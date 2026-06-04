@@ -787,7 +787,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
             border: "none", color: "#000", fontWeight: 800,
             fontSize: "0.95rem", cursor: "pointer", fontFamily: "'Syne',sans-serif", marginBottom: "0.5rem"
           }}>
-          Get {PLANS[selected]?.label} — ₹{PLANS[selected]?.priceINR} / ${PLANS[selected]?.priceUSD} →
+          Get {PLANS[selected as keyof typeof PLANS]?.label} — ₹{PLANS[selected as keyof typeof PLANS]?.priceINR} / ${PLANS[selected as keyof typeof PLANS]?.priceUSD} →
         </button>
         <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem" }}>
           Maybe later
@@ -873,7 +873,7 @@ export default function ViralContentTool() {
     setDetectedLang(getBrowserLang());
   }, []);
 
-  const limit     = plan === "free" ? 3 : (PLANS[plan]?.limit || 3);
+  const limit     = plan === "free" ? 3 : (PLANS[plan as keyof typeof PLANS]?.limit || 3);
   const remaining = Math.max(0, limit - usageCount);
   const usedPct   = Math.min(100, (usageCount / limit) * 100);
   const langLabel = getLangLabel(detectedLang);
@@ -984,7 +984,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             border: "1px solid #161616", borderRadius: "10px", padding: "0.6rem 0.9rem"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", marginBottom: "0.3rem" }}>
-              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#ff6b35" }}>{PLANS[plan]?.label}</strong></span>
+              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#ff6b35" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
               <span style={{ color: remaining === 0 ? "#ef4444" : remaining <= 3 ? "#f59e0b" : "#22c55e", fontWeight: 700 }}>
                 {remaining === 0 ? "⛔ Limit reached" : `${remaining} left`}
               </span>
@@ -1065,7 +1065,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                 <input value={keyword}
                   onChange={e => { setKeyword(e.target.value); setError(""); }}
                   onKeyDown={e => e.key === "Enter" && handleGenerate()}
-                  placeholder={`e.g. ${NICHE_EXAMPLES[niche][0]}`}
+                  placeholder={`e.g. ${NICHE_EXAMPLES[niche as keyof typeof NICHE_EXAMPLES][0]}`}
                   style={{
                     width: "100%", background: "#0d0d0d", border: "1px solid #1a1a1a",
                     borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff",
@@ -1075,7 +1075,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                   onBlur={e => e.target.style.borderColor = "#1a1a1a"}
                 />
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                  {NICHE_EXAMPLES[niche].slice(0, 3).map(ex => (
+                  {NICHE_EXAMPLES[niche as keyof typeof NICHE_EXAMPLES].slice(0, 3).map(ex => (
                     <button key={ex} onClick={() => setKeyword(ex)}
                       style={{
                         background: "none", border: "1px solid #141414", color: "#2a2a2a",
