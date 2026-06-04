@@ -882,10 +882,7 @@ const [authLoading, setAuthLoading] = useState(true);
       setAuthLoading(false);
     });
 
-    // Sign out on fresh load for testing
-    supabase.auth.signOut();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
