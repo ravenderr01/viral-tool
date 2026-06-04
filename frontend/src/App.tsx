@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./supabaseClient";
+import Auth from "./Auth";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -864,6 +866,8 @@ export default function ViralContentTool() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [detectedLang, setDetectedLang] = useState("en");
   const [activeTab, setActiveTab] = useState("generate");
+const [user, setUser] = useState<any>(null);
+const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const u = localStorage.getItem("viral_usage");
@@ -871,6 +875,21 @@ export default function ViralContentTool() {
     if (u) setUsageCount(parseInt(u));
     if (p) setPlan(p);
     setDetectedLang(getBrowserLang());
+
+    // Auth check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    // Sign out on fresh load for testing
+    supabase.auth.signOut();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const limit     = plan === "free" ? 3 : (PLANS[plan as keyof typeof PLANS]?.limit || 3);
@@ -886,6 +905,33 @@ export default function ViralContentTool() {
 
   const handleGenerate = async () => {
     if (!keyword.trim()) { setError("Please enter a keyword first."); return; }
+
+    // Supabase se check karo
+    const { data: userData } = await supabase
+      .from("users")
+      .select("generations_used_today, last_reset_date, plan")
+      .eq("id", user.id)
+      .single();
+
+    if (userData) {
+      // Daily reset check
+      const today = new Date().toISOString().split("T")[0];
+      if (userData.last_reset_date !== today) {
+        await supabase.from("users").update({
+          generations_used_today: 0,
+          last_reset_date: today
+        }).eq("id", user.id);
+        userData.generations_used_today = 0;
+      }
+
+      // Limit check
+      const dailyLimit = userData.plan === "free" ? 3 : 999;
+      if (userData.generations_used_today >= dailyLimit) {
+        setShowPaywall(true);
+        return;
+      }
+    }
+
     if (usageCount >= limit) { setShowPaywall(true); return; }
 
     setLoading(true); setError(""); setResults(null);
@@ -911,7 +957,11 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
       const clean = text.replace(/```json|```/g, "").trim();
       setResults(JSON.parse(clean));
       incrementUsage();
-    } catch {
+      // Supabase mein count update 
+      await supabase.from("users").update({
+        generations_used_today: (userData?.generations_used_today || 0) + 1
+      }).eq("id", user.id);
+          } catch {
       setError("Something went wrong. Please try again.");
     }
     setLoading(false);
@@ -932,6 +982,14 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
     { id: "calendar", label: "Calendar",  emoji: "📅" },
     { id: "pack",     label: "Pack",      emoji: "📦" },
   ];
+
+  if (authLoading) return (
+    <div style={{ minHeight: "100vh", background: "#050505", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: "#ff6b35", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
+    </div>
+  );
+
+  if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   return (
     <>
