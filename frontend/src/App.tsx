@@ -596,7 +596,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
   const [currency, setCurrency] = useState("INR");
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
-  const planData = PLANS[plan];
+  const planData = PLANS[plan as keyof typeof PLANS];
 
   return (
     <div style={{
