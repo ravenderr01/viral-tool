@@ -99,7 +99,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               border: "1px solid rgba(139,92,246,0.35)",
               borderRadius: "20px", padding: "0.3rem 1rem", marginBottom: "1rem"
             }}>
-              <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif" }}>⚡ AI-POWERED VIRAL ENGINE</span>
+              <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif" }}>⚡ VCI — Viral Content Intelligence</span>
             </div>
             <h1 style={{
               fontFamily: "'Outfit', sans-serif", fontSize: "2.1rem", fontWeight: 900,

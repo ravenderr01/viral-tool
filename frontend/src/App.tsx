@@ -1091,7 +1091,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px",
             padding: "0.2rem 0.85rem", marginBottom: "0.6rem"
           }}>
-            <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ AI-POWERED VIRAL ENGINE</span>
+            <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
           </div>
 
           <h1 style={{
@@ -1100,7 +1100,11 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             background: "linear-gradient(135deg,#ffffff 10%, #ff9a6c 50%, #a855f7 90%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
           }}>
-            Viral Content Intelligence
+            <span style={{
+              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+              borderRadius: "8px", padding: "0 0.3rem", marginRight: "0.4rem",
+              fontStyle: "normal"
+            }}>VCI</span> Viral Content Intelligence
           </h1>
           <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
             Hook Score · 30-Day Calendar · Content Pack · Instant Generation
