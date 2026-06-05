@@ -16,11 +16,18 @@ const PLANS = {
 };
 
 const NICHE_EXAMPLES = {
-  Fitness:   ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
-  Business:  ["passive income", "side hustle", "startup tips", "freelancing"],
-  Tech:      ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
-  Lifestyle: ["morning routine", "productivity hacks", "minimalism", "self care"],
-  Food:      ["meal prep", "healthy recipes", "street food", "viral recipes"],
+  Fitness:      ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
+  Business:     ["passive income", "side hustle", "startup tips", "freelancing"],
+  Tech:         ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
+  Lifestyle:    ["morning routine", "productivity hacks", "minimalism", "self care"],
+  Food:         ["meal prep", "healthy recipes", "street food", "viral recipes"],
+  "AI & Automation": ["AI tools", "automation hacks", "ChatGPT tips", "AI side hustle"],
+  "Personal Finance": ["invest money", "save money fast", "passive income", "budget tips"],
+  "Sustainable Living": ["eco friendly", "zero waste", "sustainable fashion", "green living"],
+  "Mental Health": ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
+  Storytelling:  ["viral stories", "content writing", "narrative hooks", "storytelling tips"],
+  Gaming:        ["gaming tips", "game review", "gaming setup", "esports"],
+  "Beauty & Skincare": ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
