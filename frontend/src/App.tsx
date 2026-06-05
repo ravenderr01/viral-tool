@@ -132,10 +132,19 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langLabel }: an
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are a viral content expert. Analyze this hook: "${hookInput}"
-Respond ONLY in this exact JSON (no markdown, no extra text):
-{"curiosity":7,"emotion":5,"virality":8,"overall":7,"verdict":"Good hook but needs more curiosity trigger","improved":"${hookInput} — improved version here","why":"2-sentence explanation of what works and what doesn't"}
-Score each dimension 1-10. Be honest and specific. Improved version should be dramatically better.`;
+    const prompt = `You are a harsh viral content critic. Analyze this hook brutally honestly: "${hookInput}"
+
+Scoring rules:
+- Most hooks score 3-6. Only truly exceptional hooks get 8+
+- Be STRICT. A generic hook like "best tips" = 2-3/10
+- Curiosity: Does it make people NEED to know more?
+- Emotion: Does it trigger fear, excitement, anger, or hope?
+- Virality: Would people share this?
+- Overall: Average of above 3 scores
+- Improved version must be COMPLETELY different and dramatically better - NOT just slightly modified
+
+Respond ONLY in this exact JSON (no markdown, no extra text, no default values):
+{"curiosity":0,"emotion":0,"virality":0,"overall":0,"verdict":"your honest verdict here","improved":"completely rewritten viral version here","why":"explain exactly what is weak and what the improved version does better"}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
