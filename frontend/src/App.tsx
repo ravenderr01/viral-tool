@@ -28,9 +28,28 @@ const NICHE_EXAMPLES = {
   Storytelling:  ["viral stories", "content writing", "narrative hooks", "storytelling tips"],
   Gaming:        ["gaming tips", "game review", "gaming setup", "esports"],
   "Beauty & Skincare": ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
+  "Ads & Marketing": ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
+  "Education": ["online course", "study tips", "e-learning", "skill development"],
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const LANGUAGES = [
+  { code: "en", label: "🇬🇧 English" },
+  { code: "hi", label: "🇮🇳 Hindi" },
+  { code: "es", label: "🇪🇸 Spanish" },
+  { code: "fr", label: "🇫🇷 French" },
+  { code: "de", label: "🇩🇪 German" },
+  { code: "ar", label: "🇸🇦 Arabic" },
+  { code: "pt", label: "🇧🇷 Portuguese" },
+  { code: "id", label: "🇮🇩 Indonesian" },
+  { code: "tr", label: "🇹🇷 Turkish" },
+  { code: "bn", label: "🇧🇩 Bengali" },
+  { code: "ur", label: "🇵🇰 Urdu" },
+  { code: "zh", label: "🇨🇳 Chinese" },
+  { code: "ja", label: "🇯🇵 Japanese" },
+  { code: "ko", label: "🇰🇷 Korean" },
+  { code: "ru", label: "🇷🇺 Russian" },
+];
 const CONTENT_TYPES = ["Tips","Story","Mistakes","Behind the Scenes","Q&A","Tutorial","Motivation","Trend","Case Study","Poll","Review","Challenge"];
 
 function getBrowserLang() {
@@ -872,6 +891,7 @@ export default function ViralContentTool() {
   const [payingPlan, setPayingPlan]   = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [detectedLang, setDetectedLang] = useState("en");
+const [selectedLang, setSelectedLang] = useState("en");
   const [activeTab, setActiveTab] = useState("generate");
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
@@ -901,7 +921,7 @@ const [authLoading, setAuthLoading] = useState(true);
   const limit     = plan === "free" ? 3 : (PLANS[plan as keyof typeof PLANS]?.limit || 3);
   const remaining = Math.max(0, limit - usageCount);
   const usedPct   = Math.min(100, (usageCount / limit) * 100);
-  const langLabel = getLangLabel(detectedLang);
+  const langLabel = getLangLabel(selectedLang);
 
   const incrementUsage = () => {
     const newCount = usageCount + 1;
@@ -1134,7 +1154,24 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
               {/* Keyword */}
               <div style={{ marginBottom: "0.75rem" }}>
-                <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
+                <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>OUTPUT LANGUAGE</label>
+              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+                {LANGUAGES.map(lang => (
+                  <button key={lang.code} onClick={() => setSelectedLang(lang.code)}
+                    style={{
+                      background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "#0d0d0d",
+                      border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1a1a1a"}`,
+                      color: selectedLang === lang.code ? "#a855f7" : "#444",
+                      padding: "0.28rem 0.75rem", borderRadius: "20px",
+                      cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
+                      transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+                    }}>
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+
+              <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
                 <input value={keyword}
                   onChange={e => { setKeyword(e.target.value); setError(""); }}
                   onKeyDown={e => e.key === "Enter" && handleGenerate()}
