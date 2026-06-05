@@ -3,14 +3,21 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 
+app.options("/api/generate", cors());
+
 app.post("/api/generate", async (req, res) => {
+  console.log("Request received:", JSON.stringify(req.body).slice(0, 100));
   try {
     const { messages, max_tokens } = req.body;
-    
-    // Last user message lo
     const userMessage = messages[messages.length - 1].content;
 
     const response = await fetch(
@@ -26,15 +33,15 @@ app.post("/api/generate", async (req, res) => {
     );
 
     const data = await response.json();
+    console.log("Gemini response:", JSON.stringify(data).slice(0, 200));
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Anthropic jaisa format return karo
     res.json({
       content: [{ type: "text", text }]
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
