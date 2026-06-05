@@ -140,11 +140,12 @@ Scoring rules:
 - Curiosity: Does it make people NEED to know more?
 - Emotion: Does it trigger fear, excitement, anger, or hope?
 - Virality: Would people share this?
-- Overall: Average of above 3 scores
-- Improved version must be COMPLETELY different and dramatically better - NOT just slightly modified
+- Overall: Average of above 3, rounded
+- Improved version must use power words, numbers, emotion triggers - completely rewritten
+- Also score the improved version separately
 
-Respond ONLY in this exact JSON (no markdown, no extra text, no default values):
-{"curiosity":0,"emotion":0,"virality":0,"overall":0,"verdict":"your honest verdict here","improved":"completely rewritten viral version here","why":"explain exactly what is weak and what the improved version does better"}`;
+Respond ONLY in this exact JSON (no markdown, no extra text):
+{"curiosity":0,"emotion":0,"virality":0,"overall":0,"verdict":"honest verdict","improved":"completely rewritten viral hook","improved_curiosity":0,"improved_emotion":0,"improved_virality":0,"improved_overall":0,"why":"explain what was weak and what makes improved version better"}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -255,6 +256,20 @@ Respond ONLY in this exact JSON (no markdown, no extra text, no default values):
           }}>
             <p style={{ margin: "0 0 0.5rem", fontSize: "0.7rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✨ IMPROVED VERSION</p>
             <p style={{ margin: "0 0 0.75rem", color: "#e2e2e2", fontSize: "0.92rem", lineHeight: 1.6, fontWeight: 500 }}>{result.improved}</p>
+            {result.improved_overall && (
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                {[["CURIOSITY", result.improved_curiosity], ["EMOTION", result.improved_emotion], ["VIRALITY", result.improved_virality]].map(([label, score]: any) => (
+                  <div key={label} style={{ textAlign: "center", flex: 1, background: "#0a1a0a", border: "1px solid #22c55e30", borderRadius: "8px", padding: "0.5rem" }}>
+                    <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.2rem" }}>{score}</div>
+                    <div style={{ color: "#444", fontSize: "0.6rem", fontWeight: 700 }}>{label}</div>
+                  </div>
+                ))}
+                <div style={{ textAlign: "center", flex: 1, background: "#0a1a0a", border: "1px solid #22c55e50", borderRadius: "8px", padding: "0.5rem" }}>
+                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.2rem" }}>{result.improved_overall}</div>
+                  <div style={{ color: "#444", fontSize: "0.6rem", fontWeight: 700 }}>OVERALL</div>
+                </div>
+              </div>
+            )}
             <button onClick={() => navigator.clipboard.writeText(result.improved)}
               style={{
                 background: "#22c55e18", border: "1px solid #22c55e40", color: "#22c55e",
