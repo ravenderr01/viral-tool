@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
+import Contact from "./Contact";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -917,6 +918,7 @@ export default function ViralContentTool() {
   const [detectedLang, setDetectedLang] = useState("en");
 const [selectedLang, setSelectedLang] = useState("en");
   const [activeTab, setActiveTab] = useState("generate");
+const [showContact, setShowContact] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
 
@@ -1037,6 +1039,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
     </div>
   );
 
+  if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   return (
@@ -1072,6 +1075,15 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             fontFamily: "'DM Sans',sans-serif"
           }}>
             Logout →
+          </button>
+          <button onClick={() => setShowContact(true)} style={{
+            position: "absolute", top: "1rem", right: "7rem",
+            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
+            color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px",
+            cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+            fontFamily: "'DM Sans',sans-serif"
+          }}>
+            Support
           </button>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.4rem",
