@@ -461,7 +461,7 @@ Make everything highly specific, punchy, and viral. Use numbers, power words, em
   };
 
   const sections = pack ? [
-    { key: "hooks",    label: "Viral Hooks",    emoji: "🎣", color: "#ff6b35", count: pack.hooks?.length },
+    { key: "hooks",    label: "Viral Hooks",    emoji: "🎣", color: "#a855f7", count: pack.hooks?.length },
     { key: "titles",   label: "Title Ideas",    emoji: "📝", color: "#818cf8", count: pack.titles?.length },
     { key: "captions", label: "Captions",       emoji: "💬", color: "#22c55e", count: pack.captions?.length },
     { key: "scripts",  label: "Reel Scripts",   emoji: "🎬", color: "#f59e0b", count: pack.scripts?.length },
@@ -613,13 +613,13 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
       display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto"
     }}>
       <div style={{
-        background: "#0a0a0a", border: "1px solid #ff6b35", borderRadius: "20px",
+        background: "#0a0a0a", border: "1px solid #a855f7", borderRadius: "20px",
         padding: "1.75rem", maxWidth: "460px", width: "100%", color: "#fff",
         boxShadow: "0 0 80px rgba(255,107,53,0.25)", animation: "slideUp 0.3s ease"
       }}>
         <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "2rem", marginBottom: "0.3rem" }}>💳</div>
-          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", margin: "0 0 0.5rem", color: "#ff6b35" }}>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", margin: "0 0 0.5rem", color: "#a855f7" }}>
             Complete Payment
           </h2>
           <div style={{
@@ -627,7 +627,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
             borderRadius: "20px", padding: "0.3rem 1rem"
           }}>
             <span style={{ fontWeight: 800, fontSize: "1rem" }}>
-              {planData?.label} — <span style={{ color: "#ff6b35" }}>₹{planData?.priceINR} / ${planData?.priceUSD}</span>
+              {planData?.label} — <span style={{ color: "#a855f7" }}>₹{planData?.priceINR} / ${planData?.priceUSD}</span>
             </span>
           </div>
         </div>
@@ -664,7 +664,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
               padding: "0.6rem 1rem", margin: "0 auto 0.75rem", maxWidth: "300px",
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem"
             }}>
-              <span style={{ color: "#ff6b35", fontWeight: 700, fontSize: "0.9rem", wordBreak: "break-all" }}>{YOUR_UPI_ID}</span>
+              <span style={{ color: "#a855f7", fontWeight: 700, fontSize: "0.9rem", wordBreak: "break-all" }}>{YOUR_UPI_ID}</span>
               <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 style={{
                   background: copied ? "#22c55e22" : "#ff6b3518", border: `1px solid ${copied ? "#22c55e" : "#ff6b3540"}`,
@@ -748,13 +748,13 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
       display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
     }}>
       <div style={{
-        background: "#0a0a0a", border: "1px solid #ff6b35", borderRadius: "20px",
+        background: "#0a0a0a", border: "1px solid #a855f7", borderRadius: "20px",
         padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff",
         boxShadow: "0 0 80px rgba(255,107,53,0.25)", animation: "slideUp 0.3s ease"
       }}>
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "2rem" }}>🚀</div>
-          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#ff6b35" }}>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#a855f7" }}>
             Free Limit Reached!
           </h2>
           <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>
@@ -782,7 +782,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
                 </div>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "1rem" }}>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#ff6b35" }}>₹{plan.priceINR}</div>
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#a855f7" }}>₹{plan.priceINR}</div>
                 <div style={{ color: "#333", fontSize: "0.72rem" }}>${plan.priceUSD} / mo</div>
               </div>
             </div>
@@ -792,7 +792,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
         <button onClick={() => onSelectPlan(selected)}
           style={{
             width: "100%", padding: "0.9rem", borderRadius: "10px",
-            background: "linear-gradient(135deg,#ff6b35,#f7c59f)",
+            background: "linear-gradient(135deg,#7c3aed,#a855f7)",
             border: "none", color: "#000", fontWeight: 800,
             fontSize: "0.95rem", cursor: "pointer", fontFamily: "'Syne',sans-serif", marginBottom: "0.5rem"
           }}>
@@ -850,7 +850,7 @@ function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
       {isPro && !active && (
         <span style={{
           position: "absolute", top: 4, right: 4, fontSize: "0.5rem",
-          background: "#ff6b3520", border: "1px solid #ff6b3540", color: "#ff6b35",
+          background: "#ff6b3520", border: "1px solid #ff6b3540", color: "#a855f7",
           borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700
         }}>PRO</span>
       )}
@@ -988,8 +988,8 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
   ];
 
   if (authLoading) return (
-    <div style={{ minHeight: "100vh", background: "#050505", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#ff6b35", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
+    <div style={{ minHeight: "100vh", background: "#06040f", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: "#a855f7", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
     </div>
   );
 
@@ -1013,7 +1013,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#050505", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#06040f", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
 
         {/* ── Header ── */}
         <div style={{
@@ -1025,7 +1025,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             background: "#ff6b3510", border: "1px solid #ff6b3525", borderRadius: "20px",
             padding: "0.2rem 0.85rem", marginBottom: "0.6rem"
           }}>
-            <span style={{ fontSize: "0.65rem", color: "#ff6b35", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ AI-POWERED VIRAL ENGINE</span>
+            <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ AI-POWERED VIRAL ENGINE</span>
           </div>
 
           <h1 style={{
@@ -1046,7 +1046,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             border: "1px solid #161616", borderRadius: "10px", padding: "0.6rem 0.9rem"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", marginBottom: "0.3rem" }}>
-              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#ff6b35" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
+              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#a855f7" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
               <span style={{ color: remaining === 0 ? "#ef4444" : remaining <= 3 ? "#f59e0b" : "#22c55e", fontWeight: 700 }}>
                 {remaining === 0 ? "⛔ Limit reached" : `${remaining} left`}
               </span>
@@ -1176,7 +1176,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                     display: "flex", alignItems: "center", gap: "0.5rem",
                     marginBottom: "1rem", padding: "0.5rem 0.75rem",
                     background: "#ff6b3508", border: "1px solid #ff6b3520",
-                    borderRadius: "8px", fontSize: "0.75rem", color: "#ff6b35"
+                    borderRadius: "8px", fontSize: "0.75rem", color: "#a855f7"
                   }}>
                     🌐 Generated in <strong>{langLabel}</strong>
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>
@@ -1232,7 +1232,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                   </div>
                   <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
                     <button onClick={() => setShowPaywall(true)} style={{
-                      background: "linear-gradient(135deg,#ff6b35,#f7c59f)", border: "none", color: "#000",
+                      background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#000",
                       fontWeight: 800, padding: "0.55rem 1.1rem", borderRadius: "10px",
                       cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.82rem"
                     }}>🇮🇳 UPI</button>
