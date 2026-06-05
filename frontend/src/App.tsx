@@ -168,7 +168,7 @@ Score each dimension 1-10. Be honest and specific. Improved version should be dr
               fontFamily: "'DM Sans',sans-serif", lineHeight: 1.5,
               transition: "border 0.2s"
             }}
-            onFocus={e => e.target.style.borderColor = "#ff6b35"}
+            onFocus={e => e.target.style.borderColor = "#a855f7"}
             onBlur={e => e.target.style.borderColor = "#1e1e1e"}
           />
         </div>
@@ -286,7 +286,7 @@ Generate exactly 30 days. Use varied types: ${CONTENT_TYPES.join(", ")}. Make ho
 
   const TYPE_COLORS: Record<string, string> = {
     Tips: "#818cf8", Story: "#f59e0b", Mistakes: "#ef4444", Tutorial: "#22c55e",
-    Motivation: "#ff6b35", Trend: "#06b6d4", "Case Study": "#a855f7",
+    Motivation: "#a855f7", Trend: "#06b6d4", "Case Study": "#a855f7",
     Poll: "#ec4899", Review: "#84cc16", Challenge: "#f97316",
     "Behind the Scenes": "#64748b", "Q&A": "#14b8a6"
   };
@@ -361,7 +361,7 @@ Generate exactly 30 days. Use varied types: ${CONTENT_TYPES.join(", ")}. Make ho
               <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                 {calendar.filter(d => getWeek(d.day) === week).map((day, i) => {
                   const dayName = DAYS[(day.day - 1) % 7];
-                  const color = TYPE_COLORS[day.type] || "#ff6b35";
+                  const color = TYPE_COLORS[day.type] || "#a855f7";
                   return (
                     <div key={day.day}
                       style={{
@@ -486,7 +486,7 @@ Make everything highly specific, punchy, and viral. Use numbers, power words, em
 
         {/* Pack stats preview */}
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-          {[["20","Hooks","#ff6b35"],["10","Titles","#818cf8"],["5","Captions","#22c55e"],["3","Scripts","#f59e0b"],["15","Hashtags","#06b6d4"]].map(([n,l,c]) => (
+          {[["20","Hooks","#a855f7"],["10","Titles","#818cf8"],["5","Captions","#22c55e"],["3","Scripts","#f59e0b"],["15","Hashtags","#06b6d4"]].map(([n,l,c]) => (
             <div key={l} style={{
               background: c + "10", border: `1px solid ${c}25`, borderRadius: "8px",
               padding: "0.3rem 0.6rem", display: "flex", flexDirection: "column", alignItems: "center"
@@ -623,7 +623,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
             Complete Payment
           </h2>
           <div style={{
-            display: "inline-block", background: "#ff6b3518", border: "1px solid #ff6b3540",
+            display: "inline-block", background: "#a855f718", border: "1px solid #a855f740",
             borderRadius: "20px", padding: "0.3rem 1rem"
           }}>
             <span style={{ fontWeight: 800, fontSize: "1rem" }}>
@@ -637,7 +637,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
             <button key={c} onClick={() => setCurrency(c)}
               style={{
                 flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none",
-                background: currency === c ? "#ff6b35" : "transparent",
+                background: currency === c ? "#a855f7" : "transparent",
                 color: currency === c ? "#000" : "#666",
                 fontWeight: 700, cursor: "pointer", fontFamily: "'Syne',sans-serif",
                 transition: "all 0.2s", fontSize: "0.82rem"
@@ -653,22 +653,22 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
               📱 Scan with PhonePe / GPay / Paytm or any UPI app
             </p>
             <div style={{
-              background: "#111", border: "2px solid #ff6b3530", borderRadius: "14px",
+              background: "#111", border: "2px solid #a855f730", borderRadius: "14px",
               padding: "1rem", display: "inline-block", marginBottom: "0.75rem"
             }}>
               <img src={getUPIQR(YOUR_UPI_ID, planData?.priceINR)} alt="UPI QR"
                 style={{ width: "160px", height: "160px", borderRadius: "8px", display: "block" }} />
             </div>
             <div style={{
-              background: "#0a0a0a", border: "1px solid #ff6b3525", borderRadius: "10px",
+              background: "#0a0a0a", border: "1px solid #a855f725", borderRadius: "10px",
               padding: "0.6rem 1rem", margin: "0 auto 0.75rem", maxWidth: "300px",
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem"
             }}>
               <span style={{ color: "#a855f7", fontWeight: 700, fontSize: "0.9rem", wordBreak: "break-all" }}>{YOUR_UPI_ID}</span>
               <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 style={{
-                  background: copied ? "#22c55e22" : "#ff6b3518", border: `1px solid ${copied ? "#22c55e" : "#ff6b3540"}`,
-                  color: copied ? "#22c55e" : "#ff6b35", padding: "0.25rem 0.6rem", borderRadius: "6px",
+                  background: copied ? "#22c55e22" : "#a855f718", border: `1px solid ${copied ? "#22c55e" : "#a855f740"}`,
+                  color: copied ? "#22c55e" : "#a855f7", padding: "0.25rem 0.6rem", borderRadius: "6px",
                   cursor: "pointer", fontSize: "0.72rem", flexShrink: 0, fontWeight: 700
                 }}>
                 {copied ? "✓" : "Copy"}
@@ -766,7 +766,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
           {Object.entries(PLANS).filter(([k]) => k !== "free").map(([key, plan]: any) => (
             <div key={key} onClick={() => setSelected(key)}
               style={{
-                border: `${selected === key ? "2" : "1"}px solid ${selected === key ? "#ff6b35" : "#1e1e1e"}`,
+                border: `${selected === key ? "2" : "1"}px solid ${selected === key ? "#a855f7" : "#1e1e1e"}`,
                 borderRadius: "12px", padding: "0.9rem 1rem",
                 background: selected === key ? "rgba(255,107,53,0.07)" : "#0d0d0d",
                 cursor: "pointer", transition: "all 0.2s",
@@ -837,12 +837,12 @@ function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
     <button onClick={() => onClick(id)}
       style={{
         flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none",
-        background: active ? "#ff6b3515" : "transparent",
-        color: active ? "#ff6b35" : "#444",
+        background: active ? "#a855f715" : "transparent",
+        color: active ? "#a855f7" : "#444",
         fontWeight: active ? 700 : 500, fontSize: "0.72rem",
         cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
         transition: "all 0.2s", position: "relative",
-        borderBottom: active ? "2px solid #ff6b35" : "2px solid transparent",
+        borderBottom: active ? "2px solid #a855f7" : "2px solid transparent",
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem"
       }}>
       <span style={{ fontSize: "1rem" }}>{emoji}</span>
@@ -850,7 +850,7 @@ function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
       {isPro && !active && (
         <span style={{
           position: "absolute", top: 4, right: 4, fontSize: "0.5rem",
-          background: "#ff6b3520", border: "1px solid #ff6b3540", color: "#a855f7",
+          background: "#a855f720", border: "1px solid #a855f740", color: "#a855f7",
           borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700
         }}>PRO</span>
       )}
@@ -1000,13 +1000,13 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #050505; }
+        body { margin: 0; background: #06040f; }
         @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow    { 0%,100%{box-shadow:0 0 20px rgba(255,107,53,0.25)} 50%{box-shadow:0 0 50px rgba(255,107,53,0.55)} }
         @keyframes shimmer { from{background-position:-200% 0} to{background-position:200% 0} }
         .gbtn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 40px rgba(255,107,53,0.5)!important; }
-        .tbtn:hover { border-color:#ff6b35!important; color:#ff6b35!important; }
+        .tbtn:hover { border-color:#a855f7!important; color:#a855f7!important; }
         input,textarea { box-sizing:border-box; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-track { background:#0a0a0a; }
@@ -1017,12 +1017,12 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
         {/* ── Header ── */}
         <div style={{
-          background: "#080808", borderBottom: "1px solid #111",
+          background: "#06040f", borderBottom: "1px solid #111",
           padding: "1.25rem 1rem 0", textAlign: "center"
         }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.4rem",
-            background: "#ff6b3510", border: "1px solid #ff6b3525", borderRadius: "20px",
+            background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px",
             padding: "0.2rem 0.85rem", marginBottom: "0.6rem"
           }}>
             <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ AI-POWERED VIRAL ENGINE</span>
@@ -1031,7 +1031,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
           <h1 style={{
             fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800,
             margin: "0 0 0.3rem",
-            background: "linear-gradient(135deg,#ffffff 10%, #ff9a6c 50%, #ff6b35 90%)",
+            background: "linear-gradient(135deg,#ffffff 10%, #ff9a6c 50%, #a855f7 90%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
           }}>
             Viral Content Intelligence
@@ -1054,7 +1054,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             <div style={{ background: "#141414", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
               <div style={{
                 height: "100%", borderRadius: "4px",
-                background: remaining === 0 ? "#ef4444" : "linear-gradient(90deg,#ff6b35,#f7c59f)",
+                background: remaining === 0 ? "#ef4444" : "linear-gradient(90deg,#a855f7,#c084fc)",
                 width: `${usedPct}%`, transition: "width 0.5s"
               }} />
             </div>
@@ -1088,9 +1088,9 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                   {Object.keys(NICHE_EXAMPLES).map(n => (
                     <button key={n} className="tbtn" onClick={() => setNiche(n)}
                       style={{
-                        background: niche === n ? "#ff6b3512" : "#0d0d0d",
-                        border: `1px solid ${niche === n ? "#ff6b35" : "#1a1a1a"}`,
-                        color: niche === n ? "#ff6b35" : "#444",
+                        background: niche === n ? "#a855f712" : "#0d0d0d",
+                        border: `1px solid ${niche === n ? "#a855f7" : "#1a1a1a"}`,
+                        color: niche === n ? "#a855f7" : "#444",
                         padding: "0.28rem 0.75rem", borderRadius: "20px",
                         cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
                         transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
@@ -1108,9 +1108,9 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                   {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok"].map(p => (
                     <button key={p} className="tbtn" onClick={() => setPlatform(p)}
                       style={{
-                        background: platform === p ? "#ff6b3512" : "#0d0d0d",
-                        border: `1px solid ${platform === p ? "#ff6b35" : "#1a1a1a"}`,
-                        color: platform === p ? "#ff6b35" : "#444",
+                        background: platform === p ? "#a855f712" : "#0d0d0d",
+                        border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`,
+                        color: platform === p ? "#a855f7" : "#444",
                         padding: "0.28rem 0.75rem", borderRadius: "20px",
                         cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
                         transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
@@ -1133,7 +1133,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                     borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff",
                     fontSize: "0.92rem", outline: "none", transition: "border 0.2s"
                   }}
-                  onFocus={e => e.target.style.borderColor = "#ff6b35"}
+                  onFocus={e => e.target.style.borderColor = "#a855f7"}
                   onBlur={e => e.target.style.borderColor = "#1a1a1a"}
                 />
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
@@ -1158,7 +1158,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
               <button className="gbtn" onClick={handleGenerate} disabled={loading}
                 style={{
                   width: "100%", padding: "0.95rem", borderRadius: "12px",
-                  background: loading ? "#0d0d0d" : "linear-gradient(135deg,#ff6b35,#f7c59f)",
+                  background: loading ? "#0d0d0d" : "linear-gradient(135deg,#a855f7,#c084fc)",
                   border: "none", color: loading ? "#2a2a2a" : "#000",
                   fontWeight: 800, fontSize: "0.95rem",
                   cursor: loading ? "not-allowed" : "pointer",
@@ -1175,7 +1175,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                   <div style={{
                     display: "flex", alignItems: "center", gap: "0.5rem",
                     marginBottom: "1rem", padding: "0.5rem 0.75rem",
-                    background: "#ff6b3508", border: "1px solid #ff6b3520",
+                    background: "#a855f708", border: "1px solid #a855f720",
                     borderRadius: "8px", fontSize: "0.75rem", color: "#a855f7"
                   }}>
                     🌐 Generated in <strong>{langLabel}</strong>
@@ -1184,7 +1184,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                     </span>
                   </div>
                   <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
-                  <ResultCard title="Viral Hooks"     items={results.viralHooks}     emoji="🎣" color="#ff6b35" />
+                  <ResultCard title="Viral Hooks"     items={results.viralHooks}     emoji="🎣" color="#a855f7" />
                   <ResultCard title="Title Ideas"     items={results.titles}         emoji="📝" color="#22c55e" />
                   <ResultCard title="Captions"        items={results.captions}       emoji="💬" color="#f59e0b" />
 
@@ -1209,7 +1209,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
                             fontSize: "0.75rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif",
                             transition: "all 0.2s"
                           }}
-                          onMouseEnter={e => { (e.currentTarget.style.borderColor = "#ff6b35"); (e.currentTarget.style.color = "#ff6b35"); }}
+                          onMouseEnter={e => { (e.currentTarget.style.borderColor = "#a855f7"); (e.currentTarget.style.color = "#a855f7"); }}
                           onMouseLeave={e => { (e.currentTarget.style.borderColor = "#1e1e1e"); (e.currentTarget.style.color = "#555"); }}>
                           {label}
                         </button>
@@ -1221,7 +1221,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
               {plan === "free" && (
                 <div style={{
-                  background: "#ff6b3508", border: "1px solid #ff6b3518", borderRadius: "14px",
+                  background: "#a855f708", border: "1px solid #a855f718", borderRadius: "14px",
                   padding: "1.1rem", marginTop: "1rem", textAlign: "center"
                 }}>
                   <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>
