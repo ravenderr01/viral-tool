@@ -10,9 +10,9 @@ const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
 
 const PLANS = {
   free:    { label: "Free",    limit: 3,    priceINR: 0,    priceUSD: 0  },
-  starter: { label: "Starter", limit: 30,   priceINR: 749,  priceUSD: 9,  badge: "🔥 Popular" },
-  pro:     { label: "Pro",     limit: 100,  priceINR: 1499, priceUSD: 19, badge: "⚡ Best Value" },
-  bundle:  { label: "Bundle",  limit: 9999, priceINR: 3999, priceUSD: 49, badge: "👑 Unlimited" },
+  starter: { label: "Starter", limit: 50,   priceINR: 499,  priceUSD: 6,  badge: "🔥 Popular" },
+  pro:     { label: "Pro",     limit: 150,  priceINR: 1299, priceUSD: 15, badge: "⚡ Best Value" },
+  agency:  { label: "Agency",  limit: 9999, priceINR: 4999, priceUSD: 59, badge: "👑 Unlimited" },
 };
 
 const NICHE_EXAMPLES = {
