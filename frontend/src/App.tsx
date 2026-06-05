@@ -1384,6 +1384,22 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
       {payingPlan  && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} />}
 
       {/* Toast */}
+      {/* WhatsApp Button */}
+      <a href="https://wa.me/919315133390?text=Hi!%20I%20want%20to%20know%20more%20about%20Viral%20Content%20Tool"
+        target="_blank" rel="noopener noreferrer"
+        style={{
+          position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 999,
+          background: "linear-gradient(135deg,#25d366,#128c7e)",
+          color: "#fff", borderRadius: "50px", padding: "0.75rem 1.25rem",
+          textDecoration: "none", fontWeight: 700, fontSize: "0.85rem",
+          fontFamily: "'DM Sans',sans-serif",
+          boxShadow: "0 4px 20px rgba(37,211,102,0.4)",
+          display: "flex", alignItems: "center", gap: "0.5rem",
+          transition: "all 0.3s"
+        }}>
+        💬 WhatsApp
+      </a>
+
       {showSuccess && (
         <div style={{
           position: "fixed", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)",
