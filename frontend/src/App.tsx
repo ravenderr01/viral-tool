@@ -1142,7 +1142,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
         </div>
 
         {/* ── Main ── */}
-        <div style={{ maxWidth: "640px", margin: "0 auto", padding: "1.25rem 1rem 3rem" }}>
+        <div style={{ maxWidth: "640px", margin: "0 auto", padding: "1.25rem 1rem 5rem" }}>
 
           {/* ── TAB: GENERATE ── */}
           {activeTab === "generate" && (
@@ -1390,6 +1390,19 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
             )
           )}
         </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        textAlign: "center", padding: "1.5rem 1rem",
+        borderTop: "1px solid rgba(139,92,246,0.1)",
+        marginTop: "2rem"
+      }}>
+        <p style={{ color: "#2a2a2a", fontSize: "0.72rem", margin: 0, fontFamily: "'DM Sans',sans-serif" }}>
+          Designed & Developed by{" "}
+          <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span>
+          {" "}© {new Date().getFullYear()} All Rights Reserved.
+        </p>
       </div>
 
       {/* Modals */}
