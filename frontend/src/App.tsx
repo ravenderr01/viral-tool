@@ -880,7 +880,9 @@ const [authLoading, setAuthLoading] = useState(true);
     const u = localStorage.getItem("viral_usage");
     const p = localStorage.getItem("viral_plan");
     if (u) setUsageCount(parseInt(u));
-    if (p) setPlan(p);
+    // Only set plan if it's a valid plan
+    if (p && ["free","starter","pro","agency"].includes(p)) setPlan(p);
+    else { localStorage.removeItem("viral_plan"); setPlan("free"); }
     setDetectedLang(getBrowserLang());
 
     // Auth check
@@ -1039,6 +1041,14 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
           <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
             Hook Score · 30-Day Calendar · Content Pack · Instant Generation
           </p>
+          <button onClick={() => supabase.auth.signOut()} style={{
+            background: "rgba(255,255,255,0.05)", border: "1px solid #1e1e1e",
+            color: "#444", padding: "0.3rem 0.9rem", borderRadius: "8px",
+            cursor: "pointer", fontSize: "0.72rem", fontWeight: 600,
+            fontFamily: "'DM Sans',sans-serif", marginBottom: "0.5rem"
+          }}>
+            Logout
+          </button>
 
           {/* Usage bar */}
           <div style={{
