@@ -28,7 +28,7 @@ const NICHE_EXAMPLES = {
   "Sustainable Living": ["eco friendly", "zero waste", "sustainable fashion", "green living"],
   "Mental Health": ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
   Storytelling:  ["viral stories", "content writing", "narrative hooks", "storytelling tips"],
-  Gaming:        ["gaming tips", "game review", "gaming setup", "esports"],
+  Gaming:        ["gaming tips", "game review", "gaming setup", "esports", "mobile gaming"],
   "Beauty & Skincare": ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
   "Ads & Marketing": ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
   "Education": ["online course", "study tips", "e-learning", "skill development"],
@@ -1175,7 +1175,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                  {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads"].map(p => (
+                  {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"].map(p => (
                     <button key={p} className="tbtn" onClick={() => setPlatform(p)}
                       style={{
                         background: platform === p ? "#a855f712" : "#0d0d0d",
