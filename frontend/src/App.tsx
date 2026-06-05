@@ -7,6 +7,7 @@ import Contact from "./Contact";
 // 🔧 YOUR DETAILS — change these 2 lines only
 const YOUR_UPI_ID    = "9315133390@ptyes";
 const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
+const SUPPORT_PHONE = "+91 9315133390";
 // ============================================
 
 const PLANS = {
