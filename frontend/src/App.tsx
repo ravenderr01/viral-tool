@@ -1136,7 +1136,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                  {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok"].map(p => (
+                  {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads"].map(p => (
                     <button key={p} className="tbtn" onClick={() => setPlatform(p)}
                       style={{
                         background: platform === p ? "#a855f712" : "#0d0d0d",
