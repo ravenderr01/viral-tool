@@ -112,7 +112,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 Score each dimension 1-10. Be honest and specific. Improved version should be dramatically better.`;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/generate`, {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -255,7 +255,7 @@ Respond ONLY in this exact JSON (no markdown):
 Generate exactly 30 days. Use varied types: ${CONTENT_TYPES.join(", ")}. Make hooks punchy and platform-ready.`;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/generate`, {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -426,7 +426,7 @@ Output in ${langLabel}. Respond ONLY in this exact JSON (no markdown):
 Make everything highly specific, punchy, and viral. Use numbers, power words, emotion triggers.`;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/generate`, {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -940,7 +940,7 @@ Respond ONLY in this exact JSON format (no markdown, no extra text):
 Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions, power words, emojis in captions.`;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/generate`, {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
