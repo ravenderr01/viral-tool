@@ -14,7 +14,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) setError(error.message);
-      else setMessage("✅ Account ban gaya! Ab login karo.");
+      else setMessage("✅ Account ban gaya! Ab Login.");
     }
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -110,7 +110,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               Viral Content<br />Intelligence
             </h1>
             <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>
-              {mode === "login" ? "Welcome back! Login karo 👋" : mode === "signup" ? "Join 1000+ creators — free hai! 🚀" : "Password reset karo 🔐"}
+              {mode === "login" ? "Welcome back! Please login 👋" : mode === "signup" ? "Join 1000+ creators — free hai! 🚀" : "Password reset karo 🔐"}
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 fontFamily: "'Outfit',sans-serif",
                 boxShadow: loading ? "none" : "0 8px 32px rgba(139,92,246,0.4)"
               }}>
-              {loading ? "⚡ Loading..." : mode === "login" ? "🚀 Login Karo" : mode === "signup" ? "✨ Free Account Banao" : "📧 Reset Email Bhejo"}
+              {loading ? "⚡ Loading..." : mode === "login" ? "🚀 Login" : mode === "signup" ? "✨ Free Account Banao" : "📧 Reset Email Bhejo"}
             </button>
           </div>
 
@@ -203,11 +203,11 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                     fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem",
                     fontFamily: "'DM Sans',sans-serif"
                   }}>
-                  Account nahi hai? <strong>Free Sign Up karo →</strong>
+                  Don't have an account? <strong>Sign Up Free →</strong>
                 </button>
                 <button onClick={() => { setMode("forgot"); setError(""); setMessage(""); }}
                   style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer", fontSize: "0.8rem", fontFamily: "'DM Sans',sans-serif" }}>
-                  Password bhool gaye?
+                   Forgot your password?
                 </button>
               </>
             )}
@@ -220,7 +220,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                   fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem",
                   fontFamily: "'DM Sans',sans-serif"
                 }}>
-                Pehle se account hai? <strong>Login karo →</strong>
+                Pehle se account hai? <strong>Login →</strong>
               </button>
             )}
             {mode === "forgot" && (
