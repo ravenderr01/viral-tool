@@ -1019,9 +1019,18 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
         {/* ── Header ── */}
         <div style={{
-          background: "#06040f", borderBottom: "1px solid #111",
-          padding: "1.25rem 1rem 0", textAlign: "center"
+          background: "#08040f", borderBottom: "1px solid #1a1040",
+          padding: "1.5rem 1.5rem 0", textAlign: "center", position: "relative"
         }}>
+          <button onClick={() => supabase.auth.signOut()} style={{
+            position: "absolute", top: "1rem", right: "1rem",
+            background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+            color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
+            cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+            fontFamily: "'DM Sans',sans-serif"
+          }}>
+            Logout →
+          </button>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.4rem",
             background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px",
@@ -1041,14 +1050,6 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
           <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
             Hook Score · 30-Day Calendar · Content Pack · Instant Generation
           </p>
-          <button onClick={() => supabase.auth.signOut()} style={{
-            background: "rgba(255,255,255,0.05)", border: "1px solid #1e1e1e",
-            color: "#444", padding: "0.3rem 0.9rem", borderRadius: "8px",
-            cursor: "pointer", fontSize: "0.72rem", fontWeight: 600,
-            fontFamily: "'DM Sans',sans-serif", marginBottom: "0.5rem"
-          }}>
-            Logout
-          </button>
 
           {/* Usage bar */}
           <div style={{
