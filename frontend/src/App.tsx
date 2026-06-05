@@ -759,7 +759,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
               border: "none", color: "#fff", fontWeight: 800,
               fontSize: "0.95rem", cursor: "pointer", fontFamily: "'Syne',sans-serif", marginBottom: "0.5rem"
             }}>
-            ✅ I've Completed Payment — Activate Now!
+            ✅ I've Paid — Request Activation
           </button>
         ) : (
           <div style={{
@@ -1019,8 +1019,6 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
   const handleSelectPlan = (p: string) => { setShowPaywall(false); setPayingPlan(p); };
   const handlePaid = (p: string) => {
-    setPlan(p);
-    localStorage.setItem("viral_plan", p);
     setPayingPlan(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 4000);
@@ -1394,7 +1392,7 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
           animation: "slideUp 0.3s ease", whiteSpace: "nowrap",
           boxShadow: "0 4px 20px rgba(34,197,94,0.4)", fontFamily: "'Syne',sans-serif"
         }}>
-          🎉 Plan activated! Enjoy unlimited viral content.
+          ✅ Payment received! We'll activate your plan within 2 hours. Check your email.
         </div>
       )}
     </>
