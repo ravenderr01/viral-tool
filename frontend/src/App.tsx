@@ -1249,29 +1249,62 @@ Rules: punchy, trendy, platform-specific for ${platform}, use numbers, emotions,
 
           {/* ── TAB: HOOK SCORE ── */}
           {activeTab === "score" && (
+            plan === "free" ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer is available on paid plans only.</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
+                  🚀 Upgrade Now
+                </button>
+              </div>
+            ) : (
             <HookScoreAnalyzer
               plan={plan} usageCount={usageCount} limit={limit}
               onUpgrade={() => setShowPaywall(true)}
               langLabel={langLabel}
             />
+            )
           )}
 
           {/* ── TAB: CALENDAR ── */}
           {activeTab === "calendar" && (
+            plan === "free" ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>30-Day Content Calendar is available on paid plans only.</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
+                  🚀 Upgrade Now
+                </button>
+              </div>
+            ) : (
             <ContentCalendar
               plan={plan} usageCount={usageCount} limit={limit}
               onUpgrade={() => setShowPaywall(true)}
               keyword={keyword} niche={niche} langLabel={langLabel}
             />
+            )
           )}
 
           {/* ── TAB: PACK ── */}
           {activeTab === "pack" && (
+            plan === "free" ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>One-Click Content Pack is available on paid plans only.</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
+                  🚀 Upgrade Now
+                </button>
+              </div>
+            ) : (
             <ContentPack
               plan={plan} usageCount={usageCount} limit={limit}
               onUpgrade={() => setShowPaywall(true)}
               keyword={keyword} niche={niche} platform={platform} langLabel={langLabel}
             />
+            )
           )}
         </div>
       </div>
