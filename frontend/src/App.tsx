@@ -4,7 +4,7 @@ import Auth from "./Auth";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
-const YOUR_UPI_ID    = "yourname@upi";
+const YOUR_UPI_ID    = "9315133390@ptyes";
 const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
 // ============================================
 
