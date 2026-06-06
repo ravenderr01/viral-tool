@@ -1280,11 +1280,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
             background: "linear-gradient(135deg,#ffffff 10%, #ff9a6c 50%, #a855f7 90%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
           }}>
-            <span style={{
-              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-              borderRadius: "8px", padding: "0 0.3rem", marginRight: "0.4rem",
-              fontStyle: "normal"
-            }}>VCI</span> Viral Content Intelligence
+            Viral Content Intelligence
           </h1>
           <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
             Hook Score · 30-Day Calendar · Content Pack · Instant Generation
