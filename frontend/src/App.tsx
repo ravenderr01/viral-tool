@@ -1082,8 +1082,22 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
       const data  = await res.json();
       const text  = data.content?.map((i: any) => i.text || "").join("") || "";
       const clean = text.replace(/```json|```/g, "").trim();
-      setResults(JSON.parse(clean));
+      const parsed = JSON.parse(clean);
+      setResults(parsed);
       incrementUsage();
+
+      // Supabase mein save karo
+      await supabase.from("generated_content").insert({
+        user_id: user.id,
+        niche: niche,
+        platform: platform,
+        language: langLabel,
+        keyword: keyword,
+        hooks: parsed.viralHooks || [],
+        titles: parsed.titles || [],
+        captions: parsed.captions || [],
+        trending_topics: parsed.trendingTopics || [],
+      });
       // Supabase mein count update 
       await supabase.from("users").update({
         generations_used_today: (userData?.generations_used_today || 0) + 1
