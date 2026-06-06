@@ -958,6 +958,8 @@ const [selectedLang, setSelectedLang] = useState("en");
 const [showContact, setShowContact] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
+const [profile, setProfile] = useState<any>(null);
+const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     const u = localStorage.getItem("viral_usage");
@@ -969,9 +971,13 @@ const [authLoading, setAuthLoading] = useState(true);
     setDetectedLang(getBrowserLang());
 
     // Auth check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
+      if (session?.user) {
+        const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
+        setProfile(data);
+      }
     });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -1174,6 +1180,92 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
           }}>
             Support
           </button>
+
+          {/* Profile Button */}
+          <div style={{ position: "absolute", top: "0.75rem", left: "1rem" }}
+            onClick={() => setShowProfile(!showProfile)}>
+            <div style={{
+              width: 38, height: 38, borderRadius: "50%",
+              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff",
+              fontFamily: "'Outfit',sans-serif",
+              boxShadow: "0 4px 15px rgba(139,92,246,0.4)"
+            }}>
+              {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
+
+            {showProfile && (
+              <div style={{
+                position: "absolute", top: "48px", left: 0,
+                background: "#0d0d0d", border: "1px solid rgba(139,92,246,0.3)",
+                borderRadius: "16px", padding: "1.25rem", minWidth: "240px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 100,
+                animation: "slideUp 0.2s ease"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: "50%",
+                    background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, fontSize: "1.3rem", color: "#fff",
+                    fontFamily: "'Outfit',sans-serif", flexShrink: 0
+                  }}>
+                    {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem", fontFamily: "'Outfit',sans-serif" }}>
+                      {profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : "User"}
+                    </div>
+                    <div style={{ color: "#555", fontSize: "0.75rem" }}>{user?.email}</div>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)",
+                  borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem",
+                  display: "flex", justifyContent: "space-between", alignItems: "center"
+                }}>
+                  <span style={{ color: "#888", fontSize: "0.75rem" }}>Current Plan</span>
+                  <span style={{ color: "#a855f7", fontWeight: 700, fontSize: "0.82rem", textTransform: "capitalize" }}>
+                    {profile?.plan || "Free"} ✨
+                  </span>
+                </div>
+
+                {profile?.phone && (
+                  <div style={{ color: "#555", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
+                    📞 {profile.phone}
+                  </div>
+                )}
+
+                <div style={{ color: "#333", fontSize: "0.72rem", marginBottom: "1rem" }}>
+                  📅 Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+                </div>
+
+                {profile?.plan === "free" && (
+                  <button onClick={() => { setShowPaywall(true); setShowProfile(false); }}
+                    style={{
+                      width: "100%", background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                      border: "none", color: "#fff", padding: "0.6rem",
+                      borderRadius: "8px", cursor: "pointer", fontWeight: 700,
+                      fontSize: "0.82rem", fontFamily: "'Outfit',sans-serif", marginBottom: "0.5rem"
+                    }}>
+                    🚀 Upgrade Plan
+                  </button>
+                )}
+
+                <button onClick={() => supabase.auth.signOut()}
+                  style={{
+                    width: "100%", background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444",
+                    padding: "0.6rem", borderRadius: "8px", cursor: "pointer",
+                    fontWeight: 700, fontSize: "0.82rem", fontFamily: "'DM Sans',sans-serif"
+                  }}>
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.4rem",
             background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px",
