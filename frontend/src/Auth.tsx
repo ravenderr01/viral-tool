@@ -3,6 +3,9 @@ import { supabase } from "./supabaseClient";
 
 export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -11,46 +14,60 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
 
   const handleSubmit = async () => {
     setLoading(true); setError(""); setMessage("");
+
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) setError(error.message);
-      else setMessage("✅ Account ban gaya! Ab Login.");
+      if (!firstName || !lastName || !phone) {
+        setError("Please fill all fields.");
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) { setError(error.message); setLoading(false); return; }
+
+      // Profile save karo
+      if (data.user) {
+        await supabase.from("users").update({
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+        }).eq("id", data.user.id);
+      }
+      setMessage("✅ Account created! Please login.");
+      setMode("login");
     }
+
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
       else onLogin();
     }
+
     if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) setError(error.message);
-      else setMessage("✅ Password reset email bhej diya!");
+      else setMessage("✅ Password reset email sent!");
     }
     setLoading(false);
   };
 
-  const features = [
-    { icon: "⚡", text: "20 Viral Hooks instantly" },
-    { icon: "📊", text: "Hook Score Analyzer" },
-    { icon: "📅", text: "30-Day Calendar" },
-    { icon: "📦", text: "Content Pack" },
-    { icon: "🌐", text: "Multi-language" },
-  ];
+  const inputStyle = {
+    width: "100%", background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px",
+    padding: "0.9rem 1.1rem", color: "#fff", fontSize: "0.92rem",
+    fontFamily: "'DM Sans',sans-serif", outline: "none", transition: "all 0.3s"
+  };
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(60px,-40px) scale(1.1)} 66%{transform:translate(-30px,50px) scale(0.9)} }
-        @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-50px,60px) scale(1.15)} 66%{transform:translate(70px,-30px) scale(0.85)} }
+        @keyframes orb1 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(60px,-40px)} 66%{transform:translate(-30px,50px)} }
+        @keyframes orb2 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(-50px,60px)} 66%{transform:translate(70px,-30px)} }
         @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        .auth-input { transition: all 0.3s; outline: none; }
         .auth-input:focus { border-color: #a855f7 !important; box-shadow: 0 0 0 3px rgba(168,85,247,0.15) !important; }
-        .submit-btn { transition: all 0.3s; }
         .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(168,85,247,0.5) !important; }
-        .switch-btn { transition: all 0.2s; }
-        .switch-btn:hover { background: rgba(139,92,246,0.2) !important; }
+        .submit-btn { transition: all 0.3s; }
         input::placeholder { color: #6b7280; }
       `}</style>
 
@@ -60,7 +77,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         background: "#06040f", position: "relative", overflow: "hidden",
         fontFamily: "'DM Sans', sans-serif"
       }}>
-        {/* Animated background orbs */}
+        {/* Background orbs */}
         <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
           <div style={{
             position: "absolute", width: 700, height: 700, borderRadius: "50%",
@@ -83,13 +100,15 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
 
         {/* Card */}
         <div style={{
-          width: "100%", maxWidth: 460, position: "relative", zIndex: 1,
+          width: "100%", maxWidth: mode === "signup" ? 520 : 460,
+          position: "relative", zIndex: 1,
           background: "rgba(255,255,255,0.03)",
           backdropFilter: "blur(24px)",
           border: "1px solid rgba(139,92,246,0.2)",
           borderRadius: "28px", padding: "2.5rem",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)",
-          animation: "slideUp 0.5s ease"
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+          animation: "slideUp 0.5s ease",
+          transition: "max-width 0.3s"
         }}>
           {/* Header */}
           <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
@@ -102,57 +121,59 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif" }}>⚡ VCI — Viral Content Intelligence</span>
             </div>
             <h1 style={{
-              fontFamily: "'Outfit', sans-serif", fontSize: "2.1rem", fontWeight: 900,
+              fontFamily: "'Outfit', sans-serif", fontSize: "2rem", fontWeight: 900,
               margin: "0 0 0.5rem", lineHeight: 1.1,
               background: "linear-gradient(135deg, #fff 0%, #c084fc 50%, #a855f7 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
             }}>
-              Viral Content<br />Intelligence
+              {mode === "signup" ? "Create Account" : mode === "login" ? "Welcome Back" : "Reset Password"}
             </h1>
             <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>
-              {mode === "login" ? "Welcome back! Please login 👋" : mode === "signup" ? "Join 1000+ creators — free hai! 🚀" : "Password reset karo 🔐"}
+              {mode === "login" ? "Login to access your dashboard 👋" : mode === "signup" ? "Join 1000+ creators — it's free! 🚀" : "We'll send you a reset link 🔐"}
             </p>
           </div>
 
-          {/* Feature pills on signup */}
-          {mode === "signup" && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "1.25rem", justifyContent: "center" }}>
-              {features.map((f, i) => (
-                <div key={i} style={{
-                  background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
-                  borderRadius: "20px", padding: "0.25rem 0.7rem",
-                  fontSize: "0.72rem", color: "#c084fc", fontWeight: 600
-                }}>
-                  {f.icon} {f.text}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Inputs */}
+          {/* Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-            <input
-              type="email" placeholder="Email address" value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="auth-input"
-              style={{
-                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "12px", padding: "0.9rem 1.1rem", color: "#fff",
-                fontSize: "0.92rem", fontFamily: "'DM Sans',sans-serif", width: "100%"
-              }}
-            />
+
+            {/* Signup extra fields */}
+            {mode === "signup" && (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div>
+                    <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>FIRST NAME *</label>
+                    <input value={firstName} onChange={e => setFirstName(e.target.value)}
+                      placeholder="John" className="auth-input" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>LAST NAME *</label>
+                    <input value={lastName} onChange={e => setLastName(e.target.value)}
+                      placeholder="Doe" className="auth-input" style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>PHONE NUMBER *</label>
+                  <input value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="+91 98765 43210" className="auth-input" style={inputStyle} />
+                </div>
+              </>
+            )}
+
+            <div>
+              {mode === "signup" && <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>EMAIL ADDRESS *</label>}
+              <input type="email" placeholder="Email address" value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="auth-input" style={inputStyle} />
+            </div>
+
             {mode !== "forgot" && (
-              <input
-                type="password" placeholder="Password (min 6 characters)" value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                className="auth-input"
-                style={{
-                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "12px", padding: "0.9rem 1.1rem", color: "#fff",
-                  fontSize: "0.92rem", fontFamily: "'DM Sans',sans-serif", width: "100%"
-                }}
-              />
+              <div>
+                {mode === "signup" && <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>PASSWORD *</label>}
+                <input type="password" placeholder="Password (min 6 characters)" value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                  className="auth-input" style={inputStyle} />
+              </div>
             )}
 
             {error && (
@@ -180,7 +201,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 fontFamily: "'Outfit',sans-serif",
                 boxShadow: loading ? "none" : "0 8px 32px rgba(139,92,246,0.4)"
               }}>
-              {loading ? "⚡ Loading..." : mode === "login" ? "🚀 Login" : mode === "signup" ? "✨ Free Account Banao" : "📧 Reset Email Bhejo"}
+              {loading ? "⚡ Loading..." : mode === "login" ? "🚀 Login" : mode === "signup" ? "✨ Create Free Account" : "📧 Send Reset Email"}
             </button>
           </div>
 
@@ -196,7 +217,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
             {mode === "login" && (
               <>
                 <button onClick={() => { setMode("signup"); setError(""); setMessage(""); }}
-                  className="switch-btn"
                   style={{
                     background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)",
                     borderRadius: "10px", color: "#c084fc", cursor: "pointer",
@@ -207,26 +227,25 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 </button>
                 <button onClick={() => { setMode("forgot"); setError(""); setMessage(""); }}
                   style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer", fontSize: "0.8rem", fontFamily: "'DM Sans',sans-serif" }}>
-                   Forgot your password?
+                  Forgot your password?
                 </button>
               </>
             )}
             {mode === "signup" && (
               <button onClick={() => { setMode("login"); setError(""); setMessage(""); }}
-                className="switch-btn"
                 style={{
                   background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)",
                   borderRadius: "10px", color: "#c084fc", cursor: "pointer",
                   fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem",
                   fontFamily: "'DM Sans',sans-serif"
                 }}>
-                Pehle se account hai? <strong>Login →</strong>
+                Already have an account? <strong>Login →</strong>
               </button>
             )}
             {mode === "forgot" && (
               <button onClick={() => { setMode("login"); setError(""); setMessage(""); }}
                 style={{ background: "none", border: "none", color: "#c084fc", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif" }}>
-                ← Wapas login pe jao
+                ← Back to Login
               </button>
             )}
           </div>
