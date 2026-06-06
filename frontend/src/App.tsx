@@ -1344,10 +1344,41 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                       💡 Try Hook Score tab to improve these
                     </span>
                   </div>
-                  <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
-                  <ResultCard title="Viral Hooks"     items={results.viralHooks}     emoji="🎣" color="#a855f7" />
-                  <ResultCard title="Title Ideas"     items={results.titles}         emoji="📝" color="#22c55e" />
-                  <ResultCard title="Captions"        items={results.captions}       emoji="💬" color="#f59e0b" />
+                  {["Google Ads", "Meta Ads", "Native Ads"].includes(platform) ? (
+                    <>
+                      <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#818cf8" />
+                      <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#a855f7" />
+                      <ResultCard title="Descriptions / CTAs" items={results.captions} emoji="💬" color="#22c55e" />
+                    </>
+                  ) : platform === "YouTube" ? (
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
+                      <ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#a855f7" />
+                      <ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" />
+                      <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" />
+                    </>
+                  ) : platform === "LinkedIn" ? (
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
+                      <ResultCard title="Story Openers" items={results.viralHooks} emoji="💼" color="#a855f7" />
+                      <ResultCard title="Thought Leadership Titles" items={results.titles} emoji="📝" color="#22c55e" />
+                      <ResultCard title="Posts" items={results.captions} emoji="💬" color="#f59e0b" />
+                    </>
+                  ) : platform === "Twitter / X" ? (
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
+                      <ResultCard title="Tweet Hooks" items={results.viralHooks} emoji="🐦" color="#a855f7" />
+                      <ResultCard title="Thread Titles" items={results.titles} emoji="📝" color="#22c55e" />
+                      <ResultCard title="Tweet Threads" items={results.captions} emoji="💬" color="#f59e0b" />
+                    </>
+                  ) : (
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
+                      <ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#a855f7" />
+                      <ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" />
+                      <ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" />
+                    </>
+                  )}
 
                   {/* Upsell to other features */}
                   <div style={{
