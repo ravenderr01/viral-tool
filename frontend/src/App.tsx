@@ -1307,7 +1307,8 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                 }}>
                   <span style={{ color: "#888", fontSize: "0.75rem" }}>Current Plan</span>
                   <span style={{ color: "#a855f7", fontWeight: 700, fontSize: "0.82rem", textTransform: "capitalize" }}>
-                    {profile?.plan || "Free"} ✨
+                    {plan} ✨
+
                   </span>
                 </div>
 
