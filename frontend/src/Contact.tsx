@@ -15,14 +15,29 @@ export default function Contact({ onBack }: { onBack: () => void }) {
     if (!name || !email || !message) return;
     setLoading(true);
 
-    // Gmail pe bhejne ke liye mailto link
-    const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[Support] ${subject || "Enquiry"} - from ${name}`)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
-    window.open(mailtoLink, "_blank");
+    try {
+      const res = await fetch("https://formspree.io/f/mgobalyw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          subject: subject || "General Enquiry",
+          message,
+          _replyto: email,
+          _subject: `[VCI Support] ${subject || "Enquiry"} — from ${name}`
+        })
+      });
 
-    setTimeout(() => {
-      setSubmitted(true);
-      setLoading(false);
-    }, 1000);
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Something went wrong. Please try WhatsApp or Email directly.");
+      }
+    } catch {
+      setError("Failed to send. Please contact us on WhatsApp.");
+    }
+    setLoading(false);
   };
 
   return (
