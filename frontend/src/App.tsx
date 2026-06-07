@@ -1657,7 +1657,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: TRENDS ── */}
           {activeTab === "trends" && (
-            <Trends niche={niche} keyword={keyword} />
+            <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
           )}
 
           {/* ── TAB: PACK ── */}
