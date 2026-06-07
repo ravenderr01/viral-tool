@@ -574,13 +574,33 @@ Make everything highly specific to "${packKeyword}". Use numbers, power words, e
     setTimeout(() => setCopiedSection(null), 2000);
   };
 
-  const sections = pack ? [
-    { key: "hooks",    label: "Viral Hooks",    emoji: "🎣", color: "#a855f7", count: pack.hooks?.length },
-    { key: "titles",   label: "Title Ideas",    emoji: "📝", color: "#818cf8", count: pack.titles?.length },
-    { key: "captions", label: "Captions",       emoji: "💬", color: "#22c55e", count: pack.captions?.length },
-    { key: "scripts",  label: "Reel Scripts",   emoji: "🎬", color: "#f59e0b", count: pack.scripts?.length },
-    { key: "hashtags", label: "Hashtags",       emoji: "#️⃣", color: "#06b6d4", count: pack.hashtags?.length },
-  ] : [];
+  const sectionLabels: Record<string, any[]> = {
+    instagram: [
+      { key: "hooks",    label: "Viral Hooks",    emoji: "🎣", color: "#a855f7" },
+      { key: "titles",   label: "Post Titles",    emoji: "📝", color: "#818cf8" },
+      { key: "captions", label: "Captions",       emoji: "💬", color: "#22c55e" },
+      { key: "scripts",  label: "Reel Scripts",   emoji: "🎬", color: "#f59e0b" },
+      { key: "hashtags", label: "Hashtags",       emoji: "#️⃣", color: "#06b6d4" },
+    ],
+    youtube: [
+      { key: "hooks",    label: "Video Hooks",       emoji: "🎬", color: "#a855f7" },
+      { key: "titles",   label: "SEO Titles",        emoji: "📝", color: "#818cf8" },
+      { key: "captions", label: "Descriptions",      emoji: "💬", color: "#22c55e" },
+      { key: "scripts",  label: "Intro Scripts",     emoji: "🎙️", color: "#f59e0b" },
+      { key: "hashtags", label: "YouTube Tags",      emoji: "#️⃣", color: "#06b6d4" },
+    ],
+    ads: [
+      { key: "hooks",    label: "Google Headlines",  emoji: "📢", color: "#a855f7" },
+      { key: "titles",   label: "Meta Headlines",    emoji: "📘", color: "#818cf8" },
+      { key: "captions", label: "Ad Descriptions",   emoji: "💬", color: "#22c55e" },
+      { key: "scripts",  label: "Meta Ad Copies",    emoji: "🎯", color: "#f59e0b" },
+      { key: "hashtags", label: "Hashtags",          emoji: "#️⃣", color: "#06b6d4" },
+    ],
+  };
+
+  const sections = pack ? sectionLabels[packType].map(s => ({
+    ...s, count: pack[s.key]?.length
+  })) : [];
 
   const [openSection, setOpenSection] = useState<string | null>(null);
 
