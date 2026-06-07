@@ -1050,6 +1050,10 @@ const [showProfile, setShowProfile] = useState(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setProfile(data);
+if (data && data[0]) {
+  setPlan(data[0].plan);
+  localStorage.setItem("viral_plan", data[0].plan);
+}
       }
     });
 
@@ -1454,16 +1458,20 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>OUTPUT LANGUAGE</label>
               <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "1rem" }}>
                 {LANGUAGES.map(lang => (
-                  <button key={lang.code} onClick={() => setSelectedLang(lang.code)}
+                  <button key={lang.code} onClick={() => {
+                      const freeLangs = ["en"];
+                      const isLocked = plan === "free" && !freeLangs.includes(lang.code);
+                      isLocked ? setShowPaywall(true) : setSelectedLang(lang.code);
+                    }}
                     style={{
                       background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "#0d0d0d",
                       border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1a1a1a"}`,
-                      color: selectedLang === lang.code ? "#a855f7" : "#444",
+                      color: selectedLang === lang.code ? "#a855f7" : (plan === "free" && !["en"].includes(lang.code)) ? "#2a2a2a" : "#444",
                       padding: "0.28rem 0.75rem", borderRadius: "20px",
                       cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
                       transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
                     }}>
-                    {lang.label}
+                    {(plan === "free" && !["en"].includes(lang.code)) ? "🔒 " : ""}{lang.label}
                   </button>
                 ))}
               </div>
