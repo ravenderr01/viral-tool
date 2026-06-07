@@ -460,6 +460,13 @@ function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platf
   const [packKeyword, setPackKeyword] = useState(keyword || "");
   const [error, setError] = useState("");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [packType, setPackType] = useState<"ads" | "youtube" | "instagram">("instagram");
+
+  const PACK_TYPES = [
+    { id: "instagram", label: "📸 Instagram & TikTok", desc: "Hooks, Reels, Captions, Hashtags" },
+    { id: "youtube",   label: "▶️ YouTube",             desc: "Titles, Scripts, Descriptions, Tags" },
+    { id: "ads",       label: "📢 Google & Meta Ads",   desc: "Headlines, Ad Copy, CTAs" },
+  ];
 
   const generate = async () => {
     if (!packKeyword.trim()) { setError("Enter a keyword first."); return; }
@@ -495,23 +502,49 @@ function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platf
         "Education": "learning, teaching focused",
       };
 
-      const platformGuidePack = platformInstructionsPack[platform] || platformInstructionsPack["Instagram"];
       const nicheGuidePack = nicheContextPack[niche] || "general content";
 
-      const prompt = `${platformGuidePack}
+      const packPrompts = {
+        instagram: `You are an Instagram & TikTok viral content expert for ${nicheGuidePack}.
+Generate exactly:
+- hooks: 10 viral opening lines (curiosity, emotion, shock value)
+- titles: 8 post/reel title ideas
+- captions: 5 full captions with emojis and CTA
+- scripts: 5 Reel/TikTok scripts (Hook line / Body 3 points / CTA)
+- hashtags: 15 relevant hashtags`,
 
-NICHE: ${nicheGuidePack}
+        youtube: `You are a YouTube content strategist for ${nicheGuidePack}.
+Generate exactly:
+- hooks: 8 video hook lines (first 30 seconds to retain viewers)
+- titles: 10 SEO-optimized video titles (include numbers/power words)
+- captions: 5 video descriptions (with keywords and timestamps structure)
+- scripts: 5 full intro scripts (Hook / Promise / Preview format)
+- hashtags: 10 YouTube tags`,
+
+        ads: `You are a Google Ads & Meta Ads expert for ${nicheGuidePack}.
+Generate exactly:
+- hooks: 10 Google Ad headlines (MAX 30 characters each, no emojis)
+- titles: 8 Meta Ad headlines (MAX 40 characters each)
+- captions: 5 ad descriptions (MAX 90 characters, include strong CTA)
+- scripts: 5 Meta ad primary texts (emotion-based, pain point + solution)
+- hashtags: [] (leave empty for ads)`
+      };
+
+      const prompt = `${packPrompts[packType]}
+
 KEYWORD: ${packKeyword}
 OUTPUT LANGUAGE: Write everything strictly in ${langLabel} only
 
-Respond ONLY in this exact JSON (no markdown):
+Respond ONLY in this exact JSON (no markdown, no extra text):
 {
-  "hooks":["hook1","hook2","hook3","hook4","hook5","hook6","hook7","hook8"],
-  "titles":["title1","title2","title3","title4","title5","title6","title7","title8"],
-  "captions":["caption1","caption2","caption3","caption4","caption5"],
-  "scripts":["script1","script2","script3","script4","script5"],
-  "hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"]
-}`;
+  "hooks":["hook1","hook2"],
+  "titles":["title1","title2"],
+  "captions":["caption1","caption2"],
+  "scripts":["script1","script2"],
+  "hashtags":["#tag1","#tag2"]
+}
+
+Make everything highly specific to "${packKeyword}". Use numbers, power words, emotion triggers.`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -561,8 +594,27 @@ Respond ONLY in this exact JSON (no markdown):
           <span style={{ fontSize: "1.3rem" }}>📦</span>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>One-Click Content Pack</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>20 hooks + 10 titles + 5 captions + 3 scripts + hashtags</p>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Choose your platform — get complete content pack</p>
           </div>
+        </div>
+
+        {/* Pack Type Selector */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
+          {PACK_TYPES.map(pt => (
+            <button key={pt.id} onClick={() => { setPackType(pt.id as any); setPack(null); }}
+              style={{
+                background: packType === pt.id ? "rgba(168,85,247,0.15)" : "#0a0a0a",
+                border: `1px solid ${packType === pt.id ? "#a855f7" : "#1a1a1a"}`,
+                borderRadius: "10px", padding: "0.65rem 1rem",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                cursor: "pointer", transition: "all 0.2s"
+              }}>
+              <span style={{ color: packType === pt.id ? "#a855f7" : "#fff", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif" }}>
+                {pt.label}
+              </span>
+              <span style={{ color: "#444", fontSize: "0.72rem" }}>{pt.desc}</span>
+            </button>
+          ))}
         </div>
 
         {/* Pack stats preview */}
