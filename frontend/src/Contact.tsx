@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const SUPPORT_EMAIL = "ravenderr01@gmail.com";
+const SUPPORT_EMAIL = "supportgetvci@gmail.com";
 const WHATSAPP_NUMBER = "919315133390";
 const SUPPORT_PHONE = "+91 9315133390";
 export default function Contact({ onBack }: { onBack: () => void }) {
