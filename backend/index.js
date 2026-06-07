@@ -15,7 +15,7 @@ app.post("/api/generate", async (req, res) => {
 
     // Detect if Google Ads request
     const isGoogleAds = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
-    const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad");
+    const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
 
     const systemPrompt = isGoogleAds ? 
       `You are a Google Ads expert. CRITICAL RULES:
@@ -26,9 +26,13 @@ app.post("/api/generate", async (req, res) => {
       5. Bad example: "Fix Now" (7 chars - TOO SHORT). Good example: "Expert Printer Repair Today" (27 chars)
       6. Always respond in valid JSON only.` 
       : isMetaAds ?
-      `You are a Meta Ads expert. Write compelling, emotional ad copy.
-      Headlines under 40 characters. Primary texts 150-300 characters.
-      Always respond in valid JSON only.`
+      `You are a world-class Meta Ads copywriter. STRICT RULES:
+      1. hooks: MUST be 80-125 characters. Start with customer pain point. Example: "Still losing clients to competitors? Here's the exact Facebook strategy that gets 10 new clients weekly."
+      2. titles: MUST be 30-40 characters. Include specific number/result. Example: "Get 10 Clients in 30 Days"
+      3. captions: MUST be 200-300 characters. Format: Pain → Agitate → Solution → CTA
+      4. NO generic words: unlock, boost, transform, skyrocket, master, pro
+      5. Every line must mention specific results with numbers
+      6. Always respond in valid JSON only.`
       : `You are a viral content expert. Generate highly specific, professional content.
       Always respond in valid JSON only.`;
 
