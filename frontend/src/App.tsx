@@ -1033,6 +1033,12 @@ const [selectedLang, setSelectedLang] = useState("en");
   const [activeTab, setActiveTab] = useState("generate");
 const [showContact, setShowContact] = useState(false);
 const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null>(null);
+const [showReview, setShowReview] = useState(false);
+const [reviewText, setReviewText] = useState("");
+const [reviewRole, setReviewRole] = useState("");
+const [reviewStars, setReviewStars] = useState(5);
+const [reviewSubmitted, setReviewSubmitted] = useState(false);
+const [reviewLoading, setReviewLoading] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
 const [profile, setProfile] = useState<any>(null);
@@ -1196,6 +1202,22 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
     setLoading(false);
   };
 
+  const handleReviewSubmit = async () => {
+    if (!reviewText.trim()) return;
+    setReviewLoading(true);
+    await supabase.from("reviews").insert({
+      user_id: user.id,
+      name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ""}`.trim() : user.email?.split("@")[0],
+      role: reviewRole || "Content Creator",
+      review: reviewText,
+      stars: reviewStars,
+      approved: false
+    });
+    setReviewSubmitted(true);
+    setReviewLoading(false);
+    setTimeout(() => { setShowReview(false); setReviewSubmitted(false); setReviewText(""); setReviewRole(""); setReviewStars(5); }, 2000);
+  };
+
   const handleSelectPlan = (p: string) => { setShowPaywall(false); setPayingPlan(p); };
   const handlePaid = (p: string) => {
     setPayingPlan(null);
@@ -1263,6 +1285,17 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
             fontFamily: "'DM Sans',sans-serif"
           }}>
             Support
+          </button>
+
+          {/* Review Button */}
+          <button onClick={() => setShowReview(true)} style={{
+            position: "absolute", top: "1rem", right: "13rem",
+            background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)",
+            color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px",
+            cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+            fontFamily: "'DM Sans',sans-serif"
+          }}>
+            ⭐ Review
           </button>
 
           {/* Profile Button */}
@@ -1734,6 +1767,56 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
           <button onClick={() => setLegalPage("refund")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Refund Policy</button>
         </p>
       </div>
+
+      {/* Review Modal */}
+      {showReview && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#0a0a0a", border: "1px solid rgba(251,191,36,0.3)", borderRadius: "20px", padding: "2rem", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease" }}>
+            {!reviewSubmitted ? (
+              <>
+                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⭐</div>
+                  <h3 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "1.2rem", fontWeight: 800, color: "#fff", margin: "0 0 0.3rem" }}>Share Your Experience</h3>
+                  <p style={{ color: "#555", fontSize: "0.82rem", margin: 0 }}>Your review helps other creators discover VCI!</p>
+                </div>
+
+                {/* Stars */}
+                <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} onClick={() => setReviewStars(s)}
+                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.8rem", color: s <= reviewStars ? "#f59e0b" : "#2a2a2a", transition: "all 0.2s" }}>
+                      ★
+                    </button>
+                  ))}
+                </div>
+
+                {/* Role */}
+                <input value={reviewRole} onChange={e => setReviewRole(e.target.value)}
+                  placeholder="Your role (e.g. Instagram Creator, YouTuber)"
+                  style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none", marginBottom: "0.75rem" }} />
+
+                {/* Review */}
+                <textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
+                  placeholder="Share your experience with VCI..."
+                  rows={4}
+                  style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none", resize: "none", marginBottom: "1rem" }} />
+
+                <button onClick={handleReviewSubmit} disabled={reviewLoading || !reviewText.trim()}
+                  style={{ width: "100%", padding: "0.85rem", borderRadius: "10px", background: !reviewText.trim() ? "rgba(251,191,36,0.2)" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: !reviewText.trim() ? "#555" : "#000", fontWeight: 800, fontSize: "0.9rem", cursor: !reviewText.trim() ? "not-allowed" : "pointer", fontFamily: "'Outfit',sans-serif", marginBottom: "0.5rem" }}>
+                  {reviewLoading ? "⚡ Submitting..." : "⭐ Submit Review"}
+                </button>
+                <button onClick={() => setShowReview(false)} style={{ width: "100%", background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem" }}>Cancel</button>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎉</div>
+                <h3 style={{ color: "#fff", fontFamily: "'Outfit',sans-serif" }}>Thank You!</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem" }}>Your review will be published after approval.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} onSelectPlan={handleSelectPlan} />}
