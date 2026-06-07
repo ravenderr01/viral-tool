@@ -639,7 +639,7 @@ Make everything highly specific to "${packKeyword}". Use numbers, power words, e
 
         {/* Pack stats preview */}
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-          {[["20","Hooks","#a855f7"],["10","Titles","#818cf8"],["5","Captions","#22c55e"],["3","Scripts","#f59e0b"],["15","Hashtags","#06b6d4"]].map(([n,l,c]) => (
+          {(packType === "ads" ? [["10","Headlines","#a855f7"],["8","Meta Titles","#818cf8"],["5","Ad Copies","#22c55e"],["5","Ad Scripts","#f59e0b"],["0","Hashtags","#06b6d4"]] : packType === "youtube" ? [["8","Video Hooks","#a855f7"],["10","SEO Titles","#818cf8"],["5","Descriptions","#22c55e"],["5","Scripts","#f59e0b"],["10","Tags","#06b6d4"]] : [["10","Viral Hooks","#a855f7"],["8","Post Titles","#818cf8"],["5","Captions","#22c55e"],["5","Reel Scripts","#f59e0b"],["15","Hashtags","#06b6d4"]]).map(([n,l,c]) => (
             <div key={l} style={{
               background: c + "10", border: `1px solid ${c}25`, borderRadius: "8px",
               padding: "0.3rem 0.6rem", display: "flex", flexDirection: "column", alignItems: "center"
