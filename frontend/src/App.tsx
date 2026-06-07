@@ -138,6 +138,8 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langLabel }: an
 
     const prompt = `You are a harsh viral content critic. Analyze this hook brutally honestly: "${hookInput}"
 
+IMPORTANT: Detect the language of the hook and respond in the SAME language. If hook is in Hindi, respond in Hindi. If English, respond in English.
+
 Scoring rules:
 - Most hooks score 3-6. Only truly exceptional hooks get 8+
 - Be STRICT. A generic hook like "best tips" = 2-3/10
