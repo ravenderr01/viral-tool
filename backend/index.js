@@ -19,11 +19,11 @@ app.post("/api/generate", async (req, res) => {
 
     const systemPrompt = isGoogleAds ? 
       `You are a Google Ads expert. CRITICAL RULES:
-      1. Google headlines MUST be 25-30 characters EXACTLY. Count every character including spaces.
-      2. Descriptions MUST be 80-90 characters EXACTLY.
-      3. Use power words: Fast, Expert, Save, Free, Now, Today, Best, Proven, Guaranteed
-      4. Every headline must be a complete compelling message, not just 2 words.
-      5. Bad example: "Fix Now" (7 chars - TOO SHORT). Good example: "Expert Printer Repair Today" (27 chars)
+      1. hooks (Google Search Headlines): MUST be 25-30 characters. Use urgency + benefit. Example: "Expert Fitness Coach Today"
+      2. titles (Display Headlines): MUST be 25-30 characters. Focus on USP. Example: "Get Fit in 30 Days - Start"
+      3. Descriptions: MUST be 80-90 characters. Include benefit + CTA. Example: "Work with certified fitness coach online. Book free consultation today and get results!"
+      4. scripts: keyword match suggestions like [exact match], "phrase match", broad match
+      5. NO advertising/marketing words in titles — focus on customer benefit only
       6. Always respond in valid JSON only.` 
       : isMetaAds ?
       `You are a world-class Meta Ads copywriter. STRICT RULES:
