@@ -489,16 +489,20 @@ STRICT RULES:
 
 QUALITY RULES: No generic words. Every line must have power words (Fast, Expert, Proven, Guaranteed, Free, Save, Now, Today, Best). Use numbers where possible.`,
 
-        "Meta Ads": `You are a senior Meta Ads specialist. Generate HIGH-CONVERTING Facebook/Instagram ad copy for keyword: ${keyword}.
+        "Meta Ads": `You are a senior Meta Ads specialist with 10+ years experience running profitable Facebook and Instagram campaigns. Generate HIGH-CONVERTING ad copy for keyword: ${keyword}.
 
 STRICT RULES:
-- hooks: 8 scroll-stopping first lines (under 125 chars). Must stop the scroll with emotion, curiosity or bold claim. Example: "Tired of your printer breaking down at the worst moment? We fix it in 60 minutes."
-- titles: 8 ad headlines (under 40 chars). Bold, benefit-focused, action-oriented.
-- captions: 5 primary texts (150-300 chars). Tell a mini story: Problem → Solution → CTA. Use emojis sparingly.
-- scripts: 5 different ad angles (Fear, Curiosity, Social Proof, Urgency, Benefit)
+- hooks: 8 scroll-stopping opening lines (80-125 chars each). Start with the customer's pain point or a bold claim. NEVER start with brand name. Example: "Still struggling with ${keyword}? Here's what actually works in 2024 — and it's not what you think."
+- titles: 8 ad headlines (30-40 chars each). Must be specific, benefit-driven. NO generic words like "Pro", "Master", "Expert". Example: "Get 10 Fitness Clients in 30 Days"
+- captions: 5 primary texts (200-300 chars each). Format: Pain point (1-2 lines) → Agitate (1 line) → Solution (2 lines) → Social proof (1 line) → CTA (1 line). Use 1-2 emojis max.
+- scripts: 5 ad angles with full copy: 1)Fear angle 2)Curiosity angle 3)Social proof angle 4)Urgency angle 5)Transformation angle
 - hashtags: []
 
-QUALITY RULES: Write like a human, not a robot. Trigger emotions. Make it relatable.`,
+QUALITY RULES:
+- Every headline must mention a specific number or result
+- Every caption must feel personal and relatable
+- Avoid buzzwords: "unlock", "boost", "transform", "skyrocket"
+- Write like you're talking to ONE specific person`,
 
         "Native Ads": `You are a native advertising expert. Generate editorial-style ad content for keyword: ${keyword}.
 
