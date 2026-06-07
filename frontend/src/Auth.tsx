@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 import { supabase } from "./supabaseClient";
 
 export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [reviews, setReviews] = useState<any[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -11,6 +13,11 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    supabase.from("reviews").select("*").eq("approved", true).order("created_at", { ascending: false }).limit(3)
+      .then(({ data }) => { if (data) setReviews(data); });
+  }, []);
 
   const handleSubmit = async () => {
     setLoading(true); setError(""); setMessage("");
@@ -136,11 +143,11 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           {/* Reviews — signup only */}
           {mode === "signup" && (
             <div style={{ marginBottom: "1rem" }}>
-              {[
+              {(reviews.length > 0 ? reviews : [
                 { name: "Rahul S.", role: "Instagram Creator", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
                 { name: "Priya M.", role: "Digital Marketer", review: "The Google Ads copy saved me hours. Highly recommend!", stars: 5 },
                 { name: "Arjun K.", role: "YouTuber", review: "30-day calendar feature is a game changer for my channel.", stars: 5 },
-              ].map((r, i) => (
+              ]).map((r, i) => (
                 <div key={i} style={{
                   background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.15)",
                   borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.5rem"
