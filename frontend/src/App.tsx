@@ -1035,9 +1035,6 @@ const [profile, setProfile] = useState<any>(null);
 const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
-    const u = localStorage.getItem("viral_usage");
-    const p = localStorage.getItem("viral_plan");
-    if (u) setUsageCount(parseInt(u));
     // Only set plan if it's a valid plan
         setDetectedLang(getBrowserLang());
 
