@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
+import Legal from "./Legal";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -1029,6 +1030,7 @@ export default function ViralContentTool() {
 const [selectedLang, setSelectedLang] = useState("en");
   const [activeTab, setActiveTab] = useState("generate");
 const [showContact, setShowContact] = useState(false);
+const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null>(null);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
 const [profile, setProfile] = useState<any>(null);
@@ -1214,6 +1216,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
   );
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
+  if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   return (
@@ -1720,7 +1723,13 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
         <p style={{ color: "#2a2a2a", fontSize: "0.72rem", margin: 0, fontFamily: "'DM Sans',sans-serif" }}>
           Designed & Developed by{" "}
           <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span>
-          {" "}© {new Date().getFullYear()} All Rights Reserved.
+          {" "}© {new Date().getFullYear()} All Rights Reserved.{" "}
+          <span style={{ margin: "0 0.5rem", color: "#1a1a1a" }}>|</span>
+          <button onClick={() => setLegalPage("privacy")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Privacy Policy</button>
+          <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
+          <button onClick={() => setLegalPage("terms")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Terms & Conditions</button>
+          <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
+          <button onClick={() => setLegalPage("refund")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Refund Policy</button>
         </p>
       </div>
 
