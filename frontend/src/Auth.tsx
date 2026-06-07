@@ -129,7 +129,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               {mode === "signup" ? "Create Account" : mode === "login" ? "Welcome Back" : "Reset Password"}
             </h1>
             <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>
-              {mode === "login" ? "Login to access your dashboard 👋" : mode === "signup" ? "Join 1000+ creators — it's free! 🚀" : "We'll send you a reset link 🔐"}
+              {mode === "login" ? "Login to access your dashboard 👋" : mode === "signup" ? "Create your free account & start generating viral content ⚡" : "We'll send you a reset link 🔐"}
             </p>
           </div>
 
