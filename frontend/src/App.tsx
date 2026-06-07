@@ -3,7 +3,8 @@ import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
-import Legal from "./Legal";
+import Legal from "./legal";
+import Plans from "./Plans";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -15,8 +16,8 @@ const SUPPORT_PHONE = "+91 9315133390";
 const PLANS = {
   free:    { label: "Free",    limit: 3,    priceINR: 0,    priceUSD: 0  },
   starter: { label: "Starter", limit: 50,   priceINR: 499,  priceUSD: 6,  badge: "🔥 Popular" },
-  pro:     { label: "Pro",     limit: 150,  priceINR: 1299, priceUSD: 15, badge: "⚡ Best Value" },
-  agency:  { label: "Agency",  limit: 9999, priceINR: 4999, priceUSD: 59, badge: "👑 Unlimited" },
+  pro:     { label: "Pro",     limit: 150,  priceINR: 1499, priceUSD: 18, badge: "⚡ Best Value" },
+  agency:  { label: "Agency",  limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
 };
 
 const NICHE_EXAMPLES = {
@@ -1127,6 +1128,7 @@ const [selectedLang, setSelectedLang] = useState("en");
 const [showContact, setShowContact] = useState(false);
 const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null>(null);
 const [showReview, setShowReview] = useState(false);
+const [showPlans, setShowPlans] = useState(false);
 const [reviewText, setReviewText] = useState("");
 const [reviewRole, setReviewRole] = useState("");
 const [reviewStars, setReviewStars] = useState(5);
@@ -1334,6 +1336,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
+  if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={() => { setShowPlans(false); setShowPaywall(true); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   return (
@@ -1370,6 +1373,16 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
           }}>
             Logout →
           </button>
+          <button onClick={() => setShowPlans(true)} style={{
+            position: "absolute", top: "1rem", right: "14rem",
+            background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+            color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
+            cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+            fontFamily: "'DM Sans',sans-serif"
+          }}>
+            💎 Plans
+          </button>
+
           <button onClick={() => setShowContact(true)} style={{
             position: "absolute", top: "1rem", right: "7rem",
             background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
@@ -1545,7 +1558,8 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                   {Object.keys(NICHE_EXAMPLES).map(n => (
                     <button key={n} className="tbtn" onClick={() => {
                         const freeNiches = ["Fitness", "Business"];
-                        const isLocked = plan === "free" && !freeNiches.includes(n);
+                        const starterNiches = Object.keys(NICHE_EXAMPLES).filter(n => n !== "Ads & Marketing");
+                        const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
                         isLocked ? setShowPaywall(true) : setNiche(n);
                       }}
                       style={{
@@ -1569,7 +1583,9 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                   {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"].map(p => (
                     <button key={p} className="tbtn" onClick={() => {
                         const freePlatforms = ["Instagram", "YouTube"];
-                        const isLocked = plan === "free" && !freePlatforms.includes(p);
+                        const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X"];
+                        const proPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"];
+                        const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
                         isLocked ? setShowPaywall(true) : setPlatform(p);
                       }}
                       style={{
@@ -1593,7 +1609,8 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                 {LANGUAGES.map(lang => (
                   <button key={lang.code} onClick={() => {
                       const freeLangs = ["en"];
-                      const isLocked = plan === "free" && !freeLangs.includes(lang.code);
+                      const paidLangs = ["en", "hi"];
+                      const isLocked = (plan === "free" && !freeLangs.includes(lang.code)) || (plan === "starter" && !paidLangs.includes(lang.code)) || (plan === "pro" && !paidLangs.includes(lang.code));
                       isLocked ? setShowPaywall(true) : setSelectedLang(lang.code);
                     }}
                     style={{
@@ -1766,7 +1783,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: HOOK SCORE ── */}
           {activeTab === "score" && (
-            plan === "free" ? (
+            (plan === "free" || plan === "starter") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
@@ -1786,7 +1803,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: CALENDAR ── */}
           {activeTab === "calendar" && (
-            plan === "free" ? (
+            (plan === "free" || plan === "starter" || plan === "pro") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
@@ -1806,7 +1823,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: TRENDS ── */}
           {activeTab === "trends" && (
-            plan === "free" ? (
+            (plan === "free" || plan === "starter") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
@@ -1822,7 +1839,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: PACK ── */}
           {activeTab === "pack" && (
-            plan === "free" ? (
+            (plan === "free" || plan === "starter" || plan === "pro") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
