@@ -4,7 +4,7 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
   const [loading, setLoading] = useState(false);
   const [trends, setTrends] = useState<any>(null);
   const [error, setError] = useState("");
-  const [activeSection, setActiveSection] = useState<"google" | "youtube">("google");
+  const [activeSection, setActiveSection] = useState<"google" | "youtube" | "instagram" | "tiktok">("google");
 
   const fetchTrends = async () => {
     setLoading(true); setError(""); setTrends(null);
@@ -23,12 +23,20 @@ Respond ONLY in this exact JSON (no markdown):
     {"title": "viral video title idea 2", "views": "200K+ views", "hook": "why this works"}
   ],
   "trending_hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+  "instagram_trends": [
+    {"caption": "trending reel idea", "likes": "50K+ likes", "type": "Reel"},
+    {"caption": "trending reel idea 2", "likes": "30K+ likes", "type": "Story"}
+  ],
+  "tiktok_trends": [
+    {"hook": "viral tiktok hook", "views": "1M+ views", "sound": "trending sound idea"},
+    {"hook": "viral tiktok hook 2", "views": "500K+ views", "sound": "trending sound idea 2"}
+  ],
   "content_angles": ["unique angle 1", "unique angle 2", "unique angle 3"],
   "peak_time": "Best time to post: 6-9 PM IST"
 }
 
-Generate exactly: 10 google trends, 8 youtube trends, 10 hashtags, 5 content angles.
-Make everything highly specific to "${keyword || niche}". Use realistic traffic numbers.`;
+Generate exactly: 8 google trends, 6 youtube trends, 6 instagram trends, 6 tiktok trends, 10 hashtags, 5 content angles.
+Make everything highly specific to "${keyword || niche}". Use realistic numbers.`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -109,11 +117,14 @@ Make everything highly specific to "${keyword || niche}". Use realistic traffic 
           {/* Tab switcher */}
           <div style={{
             display: "flex", gap: "0.4rem", marginBottom: "1rem",
-            background: "#0a0a0a", borderRadius: "10px", padding: "0.3rem"
+            background: "#0a0a0a", borderRadius: "10px", padding: "0.3rem",
+            flexWrap: "wrap"
           }}>
             {[
-              { id: "google", label: "🔍 Google Trends" },
-              { id: "youtube", label: "▶️ YouTube Trends" }
+              { id: "google", label: "🔍 Google" },
+              { id: "youtube", label: "▶️ YouTube" },
+              { id: "instagram", label: "📸 Instagram" },
+              { id: "tiktok", label: "🎵 TikTok" }
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveSection(tab.id as any)}
                 style={{
@@ -192,6 +203,52 @@ Make everything highly specific to "${keyword || niche}". Use realistic traffic 
                       color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
                       cursor: "pointer", fontSize: "0.65rem", flexShrink: 0
                     }}>Copy</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Instagram Trends */}
+          {activeSection === "instagram" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
+              {trends.instagram_trends?.map((item: any, i: number) => (
+                <div key={i} style={{
+                  background: "#0d0d0d", border: "1px solid #1a1a1a",
+                  borderRadius: "10px", padding: "0.75rem 1rem",
+                  display: "flex", alignItems: "flex-start", gap: "0.75rem"
+                }}>
+                  <span style={{ color: i < 3 ? "#e1306c" : "#333", fontWeight: 800, fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, color: "#fff", fontSize: "0.83rem", fontWeight: 600, lineHeight: 1.4 }}>{item.caption}</p>
+                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
+                      <span style={{ color: "#e1306c", fontSize: "0.68rem" }}>❤️ {item.likes}</span>
+                      <span style={{ background: "#e1306c18", border: "1px solid #e1306c30", color: "#e1306c", fontSize: "0.6rem", fontWeight: 700, padding: "0.05rem 0.4rem", borderRadius: "4px" }}>{item.type}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => navigator.clipboard.writeText(item.caption)}
+                    style={{ background: "#ffffff08", border: "1px solid #2a2a2a", color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", flexShrink: 0 }}>Copy</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TikTok Trends */}
+          {activeSection === "tiktok" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
+              {trends.tiktok_trends?.map((item: any, i: number) => (
+                <div key={i} style={{
+                  background: "#0d0d0d", border: "1px solid #1a1a1a",
+                  borderRadius: "10px", padding: "0.75rem 1rem",
+                  display: "flex", alignItems: "flex-start", gap: "0.75rem"
+                }}>
+                  <span style={{ color: i < 3 ? "#69c9d0" : "#333", fontWeight: 800, fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, color: "#fff", fontSize: "0.83rem", fontWeight: 600, lineHeight: 1.4 }}>{item.hook}</p>
+                    <p style={{ margin: "0.2rem 0 0", color: "#22c55e", fontSize: "0.68rem" }}>👁️ {item.views}</p>
+                    <p style={{ margin: "0.2rem 0 0", color: "#555", fontSize: "0.7rem" }}>🎵 {item.sound}</p>
+                  </div>
+                  <button onClick={() => navigator.clipboard.writeText(item.hook)}
+                    style={{ background: "#ffffff08", border: "1px solid #2a2a2a", color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", flexShrink: 0 }}>Copy</button>
                 </div>
               ))}
             </div>
