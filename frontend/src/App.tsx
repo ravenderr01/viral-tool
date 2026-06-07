@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
-import Legal from "./legal";
+import Legal from "./Legal";
 import Plans from "./plans";
 
 // ============================================
