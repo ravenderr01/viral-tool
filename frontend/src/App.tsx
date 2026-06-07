@@ -478,15 +478,104 @@ function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platf
     setLoading(true); setError(""); setPack(null);
 
     const platformInstructionsPack: Record<string, string> = {
-        "Google Ads": `You are a Google Ads expert. Generate: hooks as 8 headlines (MAX 30 chars each), titles as 8 ad titles (MAX 30 chars), captions as 5 descriptions (MAX 90 chars, CTA included), scripts as 5 keyword lists, hashtags as empty [].`,
-        "Meta Ads": `You are a Meta Ads expert. Generate: hooks as 8 scroll-stopping lines (under 125 chars), titles as 8 headlines (MAX 40 chars), captions as 5 primary texts (emotion-based, CTA), scripts as 5 ad angle variations, hashtags as empty [].`,
-        "Native Ads": `You are a Native Ads copywriter. Generate: hooks as 8 curiosity headlines, titles as 8 article-style titles, captions as 5 advertorial descriptions, scripts as 5 story-based copies, hashtags as empty [].`,
-        "Instagram": `You are an Instagram viral expert. Generate: hooks as 8 viral opening lines, titles as 8 post ideas, captions as 5 engaging captions with emojis, scripts as 5 Reel scripts (Hook/Body/CTA), hashtags as 15 relevant hashtags.`,
-        "YouTube": `You are a YouTube expert. Generate: hooks as 8 video hooks, titles as 8 SEO titles, captions as 5 descriptions, scripts as 5 intro scripts, hashtags as 10 YouTube tags.`,
-        "TikTok": `You are a TikTok expert. Generate: hooks as 8 pattern interrupt hooks, titles as 8 trending titles, captions as 5 short captions, scripts as 5 TikTok scripts, hashtags as 10 hashtags.`,
-        "LinkedIn": `You are a LinkedIn strategist. Generate: hooks as 8 professional openers, titles as 8 thought leadership titles, captions as 5 value posts, scripts as 5 carousel outlines, hashtags as 5 professional hashtags.`,
-        "Twitter / X": `You are a Twitter expert. Generate: hooks as 8 tweet hooks (under 280 chars), titles as 8 thread titles, captions as 5 tweet threads, scripts as 5 viral tweet formats, hashtags as 3 hashtags.`,
-        "Learning & Skills": `You are an e-learning expert. Generate: hooks as 8 learning hooks, titles as 8 course titles, captions as 5 educational captions, scripts as 5 lesson outlines, hashtags as 10 education hashtags.`,
+        "Google Ads": `You are a senior Google Ads copywriter with 10+ years experience. Generate HIGH-CONVERTING ad copy for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 Google Search headlines. Each MUST be 25-30 characters (count carefully!). Use urgency, numbers, benefits. Example format: "Fix Printer Fast - Call Now", "Expert Repair in 60 Min"
+- titles: 8 display ad headlines, each 25-30 characters. Focus on USP and offers.
+- captions: 5 Google descriptions, each 80-90 characters. Include strong CTA, benefit, and urgency. Example: "Professional printer repair at your doorstep. Same-day service available. Call now!"
+- scripts: 5 keyword match type suggestions (exact, phrase, broad match)
+- hashtags: []
+
+QUALITY RULES: No generic words. Every line must have power words (Fast, Expert, Proven, Guaranteed, Free, Save, Now, Today, Best). Use numbers where possible.`,
+
+        "Meta Ads": `You are a senior Meta Ads specialist. Generate HIGH-CONVERTING Facebook/Instagram ad copy for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 scroll-stopping first lines (under 125 chars). Must stop the scroll with emotion, curiosity or bold claim. Example: "Tired of your printer breaking down at the worst moment? We fix it in 60 minutes."
+- titles: 8 ad headlines (under 40 chars). Bold, benefit-focused, action-oriented.
+- captions: 5 primary texts (150-300 chars). Tell a mini story: Problem → Solution → CTA. Use emojis sparingly.
+- scripts: 5 different ad angles (Fear, Curiosity, Social Proof, Urgency, Benefit)
+- hashtags: []
+
+QUALITY RULES: Write like a human, not a robot. Trigger emotions. Make it relatable.`,
+
+        "Native Ads": `You are a native advertising expert. Generate editorial-style ad content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 curiosity-based headlines that sound like news/articles (not salesy). Example: "The Surprising Reason Your Printer Keeps Breaking (And How to Fix It)"
+- titles: 8 article-style titles that blend with editorial content
+- captions: 5 advertorial-style descriptions (100-150 chars). Sound informational, not promotional.
+- scripts: 5 story-based ad copy angles (personal story, expert advice, case study, how-to, myth-busting)
+- hashtags: []
+
+QUALITY RULES: Sound like journalism, not advertising. Build curiosity first.`,
+
+        "Instagram": `You are a top Instagram content strategist. Generate VIRAL content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 reel opening lines that stop scrolling in 1 second. Use shock, curiosity, controversy or bold claims.
+- titles: 8 reel/post title ideas with strong emotional pull
+- captions: 5 full captions (150-200 chars) with emojis, line breaks, and strong CTA. Use storytelling.
+- scripts: 5 complete Reel scripts: Hook (1 line) → Problem (2 lines) → Solution (3 lines) → CTA (1 line)
+- hashtags: 15 mix of niche, medium and broad hashtags
+
+QUALITY RULES: Be bold, be real, be relatable. Use conversational tone.`,
+
+        "YouTube": `You are a top YouTube growth strategist. Generate HIGH-CTR content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 video opening lines (first 30 seconds) that promise value and create curiosity. Use "What if", "The truth about", "Nobody tells you"
+- titles: 8 SEO-optimized titles with power words, numbers, and brackets. Example: "How to Fix Any Printer in 10 Minutes (Step-by-Step)"
+- captions: 5 video descriptions (200-250 chars) with keywords naturally embedded and timestamps hint
+- scripts: 5 complete intro scripts: Hook → Credibility → Promise → Preview (each 4-5 sentences)
+- hashtags: 10 YouTube-specific tags mixing broad and niche terms
+
+QUALITY RULES: Titles must have high CTR potential. Hooks must create FOMO.`,
+
+        "TikTok": `You are a viral TikTok content expert. Generate TRENDING content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 first-3-second hooks that immediately grab attention. Use pattern interrupts, controversial statements, or surprising facts.
+- titles: 8 trending-style captions that work with TikTok algorithm
+- captions: 5 short punchy captions (50-80 chars) with 2-3 emojis and CTA
+- scripts: 5 TikTok video scripts: Hook (1 line) → Relate (1 line) → Reveal (2 lines) → CTA (1 line)
+- hashtags: 10 trending TikTok hashtags (mix of viral and niche)
+
+QUALITY RULES: Fast, punchy, trendy. No corporate language. Sound like a real person.`,
+
+        "LinkedIn": `You are a LinkedIn thought leadership expert. Generate PROFESSIONAL content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 professional story openers that start with a bold statement or personal insight. Example: "I fixed 500+ printers last year. Here's what nobody tells you."
+- titles: 8 thought leadership article titles that position you as an expert
+- captions: 5 LinkedIn posts (150-200 chars) with value-first approach, minimal emojis, strong insight
+- scripts: 5 carousel post outlines (5-7 slides each with slide title and key point)
+- hashtags: 5-8 professional LinkedIn hashtags
+
+QUALITY RULES: Authority tone. Data and insights. Professional but human.`,
+
+        "Twitter / X": `You are a viral Twitter/X content expert. Generate HIGH-ENGAGEMENT content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 tweet hooks (under 200 chars). Use controversial takes, surprising facts, or bold opinions that spark debate.
+- titles: 8 thread title ideas that make people click "read more"
+- captions: 5 tweet threads (3-5 tweets each, separated by "//"). Build tension and deliver value.
+- scripts: 5 viral tweet formats (Hot take, Unpopular opinion, Story thread, List thread, Question tweet)
+- hashtags: 3-5 trending hashtags only
+
+QUALITY RULES: Be polarizing but not offensive. Short sentences. Big ideas.`,
+
+        "Learning & Skills": `You are an e-learning content expert. Generate ENGAGING educational content for keyword: ${keyword}.
+
+STRICT RULES:
+- hooks: 8 curiosity-driven learning hooks that promise transformation. Example: "Learn to fix any printer in under 10 minutes — even if you've never tried before."
+- titles: 8 course/tutorial titles with clear outcome and time promise
+- captions: 5 educational post captions (100-150 chars) that teach one thing and leave them wanting more
+- scripts: 5 lesson outlines: Title → Learning Objective → 3 Key Points → Quiz Question → CTA
+- hashtags: 10 education and skill hashtags
+
+QUALITY RULES: Focus on transformation. Use before/after framing. Make learning feel achievable.`,
       };
 
       const nicheContextPack: Record<string, string> = {
