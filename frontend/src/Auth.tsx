@@ -133,6 +133,31 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
             </p>
           </div>
 
+          {/* Reviews — signup only */}
+          {mode === "signup" && (
+            <div style={{ marginBottom: "1rem" }}>
+              {[
+                { name: "Rahul S.", role: "Instagram Creator", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
+                { name: "Priya M.", role: "Digital Marketer", review: "The Google Ads copy saved me hours. Highly recommend!", stars: 5 },
+                { name: "Arjun K.", role: "YouTuber", review: "30-day calendar feature is a game changer for my channel.", stars: 5 },
+              ].map((r, i) => (
+                <div key={i} style={{
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.15)",
+                  borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.5rem"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                    <div>
+                      <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{r.name}</span>
+                      <span style={{ color: "#555", fontSize: "0.7rem", marginLeft: "0.4rem" }}>· {r.role}</span>
+                    </div>
+                    <span style={{ color: "#f59e0b", fontSize: "0.75rem" }}>{"★".repeat(r.stars)}</span>
+                  </div>
+                  <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5, fontStyle: "italic" }}>"{r.review}"</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
 
