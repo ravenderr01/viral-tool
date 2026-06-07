@@ -1049,7 +1049,16 @@ const [showProfile, setShowProfile] = useState(false);
       setAuthLoading(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
-        setProfile(data);
+        setProfile(data?.[0] ?? null);
+const ADMIN_EMAIL = "ravenderr01@gmail.com";
+if (session?.user?.email === ADMIN_EMAIL) {
+  setPlan("agency");
+  localStorage.setItem("viral_plan", "agency");
+} else if (data?.[0]?.plan) {
+  setPlan(data[0].plan);
+  localStorage.setItem("viral_plan", data[0].plan);
+}
+
 if (data && data[0]) {
   setPlan(data[0].plan);
   localStorage.setItem("viral_plan", data[0].plan);
