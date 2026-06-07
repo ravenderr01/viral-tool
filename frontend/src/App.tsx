@@ -4,7 +4,7 @@ import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
 import Legal from "./legal";
-import Plans from "./Plans";
+import Plans from "./plans";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
