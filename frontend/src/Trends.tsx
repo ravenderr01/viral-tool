@@ -51,15 +51,13 @@ export default function Trends({ niche, keyword }: { niche: string; keyword: str
         </div>
 
         {/* Current keyword info */}
-        {keyword && (
-          <div style={{
-            background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
-            borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem",
-            fontSize: "0.78rem", color: "#a855f7"
-          }}>
-            🔍 Fetching trends for: <strong>{keyword}</strong> in <strong>{niche}</strong>
-          </div>
-        )}
+        <div style={{
+          background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
+          borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem",
+          fontSize: "0.78rem", color: "#a855f7"
+        }}>
+          🔍 Showing trends for: <strong>{keyword || niche}</strong>
+        </div>
 
         <button onClick={fetchTrends} disabled={loading}
           style={{
