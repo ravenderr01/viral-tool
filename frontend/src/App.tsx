@@ -1396,7 +1396,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji}
                 active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["score","calendar","pack"].includes(t.id)} />
+                isPro={["score","calendar","pack","trends"].includes(t.id)} />
             ))}
           </div>
         </div>
