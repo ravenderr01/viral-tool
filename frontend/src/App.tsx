@@ -1406,16 +1406,20 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>NICHE</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => (
-                    <button key={n} className="tbtn" onClick={() => setNiche(n)}
+                    <button key={n} className="tbtn" onClick={() => {
+                        const freeNiches = ["Fitness", "Business"];
+                        const isLocked = plan === "free" && !freeNiches.includes(n);
+                        isLocked ? setShowPaywall(true) : setNiche(n);
+                      }}
                       style={{
                         background: niche === n ? "#a855f712" : "#0d0d0d",
                         border: `1px solid ${niche === n ? "#a855f7" : "#1a1a1a"}`,
-                        color: niche === n ? "#a855f7" : "#444",
+                        color: niche === n ? "#a855f7" : (plan === "free" && !["Fitness","Business"].includes(n)) ? "#2a2a2a" : "#444",
                         padding: "0.28rem 0.75rem", borderRadius: "20px",
                         cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
                         transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
                       }}>
-                      {n}
+                      {(plan === "free" && !["Fitness","Business"].includes(n)) ? "🔒 " : ""}{n}
                     </button>
                   ))}
                 </div>
@@ -1426,16 +1430,20 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"].map(p => (
-                    <button key={p} className="tbtn" onClick={() => setPlatform(p)}
+                    <button key={p} className="tbtn" onClick={() => {
+                        const freePlatforms = ["Instagram", "YouTube"];
+                        const isLocked = plan === "free" && !freePlatforms.includes(p);
+                        isLocked ? setShowPaywall(true) : setPlatform(p);
+                      }}
                       style={{
                         background: platform === p ? "#a855f712" : "#0d0d0d",
                         border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`,
-                        color: platform === p ? "#a855f7" : "#444",
+                        color: platform === p ? "#a855f7" : (plan === "free" && !["Instagram","YouTube"].includes(p)) ? "#2a2a2a" : "#444",
                         padding: "0.28rem 0.75rem", borderRadius: "20px",
                         cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
                         transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
                       }}>
-                      {p}
+                      {(plan === "free" && !["Instagram","YouTube"].includes(p)) ? "🔒 " : ""}{p}
                     </button>
                   ))}
                 </div>
@@ -1657,7 +1665,18 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
           {/* ── TAB: TRENDS ── */}
           {activeTab === "trends" && (
+            plan === "free" ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>AI Trend Intelligence is available on paid plans only.</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
+                  🚀 Upgrade Now
+                </button>
+              </div>
+            ) : (
             <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
+            )
           )}
 
           {/* ── TAB: PACK ── */}
