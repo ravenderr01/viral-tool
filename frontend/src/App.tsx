@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import Contact from "./Contact";
+import Trends from "./Trends";
 
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -1198,6 +1199,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
     { id: "score",    label: "Hook Score", emoji: "📊" },
     { id: "calendar", label: "Calendar",  emoji: "📅" },
     { id: "pack",     label: "Pack",      emoji: "📦" },
+    { id: "trends",   label: "Trends",    emoji: "📈" },
   ];
 
   if (authLoading) return (
@@ -1651,6 +1653,11 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
               keyword={keyword} niche={niche} langLabel={langLabel}
             />
             )
+          )}
+
+          {/* ── TAB: TRENDS ── */}
+          {activeTab === "trends" && (
+            <Trends niche={niche} keyword={keyword} />
           )}
 
           {/* ── TAB: PACK ── */}
