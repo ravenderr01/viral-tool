@@ -39,4 +39,45 @@ app.post("/api/generate", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+// Google Trends endpoint
+app.get("/api/trends/google", async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    const response = await fetch(
+      `https://google-trends8.p.rapidapi.com/trendings?region_code=IN&hl=en-US`,
+      {
+        headers: {
+          "x-rapidapi-host": "google-trends8.p.rapidapi.com",
+          "x-rapidapi-key": process.env.RAPIDAPI_KEY
+        }
+      }
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Trends fetch failed" });
+  }
+});
+
+// YouTube Trends endpoint
+app.get("/api/trends/youtube", async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    const response = await fetch(
+      `https://youtube-v3-alternative.p.rapidapi.com/trending?regionCode=IN&type=video&hl=en&gl=IN`,
+      {
+        headers: {
+          "x-rapidapi-host": "youtube-v3-alternative.p.rapidapi.com",
+          "x-rapidapi-key": process.env.RAPIDAPI_KEY
+        }
+      }
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "YouTube trends fetch failed" });
+  }
+});
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
