@@ -1054,10 +1054,7 @@ if (session?.user?.email === ADMIN_EMAIL) {
   localStorage.setItem("viral_plan", data[0].plan);
 }
 
-if (data && data[0]) {
-  setPlan(data[0].plan);
-  localStorage.setItem("viral_plan", data[0].plan);
-}
+
       }
     });
 
