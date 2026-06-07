@@ -1039,9 +1039,7 @@ const [showProfile, setShowProfile] = useState(false);
     const p = localStorage.getItem("viral_plan");
     if (u) setUsageCount(parseInt(u));
     // Only set plan if it's a valid plan
-    if (p && ["free","starter","pro","agency"].includes(p)) setPlan(p);
-    else { localStorage.removeItem("viral_plan"); setPlan("free"); }
-    setDetectedLang(getBrowserLang());
+        setDetectedLang(getBrowserLang());
 
     // Auth check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
