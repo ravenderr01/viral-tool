@@ -279,8 +279,8 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
             </p>
           </div>
 
-          {/* Reviews — signup only */}
-          {mode === "signup" && (
+          {/* Reviews — both login and signup */}
+          {(mode === "signup" || mode === "login") && (
             <div style={{ marginBottom: "1rem" }}>
               <ReviewCarousel reviews={reviews} />
             </div>
