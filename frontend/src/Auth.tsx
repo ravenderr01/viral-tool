@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import Legal from "./Legal";
 const DEFAULT_REVIEWS = [
   { name: "Rahul S.", role: "Instagram Creator", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
   { name: "Priya M.", role: "Digital Marketer", review: "The Google Ads copy saved me hours. Highly recommend VCI!", stars: 5 },
@@ -53,6 +54,7 @@ function ReviewCarousel({ reviews }: { reviews: any[] }) {
 export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [reviews, setReviews] = useState<any[]>([]);
+  const [showLegal, setShowLegal] = useState<"privacy" | "terms" | "refund" | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -137,18 +139,21 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         fontFamily: "'DM Sans', sans-serif"
       }}>
 
-        {/* Top bar */}
+        {showLegal && <Legal page={showLegal} onBack={() => setShowLegal(null)} />}
+      {!showLegal && <>
+
+      {/* Top bar */}
         {mode === "login" && (
           <div style={{
             position: "fixed", top: 0, right: 0, zIndex: 100,
             display: "flex", gap: "0.5rem", padding: "0.75rem 1.5rem"
           }}>
-            <a href="https://viral-tool-frontend.onrender.com" style={{
+            <button onClick={() => setMode("signup")} style={{
               background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
               color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
               cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
-              fontFamily: "'DM Sans',sans-serif", textDecoration: "none"
-            }}>💎 Plans</a>
+              fontFamily: "'DM Sans',sans-serif"
+            }}>💎 Get Started Free</button>
             <a href="mailto:supportgetvci@gmail.com" style={{
               background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
               color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px",
@@ -259,7 +264,8 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         <div className="auth-right" style={{
           flex: mode === "login" ? "0 0 480px" : 1,
           display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "2rem", position: "relative", zIndex: 1, minHeight: "100vh",
+          padding: mode === "login" ? "5rem 2rem 2rem" : "2rem",
+          position: "relative", zIndex: 1, minHeight: "100vh",
           background: mode === "login" ? "rgba(0,0,0,0.3)" : "transparent",
           borderLeft: mode === "login" ? "1px solid rgba(139,92,246,0.1)" : "none",
           backdropFilter: mode === "login" ? "blur(10px)" : "none"
@@ -448,15 +454,16 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span>
               {" "}© {new Date().getFullYear()} All Rights Reserved.{" "}
               <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>|</span>
-              <a href="#" onClick={() => window.location.href = "/?page=privacy"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Privacy Policy</a>
+              <button onClick={() => setShowLegal("privacy")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Privacy Policy</button>
               <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
-              <a href="#" onClick={() => window.location.href = "/?page=terms"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Terms & Conditions</a>
+              <button onClick={() => setShowLegal("terms")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Terms & Conditions</button>
               <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
-              <a href="#" onClick={() => window.location.href = "/?page=refund"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Refund Policy</a>
+              <button onClick={() => setShowLegal("refund")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", fontFamily: "'DM Sans',sans-serif" }}>Refund Policy</button>
             </p>
           </div>
         )}
       </div>
+      </>}
     </>
   );
 }
