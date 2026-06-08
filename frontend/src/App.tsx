@@ -1218,48 +1218,58 @@ if (session?.user?.email === ADMIN_EMAIL) {
     setLoading(true); setError(""); setResults(null);
 
     const platformInstructions: Record<string, string> = {
-      "Google Ads": `You are a Google Ads expert. Generate hooks as 5 headlines (MAX 30 chars each, no emojis), titles as 5 ad titles (MAX 30 chars), captions as 3 descriptions (MAX 90 chars, include CTA). Conversion focused only.`,
-      "Meta Ads": `You are a Meta Ads expert. Generate hooks as 5 scroll-stopping first lines (under 125 chars), titles as 5 ad headlines (MAX 40 chars), captions as 3 primary texts (emotion-based, with CTA).`,
-      "Native Ads": `You are a Native Ads copywriter. Generate hooks as 5 curiosity-based headlines (not salesy), titles as 5 article-style titles, captions as 3 advertorial style descriptions.`,
-      "Instagram": `You are an Instagram viral expert. Generate hooks as 5 viral opening lines (curiosity, emotion, shock), titles as 5 post ideas, captions as 3 engaging captions with emojis.`,
-      "YouTube": `You are a YouTube SEO expert. Generate hooks as 5 video hook lines (first 30 seconds), titles as 5 SEO optimized video titles, captions as 3 video descriptions with keywords.`,
-      "TikTok": `You are a TikTok viral expert. Generate hooks as 5 pattern interrupt hooks (first 3 seconds), titles as 5 trending style titles, captions as 3 short punchy captions.`,
-      "LinkedIn": `You are a LinkedIn content strategist. Generate hooks as 5 professional story openers, titles as 5 thought leadership titles, captions as 3 value-driven posts.`,
-      "Twitter / X": `You are a Twitter/X viral expert. Generate hooks as 5 tweet hooks (under 280 chars), titles as 5 thread title ideas, captions as 3 tweet threads.`,
-      "Learning & Skills": `You are an e-learning content expert. Generate hooks as 5 curiosity-driven learning hooks, titles as 5 course/tutorial titles, captions as 3 educational post captions.`,
+      "Google Ads": `You are a senior Google Ads copywriter. Generate hooks as 5 headlines (EXACTLY 25-30 chars, no emojis, use urgency+benefit), titles as 5 display headlines (25-30 chars, USP focused), captions as 3 descriptions (80-90 chars, benefit+CTA). NO generic words.`,
+      "Meta Ads": `You are a Meta Ads specialist. Generate hooks as 5 scroll-stopping openers (80-125 chars, start with pain point), titles as 5 ad headlines (30-40 chars, specific numbers), captions as 3 primary texts (200-300 chars, Pain→Solution→CTA).`,
+      "Native Ads": `You are a Native Ads expert. Generate hooks as 5 curiosity headlines (sound like news, not ads), titles as 5 article-style titles, captions as 3 advertorial descriptions (100-150 chars, informational tone).`,
+      "Instagram": `You are an Instagram growth expert. Generate hooks as 5 reel opening lines (stop-scroll in 1 sec, use shock/curiosity/controversy), titles as 5 post/reel title ideas, captions as 3 full captions (150-200 chars, emojis, storytelling, CTA).`,
+      "YouTube": `You are a YouTube growth strategist. Generate hooks as 5 video opening lines (create FOMO, use "What if"/"Truth about"), titles as 5 SEO titles (power words+numbers+brackets), captions as 3 descriptions (200 chars, keywords embedded).`,
+      "TikTok": `You are a TikTok viral expert. Generate hooks as 5 first-3-second hooks (pattern interrupt, bold claim, surprising fact), titles as 5 trending captions, captions as 3 short punchy texts (50-80 chars, 2-3 emojis).`,
+      "LinkedIn": `You are a LinkedIn thought leader. Generate hooks as 5 professional story openers (start with bold insight or personal story), titles as 5 thought leadership titles (data-driven), captions as 3 value posts (150-200 chars, no fluff, authority tone).`,
+      "Twitter / X": `You are a Twitter/X viral expert. Generate hooks as 5 tweet hooks (under 200 chars, controversial/surprising/bold opinion), titles as 5 thread titles (make people click), captions as 3 tweet threads (3-5 tweets each separated by //).`,
+      "Facebook": `You are a Facebook content expert. Generate hooks as 5 emotional post openers (relatable, community-focused, 80-120 chars), titles as 5 post headlines (shareable, 40-60 chars), captions as 3 Facebook posts (200-300 chars, story+value+CTA).`,
+      "Pinterest": `You are a Pinterest SEO expert. Generate hooks as 5 pin titles (keyword-rich, 60-80 chars, benefit-focused), titles as 5 board name ideas (specific, searchable), captions as 3 pin descriptions (200-300 chars, natural keywords, CTA).`,
+      "WhatsApp": `You are a WhatsApp marketing expert. Generate hooks as 5 broadcast openers (personal, direct, 50-80 chars), titles as 5 message subject lines (30-50 chars), captions as 3 broadcast messages (150-200 chars, conversational, clear CTA).`,
+      "Snapchat": `You are a Snapchat content expert. Generate hooks as 5 snap story hooks (fun, FOMO, 30-50 chars), titles as 5 story ideas (trendy, youth-focused), captions as 3 snap captions (20-40 chars, emoji-heavy, casual).`,
     };
 
     const nicheContext: Record<string, string> = {
-      "Fitness": "fitness, gym, health, workout, nutrition focused",
-      "Business": "entrepreneurship, startup, business growth focused",
-      "Tech": "technology, software, gadgets, innovation focused",
-      "Lifestyle": "daily life, habits, personal growth focused",
-      "Food": "recipes, cooking, food review focused",
-      "AI & Automation": "artificial intelligence, productivity tools focused",
-      "Personal Finance": "money management, investing, savings focused",
-      "Mental Health": "emotional wellness, mindfulness focused",
-      "Sustainable Living": "eco-friendly, zero waste, green living focused",
-      "Storytelling": "narrative, personal story, entertainment focused",
-      "Gaming": "video games, esports, gaming culture focused",
-      "Beauty & Skincare": "beauty, makeup, skincare routine focused",
-      "Ads & Marketing": "digital marketing, advertising, campaigns focused",
-      "Education": "learning, skills, knowledge, teaching focused",
+      "Fitness": "fitness, gym, workout, weight loss, nutrition, health transformation",
+      "Business": "entrepreneurship, startup, business growth, freelancing, side hustle",
+      "Tech": "technology, software, AI tools, gadgets, coding, innovation",
+      "Lifestyle": "daily routines, habits, personal growth, productivity, minimalism",
+      "Food": "recipes, cooking, food review, street food, viral food trends",
+      "AI & Automation": "artificial intelligence, automation tools, ChatGPT, productivity hacks",
+      "Personal Finance": "investing, saving money, passive income, budgeting, financial freedom",
+      "Mental Health": "emotional wellness, mindfulness, anxiety relief, self-care, therapy",
+      "Beauty & Skincare": "skincare routine, makeup, beauty tips, glow up, anti-aging",
+      "Ads & Marketing": "digital marketing, advertising, campaigns, copywriting, ROAS",
+      "Education": "online learning, skill development, courses, e-learning, teaching",
+      "Travel": "travel tips, destinations, budget travel, solo travel, travel vlogs",
+      "Fashion & Style": "outfit ideas, fashion trends, style tips, clothing, accessories",
+      "Real Estate": "property investment, home buying, rental income, real estate tips",
+      "Motivational": "success mindset, motivation, self-improvement, hustle, discipline",
+      "Health & Wellness": "healthy lifestyle, nutrition, yoga, wellness tips, sleep optimization",
+      "Gaming": "video games, esports, gaming setup, mobile gaming, game reviews",
     };
 
     const platformGuide = platformInstructions[platform] || platformInstructions["Instagram"];
-    const nicheGuide = nicheContext[niche] || "general content";
+    const nicheGuide = nicheContext[niche] || "general content creation";
 
     const prompt = `${platformGuide}
 
-NICHE: This content is ${nicheGuide}
-KEYWORD: ${keyword}
-OUTPUT LANGUAGE: Write everything strictly in ${langLabel} only
-TARGET: ${niche} audience on ${platform}
+NICHE CONTEXT: Content is specifically for ${nicheGuide}
+KEYWORD/TOPIC: "${keyword}"
+OUTPUT LANGUAGE: Write EVERYTHING strictly in ${langLabel} only
+TARGET AUDIENCE: ${niche} enthusiasts on ${platform}
+
+QUALITY RULES:
+- Every output must be highly specific to "${keyword}" — NO generic content
+- Use numbers, power words, emotion triggers
+- Make it feel human, not robotic
+- Adapt tone for ${platform} audience
 
 Respond ONLY in this exact JSON (no markdown, no extra text):
-{"trendingTopics":["topic1","topic2","topic3","topic4","topic5"],"viralHooks":["hook1","hook2","hook3","hook4","hook5"],"titles":["title1","title2","title3","title4","title5"],"captions":["caption1","caption2","caption3"]}
-
-Make everything highly specific to ${keyword}. Use numbers, power words, emotion triggers.`;
+{"trendingTopics":["topic1","topic2","topic3","topic4","topic5"],"viralHooks":["hook1","hook2","hook3","hook4","hook5"],"titles":["title1","title2","title3","title4","title5"],"captions":["caption1","caption2","caption3"]}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
