@@ -1,6 +1,55 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+const DEFAULT_REVIEWS = [
+  { name: "Rahul S.", role: "Instagram Creator", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
+  { name: "Priya M.", role: "Digital Marketer", review: "The Google Ads copy saved me hours. Highly recommend VCI!", stars: 5 },
+  { name: "Arjun K.", role: "YouTuber", review: "30-day calendar changed my posting strategy completely.", stars: 5 },
+  { name: "Sneha R.", role: "Fitness Coach", review: "Hook Score feature helped me understand why content wasn't performing!", stars: 5 },
+  { name: "Vikram T.", role: "Agency Owner", review: "We use VCI for all clients. Saves 5+ hours per week!", stars: 5 },
+  { name: "Ananya D.", role: "Lifestyle Blogger", review: "Instagram captions doubled my engagement in 2 weeks.", stars: 5 },
+  { name: "Mohit G.", role: "E-commerce Owner", review: "Meta Ads copy feature is incredible. ROAS improved by 3x!", stars: 5 },
+  { name: "Deepak N.", role: "LinkedIn Consultant", review: "Best tool for LinkedIn content. Professional hooks every time.", stars: 5 },
+];
 
+function ReviewCarousel({ reviews }: { reviews: any[] }) {
+  const allReviews = [...DEFAULT_REVIEWS, ...reviews];
+  const [pos, setPos] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPos(p => (p + 1) % allReviews.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [allReviews.length]);
+
+  return (
+    <div style={{ marginBottom: "1rem", overflow: "hidden" }}>
+      <style>{`
+        @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        .marquee-track { display:flex; animation: marquee 30s linear infinite; width: max-content; }
+        .marquee-track:hover { animation-play-state: paused; }
+      `}</style>
+      <div style={{ overflow: "hidden", position: "relative" }}>
+        <div className="marquee-track">
+          {[...allReviews, ...allReviews].map((r, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.15)",
+              borderRadius: "10px", padding: "0.75rem 1rem",
+              minWidth: "220px", maxWidth: "220px", marginRight: "0.75rem", flexShrink: 0
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.78rem" }}>{r.name}</span>
+                <span style={{ color: "#f59e0b", fontSize: "0.65rem" }}>{"★".repeat(r.stars)}</span>
+              </div>
+              <p style={{ margin: "0 0 0.2rem", color: "#555", fontSize: "0.65rem" }}>{r.role}</p>
+              <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.72rem", lineHeight: 1.4, fontStyle: "italic", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>"{r.review}"</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [reviews, setReviews] = useState<any[]>([]);
@@ -142,52 +191,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           {/* Reviews — signup only */}
           {mode === "signup" && (
             <div style={{ marginBottom: "1rem" }}>
-              {[
-                { name: "Rahul S.", role: "Instagram Creator 🇮🇳", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
-                { name: "Priya M.", role: "Digital Marketer", review: "The Google Ads copy saved me hours of work. Highly recommend VCI!", stars: 5 },
-                { name: "Arjun K.", role: "YouTuber 🎬", review: "30-day content calendar changed my posting strategy completely.", stars: 5 },
-                { name: "Sneha R.", role: "Fitness Coach", review: "Hook Score feature helped me understand why my content wasn't performing. Game changer!", stars: 5 },
-                { name: "Vikram T.", role: "Agency Owner", review: "We use VCI for all our clients. Saves 5+ hours per week on content creation.", stars: 5 },
-                { name: "Ananya D.", role: "Lifestyle Blogger", review: "Instagram captions are so good! My engagement doubled in 2 weeks.", stars: 5 },
-                { name: "Mohit G.", role: "E-commerce Owner", review: "Meta Ads copy feature is incredible. Our ROAS improved by 3x!", stars: 5 },
-                { name: "Deepak N.", role: "LinkedIn Consultant", review: "Best tool for LinkedIn content. Professional hooks every single time.", stars: 5 },
-              ].map((r, i) => (
-                <div key={i} style={{
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.15)",
-                  borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.5rem"
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                    <div>
-                      <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{r.name}</span>
-                      <span style={{ color: "#555", fontSize: "0.7rem", marginLeft: "0.4rem" }}>· {r.role}</span>
-                    </div>
-                    <span style={{ color: "#f59e0b", fontSize: "0.75rem" }}>{"★".repeat(r.stars)}</span>
-                  </div>
-                  <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5, fontStyle: "italic" }}>"{r.review}"</p>
-                </div>
-              ))}
-
-              {/* Real user reviews */}
-              {reviews.length > 0 && (
-                <div style={{ marginTop: "0.75rem" }}>
-                  <p style={{ color: "#444", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", margin: "0 0 0.5rem" }}>⭐ FROM OUR USERS</p>
-                  {reviews.map((r, i) => (
-                <div key={i} style={{
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(139,92,246,0.15)",
-                  borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.5rem"
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                    <div>
-                      <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{r.name}</span>
-                      <span style={{ color: "#555", fontSize: "0.7rem", marginLeft: "0.4rem" }}>· {r.role}</span>
-                    </div>
-                    <span style={{ color: "#f59e0b", fontSize: "0.75rem" }}>{"★".repeat(r.stars)}</span>
-                  </div>
-                  <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5, fontStyle: "italic" }}>"{r.review}"</p>
-                </div>
-              ))}
-                </div>
-              )}
+              <ReviewCarousel reviews={reviews} />
             </div>
           )}
 
