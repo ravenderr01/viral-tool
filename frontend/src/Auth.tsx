@@ -120,15 +120,19 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         @keyframes orb1 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(60px,-40px)} 66%{transform:translate(-30px,50px)} }
         @keyframes orb2 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(-50px,60px)} 66%{transform:translate(70px,-30px)} }
         @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes glow { 0%,100%{opacity:0.5} 50%{opacity:1} }
         .auth-input:focus { border-color: #a855f7 !important; box-shadow: 0 0 0 3px rgba(168,85,247,0.15) !important; }
         .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(168,85,247,0.5) !important; }
         .submit-btn { transition: all 0.3s; }
+        .feature-item:hover { border-color: rgba(168,85,247,0.4) !important; transform: translateX(4px); }
+        .feature-item { transition: all 0.2s; }
         input::placeholder { color: #6b7280; }
+        @media (max-width: 768px) { .auth-left { display: none !important; } .auth-right { max-width: 100% !important; } }
       `}</style>
 
       <div style={{
-        minHeight: "100vh", display: "flex", alignItems: "center",
-        justifyContent: "center", padding: "2rem",
+        minHeight: "100vh", display: "flex",
         background: "#06040f", position: "relative", overflow: "hidden",
         fontFamily: "'DM Sans', sans-serif"
       }}>
@@ -153,9 +157,96 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           }} />
         </div>
 
+        {/* ── LEFT SIDE — Features ── */}
+        {mode === "login" && (
+          <div className="auth-left" style={{
+            flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
+            padding: "4rem 3rem", position: "relative", zIndex: 1, minHeight: "100vh"
+          }}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "3rem" }}>
+              <div style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", borderRadius: "12px", padding: "0.5rem 0.8rem", fontSize: "1.2rem" }}>⚡</div>
+              <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "1.1rem", background: "linear-gradient(135deg,#fff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>VCI</span>
+            </div>
+
+            {/* Headline */}
+            <div style={{ marginBottom: "2.5rem" }}>
+              <h1 style={{
+                fontFamily: "'Outfit',sans-serif", fontSize: "clamp(2rem,3.5vw,3rem)",
+                fontWeight: 900, margin: "0 0 1rem", lineHeight: 1.1,
+                background: "linear-gradient(135deg,#fff 0%,#c084fc 60%,#a855f7 100%)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+              }}>
+                Get Viral Content<br />in Under 60 Seconds
+              </h1>
+              <p style={{ color: "#6b7280", fontSize: "1rem", lineHeight: 1.7, maxWidth: 420 }}>
+                Stop spending hours on content creation. VCI generates platform-specific viral hooks, captions, ad copy and more — instantly.
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: "flex", gap: "1.5rem", marginBottom: "2.5rem", flexWrap: "wrap" }}>
+              {[
+                { number: "10x", label: "Faster Content" },
+                { number: "15+", label: "Languages" },
+                { number: "9+", label: "Platforms" },
+              ].map((s, i) => (
+                <div key={i} style={{ textAlign: "center" }}>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: "2rem", fontWeight: 900, background: "linear-gradient(135deg,#a855f7,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{s.number}</div>
+                  <div style={{ color: "#555", fontSize: "0.78rem", fontWeight: 600 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Features list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "2.5rem" }}>
+              {[
+                { icon: "🎣", title: "Viral Hook Generator", desc: "Platform-specific hooks that stop the scroll" },
+                { icon: "📊", title: "Hook Score Analyzer", desc: "AI scores your hooks & suggests improvements" },
+                { icon: "📢", title: "Google & Meta Ads Copy", desc: "Professional ad headlines & descriptions" },
+                { icon: "📅", title: "30-Day Content Calendar", desc: "Auto-plan your entire month of content" },
+                { icon: "📈", title: "AI Trend Intelligence", desc: "Google + YouTube + Instagram trends" },
+                { icon: "🌐", title: "15+ Languages", desc: "Generate content in any language" },
+              ].map((f, i) => (
+                <div key={i} className="feature-item" style={{
+                  display: "flex", alignItems: "flex-start", gap: "0.75rem",
+                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(139,92,246,0.1)",
+                  borderRadius: "10px", padding: "0.65rem 0.9rem"
+                }}>
+                  <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{f.icon}</span>
+                  <div>
+                    <p style={{ margin: 0, color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{f.title}</p>
+                    <p style={{ margin: 0, color: "#555", fontSize: "0.72rem", marginTop: "0.1rem" }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Trust */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ display: "flex" }}>
+                {["R","P","A","S","V"].map((l, i) => (
+                  <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: `linear-gradient(135deg,#7c3aed,#a855f7)`, border: "2px solid #06040f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: 800, color: "#fff", marginLeft: i > 0 ? "-8px" : 0 }}>{l}</div>
+                ))}
+              </div>
+              <span style={{ color: "#555", fontSize: "0.78rem" }}>Trusted by <strong style={{ color: "#a855f7" }}>1000+</strong> creators & marketers</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── RIGHT SIDE — Form ── */}
+        <div className="auth-right" style={{
+          flex: mode === "login" ? "0 0 480px" : 1,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "2rem", position: "relative", zIndex: 1, minHeight: "100vh",
+          background: mode === "login" ? "rgba(0,0,0,0.3)" : "transparent",
+          borderLeft: mode === "login" ? "1px solid rgba(139,92,246,0.1)" : "none",
+          backdropFilter: mode === "login" ? "blur(10px)" : "none"
+        }}>
+
         {/* Card */}
         <div style={{
-          width: "100%", maxWidth: mode === "signup" ? 520 : 460,
+          width: "100%", maxWidth: mode === "signup" ? 520 : 420,
           position: "relative", zIndex: 1,
           background: "rgba(255,255,255,0.03)",
           backdropFilter: "blur(24px)",
@@ -321,6 +412,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </>
