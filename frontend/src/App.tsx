@@ -5,7 +5,7 @@ import Contact from "./Contact";
 import Trends from "./Trends";
 import Legal from "./Legal";
 import Plans from "./plans";
-
+import { Helmet } from 'react-helmet-async';
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
 const YOUR_UPI_ID    = "9315133390@ptyes";
@@ -1341,6 +1341,13 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
 
   return (
     <>
+    <Helmet>
+  <title>VCI — Viral Content Intelligence</title>
+  <meta name="description" content="AI-powered tool to discover and predict viral content for creators and brands." />
+  <meta property="og:title" content="VCI — Viral Content Intelligence" />
+  <meta property="og:description" content="Predict viral content with AI. Built for creators and brands." />
+  <meta property="og:url" content="https://www.getvci.com" />
+</Helmet>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
