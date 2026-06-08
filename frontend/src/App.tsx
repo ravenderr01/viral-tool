@@ -1374,7 +1374,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
             Logout →
           </button>
           <button onClick={() => setShowPlans(true)} style={{
-            position: "absolute", top: "1rem", right: "14rem",
+            position: "absolute", top: "1rem", right: "20rem",
             background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
             color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
             cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
