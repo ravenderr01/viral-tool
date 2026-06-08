@@ -1590,7 +1590,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                  {["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"].map(p => (
+                  {["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Google Ads", "Meta Ads", "Native Ads"].map(p => (
                     <button key={p} className="tbtn" onClick={() => {
                         const freePlatforms = ["Instagram", "YouTube"];
                         const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X"];
