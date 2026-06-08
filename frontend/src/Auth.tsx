@@ -139,10 +139,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         fontFamily: "'DM Sans', sans-serif"
       }}>
 
-        {showLegal && <Legal page={showLegal} onBack={() => setShowLegal(null)} />}
-      {!showLegal && <>
-
-      {/* Top bar */}
+        {/* Top bar */}
         {mode === "login" && (
           <div style={{
             position: "fixed", top: 0, right: 0, zIndex: 100,
@@ -463,7 +460,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           </div>
         )}
       </div>
-      </>}
     </>
   );
 }
