@@ -186,6 +186,8 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                   <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5, fontStyle: "italic" }}>"{r.review}"</p>
                 </div>
               ))}
+                </div>
+              )}
             </div>
           )}
 
