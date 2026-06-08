@@ -75,7 +75,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: { onBack: () =
       badge: "👑 Premium",
       color: "#f59e0b",
       borderColor: "#f59e0b",
-      generations: "1000/month",
+      generations: "500/month",
       features: [
         { text: "All Niches including Ads & Marketing", included: true },
         { text: "All Platforms including Google/Meta Ads", included: true },
