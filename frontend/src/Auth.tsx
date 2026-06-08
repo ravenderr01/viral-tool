@@ -177,7 +177,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 background: "linear-gradient(135deg,#fff 0%,#c084fc 60%,#a855f7 100%)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
               }}>
-                Get Viral Content<br />in Under 60 Seconds
+                Get Viral Content<br />10x Faster
               </h1>
               <p style={{ color: "#6b7280", fontSize: "1rem", lineHeight: 1.7, maxWidth: 420 }}>
                 Stop spending hours on content creation. VCI generates platform-specific viral hooks, captions, ad copy and more — instantly.
