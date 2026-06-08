@@ -132,10 +132,31 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
       `}</style>
 
       <div style={{
-        minHeight: "100vh", display: "flex",
+        minHeight: "100vh", display: "flex", flexDirection: "column",
         background: "#06040f", position: "relative", overflow: "hidden",
         fontFamily: "'DM Sans', sans-serif"
       }}>
+
+        {/* Top bar */}
+        {mode === "login" && (
+          <div style={{
+            position: "fixed", top: 0, right: 0, zIndex: 100,
+            display: "flex", gap: "0.5rem", padding: "0.75rem 1.5rem"
+          }}>
+            <a href="https://viral-tool-frontend.onrender.com" style={{
+              background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+              color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
+              cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+              fontFamily: "'DM Sans',sans-serif", textDecoration: "none"
+            }}>💎 Plans</a>
+            <a href="mailto:supportgetvci@gmail.com" style={{
+              background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
+              color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px",
+              cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+              fontFamily: "'DM Sans',sans-serif", textDecoration: "none"
+            }}>💬 Support</a>
+          </div>
+        )}
         {/* Background orbs */}
         <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
           <div style={{
@@ -229,7 +250,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                   <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: `linear-gradient(135deg,#7c3aed,#a855f7)`, border: "2px solid #06040f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: 800, color: "#fff", marginLeft: i > 0 ? "-8px" : 0 }}>{l}</div>
                 ))}
               </div>
-              <span style={{ color: "#555", fontSize: "0.78rem" }}>Trusted by <strong style={{ color: "#a855f7" }}>1000+</strong> creators & marketers</span>
+              <span style={{ color: "#555", fontSize: "0.78rem" }}>Trusted by <strong style={{ color: "#a855f7" }}>500+</strong> creators & marketers</span>
             </div>
           </div>
         )}
@@ -414,6 +435,27 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
         </div>
+
+        {/* Footer on login page */}
+        {mode === "login" && (
+          <div style={{
+            textAlign: "center", padding: "1rem",
+            borderTop: "1px solid rgba(139,92,246,0.1)",
+            position: "relative", zIndex: 1
+          }}>
+            <p style={{ color: "#2a2a2a", fontSize: "0.72rem", margin: 0, fontFamily: "'DM Sans',sans-serif" }}>
+              Designed & Developed by{" "}
+              <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span>
+              {" "}© {new Date().getFullYear()} All Rights Reserved.{" "}
+              <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>|</span>
+              <a href="#" onClick={() => window.location.href = "/?page=privacy"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Privacy Policy</a>
+              <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
+              <a href="#" onClick={() => window.location.href = "/?page=terms"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Terms & Conditions</a>
+              <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
+              <a href="#" onClick={() => window.location.href = "/?page=refund"} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem", textDecoration: "none" }}>Refund Policy</a>
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
