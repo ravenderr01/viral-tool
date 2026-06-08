@@ -21,20 +21,23 @@ const PLANS = {
 };
 
 const NICHE_EXAMPLES = {
-  Fitness:      ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
-  Business:     ["passive income", "side hustle", "startup tips", "freelancing"],
-  Tech:         ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
-  Lifestyle:    ["morning routine", "productivity hacks", "minimalism", "self care"],
-  Food:         ["meal prep", "healthy recipes", "street food", "viral recipes"],
+  Fitness:           ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
+  Business:          ["passive income", "side hustle", "startup tips", "freelancing"],
+  Tech:              ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
+  Lifestyle:         ["morning routine", "productivity hacks", "minimalism", "self care"],
+  Food:              ["meal prep", "healthy recipes", "street food", "viral recipes"],
   "AI & Automation": ["AI tools", "automation hacks", "ChatGPT tips", "AI side hustle"],
   "Personal Finance": ["invest money", "save money fast", "passive income", "budget tips"],
-  "Sustainable Living": ["eco friendly", "zero waste", "sustainable fashion", "green living"],
-  "Mental Health": ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
-  Storytelling:  ["viral stories", "content writing", "narrative hooks", "storytelling tips"],
-  Gaming:        ["gaming tips", "game review", "gaming setup", "esports", "mobile gaming"],
+  "Mental Health":   ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
   "Beauty & Skincare": ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
   "Ads & Marketing": ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
-  "Education": ["online course", "study tips", "e-learning", "skill development"],
+  Education:         ["online course", "study tips", "e-learning", "skill development"],
+  Travel:            ["travel tips", "budget travel", "solo travel", "travel vlog"],
+  "Fashion & Style": ["outfit ideas", "fashion tips", "style guide", "trendy outfits"],
+  "Real Estate":     ["property investment", "home buying tips", "real estate India", "rental income"],
+  Motivational:      ["success mindset", "morning motivation", "self improvement", "hustle tips"],
+  "Health & Wellness": ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
+  Gaming:            ["gaming tips", "game review", "gaming setup", "mobile gaming"],
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -1565,7 +1568,7 @@ Make everything highly specific to ${keyword}. Use numbers, power words, emotion
                   {Object.keys(NICHE_EXAMPLES).map(n => (
                     <button key={n} className="tbtn" onClick={() => {
                         const freeNiches = ["Fitness", "Business"];
-                        const starterNiches = Object.keys(NICHE_EXAMPLES).filter(n => n !== "Ads & Marketing");
+                        const starterNiches = Object.keys(NICHE_EXAMPLES).filter(n => n !== "Ads & Marketing" && n !== "Real Estate");
                         const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
                         isLocked ? setShowPaywall(true) : setNiche(n);
                       }}
