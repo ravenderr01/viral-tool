@@ -1,65 +1,93 @@
 import { useState } from "react";
 
+const COUNTRIES = [
+  { code: "IN", label: "🇮🇳 India" },
+  { code: "US", label: "🇺🇸 USA" },
+  { code: "GB", label: "🇬🇧 UK" },
+  { code: "AU", label: "🇦🇺 Australia" },
+  { code: "CA", label: "🇨🇦 Canada" },
+  { code: "SG", label: "🇸🇬 Singapore" },
+  { code: "AE", label: "🇦🇪 UAE" },
+  { code: "PK", label: "🇵🇰 Pakistan" },
+  { code: "BD", label: "🇧🇩 Bangladesh" },
+];
+
+const BACKEND = "https://viral-tool-1.onrender.com";
+
 export default function Trends({ niche, keyword, langLabel }: { niche: string; keyword: string; langLabel: string }) {
   const [loading, setLoading] = useState(false);
-  const [trends, setTrends] = useState<any>(null);
+  const [googleTrends, setGoogleTrends] = useState<any[]>([]);
+  const [youtubeTrends, setYoutubeTrends] = useState<any[]>([]);
+  const [youtubeSearch, setYoutubeSearch] = useState<any[]>([]);
   const [error, setError] = useState("");
-  const [activeSection, setActiveSection] = useState<"google" | "youtube" | "instagram" | "tiktok">("google");
+  const [activeSection, setActiveSection] = useState<"google" | "youtube">("google");
+  const [country, setCountry] = useState("IN");
+  const [fetched, setFetched] = useState(false);
 
   const fetchTrends = async () => {
-    setLoading(true); setError(""); setTrends(null);
-
-    const prompt = `You are a digital marketing expert. Generate trending content ideas for keyword: "${keyword || niche}", niche: ${niche}.
-
-Generate in ${langLabel} language.
-Respond ONLY in this exact JSON (no markdown):
-{
-  "google_trends": [
-    {"query": "trending search term", "traffic": "50K+ searches", "trend": "rising"},
-    {"query": "trending search term 2", "traffic": "30K+ searches", "trend": "stable"}
-  ],
-  "youtube_trends": [
-    {"title": "viral video title idea", "views": "500K+ views", "hook": "why this works"},
-    {"title": "viral video title idea 2", "views": "200K+ views", "hook": "why this works"}
-  ],
-  "trending_hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
-  "instagram_trends": [
-    {"caption": "trending reel idea", "likes": "50K+ likes", "type": "Reel"},
-    {"caption": "trending reel idea 2", "likes": "30K+ likes", "type": "Story"}
-  ],
-  "tiktok_trends": [
-    {"hook": "viral tiktok hook", "views": "1M+ views", "sound": "trending sound idea"},
-    {"hook": "viral tiktok hook 2", "views": "500K+ views", "sound": "trending sound idea 2"}
-  ],
-  "content_angles": ["unique angle 1", "unique angle 2", "unique angle 3"],
-  "peak_time": "Best time to post: 6-9 PM IST"
-}
-
-Generate exactly: 8 google trends, 6 youtube trends, 6 instagram trends, 6 tiktok trends, 10 hashtags, 5 content angles.
-Make everything highly specific to "${keyword || niche}". Use realistic numbers.`;
+    setLoading(true);
+    setError("");
+    setGoogleTrends([]);
+    setYoutubeTrends([]);
+    setYoutubeSearch([]);
 
     try {
-      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 2000,
-          messages: [{ role: "user", content: prompt }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      setTrends(JSON.parse(clean));
-    } catch {
-      setError("Failed to fetch trends. Try again.");
+      // Fetch all in parallel
+      const [googleRes, googleTrendingRes, youtubeRes, youtubeSearchRes] = await Promise.allSettled([
+        fetch(`${BACKEND}/api/trends/google?q=${encodeURIComponent(keyword || niche)}&country=${country}`),
+        fetch(`${BACKEND}/api/trends/google-trending?country=${country}`),
+        fetch(`${BACKEND}/api/trends/youtube?country=${country}`),
+        fetch(`${BACKEND}/api/trends/youtube-search?q=${encodeURIComponent(keyword || niche)}&country=${country}`)
+      ]);
+
+      // Google Trends
+      if (googleRes.status === "fulfilled" && googleRes.value.ok) {
+        const data = await googleRes.value.json();
+        const interest = data.interest_over_time?.timeline_data || [];
+        setGoogleTrends(interest.slice(-10).reverse());
+      }
+
+      // Google Trending Now
+      if (googleTrendingRes.status === "fulfilled" && googleTrendingRes.value.ok) {
+        const data = await googleTrendingRes.value.json();
+        const trending = data.trending_searches || data.realtime_trending_searches || [];
+        if (trending.length > 0 && googleTrends.length === 0) {
+          setGoogleTrends(trending.slice(0, 10));
+        }
+      }
+
+      // YouTube Trending
+      if (youtubeRes.status === "fulfilled" && youtubeRes.value.ok) {
+        const data = await youtubeRes.value.json();
+        const videos = data.items || [];
+        setYoutubeTrends(videos.slice(0, 10));
+      }
+
+      // YouTube Search
+      if (youtubeSearchRes.status === "fulfilled" && youtubeSearchRes.value.ok) {
+        const data = await youtubeSearchRes.value.json();
+        const items = data.items || [];
+        setYoutubeSearch(items.slice(0, 8));
+      }
+
+      setFetched(true);
+    } catch (err) {
+      setError("Failed to fetch trends. Please try again.");
     }
+
     setLoading(false);
+  };
+
+  const formatViews = (count: string) => {
+    const n = parseInt(count);
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
+    return count;
   };
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
+      {/* Header Card */}
       <div style={{
         background: "#0d0d0d", border: "1px solid #1e1e1e",
         borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem"
@@ -67,17 +95,38 @@ Make everything highly specific to "${keyword || niche}". Use realistic numbers.
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📈</span>
           <div>
-            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>AI Trend Intelligence</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Google + YouTube trending ideas powered by AI</p>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>Real Trend Intelligence</h3>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Live Google Trends + YouTube Trending — country wise</p>
           </div>
         </div>
 
+        {/* Country Selector */}
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT COUNTRY</label>
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+            {COUNTRIES.map(c => (
+              <button key={c.code} onClick={() => setCountry(c.code)}
+                style={{
+                  background: country === c.code ? "rgba(168,85,247,0.15)" : "#0a0a0a",
+                  border: `1px solid ${country === c.code ? "#a855f7" : "#1a1a1a"}`,
+                  color: country === c.code ? "#a855f7" : "#444",
+                  padding: "0.28rem 0.65rem", borderRadius: "20px",
+                  cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
+                  transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+                }}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Keyword info */}
         <div style={{
           background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
           borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem",
           fontSize: "0.78rem", color: "#a855f7"
         }}>
-          🔍 Analyzing trends for: <strong>{keyword || niche}</strong>
+          🔍 Fetching real trends for: <strong>{keyword || niche}</strong> in <strong>{COUNTRIES.find(c => c.code === country)?.label}</strong>
         </div>
 
         <button onClick={fetchTrends} disabled={loading}
@@ -87,9 +136,9 @@ Make everything highly specific to "${keyword || niche}". Use realistic numbers.
             border: "none", color: loading ? "#333" : "#fff",
             fontWeight: 800, fontSize: "0.88rem",
             cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "'Syne',sans-serif"
+            fontFamily: "'Syne',sans-serif", transition: "all 0.3s"
           }}>
-          {loading ? "⚡ Analyzing Trends..." : "📈 Generate AI Trend Report"}
+          {loading ? "⚡ Fetching Live Trends..." : "📈 Fetch Real Trends"}
         </button>
       </div>
 
@@ -101,37 +150,24 @@ Make everything highly specific to "${keyword || niche}". Use realistic numbers.
         }}>{error}</div>
       )}
 
-      {trends && (
+      {fetched && (
         <div style={{ animation: "slideUp 0.4s ease" }}>
-
-          {/* Peak Time */}
-          <div style={{
-            background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
-            borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.75rem",
-            display: "flex", alignItems: "center", gap: "0.5rem"
-          }}>
-            <span style={{ fontSize: "1rem" }}>⏰</span>
-            <span style={{ color: "#22c55e", fontSize: "0.82rem", fontWeight: 600 }}>{trends.peak_time}</span>
-          </div>
 
           {/* Tab switcher */}
           <div style={{
             display: "flex", gap: "0.4rem", marginBottom: "1rem",
-            background: "#0a0a0a", borderRadius: "10px", padding: "0.3rem",
-            flexWrap: "wrap"
+            background: "#0a0a0a", borderRadius: "10px", padding: "0.3rem"
           }}>
             {[
-              { id: "google", label: "🔍 Google" },
-              { id: "youtube", label: "▶️ YouTube" },
-              { id: "instagram", label: "📸 Instagram" },
-              { id: "tiktok", label: "🎵 TikTok" }
+              { id: "google", label: "🔍 Google Trends" },
+              { id: "youtube", label: "▶️ YouTube Trends" },
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveSection(tab.id as any)}
                 style={{
-                  flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none",
+                  flex: 1, padding: "0.6rem", borderRadius: "8px", border: "none",
                   background: activeSection === tab.id ? "rgba(168,85,247,0.15)" : "transparent",
                   color: activeSection === tab.id ? "#a855f7" : "#444",
-                  fontWeight: 700, fontSize: "0.78rem", cursor: "pointer",
+                  fontWeight: 700, fontSize: "0.82rem", cursor: "pointer",
                   fontFamily: "'DM Sans',sans-serif",
                   borderBottom: activeSection === tab.id ? "2px solid #a855f7" : "2px solid transparent"
                 }}>
@@ -142,161 +178,218 @@ Make everything highly specific to "${keyword || niche}". Use realistic numbers.
 
           {/* Google Trends */}
           {activeSection === "google" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
-              {trends.google_trends?.map((item: any, i: number) => (
-                <div key={i} style={{
-                  background: "#0d0d0d", border: "1px solid #1a1a1a",
-                  borderRadius: "10px", padding: "0.75rem 1rem",
-                  display: "flex", alignItems: "center", gap: "0.75rem"
-                }}>
-                  <span style={{
-                    color: i < 3 ? "#f59e0b" : "#333", fontWeight: 800,
-                    fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif"
-                  }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>{item.query}</p>
-                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem", alignItems: "center" }}>
-                      <span style={{ color: "#22c55e", fontSize: "0.68rem" }}>🔥 {item.traffic}</span>
-                      <span style={{
-                        background: item.trend === "rising" ? "#22c55e18" : "#f59e0b18",
-                        border: `1px solid ${item.trend === "rising" ? "#22c55e40" : "#f59e0b40"}`,
-                        color: item.trend === "rising" ? "#22c55e" : "#f59e0b",
-                        fontSize: "0.6rem", fontWeight: 700, padding: "0.05rem 0.4rem",
-                        borderRadius: "4px"
-                      }}>
-                        {item.trend === "rising" ? "📈 Rising" : "📊 Stable"}
-                      </span>
-                    </div>
-                  </div>
-                  <button onClick={() => navigator.clipboard.writeText(item.query)}
-                    style={{
-                      background: "#ffffff08", border: "1px solid #2a2a2a",
-                      color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
-                      cursor: "pointer", fontSize: "0.65rem"
-                    }}>Copy</button>
+            <div>
+              {googleTrends.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
+                  {googleTrends.map((item: any, i: number) => {
+                    // Handle different response formats
+                    const query = item.query || item.title?.query || item.title || `Trend ${i + 1}`;
+                    const traffic = item.formattedValue || item.traffic || item.title?.exploreLink || "";
+                    const isRising = item.hasTopNewsArticles || i < 3;
+
+                    return (
+                      <div key={i} style={{
+                        background: "#0d0d0d", border: "1px solid #1a1a1a",
+                        borderRadius: "10px", padding: "0.75rem 1rem",
+                        display: "flex", alignItems: "center", gap: "0.75rem",
+                        transition: "border-color 0.2s"
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = "#a855f740"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
+                      >
+                        <span style={{
+                          color: i < 3 ? "#f59e0b" : "#333", fontWeight: 800,
+                          fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif"
+                        }}>#{i + 1}</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>{query}</p>
+                          {traffic && (
+                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem", alignItems: "center" }}>
+                              <span style={{ color: "#22c55e", fontSize: "0.68rem" }}>🔥 {traffic}</span>
+                              <span style={{
+                                background: isRising ? "#22c55e18" : "#f59e0b18",
+                                border: `1px solid ${isRising ? "#22c55e40" : "#f59e0b40"}`,
+                                color: isRising ? "#22c55e" : "#f59e0b",
+                                fontSize: "0.6rem", fontWeight: 700, padding: "0.05rem 0.4rem",
+                                borderRadius: "4px"
+                              }}>
+                                {isRising ? "📈 Rising" : "📊 Stable"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: "0.4rem" }}>
+                          <a href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(query)}&geo=${country}`}
+                            target="_blank" rel="noreferrer"
+                            style={{
+                              background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+                              color: "#a855f7", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                              fontSize: "0.65rem", textDecoration: "none", fontWeight: 700
+                            }}>View</a>
+                          <button onClick={() => navigator.clipboard.writeText(query)}
+                            style={{
+                              background: "#ffffff08", border: "1px solid #2a2a2a",
+                              color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                              cursor: "pointer", fontSize: "0.65rem"
+                            }}>Copy</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              ) : (
+                <div style={{
+                  background: "#0d0d0d", border: "1px solid #1a1a1a",
+                  borderRadius: "12px", padding: "2rem", textAlign: "center"
+                }}>
+                  <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>
+                    No Google Trends data available. Try a different keyword or country.
+                  </p>
+                  <a href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(keyword || niche)}&geo=${country}`}
+                    target="_blank" rel="noreferrer"
+                    style={{
+                      display: "inline-block", marginTop: "0.75rem",
+                      background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+                      color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
+                      fontSize: "0.8rem", textDecoration: "none", fontWeight: 700
+                    }}>
+                    Open Google Trends →
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {/* YouTube Trends */}
           {activeSection === "youtube" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
-              {trends.youtube_trends?.map((item: any, i: number) => (
-                <div key={i} style={{
-                  background: "#0d0d0d", border: "1px solid #1a1a1a",
-                  borderRadius: "10px", padding: "0.75rem 1rem",
-                  display: "flex", alignItems: "flex-start", gap: "0.75rem"
-                }}>
-                  <span style={{
-                    color: i < 3 ? "#ef4444" : "#333", fontWeight: 800,
-                    fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif"
-                  }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, color: "#fff", fontSize: "0.83rem", fontWeight: 600, lineHeight: 1.4 }}>{item.title}</p>
-                    <p style={{ margin: "0.2rem 0 0", color: "#22c55e", fontSize: "0.68rem" }}>👁️ {item.views}</p>
-                    <p style={{ margin: "0.2rem 0 0", color: "#555", fontSize: "0.7rem", lineHeight: 1.4 }}>💡 {item.hook}</p>
+            <div>
+              {/* Trending Videos */}
+              {youtubeTrends.length > 0 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <p style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.5rem" }}>
+                    🔥 TRENDING NOW IN {COUNTRIES.find(c => c.code === country)?.label.split(" ")[1]}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    {youtubeTrends.map((item: any, i: number) => {
+                      const title = item.snippet?.title || "";
+                      const channel = item.snippet?.channelTitle || "";
+                      const views = item.statistics?.viewCount ? formatViews(item.statistics.viewCount) : "";
+                      const likes = item.statistics?.likeCount ? formatViews(item.statistics.likeCount) : "";
+                      const thumb = item.snippet?.thumbnails?.medium?.url || "";
+                      const videoId = item.id;
+
+                      return (
+                        <div key={i} style={{
+                          background: "#0d0d0d", border: "1px solid #1a1a1a",
+                          borderRadius: "10px", padding: "0.75rem",
+                          display: "flex", gap: "0.75rem", alignItems: "flex-start",
+                          transition: "border-color 0.2s"
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = "#ef444440"}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
+                        >
+                          {thumb && (
+                            <img src={thumb} alt={title}
+                              style={{ width: 80, height: 55, borderRadius: "6px", objectFit: "cover", flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, color: "#fff", fontSize: "0.82rem", fontWeight: 600, lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>{title}</p>
+                            <p style={{ margin: "0.2rem 0 0", color: "#555", fontSize: "0.68rem" }}>{channel}</p>
+                            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.2rem" }}>
+                              {views && <span style={{ color: "#22c55e", fontSize: "0.65rem" }}>👁️ {views} views</span>}
+                              {likes && <span style={{ color: "#ef4444", fontSize: "0.65rem" }}>❤️ {likes}</span>}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", flexShrink: 0 }}>
+                            <a href={`https://youtube.com/watch?v=${videoId}`}
+                              target="_blank" rel="noreferrer"
+                              style={{
+                                background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                                color: "#ef4444", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                                fontSize: "0.65rem", textDecoration: "none", fontWeight: 700, textAlign: "center"
+                              }}>Watch</a>
+                            <button onClick={() => navigator.clipboard.writeText(title)}
+                              style={{
+                                background: "#ffffff08", border: "1px solid #2a2a2a",
+                                color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                                cursor: "pointer", fontSize: "0.65rem"
+                              }}>Copy</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button onClick={() => navigator.clipboard.writeText(item.title)}
-                    style={{
-                      background: "#ffffff08", border: "1px solid #2a2a2a",
-                      color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
-                      cursor: "pointer", fontSize: "0.65rem", flexShrink: 0
-                    }}>Copy</button>
                 </div>
-              ))}
+              )}
+
+              {/* YouTube Search Results */}
+              {youtubeSearch.length > 0 && (
+                <div>
+                  <p style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.5rem" }}>
+                    🔍 TOP VIDEOS FOR "{(keyword || niche).toUpperCase()}"
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    {youtubeSearch.map((item: any, i: number) => {
+                      const title = item.snippet?.title || "";
+                      const channel = item.snippet?.channelTitle || "";
+                      const thumb = item.snippet?.thumbnails?.medium?.url || "";
+                      const videoId = item.id?.videoId;
+                      const publishedAt = item.snippet?.publishedAt ? new Date(item.snippet.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "";
+
+                      return (
+                        <div key={i} style={{
+                          background: "#0d0d0d", border: "1px solid #1a1a1a",
+                          borderRadius: "10px", padding: "0.75rem",
+                          display: "flex", gap: "0.75rem", alignItems: "flex-start",
+                          transition: "border-color 0.2s"
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = "#a855f740"}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
+                        >
+                          {thumb && (
+                            <img src={thumb} alt={title}
+                              style={{ width: 80, height: 55, borderRadius: "6px", objectFit: "cover", flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, color: "#fff", fontSize: "0.82rem", fontWeight: 600, lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>{title}</p>
+                            <p style={{ margin: "0.2rem 0 0", color: "#555", fontSize: "0.68rem" }}>{channel} {publishedAt && `· ${publishedAt}`}</p>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", flexShrink: 0 }}>
+                            {videoId && (
+                              <a href={`https://youtube.com/watch?v=${videoId}`}
+                                target="_blank" rel="noreferrer"
+                                style={{
+                                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                                  color: "#ef4444", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                                  fontSize: "0.65rem", textDecoration: "none", fontWeight: 700, textAlign: "center"
+                                }}>Watch</a>
+                            )}
+                            <button onClick={() => navigator.clipboard.writeText(title)}
+                              style={{
+                                background: "#ffffff08", border: "1px solid #2a2a2a",
+                                color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
+                                cursor: "pointer", fontSize: "0.65rem"
+                              }}>Copy</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {youtubeTrends.length === 0 && youtubeSearch.length === 0 && (
+                <div style={{
+                  background: "#0d0d0d", border: "1px solid #1a1a1a",
+                  borderRadius: "12px", padding: "2rem", textAlign: "center"
+                }}>
+                  <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>
+                    No YouTube data available. Check your API quota or try again.
+                  </p>
+                </div>
+              )}
             </div>
           )}
-
-          {/* Instagram Trends */}
-          {activeSection === "instagram" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
-              {trends.instagram_trends?.map((item: any, i: number) => (
-                <div key={i} style={{
-                  background: "#0d0d0d", border: "1px solid #1a1a1a",
-                  borderRadius: "10px", padding: "0.75rem 1rem",
-                  display: "flex", alignItems: "flex-start", gap: "0.75rem"
-                }}>
-                  <span style={{ color: i < 3 ? "#e1306c" : "#333", fontWeight: 800, fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif" }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, color: "#fff", fontSize: "0.83rem", fontWeight: 600, lineHeight: 1.4 }}>{item.caption}</p>
-                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem" }}>
-                      <span style={{ color: "#e1306c", fontSize: "0.68rem" }}>❤️ {item.likes}</span>
-                      <span style={{ background: "#e1306c18", border: "1px solid #e1306c30", color: "#e1306c", fontSize: "0.6rem", fontWeight: 700, padding: "0.05rem 0.4rem", borderRadius: "4px" }}>{item.type}</span>
-                    </div>
-                  </div>
-                  <button onClick={() => navigator.clipboard.writeText(item.caption)}
-                    style={{ background: "#ffffff08", border: "1px solid #2a2a2a", color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", flexShrink: 0 }}>Copy</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* TikTok Trends */}
-          {activeSection === "tiktok" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
-              {trends.tiktok_trends?.map((item: any, i: number) => (
-                <div key={i} style={{
-                  background: "#0d0d0d", border: "1px solid #1a1a1a",
-                  borderRadius: "10px", padding: "0.75rem 1rem",
-                  display: "flex", alignItems: "flex-start", gap: "0.75rem"
-                }}>
-                  <span style={{ color: i < 3 ? "#69c9d0" : "#333", fontWeight: 800, fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif" }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, color: "#fff", fontSize: "0.83rem", fontWeight: 600, lineHeight: 1.4 }}>{item.hook}</p>
-                    <p style={{ margin: "0.2rem 0 0", color: "#22c55e", fontSize: "0.68rem" }}>👁️ {item.views}</p>
-                    <p style={{ margin: "0.2rem 0 0", color: "#555", fontSize: "0.7rem" }}>🎵 {item.sound}</p>
-                  </div>
-                  <button onClick={() => navigator.clipboard.writeText(item.hook)}
-                    style={{ background: "#ffffff08", border: "1px solid #2a2a2a", color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", flexShrink: 0 }}>Copy</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Trending Hashtags */}
-          <div style={{
-            background: "#0d0d0d", border: "1px solid #1a1a1a",
-            borderRadius: "12px", padding: "1rem", marginBottom: "0.75rem"
-          }}>
-            <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#444", fontWeight: 700, letterSpacing: "0.06em" }}>
-              #️⃣ TRENDING HASHTAGS
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              {trends.trending_hashtags?.map((tag: string, i: number) => (
-                <button key={i} onClick={() => navigator.clipboard.writeText(tag)}
-                  style={{
-                    background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)",
-                    color: "#a855f7", padding: "0.25rem 0.65rem", borderRadius: "20px",
-                    cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
-                    fontFamily: "'DM Sans',sans-serif"
-                  }}>
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Content Angles */}
-          <div style={{
-            background: "#0d0d0d", border: "1px solid #1a1a1a",
-            borderRadius: "12px", padding: "1rem"
-          }}>
-            <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#444", fontWeight: 700, letterSpacing: "0.06em" }}>
-              🎯 UNIQUE CONTENT ANGLES
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              {trends.content_angles?.map((angle: string, i: number) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: "0.5rem",
-                  padding: "0.4rem 0", borderBottom: i < (trends.content_angles.length - 1) ? "1px solid #111" : "none"
-                }}>
-                  <span style={{ color: "#a855f7", fontSize: "0.75rem", fontWeight: 800 }}>0{i + 1}</span>
-                  <p style={{ margin: 0, color: "#ccc", fontSize: "0.82rem" }}>{angle}</p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
