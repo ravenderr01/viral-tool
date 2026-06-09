@@ -209,7 +209,8 @@ const PORT = process.env.PORT || 3001;
 // Referral endpoint
 app.post("/api/referral/apply", async (req, res) => {
   const { referral_code, new_user_id } = req.body;
-console.log("Referral apply called:", referral_code, new_user_id);  
+  console.log("Referral apply called:", referral_code, new_user_id);
+
   try {
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(
@@ -217,45 +218,60 @@ console.log("Referral apply called:", referral_code, new_user_id);
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    // 
-    const { data: referrer } = await supabase
+    const { data: referrer, error: refErr } = await supabase
       .from("users")
       .select("id, credits_remaining, referral_count")
       .eq("referral_code", referral_code.toUpperCase())
       .single();
 
+    console.log("Referrer found:", referrer, refErr);
+
     if (!referrer) {
       return res.json({ success: false, message: "Invalid referral code" });
     }
 
-    // 
-    const { data: newUser } = await supabase
+    const { data: newUser, error: newErr } = await supabase
       .from("users")
-      .select("referred_by, credits_remaining")
+      .select("id, referred_by, credits_remaining")
       .eq("id", new_user_id)
       .single();
 
-    if (newUser?.referred_by) {
+    console.log("New user found:", newUser, newErr);
+
+    if (!newUser) {
+      return res.json({ success: false, message: "New user not found" });
+    }
+
+    if (newUser.referred_by) {
       return res.json({ success: false, message: "Already used a referral code" });
     }
 
-    // Referrer ko 10 credits do
-    await supabase.from("users").update({
-      credits_remaining: (referrer.credits_remaining || 0) + 10,
-      referral_count: (referrer.referral_count || 0) + 1
-    }).eq("id", referrer.id);
+    const { error: refUpdateErr } = await supabase
+      .from("users")
+      .update({
+        credits_remaining: (referrer.credits_remaining || 0) + 10,
+        referral_count: (referrer.referral_count || 0) + 1
+      })
+      .eq("id", referrer.id);
 
-    // New user ko 10 extra credits do + referred_by set karo
-    await supabase.from("users").update({
-      credits_remaining: (newUser.credits_remaining || 10) + 10,
-      credits_total: 20,
-      referred_by: referral_code.toUpperCase()
-    }).eq("id", new_user_id);
+    console.log("Referrer update error:", refUpdateErr);
 
-    res.json({ success: true, message: "Referral applied! Both users got 10 bonus credits." });
+    const { error: newUpdateErr } = await supabase
+      .from("users")
+      .update({
+        credits_remaining: (newUser.credits_remaining || 10) + 10,
+        credits_total: 20,
+        referred_by: referral_code.toUpperCase()
+      })
+      .eq("id", new_user_id);
+
+    console.log("New user update error:", newUpdateErr);
+
+    res.json({ success: true, message: "Referral applied successfully!" });
 
   } catch (err) {
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("Referral error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
