@@ -60,6 +60,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,16 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           phone: phone,
         }).eq("id", data.user.id);
       }
+      if (data.user && referralCode) {
+  await fetch("https://viral-tool-1.onrender.com/api/referral/apply", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      referral_code: referralCode,
+      new_user_id: data.user.id
+    })
+  });
+}
       setMessage("✅ Account created! Please login.");
       setMode("login");
     }
@@ -331,6 +342,12 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                       <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>PHONE NUMBER *</label>
                       <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className="auth-input" style={inputStyle} />
                     </div>
+                    <div>
+  <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>REFERRAL CODE (Optional)</label>
+  <input value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+    placeholder="Enter referral code (optional)"
+    className="auth-input" style={inputStyle} />
+</div>
                   </>
                 )}
 
