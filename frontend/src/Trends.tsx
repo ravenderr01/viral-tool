@@ -23,6 +23,7 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
   const [activeSection, setActiveSection] = useState<"google" | "youtube">("google");
   const [country, setCountry] = useState("IN");
   const [fetched, setFetched] = useState(false);
+  const [selectedTrend, setSelectedTrend] = useState<string | null>(null);
 
   const fetchTrends = async () => {
     setLoading(true);
@@ -32,7 +33,6 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
     setYoutubeSearch([]);
 
     try {
-      // Fetch all in parallel
       const [googleRes, googleTrendingRes, youtubeRes, youtubeSearchRes] = await Promise.allSettled([
         fetch(`${BACKEND}/api/trends/google?q=${encodeURIComponent(keyword || niche)}&country=${country}`),
         fetch(`${BACKEND}/api/trends/google-trending?country=${country}`),
@@ -40,14 +40,12 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
         fetch(`${BACKEND}/api/trends/youtube-search?q=${encodeURIComponent(keyword || niche)}&country=${country}`)
       ]);
 
-      // Google Trends
       if (googleRes.status === "fulfilled" && googleRes.value.ok) {
         const data = await googleRes.value.json();
         const interest = data.interest_over_time?.timeline_data || [];
         setGoogleTrends(interest.slice(-10).reverse());
       }
 
-      // Google Trending Now
       if (googleTrendingRes.status === "fulfilled" && googleTrendingRes.value.ok) {
         const data = await googleTrendingRes.value.json();
         const trending = data.trending_searches || data.realtime_trending_searches || [];
@@ -56,14 +54,12 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
         }
       }
 
-      // YouTube Trending
       if (youtubeRes.status === "fulfilled" && youtubeRes.value.ok) {
         const data = await youtubeRes.value.json();
         const videos = data.items || [];
         setYoutubeTrends(videos.slice(0, 10));
       }
 
-      // YouTube Search
       if (youtubeSearchRes.status === "fulfilled" && youtubeSearchRes.value.ok) {
         const data = await youtubeSearchRes.value.json();
         const items = data.items || [];
@@ -87,6 +83,7 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
+
       {/* Header Card */}
       <div style={{
         background: "#0d0d0d", border: "1px solid #1e1e1e",
@@ -182,7 +179,6 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
               {googleTrends.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
                   {googleTrends.map((item: any, i: number) => {
-                    // Handle different response formats
                     const query = item.query || item.title?.query || item.title || `Trend ${i + 1}`;
                     const traffic = item.formattedValue || item.traffic || item.title?.exploreLink || "";
                     const isRising = item.hasTopNewsArticles || i < 3;
@@ -219,13 +215,13 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
                           )}
                         </div>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
-                          <a href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(query)}&geo=${country}`}
-                            target="_blank" rel="noreferrer"
+                          {/* ✅ View button - Modal khulega, redirect nahi */}
+                          <button onClick={() => setSelectedTrend(query)}
                             style={{
                               background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
                               color: "#a855f7", padding: "0.2rem 0.5rem", borderRadius: "6px",
-                              fontSize: "0.65rem", textDecoration: "none", fontWeight: 700
-                            }}>View</a>
+                              fontSize: "0.65rem", fontWeight: 700, cursor: "pointer"
+                            }}>View</button>
                           <button onClick={() => navigator.clipboard.writeText(query)}
                             style={{
                               background: "#ffffff08", border: "1px solid #2a2a2a",
@@ -263,7 +259,6 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
           {/* YouTube Trends */}
           {activeSection === "youtube" && (
             <div>
-              {/* Trending Videos */}
               {youtubeTrends.length > 0 && (
                 <div style={{ marginBottom: "1rem" }}>
                   <p style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.5rem" }}>
@@ -322,7 +317,6 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
                 </div>
               )}
 
-              {/* YouTube Search Results */}
               {youtubeSearch.length > 0 && (
                 <div>
                   <p style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.5rem" }}>
@@ -392,6 +386,70 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
           )}
         </div>
       )}
+
+      {/* ✅ Trend Detail Modal — Google Trends redirect nahi, platform pe dikhega */}
+      {selectedTrend && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.85)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "1rem"
+        }} onClick={() => setSelectedTrend(null)}>
+          <div style={{
+            background: "#0d0d0d", border: "1px solid #a855f740",
+            borderRadius: "16px", padding: "1.5rem", maxWidth: "420px", width: "100%"
+          }} onClick={e => e.stopPropagation()}>
+
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ margin: 0, color: "#fff", fontFamily: "'Syne',sans-serif", fontSize: "1rem" }}>
+                📈 Trend Detail
+              </h3>
+              <button onClick={() => setSelectedTrend(null)}
+                style={{ background: "none", border: "none", color: "#555", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
+            </div>
+
+            {/* Trend Name */}
+            <div style={{
+              background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
+              borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.75rem"
+            }}>
+              <p style={{ margin: 0, color: "#a855f7", fontWeight: 700, fontSize: "0.95rem" }}>🔍 {selectedTrend}</p>
+              <p style={{ margin: "0.3rem 0 0", color: "#555", fontSize: "0.72rem" }}>
+                {COUNTRIES.find(c => c.code === country)?.label} · Google Trends
+              </p>
+            </div>
+
+            {/* Niche Info */}
+            <div style={{
+              background: "#0a0a0a", border: "1px solid #1a1a1a",
+              borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "1rem"
+            }}>
+              <p style={{ margin: 0, color: "#444", fontSize: "0.72rem", fontWeight: 600 }}>YOUR NICHE</p>
+              <p style={{ margin: "0.2rem 0 0", color: "#888", fontSize: "0.82rem" }}>{keyword || niche}</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button onClick={() => navigator.clipboard.writeText(selectedTrend)}
+                style={{
+                  flex: 1, padding: "0.6rem", borderRadius: "8px",
+                  background: "#ffffff08", border: "1px solid #2a2a2a",
+                  color: "#888", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600,
+                  fontFamily: "'DM Sans',sans-serif"
+                }}>📋 Copy Keyword</button>
+              <button onClick={() => setSelectedTrend(null)}
+                style={{
+                  flex: 1, padding: "0.6rem", borderRadius: "8px",
+                  background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
+                  color: "#a855f7", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600,
+                  fontFamily: "'DM Sans',sans-serif"
+                }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
