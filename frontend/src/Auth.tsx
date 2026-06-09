@@ -179,7 +179,9 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
               fontFamily: "'DM Sans',sans-serif"
             }}>💎 Get Started Free</button>
-            <a href="mailto:supportgetvci@gmail.com" style={{
+            <a href="https://mail.google.com/mail/?view=cm&to=supportgetvci@gmail.com"
+target="_blank"
+rel="noreferrer" style={{
               background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
               color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px",
               cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
