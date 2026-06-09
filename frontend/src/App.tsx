@@ -1207,7 +1207,7 @@ if (session?.user?.email === ADMIN_EMAIL) {
 
       // Limit check
       const dailyLimit = userData.plan === "free" ? 3 : 999;
-      if (userData.generations_used_today >= dailyLimit) {
+      if (userData.credits_remaining <= 0) {
         setShowPaywall(true);
         return;
       }
@@ -1302,7 +1302,8 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
       });
       // Supabase mein count update 
       await supabase.from("users").update({
-        generations_used_today: (userData?.generations_used_today || 0) + 1
+        generations_used_today: (userData?.generations_used_today || 0) + 1,
+        credits_remaining: (userData?.credits_remaining || 0) - 1
       }).eq("id", user.id);
           } catch {
       setError("Something went wrong. Please try again.");
