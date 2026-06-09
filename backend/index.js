@@ -13,18 +13,17 @@ app.post("/api/generate", async (req, res) => {
     const { messages, max_tokens } = req.body;
     const userMessage = messages[messages.length - 1].content;
 
-    // Detect if Google Ads request
     const isGoogleAds = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
     const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
 
-    const systemPrompt = isGoogleAds ? 
+    const systemPrompt = isGoogleAds ?
       `You are a Google Ads expert. CRITICAL RULES:
       1. hooks (Google Search Headlines): MUST be 25-30 characters. Use urgency + benefit. Example: "Expert Fitness Coach Today"
       2. titles (Display Headlines): MUST be 25-30 characters. Focus on USP. Example: "Get Fit in 30 Days - Start"
       3. Descriptions: MUST be 80-90 characters. Include benefit + CTA. Example: "Work with certified fitness coach online. Book free consultation today and get results!"
       4. scripts: keyword match suggestions like [exact match], "phrase match", broad match
       5. NO advertising/marketing words in titles — focus on customer benefit only
-      6. Always respond in valid JSON only.` 
+      6. Always respond in valid JSON only.`
       : isMetaAds ?
       `You are a world-class Meta Ads copywriter. STRICT RULES:
       1. hooks: MUST be 80-125 characters. Start with customer pain point. Example: "Still losing clients to competitors? Here's the exact Facebook strategy that gets 10 new clients weekly."
@@ -85,12 +84,65 @@ app.post("/api/generate", async (req, res) => {
     const data = await response.json();
     console.log("Groq response status:", response.status);
     const text = data.choices?.[0]?.message?.content || "";
-
     res.json({ content: [{ type: "text", text }] });
 
   } catch (err) {
     console.error("Error:", err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ✅ NEW: Platform Trends endpoint — Groq se platform-specific trending ideas
+app.post("/api/trends/platform", async (req, res) => {
+  try {
+    const { platform, niche, keyword, country } = req.body;
+
+    const prompt = `You are a viral content trend analyst. Generate CURRENT trending content ideas for ${platform} in the ${niche} niche for ${country}.
+
+Return ONLY a valid JSON object like this:
+{
+  "platform": "${platform}",
+  "niche": "${niche}",
+  "trending_formats": [
+    { "format": "Format name", "description": "What it is", "example": "Specific example title/idea", "why_trending": "Why it works now" }
+  ],
+  "trending_topics": [
+    { "topic": "Topic name", "hook": "Hook idea for this topic", "content_angle": "Unique angle to cover this" }
+  ],
+  "best_posting_times": "Best times to post on ${platform}",
+  "trending_hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"],
+  "pro_tip": "One specific actionable tip for ${platform} ${niche} content right now"
+}
+
+Make it VERY specific to ${platform} format — e.g. for Instagram focus on Reels, for YouTube focus on video titles/thumbnails, for TikTok focus on sounds/trends.
+Keyword context: ${keyword || niche}
+Return only JSON, no extra text.`;
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 1500,
+        temperature: 0.8,
+        messages: [
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "{}";
+    const clean = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+
+  } catch (err) {
+    console.error("Platform trends error:", err);
+    res.status(500).json({ error: "Platform trends fetch failed" });
   }
 });
 
