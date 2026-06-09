@@ -206,4 +206,56 @@ app.get("/api/trends/youtube-search", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+// Referral endpoint
+app.post("/api/referral/apply", async (req, res) => {
+  const { referral_code, new_user_id } = req.body;
+  
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+
+    // Referral code wala user dhundo
+    const { data: referrer } = await supabase
+      .from("users")
+      .select("id, credits_remaining, referral_count")
+      .eq("referral_code", referral_code.toUpperCase())
+      .single();
+
+    if (!referrer) {
+      return res.json({ success: false, message: "Invalid referral code" });
+    }
+
+    // New user ko already referred nahi hona chahiye
+    const { data: newUser } = await supabase
+      .from("users")
+      .select("referred_by, credits_remaining")
+      .eq("id", new_user_id)
+      .single();
+
+    if (newUser?.referred_by) {
+      return res.json({ success: false, message: "Already used a referral code" });
+    }
+
+    // Referrer ko 10 credits do
+    await supabase.from("users").update({
+      credits_remaining: (referrer.credits_remaining || 0) + 10,
+      referral_count: (referrer.referral_count || 0) + 1
+    }).eq("id", referrer.id);
+
+    // New user ko 10 extra credits do + referred_by set karo
+    await supabase.from("users").update({
+      credits_remaining: (newUser.credits_remaining || 10) + 10,
+      credits_total: 20,
+      referred_by: referral_code.toUpperCase()
+    }).eq("id", new_user_id);
+
+    res.json({ success: true, message: "Referral applied! Both users got 10 bonus credits." });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
