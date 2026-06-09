@@ -167,29 +167,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           }} />
         </div>
 
-        {/* Top bar */}
-        {mode === "login" && (
-          <div style={{
-            position: "fixed", top: 0, right: 0, zIndex: 100,
-            display: "flex", gap: "0.5rem", padding: "0.75rem 1.5rem"
-          }}>
-            <button onClick={() => setMode("signup")} style={{
-              background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
-              color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
-              cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
-              fontFamily: "'DM Sans',sans-serif"
-            }}>💎 Get Started Free</button>
-            <a href="https://mail.google.com/mail/?view=cm&to=supportgetvci@gmail.com"
-target="_blank"
-rel="noreferrer" style={{
-              background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
-              color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px",
-              cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
-              fontFamily: "'DM Sans',sans-serif", textDecoration: "none"
-            }}>💬 Support</a>
-          </div>
-        )}
-
+        
         {/* ── MAIN ROW (left + right side by side) ── */}
         <div style={{
           flex: 1,
