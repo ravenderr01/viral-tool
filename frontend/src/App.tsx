@@ -1482,7 +1482,35 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                     📞 {profile.phone}
                   </div>
                 )}
-
+{/* Referral Code */}
+{profile?.referral_code && (
+  <div style={{
+    background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
+    borderRadius: "10px", padding: "0.75rem", marginBottom: "0.75rem"
+  }}>
+    <p style={{ margin: "0 0 0.3rem", fontSize: "0.68rem", color: "#555", fontWeight: 700 }}>🎁 YOUR REFERRAL CODE</p>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+      <span style={{ color: "#a855f7", fontWeight: 800, fontSize: "1rem", fontFamily: "'Outfit',sans-serif", letterSpacing: "0.1em" }}>
+        {profile.referral_code}
+      </span>
+      <button onClick={() => {
+        navigator.clipboard.writeText(`Join VCI — Viral Content Intelligence! Use my referral code ${profile.referral_code} and get 10 FREE bonus credits! 🚀 https://getvci.com`);
+      }} style={{
+        background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)",
+        color: "#a855f7", padding: "0.25rem 0.6rem", borderRadius: "6px",
+        cursor: "pointer", fontSize: "0.68rem", fontWeight: 700
+      }}>Share</button>
+    </div>
+    <p style={{ margin: "0.4rem 0 0", color: "#444", fontSize: "0.68rem" }}>
+      Friend joins → You get <strong style={{ color: "#22c55e" }}>+10 credits</strong> · They get <strong style={{ color: "#22c55e" }}>+10 credits</strong>
+    </p>
+    {profile?.referral_count > 0 && (
+      <p style={{ margin: "0.3rem 0 0", color: "#22c55e", fontSize: "0.68rem", fontWeight: 700 }}>
+        ✅ {profile.referral_count} successful referrals!
+      </p>
+    )}
+  </div>
+)}
                 <div style={{ color: "#333", fontSize: "0.72rem", marginBottom: "1rem" }}>
                   📅 Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                 </div>
