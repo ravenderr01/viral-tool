@@ -209,7 +209,7 @@ const PORT = process.env.PORT || 3001;
 // Referral endpoint
 app.post("/api/referral/apply", async (req, res) => {
   const { referral_code, new_user_id } = req.body;
-  
+console.log("Referral apply called:", referral_code, new_user_id);  
   try {
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(
@@ -217,7 +217,7 @@ app.post("/api/referral/apply", async (req, res) => {
       process.env.SUPABASE_SERVICE_KEY
     );
 
-    // Referral code wala user dhundo
+    // 
     const { data: referrer } = await supabase
       .from("users")
       .select("id, credits_remaining, referral_count")
@@ -228,7 +228,7 @@ app.post("/api/referral/apply", async (req, res) => {
       return res.json({ success: false, message: "Invalid referral code" });
     }
 
-    // New user ko already referred nahi hona chahiye
+    // 
     const { data: newUser } = await supabase
       .from("users")
       .select("referred_by, credits_remaining")
