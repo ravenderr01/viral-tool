@@ -33,6 +33,35 @@ app.post("/api/generate", async (req, res) => {
       4. NO generic words: unlock, boost, transform, skyrocket, master, pro
       5. Every line must mention specific results with numbers
       6. Always respond in valid JSON only.`
+      : userMessage.includes("Facebook content expert") ?
+      `You are a Facebook content expert. STRICT RULES:
+      1. hooks: 8 emotional story-based post openers (80-120 chars). Start with relatable situation.
+      2. titles: 8 post headlines (40-60 chars). Community-focused, shareable.
+      3. captions: 5 complete Facebook posts (200-300 chars). Format: Story → Value → CTA. Use 1-2 emojis.
+      4. scripts: 5 Facebook video scripts (Hook/Story/CTA format)
+      5. Always respond in valid JSON only.`
+      : userMessage.includes("Pinterest SEO expert") ?
+      `You are a Pinterest SEO expert. STRICT RULES:
+      1. hooks: 8 pin titles (60-80 chars). Keyword-rich, descriptive, benefit-focused.
+      2. titles: 8 board name ideas. Specific and searchable.
+      3. captions: 5 pin descriptions (200-300 chars). Include keywords naturally, end with CTA.
+      4. scripts: 5 Pinterest strategy tips for growth.
+      5. Always respond in valid JSON only.`
+      : userMessage.includes("WhatsApp marketing expert") ?
+      `You are a WhatsApp marketing expert. STRICT RULES:
+      1. hooks: 8 broadcast message openers (50-80 chars). Personal, direct, curiosity-driven.
+      2. titles: 8 message subject lines (30-50 chars). Clear and compelling.
+      3. captions: 5 complete WhatsApp broadcast messages (150-200 chars). Conversational tone, clear CTA.
+      4. scripts: 5 WhatsApp status ideas. Short and engaging.
+      5. hashtags: empty []
+      6. Always respond in valid JSON only.`
+      : userMessage.includes("Snapchat content expert") ?
+      `You are a Snapchat content expert. STRICT RULES:
+      1. hooks: 8 snap story hooks (30-50 chars). Fun, casual, FOMO-based.
+      2. titles: 8 story title ideas. Trendy and youth-focused.
+      3. captions: 5 snap captions (20-40 chars). Short, fun, emoji-heavy.
+      4. scripts: 5 Snapchat story scripts (5-7 snaps each with text overlay ideas).
+      5. Always respond in valid JSON only.`
       : `You are a viral content expert. Generate highly specific, professional content.
       Always respond in valid JSON only.`;
 
@@ -65,41 +94,62 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// Google Trends endpoint
+// Google Trends endpoint (SerpApi)
 app.get("/api/trends/google", async (req, res) => {
   try {
+    const query = req.query.q || "trending";
+    const country = req.query.country || "IN";
     const response = await fetch(
-      `https://google-trends8.p.rapidapi.com/trendings?region_code=IN&hl=en-US`,
-      {
-        headers: {
-          "x-rapidapi-host": "google-trends8.p.rapidapi.com",
-          "x-rapidapi-key": process.env.RAPIDAPI_KEY
-        }
-      }
+      `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(query)}&geo=${country}&api_key=${process.env.SERPAPI_KEY}`
     );
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: "Trends fetch failed" });
+    res.status(500).json({ error: "Google Trends fetch failed" });
   }
 });
 
-// YouTube Trends endpoint
+// Google Trending Searches endpoint (SerpApi)
+app.get("/api/trends/google-trending", async (req, res) => {
+  try {
+    const country = req.query.country || "IN";
+    const response = await fetch(
+      `https://serpapi.com/search.json?engine=google_trends_trending_now&frequency=realtime&geo=${country}&api_key=${process.env.SERPAPI_KEY}`
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Google Trending fetch failed" });
+  }
+});
+
+// YouTube Trends endpoint (Official API)
 app.get("/api/trends/youtube", async (req, res) => {
   try {
+    const country = req.query.country || "IN";
+    const category = req.query.category || "0";
     const response = await fetch(
-      `https://youtube-v3-alternative.p.rapidapi.com/trending?regionCode=IN&type=video&hl=en&gl=IN`,
-      {
-        headers: {
-          "x-rapidapi-host": "youtube-v3-alternative.p.rapidapi.com",
-          "x-rapidapi-key": process.env.RAPIDAPI_KEY
-        }
-      }
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${country}&videoCategoryId=${category}&maxResults=20&key=${process.env.YOUTUBE_API_KEY}`
     );
     const data = await response.json();
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: "YouTube trends fetch failed" });
+  }
+});
+
+// YouTube Search Trending endpoint
+app.get("/api/trends/youtube-search", async (req, res) => {
+  try {
+    const query = req.query.q || "trending";
+    const country = req.query.country || "IN";
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=viewCount&regionCode=${country}&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "YouTube search failed" });
   }
 });
 
