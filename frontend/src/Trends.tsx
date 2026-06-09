@@ -179,9 +179,10 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
               {googleTrends.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
                   {googleTrends.map((item: any, i: number) => {
-                    const query = item.query || item.title?.query || item.title || `Trend ${i + 1}`;
-                    const traffic = item.formattedValue || item.traffic || item.title?.exploreLink || "";
-                    const isRising = item.hasTopNewsArticles || i < 3;
+                    const query = item.values?.[0]?.query || item.query || item.title?.query || item.title || `Trend ${i + 1}`;
+                    const traffic = item.values?.[0]?.value ? `Interest: ${item.values[0].value}/100` : item.formattedValue || "";
+                    const dateLabel = item.date || "";
+                    const isRising = parseInt(item.values?.[0]?.value || "0") >= 70;
 
                     return (
                       <div key={i} style={{
@@ -199,6 +200,7 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
                         }}>#{i + 1}</span>
                         <div style={{ flex: 1 }}>
                           <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>{query}</p>
+                          <p style={{ margin: "0.1rem 0 0", color: "#333", fontSize: "0.68rem" }}>{dateLabel}</p>
                           {traffic && (
                             <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem", alignItems: "center" }}>
                               <span style={{ color: "#22c55e", fontSize: "0.68rem" }}>🔥 {traffic}</span>
