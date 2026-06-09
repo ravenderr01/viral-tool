@@ -4,7 +4,7 @@ import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
 import Legal from "./Legal";
-import Plans from "./Plans";
+import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
