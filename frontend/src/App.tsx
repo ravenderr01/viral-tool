@@ -1152,7 +1152,7 @@ const [showProfile, setShowProfile] = useState(false);
       setAuthLoading(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
-        setProfile(data?.[0] ?? null);
+        setProfile(data ?? null);
 const ADMIN_EMAIL = "ravenderr01@gmail.com";
 if (session?.user?.email === ADMIN_EMAIL) {
   setPlan("agency");
