@@ -4,7 +4,7 @@ import Auth from "./Auth";
 import Contact from "./Contact";
 import Trends from "./Trends";
 import Legal from "./Legal";
-import Plans from "./plans";
+import Plans from "./Plans";
 import { Helmet } from 'react-helmet-async';
 // ============================================
 // 🔧 YOUR DETAILS — change these 2 lines only
@@ -1349,7 +1349,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
-  if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={() => { setShowPlans(false); setShowPaywall(true); }} currentPlan={plan} />;
+  if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   return (
