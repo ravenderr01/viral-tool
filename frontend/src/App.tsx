@@ -1190,7 +1190,7 @@ if (session?.user?.email === ADMIN_EMAIL) {
     // Supabase se check karo
     const { data: userData } = await supabase
       .from("users")
-      .select("generations_used_today, last_reset_date, plan")
+      .select("generations_used_today, last_reset_date, plan, credits_remaining")
       .eq("id", user.id)
       .single();
 
