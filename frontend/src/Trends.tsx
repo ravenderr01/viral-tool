@@ -177,63 +177,88 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
           {activeSection === "google" && (
             <div>
               {googleTrends.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1rem" }}>
-                  {googleTrends.map((item: any, i: number) => {
-                    const query = item.values?.[0]?.query || item.query || item.title?.query || item.title || `Trend ${i + 1}`;
-                    const traffic = item.values?.[0]?.value ? `Interest: ${item.values[0].value}/100` : item.formattedValue || "";
-                    const dateLabel = item.date || "";
-                    const isRising = parseInt(item.values?.[0]?.value || "0") >= 70;
+                <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "1rem", marginBottom: "1rem" }}>
 
-                    return (
-                      <div key={i} style={{
-                        background: "#0d0d0d", border: "1px solid #1a1a1a",
-                        borderRadius: "10px", padding: "0.75rem 1rem",
-                        display: "flex", alignItems: "center", gap: "0.75rem",
-                        transition: "border-color 0.2s"
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = "#a855f740"}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
-                      >
-                        <span style={{
-                          color: i < 3 ? "#f59e0b" : "#333", fontWeight: 800,
-                          fontSize: "0.85rem", minWidth: "24px", fontFamily: "'Syne',sans-serif"
-                        }}>#{i + 1}</span>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>{query}</p>
-                          <p style={{ margin: "0.1rem 0 0", color: "#333", fontSize: "0.68rem" }}>{dateLabel}</p>
-                          {traffic && (
-                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem", alignItems: "center" }}>
-                              <span style={{ color: "#22c55e", fontSize: "0.68rem" }}>🔥 {traffic}</span>
-                              <span style={{
-                                background: isRising ? "#22c55e18" : "#f59e0b18",
-                                border: `1px solid ${isRising ? "#22c55e40" : "#f59e0b40"}`,
-                                color: isRising ? "#22c55e" : "#f59e0b",
-                                fontSize: "0.6rem", fontWeight: 700, padding: "0.05rem 0.4rem",
-                                borderRadius: "4px"
-                              }}>
-                                {isRising ? "📈 Rising" : "📊 Stable"}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ display: "flex", gap: "0.4rem" }}>
-                          {/* ✅ View button - Modal khulega, redirect nahi */}
-                          <button onClick={() => setSelectedTrend(query)}
-                            style={{
-                              background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
-                              color: "#a855f7", padding: "0.2rem 0.5rem", borderRadius: "6px",
-                              fontSize: "0.65rem", fontWeight: 700, cursor: "pointer"
-                            }}>View</button>
-                          <button onClick={() => navigator.clipboard.writeText(query)}
-                            style={{
-                              background: "#ffffff08", border: "1px solid #2a2a2a",
-                              color: "#444", padding: "0.2rem 0.5rem", borderRadius: "6px",
-                              cursor: "pointer", fontSize: "0.65rem"
-                            }}>Copy</button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {/* Keyword Summary */}
+                  <div style={{
+                    background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
+                    borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "1rem"
+                  }}>
+                    <p style={{ margin: 0, color: "#a855f7", fontWeight: 700, fontSize: "0.9rem" }}>
+                      🔍 "{keyword || niche}" — Last 12 Months
+                    </p>
+                    <p style={{ margin: "0.3rem 0 0", color: "#555", fontSize: "0.72rem" }}>
+                      {COUNTRIES.find(c => c.code === country)?.label} · Google Trends Interest Over Time (0–100)
+                    </p>
+                  </div>
+
+                  {/* Stats Cards */}
+                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+                    <div style={{
+                      flex: 1, background: "#0a0a0a", border: "1px solid #1a1a1a",
+                      borderRadius: "10px", padding: "0.75rem", textAlign: "center"
+                    }}>
+                      <p style={{ margin: 0, color: "#f59e0b", fontSize: "1.4rem", fontWeight: 800 }}>
+                        {Math.max(...googleTrends.map((t: any) => t.values?.[0]?.extracted_value || 0))}
+                      </p>
+                      <p style={{ margin: "0.2rem 0 0", color: "#444", fontSize: "0.62rem", fontWeight: 700 }}>🏆 PEAK</p>
+                    </div>
+                    <div style={{
+                      flex: 1, background: "#0a0a0a", border: "1px solid #1a1a1a",
+                      borderRadius: "10px", padding: "0.75rem", textAlign: "center"
+                    }}>
+                      <p style={{ margin: 0, color: "#22c55e", fontSize: "1.4rem", fontWeight: 800 }}>
+                        {googleTrends[0]?.values?.[0]?.extracted_value || 0}
+                      </p>
+                      <p style={{ margin: "0.2rem 0 0", color: "#444", fontSize: "0.62rem", fontWeight: 700 }}>📅 NOW</p>
+                    </div>
+                    <div style={{
+                      flex: 1, background: "#0a0a0a", border: "1px solid #1a1a1a",
+                      borderRadius: "10px", padding: "0.75rem", textAlign: "center"
+                    }}>
+                      <p style={{ margin: 0, color: "#a855f7", fontSize: "1.4rem", fontWeight: 800 }}>
+                        {Math.round(googleTrends.reduce((a: number, t: any) => a + (t.values?.[0]?.extracted_value || 0), 0) / googleTrends.length)}
+                      </p>
+                      <p style={{ margin: "0.2rem 0 0", color: "#444", fontSize: "0.62rem", fontWeight: 700 }}>📊 AVG</p>
+                    </div>
+                  </div>
+
+                  {/* Bar Chart */}
+                  <div style={{ marginBottom: "1rem" }}>
+                    <p style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, margin: "0 0 0.5rem", letterSpacing: "0.08em" }}>INTEREST OVER TIME</p>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "70px" }}>
+                      {[...googleTrends].reverse().map((item: any, i: number) => {
+                        const val = item.values?.[0]?.extracted_value || 0;
+                        const max = Math.max(...googleTrends.map((t: any) => t.values?.[0]?.extracted_value || 0));
+                        const height = max > 0 ? (val / max) * 70 : 0;
+                        return (
+                          <div key={i} title={`${item.date}: ${val}/100`} style={{
+                            flex: 1, height: `${height}px`,
+                            background: val >= 70 ? "#a855f7" : "rgba(168,85,247,0.3)",
+                            borderRadius: "2px 2px 0 0", cursor: "pointer",
+                            transition: "background 0.2s"
+                          }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#a855f7")}
+                            onMouseLeave={e => (e.currentTarget.style.background = val >= 70 ? "#a855f7" : "rgba(168,85,247,0.3)")}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
+                      <span style={{ color: "#333", fontSize: "0.6rem" }}>{[...googleTrends].reverse()[0]?.date?.split("–")[0]?.trim() || ""}</span>
+                      <span style={{ color: "#333", fontSize: "0.6rem" }}>{googleTrends[0]?.date?.split("–")[0]?.trim() || ""}</span>
+                    </div>
+                  </div>
+
+                  {/* Copy Button */}
+                  <button onClick={() => navigator.clipboard.writeText(keyword || niche)}
+                    style={{
+                      width: "100%", padding: "0.6rem", borderRadius: "8px",
+                      background: "#ffffff08", border: "1px solid #2a2a2a",
+                      color: "#888", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600,
+                      fontFamily: "'DM Sans',sans-serif"
+                    }}>📋 Copy Keyword — {keyword || niche}</button>
+
                 </div>
               ) : (
                 <div style={{
@@ -243,16 +268,6 @@ export default function Trends({ niche, keyword, langLabel }: { niche: string; k
                   <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>
                     No Google Trends data available. Try a different keyword or country.
                   </p>
-                  <a href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(keyword || niche)}&geo=${country}`}
-                    target="_blank" rel="noreferrer"
-                    style={{
-                      display: "inline-block", marginTop: "0.75rem",
-                      background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
-                      color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px",
-                      fontSize: "0.8rem", textDecoration: "none", fontWeight: 700
-                    }}>
-                    Open Google Trends →
-                  </a>
                 </div>
               )}
             </div>
