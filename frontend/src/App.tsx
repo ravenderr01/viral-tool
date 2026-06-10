@@ -413,6 +413,26 @@ Generate exactly 30 days.`;
 
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
 
+        {/* Platform Selector */}
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+            {CAL_PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setCalPlatform(p.id)}
+                style={{
+                  background: calPlatform === p.id ? `${p.color}18` : "#0a0a0a",
+                  border: `1px solid ${calPlatform === p.id ? p.color : "#1a1a1a"}`,
+                  color: calPlatform === p.id ? p.color : "#444",
+                  padding: "0.28rem 0.75rem", borderRadius: "20px",
+                  cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
+                  transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+                }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button onClick={generate} disabled={loading}
           style={{
             width: "100%", padding: "0.8rem", borderRadius: "10px",
