@@ -1198,7 +1198,6 @@ if (session?.user?.email === ADMIN_EMAIL) {
       .single();
 
     if (userData) {
-      // Daily reset check
       const today = new Date().toISOString().split("T")[0];
       if (userData.last_reset_date !== today) {
         await supabase.from("users").update({
@@ -1207,9 +1206,6 @@ if (session?.user?.email === ADMIN_EMAIL) {
         }).eq("id", user.id);
         userData.generations_used_today = 0;
       }
-
-      // Limit check
-      const dailyLimit = userData.plan === "free" ? 3 : 999;
       if (userData.credits_remaining <= 0) {
         setShowPaywall(true);
         return;
@@ -1220,29 +1216,16 @@ if (session?.user?.email === ADMIN_EMAIL) {
 
     setLoading(true); setError(""); setResults(null);
 
-    const platformInstructions: Record<string, string> = {
-      "Google Ads": `You are a senior Google Ads copywriter. Generate hooks as 5 headlines (EXACTLY 25-30 chars, no emojis, use urgency+benefit), titles as 5 display headlines (25-30 chars, USP focused), captions as 3 descriptions (80-90 chars, benefit+CTA). NO generic words.`,
-      "Meta Ads": `You are a Meta Ads specialist. Generate hooks as 5 scroll-stopping openers (80-125 chars, start with pain point), titles as 5 ad headlines (30-40 chars, specific numbers), captions as 3 primary texts (200-300 chars, Pain→Solution→CTA).`,
-      "Native Ads": `You are a Native Ads expert. Generate hooks as 5 curiosity headlines (sound like news, not ads), titles as 5 article-style titles, captions as 3 advertorial descriptions (100-150 chars, informational tone).`,
-      "Instagram": `You are an Instagram growth expert. Generate hooks as 5 reel opening lines (stop-scroll in 1 sec, use shock/curiosity/controversy), titles as 5 post/reel title ideas, captions as 3 full captions (150-200 chars, emojis, storytelling, CTA).`,
-      "YouTube": `You are a YouTube growth strategist. Generate hooks as 5 video opening lines (create FOMO, use "What if"/"Truth about"), titles as 5 SEO titles (power words+numbers+brackets), captions as 3 descriptions (200 chars, keywords embedded).`,
-      "TikTok": `You are a TikTok viral expert. Generate hooks as 5 first-3-second hooks (pattern interrupt, bold claim, surprising fact), titles as 5 trending captions, captions as 3 short punchy texts (50-80 chars, 2-3 emojis).`,
-      "LinkedIn": `You are a LinkedIn thought leader. Generate hooks as 5 professional story openers (start with bold insight or personal story), titles as 5 thought leadership titles (data-driven), captions as 3 value posts (150-200 chars, no fluff, authority tone).`,
-      "Twitter / X": `You are a Twitter/X viral expert. Generate hooks as 5 tweet hooks (under 200 chars, controversial/surprising/bold opinion), titles as 5 thread titles (make people click), captions as 3 tweet threads (3-5 tweets each separated by //).`,
-      "Facebook": `You are a Facebook content expert. Generate hooks as 5 emotional post openers (relatable, community-focused, 80-120 chars), titles as 5 post headlines (shareable, 40-60 chars), captions as 3 Facebook posts (200-300 chars, story+value+CTA).`,
-      "Pinterest": `You are a Pinterest SEO expert. Generate hooks as 5 pin titles (keyword-rich, 60-80 chars, benefit-focused), titles as 5 board name ideas (specific, searchable), captions as 3 pin descriptions (200-300 chars, natural keywords, CTA).`,
-      "WhatsApp": `You are a WhatsApp marketing expert. Generate hooks as 5 broadcast openers (personal, direct, 50-80 chars), titles as 5 message subject lines (30-50 chars), captions as 3 broadcast messages (150-200 chars, conversational, clear CTA).`,
-      "Snapchat": `You are a Snapchat content expert. Generate hooks as 5 snap story hooks (fun, FOMO, 30-50 chars), titles as 5 story ideas (trendy, youth-focused), captions as 3 snap captions (20-40 chars, emoji-heavy, casual).`,
-      "Reddit": `You are a Reddit content expert. Generate hooks as 5 viral post titles (curiosity-driven, discussion-starter, 60-80 chars), titles as 5 subreddit suggestions specific to the niche, captions as 3 Reddit post bodies (200-300 chars, conversational, value-first, no self-promotion), scripts as 5 comment hooks to drive engagement.`,
-      "YouTube Ads": `You are a YouTube Ads expert. Generate hooks as 5 skippable ad hooks (first 5 seconds, must stop skip, 10-15 words), titles as 5 ad headlines (40-60 chars, benefit-focused), captions as 3 ad scripts (Hook 5sec → Problem 10sec → Solution 15sec → CTA 5sec format).`,
-    };
-
     const nicheContext: Record<string, string> = {
       "Fitness": "fitness, gym, workout, weight loss, nutrition, health transformation",
       "Business": "entrepreneurship, startup, business growth, freelancing, side hustle",
       "Tech": "technology, software, AI tools, gadgets, coding, innovation",
       "Lifestyle": "daily routines, habits, personal growth, productivity, minimalism",
       "Food": "recipes, cooking, food review, street food, viral food trends",
+      "Daily Vlog": "day in my life, daily routine, vlog, lifestyle content, personal vlogs",
+      "Comedy & Entertainment": "funny content, comedy skits, meme culture, entertainment, humor",
+      "Sports": "cricket, football, sports highlights, fitness training, sports motivation",
+      "Spirituality": "meditation, manifestation, spiritual growth, mindfulness, inner peace",
       "AI & Automation": "artificial intelligence, automation tools, ChatGPT, productivity hacks",
       "Personal Finance": "investing, saving money, passive income, budgeting, financial freedom",
       "Mental Health": "emotional wellness, mindfulness, anxiety relief, self-care, therapy",
@@ -1257,38 +1240,306 @@ if (session?.user?.email === ADMIN_EMAIL) {
       "Gaming": "video games, esports, gaming setup, mobile gaming, game reviews",
     };
 
-    const platformGuide = platformInstructions[platform] || platformInstructions["Instagram"];
-console.log("Platform selected:", platform, "Guide found:", !!platformInstructions[platform]);
     const nicheGuide = nicheContext[niche] || "general content creation";
 
-    const prompt = `${platformGuide}
+    try {
+      let realData = "";
 
-NICHE CONTEXT: Content is specifically for ${nicheGuide}
-KEYWORD/TOPIC: "${keyword}"
+      // ── REAL DATA FETCH based on platform ──
+      if (platform === "YouTube" || platform === "YouTube Ads") {
+        try {
+          // Real YouTube trending videos fetch
+          const [trendRes, searchRes] = await Promise.allSettled([
+            fetch(`https://viral-tool-1.onrender.com/api/trends/youtube?country=IN`),
+            fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(keyword)}&country=IN`)
+          ]);
+
+          let trendTitles: string[] = [];
+          let searchTitles: string[] = [];
+
+          if (trendRes.status === "fulfilled" && trendRes.value.ok) {
+            const data = await trendRes.value.json();
+            trendTitles = (data.items || []).slice(0, 5).map((v: any) => v.snippet?.title || "");
+          }
+          if (searchRes.status === "fulfilled" && searchRes.value.ok) {
+            const data = await searchRes.value.json();
+            searchTitles = (data.items || []).slice(0, 5).map((v: any) => v.snippet?.title || "");
+          }
+
+          if (trendTitles.length > 0 || searchTitles.length > 0) {
+            realData = `
+REAL YOUTUBE DATA (use this to inform your content):
+Currently Trending on YouTube India:
+${trendTitles.map((t, i) => `${i+1}. ${t}`).join("\n")}
+
+Top Videos for "${keyword}":
+${searchTitles.map((t, i) => `${i+1}. ${t}`).join("\n")}
+
+Analyze these real trends and create content that follows similar patterns, titles structures, and hooks that are currently working on YouTube.`;
+          }
+        } catch (e) {}
+
+      } else if (platform === "Reddit") {
+        try {
+          // Real Reddit posts fetch
+          const subredditMap: Record<string, string> = {
+            "Fitness": "fitness+loseit+workout",
+            "Business": "entrepreneur+smallbusiness+startups",
+            "Tech": "technology+programming+artificial",
+            "Lifestyle": "lifestyle+selfimprovement+productivity",
+            "Food": "food+recipes+cooking",
+            "Daily Vlog": "vlog+youtube+contentcreators",
+            "Comedy & Entertainment": "funny+memes+comedy",
+            "Sports": "sports+cricket+football",
+            "Spirituality": "spirituality+meditation+mindfulness",
+            "Mental Health": "mentalhealth+anxiety+selfcare",
+            "Personal Finance": "personalfinance+investing+financialindependence",
+            "Beauty & Skincare": "SkincareAddiction+beauty+makeupaddiction",
+            "Gaming": "gaming+pcgaming+mobilegaming",
+            "Travel": "travel+solotravel+backpacking",
+          };
+          const subreddit = subredditMap[niche] || "all";
+          const redditRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/reddit?subreddit=${subreddit}&time=week&limit=8`);
+          if (redditRes.ok) {
+            const data = await redditRes.json();
+            const posts = (data.data?.children || []).slice(0, 8).map((p: any) => ({
+              title: p.data?.title || "",
+              upvotes: p.data?.ups || 0,
+              comments: p.data?.num_comments || 0,
+              subreddit: p.data?.subreddit || ""
+            }));
+            if (posts.length > 0) {
+              realData = `
+REAL REDDIT DATA (currently trending this week):
+${posts.map((p: any, i: number) => `${i+1}. "${p.title}" — ${p.upvotes} upvotes, ${p.comments} comments — r/${p.subreddit}`).join("\n")}
+
+Analyze these real Reddit posts. Create content that matches the style, tone, and topics that are getting high engagement on Reddit right now.`;
+            }
+          }
+        } catch (e) {}
+
+      } else if (platform === "Google Ads" || platform === "Meta Ads" || platform === "Native Ads") {
+        try {
+          // Real Google trending searches
+          const serpRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(keyword)}&country=IN`);
+          if (serpRes.ok) {
+            const data = await serpRes.json();
+            const timeline = data.interest_over_time?.timeline_data || [];
+            const peak = Math.max(...timeline.map((t: any) => t.values?.[0]?.extracted_value || 0));
+            const avg = Math.round(timeline.reduce((a: number, t: any) => a + (t.values?.[0]?.extracted_value || 0), 0) / (timeline.length || 1));
+            const relatedQueries = data.related_queries?.rising?.slice(0, 5).map((q: any) => q.query) || [];
+            const relatedTopics = data.related_topics?.rising?.slice(0, 5).map((t: any) => t.topic_title) || [];
+
+            if (peak > 0 || relatedQueries.length > 0) {
+              realData = `
+REAL GOOGLE TRENDS DATA for "${keyword}":
+- Peak interest: ${peak}/100
+- Average interest: ${avg}/100
+- Rising related searches: ${relatedQueries.join(", ") || "N/A"}
+- Rising related topics: ${relatedTopics.join(", ") || "N/A"}
+
+Use this real data to create ads that target exactly what people are searching for right now.`;
+            }
+          }
+        } catch (e) {}
+
+      } else if (platform === "Instagram" || platform === "Facebook" || platform === "TikTok") {
+        try {
+          // Google trends + YouTube search for Instagram/TikTok/Facebook reels context
+          const [serpRes, ytRes] = await Promise.allSettled([
+            fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(keyword)}&country=IN`),
+            fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(keyword + " reel viral")}&country=IN`)
+          ]);
+
+          let trendContext = "";
+          let reelContext = "";
+
+          if (serpRes.status === "fulfilled" && serpRes.value.ok) {
+            const data = await serpRes.value.json();
+            const rising = data.related_queries?.rising?.slice(0, 5).map((q: any) => q.query) || [];
+            const topics = data.related_topics?.rising?.slice(0, 3).map((t: any) => t.topic_title) || [];
+            if (rising.length > 0) trendContext = `Trending searches: ${rising.join(", ")}. Hot topics: ${topics.join(", ")}.`;
+          }
+
+          if (ytRes.status === "fulfilled" && ytRes.value.ok) {
+            const data = await ytRes.value.json();
+            const videos = (data.items || []).slice(0, 4).map((v: any) => v.snippet?.title || "");
+            if (videos.length > 0) reelContext = `Viral video titles for inspiration: ${videos.join(" | ")}`;
+          }
+
+          if (trendContext || reelContext) {
+            realData = `
+REAL TREND CONTEXT for ${platform} content:
+${trendContext}
+${reelContext}
+
+For ${platform === "Instagram" ? "Instagram Reels" : platform === "TikTok" ? "TikTok videos" : "Facebook Reels"}:
+- Focus on trending audio categories for ${niche} niche
+- Hook must work in first 2-3 seconds
+- Use trending formats that are currently viral
+- Trending reel styles for ${niche}: Tutorial, POV, Day-in-Life, Before/After, Reaction, Storytelling`;
+          }
+        } catch (e) {}
+      }
+
+      // ── PLATFORM SPECIFIC PROMPTS ──
+      const platformPrompts: Record<string, string> = {
+        "Instagram": `You are a top Instagram Reels strategist with deep knowledge of what goes viral in ${new Date().getFullYear()}.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 Reel opening lines — first 3 words MUST stop scroll. Use controversy, shock, curiosity or bold claim. NO "Hey guys" or generic openers.
+- titles: 5 Reel/Post title ideas with strong emotional trigger and trending formats (POV, Tutorial, Day-in-life, Before/After, Storytime)
+- captions: 3 complete captions (150-200 chars) with emojis, line breaks, storytelling arc, strong CTA + 5 relevant hashtags each
+- trendingTopics: 5 trending audio/song types + reel format suggestions currently viral for ${niche}`,
+
+        "YouTube": `You are a top YouTube growth expert who analyzes what makes videos go viral.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 video opening lines (first 30 seconds). Must create immediate curiosity or FOMO. Use "Nobody tells you...", "I tried...", "The truth about...", "What if..."
+- titles: 5 SEO-optimized titles. Include: number OR power word + keyword + benefit/curiosity. Example format: "I Tried [keyword] for 30 Days — Here's What Happened"
+- captions: 3 video descriptions (200 chars). Include main keyword naturally + timestamps hint + CTA
+- trendingTopics: 5 trending video formats + thumbnail ideas currently working for ${niche} on YouTube`,
+
+        "TikTok": `You are a viral TikTok content expert who knows exactly what trends in ${new Date().getFullYear()}.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 first-3-second hooks. Must use pattern interrupt, bold statement, or trending format. No slow intros.
+- titles: 5 TikTok caption ideas (under 100 chars) with trending hashtag placement
+- captions: 3 complete TikTok scripts (Hook 1 line → Story 2 lines → Reveal 1 line → CTA 1 line)
+- trendingTopics: 5 trending TikTok sounds/audio types + video format ideas for ${niche}`,
+
+        "Facebook": `You are a Facebook content expert specializing in Reels and viral posts for ${new Date().getFullYear()}.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 Facebook Reel hooks that work for 25-45 age group. Emotional, relatable, community-focused
+- titles: 5 post headlines that get shares (40-60 chars). Use nostalgia, community feeling, or helpful tips
+- captions: 3 Facebook posts (200-300 chars). Story format → Value → Tag someone CTA
+- trendingTopics: 5 Facebook Reel formats + content types that get maximum reach for ${niche}`,
+
+        "Reddit": `You are a Reddit community expert who knows how to create posts that go viral on Reddit.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 Reddit post titles that spark discussion. Use: "I discovered...", "Unpopular opinion:", "After X years...", "What nobody tells you about...", "Am I the only one who..."
+- titles: 5 specific subreddit recommendations with reasons (format: r/subredditname — why post here)
+- captions: 3 complete Reddit post bodies (200-300 chars). Conversational, value-first, ends with question to spark comments
+- trendingTopics: 5 trending discussion topics in ${niche} Reddit communities right now`,
+
+        "LinkedIn": `You are a LinkedIn thought leadership expert creating content that builds authority.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 LinkedIn post openers. Start with personal story or bold insight. No "I'm excited to share..."
+- titles: 5 article/newsletter titles (data-driven, specific, authoritative)
+- captions: 3 LinkedIn posts (150-200 chars). Format: Bold insight → Evidence → Takeaway → Question
+- trendingTopics: 5 trending ${niche} topics getting high engagement on LinkedIn currently`,
+
+        "Twitter / X": `You are a Twitter/X viral content expert who creates threads and tweets that get massive engagement.
+Generate content for ${niche} niche, keyword: "${keyword}".
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 tweet hooks (under 200 chars). Controversial take, surprising fact, or bold opinion that sparks debate
+- titles: 5 thread titles that make people click "read more"
+- captions: 3 tweet threads (3 tweets each, separated by //, each under 280 chars)
+- trendingTopics: 5 trending ${niche} conversations happening on Twitter/X right now`,
+
+        "Pinterest": `You are a Pinterest SEO and content expert who drives massive traffic through pins.
+Generate content for ${niche} niche, keyword: "${keyword}".
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 pin titles (60-80 chars). Keyword-rich, benefit-focused, searchable. Use "How to", numbers, "Ideas"
+- titles: 5 board name ideas (specific, searchable, niche-focused)
+- captions: 3 pin descriptions (200-300 chars). Natural keyword inclusion, helpful tone, CTA to save
+- trendingTopics: 5 trending Pinterest search terms for ${niche} with seasonal relevance`,
+
+        "WhatsApp": `You are a WhatsApp broadcast and community marketing expert.
+Generate content for ${niche} niche, keyword: "${keyword}".
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 broadcast message openers (50-80 chars). Personal, direct, creates urgency or curiosity
+- titles: 5 WhatsApp status ideas that drive profile visits
+- captions: 3 broadcast messages (150-200 chars). Conversational, clear value, single CTA
+- trendingTopics: 5 content ideas perfect for WhatsApp communities in ${niche}`,
+
+        "Snapchat": `You are a Snapchat content expert for Gen-Z audience.
+Generate content for ${niche} niche, keyword: "${keyword}".
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 snap story hooks (30-50 chars). Fun, FOMO-inducing, casual
+- titles: 5 story series ideas (3-7 snaps each)
+- captions: 3 snap text overlays (10-20 chars). Short, punchy, emoji-driven
+- trendingTopics: 5 trending Snapchat story formats for ${niche}`,
+
+        "Google Ads": `You are a senior Google Ads copywriter with 10+ years of experience.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 Search Ad headlines (EXACTLY 25-30 chars each, no emojis). Use urgency + specific benefit. Count carefully!
+- titles: 5 Display Ad headlines (25-30 chars). Focus on unique selling point
+- captions: 3 Ad descriptions (80-90 chars each). Benefit + proof + CTA. Example: "Trusted by 10,000+ users. Get results in 7 days. Start your free trial today!"
+- trendingTopics: 5 high-intent keyword variations for "${keyword}" to bid on`,
+
+        "Meta Ads": `You are a Meta Ads specialist running high-ROAS campaigns.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 primary text openers (80-125 chars). Start with customer's pain point. NEVER start with brand name.
+- titles: 5 ad headlines (30-40 chars). Specific number or result. Example: "Lose 10kg in 30 Days"
+- captions: 3 complete ad primary texts (200-300 chars). Format: Pain (1 line) → Agitate (1 line) → Solution (2 lines) → Social proof (1 line) → CTA
+- trendingTopics: 5 winning ad angles for ${niche} — fear, curiosity, social proof, urgency, transformation`,
+
+        "YouTube Ads": `You are a YouTube Ads expert creating skippable and non-skippable ads.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 first-5-second hooks that prevent skipping. Must create immediate curiosity or shock
+- titles: 5 ad headlines shown in companion banner (40-60 chars)
+- captions: 3 complete ad scripts: Hook (5sec) → Problem (10sec) → Solution (15sec) → Social proof (5sec) → CTA (5sec)
+- trendingTopics: 5 ad formats + targeting angles working best for ${niche} on YouTube`,
+
+        "Native Ads": `You are a Native Ads expert creating editorial-style content.
+Generate content for ${niche} niche, keyword: "${keyword}".
+${realData}
+
+STRICT OUTPUT RULES:
+- viralHooks: 5 curiosity headlines that look like news/articles (not ads). Example: "The Surprising Reason Most ${niche} People Fail"
+- titles: 5 article-style titles that blend with editorial content
+- captions: 3 advertorial descriptions (100-150 chars). Informational, not promotional tone
+- trendingTopics: 5 story angles + content formats working for native ads in ${niche}`,
+      };
+
+      const prompt = `${platformPrompts[platform] || platformPrompts["Instagram"]}
+
 OUTPUT LANGUAGE: Write EVERYTHING strictly in ${langLabel} only
-TARGET AUDIENCE: ${niche} enthusiasts on ${platform}
-
-QUALITY RULES:
-- Every output must be highly specific to "${keyword}" — NO generic content
-- Use numbers, power words, emotion triggers
-- Make it feel human, not robotic
-- Adapt tone for ${platform} audience
 
 Respond ONLY in this exact JSON (no markdown, no extra text):
 {"trendingTopics":["topic1","topic2","topic3","topic4","topic5"],"viralHooks":["hook1","hook2","hook3","hook4","hook5"],"titles":["title1","title2","title3","title4","title5"],"captions":["caption1","caption2","caption3"]}`;
 
-    try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 1500,
           messages: [{ role: "user", content: prompt }]
         })
       });
-      const data  = await res.json();
-      const text  = data.content?.map((i: any) => i.text || "").join("") || "";
+
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
       const clean = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       setResults(parsed);
@@ -1306,17 +1557,18 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         captions: parsed.captions || [],
         trending_topics: parsed.trendingTopics || [],
       });
-      // Supabase mein count update 
+
+      // Credits update
       await supabase.from("users").update({
         generations_used_today: (userData?.generations_used_today || 0) + 1,
         credits_remaining: (userData?.credits_remaining || 0) - 1
       }).eq("id", user.id);
-          } catch {
+
+    } catch {
       setError("Something went wrong. Please try again.");
     }
     setLoading(false);
   };
-
   const handleReviewSubmit = async () => {
     if (!reviewText.trim()) return;
     setReviewLoading(true);
