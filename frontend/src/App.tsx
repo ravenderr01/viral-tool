@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import VCIAssistant from "./VCIAssistant";
 import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import Contact from "./Contact";
@@ -2308,6 +2309,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
       {payingPlan  && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} />}
 
       {/* Toast */}
+      <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
       {/* WhatsApp Button */}
       <a href="https://wa.me/919315133390?text=Hi!%20I%20want%20to%20know%20more%20about%20Viral%20Content%20Tool"
         target="_blank" rel="noopener noreferrer"
