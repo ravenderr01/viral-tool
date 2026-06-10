@@ -21,25 +21,28 @@ const PLANS = {
 };
 
 const NICHE_EXAMPLES = {
-  Fitness:           ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
-  Business:          ["passive income", "side hustle", "startup tips", "freelancing"],
-  Tech:              ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
-  Lifestyle:         ["morning routine", "productivity hacks", "minimalism", "self care"],
-  Food:              ["meal prep", "healthy recipes", "street food", "viral recipes"],
-  "AI & Automation": ["AI tools", "automation hacks", "ChatGPT tips", "AI side hustle"],
-  "Personal Finance": ["invest money", "save money fast", "passive income", "budget tips"],
-  "Mental Health":   ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
-  "Beauty & Skincare": ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
-  "Ads & Marketing": ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
-  Education:         ["online course", "study tips", "e-learning", "skill development"],
-  Travel:            ["travel tips", "budget travel", "solo travel", "travel vlog"],
-  "Fashion & Style": ["outfit ideas", "fashion tips", "style guide", "trendy outfits"],
-  "Real Estate":     ["property investment", "home buying tips", "real estate India", "rental income"],
-  Motivational:      ["success mindset", "morning motivation", "self improvement", "hustle tips"],
-  "Health & Wellness": ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
-  Gaming:            ["gaming tips", "game review", "gaming setup", "mobile gaming"],
+  Fitness:              ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
+  Business:             ["passive income", "side hustle", "startup tips", "freelancing"],
+  Tech:                 ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
+  Lifestyle:            ["morning routine", "productivity hacks", "minimalism", "self care"],
+  Food:                 ["meal prep", "healthy recipes", "street food", "viral recipes"],
+  "Daily Vlog":         ["day in my life", "vlog ideas", "daily routine", "life update"],
+  "Comedy & Entertainment": ["funny skits", "comedy reels", "meme content", "trending jokes"],
+  "Sports":             ["cricket tips", "football highlights", "sports motivation", "fitness training"],
+  "Spirituality":       ["meditation tips", "manifestation", "spiritual growth", "mindfulness"],
+  "AI & Automation":    ["AI tools", "automation hacks", "ChatGPT tips", "AI side hustle"],
+  "Personal Finance":   ["invest money", "save money fast", "passive income", "budget tips"],
+  "Mental Health":      ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
+  "Beauty & Skincare":  ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
+  "Ads & Marketing":    ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
+  Education:            ["online course", "study tips", "e-learning", "skill development"],
+  Travel:               ["travel tips", "budget travel", "solo travel", "travel vlog"],
+  "Fashion & Style":    ["outfit ideas", "fashion tips", "style guide", "trendy outfits"],
+  "Real Estate":        ["property investment", "home buying tips", "real estate India", "rental income"],
+  Motivational:         ["success mindset", "morning motivation", "self improvement", "hustle tips"],
+  "Health & Wellness":  ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
+  Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
 };
-
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const LANGUAGES = [
   { code: "en", label: "🇬🇧 English" },
@@ -1606,8 +1609,8 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => (
                     <button key={n} className="tbtn" onClick={() => {
-                        const freeNiches = ["Fitness", "Business"];
-                        const starterNiches = Object.keys(NICHE_EXAMPLES).filter(n => n !== "Ads & Marketing" && n !== "Real Estate");
+                        const freeNiches = ["Fitness", "Business", "Daily Vlog"];
+                        const starterNiches = Object.keys(NICHE_EXAMPLES).filter(n => n !== "Ads & Marketing" && n !== "Real Estate" && n !== "Comedy & Entertainment");
                         const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
                         isLocked ? setShowPaywall(true) : setNiche(n);
                       }}
@@ -1629,11 +1632,11 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                  {["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Google Ads", "Meta Ads", "Native Ads"].map(p => (
+                  {["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit", "Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"].map(p => (
                     <button key={p} className="tbtn" onClick={() => {
                         const freePlatforms = ["Instagram", "YouTube"];
-                        const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X"];
-                        const proPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "TikTok", "Google Ads", "Meta Ads", "Native Ads", "Learning & Skills"];
+                        const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook"];
+                        const proPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook", "TikTok", "Reddit", "Google Ads", "Meta Ads", "YouTube Ads", "Native Ads"];
                         const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
                         isLocked ? setShowPaywall(true) : setPlatform(p);
                       }}
