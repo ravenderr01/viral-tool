@@ -305,17 +305,50 @@ function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, l
   const [calKeyword, setCalKeyword] = useState(keyword || "");
   const [error, setError] = useState("");
   const [copiedDay, setCopiedDay] = useState<number | null>(null);
+  const [calPlatform, setCalPlatform] = useState("Instagram");
+
+  const CAL_PLATFORMS = [
+    { id: "Instagram", emoji: "📸", color: "#e1306c" },
+    { id: "YouTube", emoji: "▶️", color: "#ef4444" },
+    { id: "Facebook", emoji: "📘", color: "#1877f2" },
+    { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
+    { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
+    { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
+    { id: "Pinterest", emoji: "📌", color: "#e60023" },
+  ];
+
+  const platformGuide: Record<string, string> = {
+    "Instagram": "Instagram Reels, Stories, Carousels, and Feed Posts. Focus on visual hooks, trending audio suggestions, reel ideas, and caption CTAs.",
+    "YouTube": "YouTube Videos and Shorts. Focus on video titles, thumbnail ideas, video hooks (first 30 seconds), and description keywords.",
+    "Facebook": "Facebook Reels, Posts, and Stories. Focus on community engagement, shareable content, emotional storytelling, and group posts.",
+    "TikTok": "TikTok Videos. Focus on trending sounds, first-3-second hooks, duet/stitch ideas, and viral formats.",
+    "LinkedIn": "LinkedIn Posts, Articles, and Newsletters. Focus on thought leadership, professional insights, data-driven posts, and carousels.",
+    "Twitter / X": "Twitter/X Tweets and Threads. Focus on hot takes, thread ideas, engagement questions, and trending conversations.",
+    "Pinterest": "Pinterest Pins and Boards. Focus on SEO-optimized pin titles, board ideas, and save-worthy content.",
+  };
 
   const generate = async () => {
     if (!calKeyword.trim()) { setError("Enter a keyword or topic first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setCalendar([]);
 
-    const prompt = `You are a content strategist. Create a 30-day content calendar for keyword: "${calKeyword}", niche: ${niche}.
-Generate in ${langLabel} language.
+    const prompt = `You are a ${calPlatform} content strategist. Create a 30-day content calendar specifically for ${calPlatform}.
+
+Platform: ${calPlatform}
+Platform Guide: ${platformGuide[calPlatform]}
+Keyword/Topic: "${calKeyword}"
+Niche: ${niche}
+Language: ${langLabel}
+
+STRICT RULES:
+- Every hook must be specifically designed for ${calPlatform} — not generic
+- platform_note must give ${calPlatform}-specific advice (e.g. for YouTube: "Make thumbnail with shocked face", for Instagram: "Use trending audio", for LinkedIn: "Start with a bold stat")
+- Use varied content types: ${CONTENT_TYPES.join(", ")}
+- Make every hook punchy, specific, and ready to use on ${calPlatform}
+
 Respond ONLY in this exact JSON (no markdown):
-{"days":[{"day":1,"type":"Tips","hook":"hook text here","platform_note":"short tip"},...]}
-Generate exactly 30 days. Use varied types: ${CONTENT_TYPES.join(", ")}. Make hooks punchy and platform-ready.`;
+{"days":[{"day":1,"type":"Tips","hook":"platform specific hook here","platform_note":"specific ${calPlatform} tip"},...]}
+Generate exactly 30 days.`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
