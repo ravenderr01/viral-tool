@@ -274,4 +274,25 @@ app.post("/api/referral/apply", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+// Reddit Trends endpoint
+app.get("/api/trends/reddit", async (req, res) => {
+  try {
+    const subreddit = req.query.subreddit || "all";
+    const time = req.query.time || "day";
+    const limit = req.query.limit || 10;
+    
+    const response = await fetch(
+      `https://www.reddit.com/r/${subreddit}/top.json?limit=${limit}&t=${time}`,
+      {
+        headers: {
+          "User-Agent": "VCI-Tool/1.0"
+        }
+      }
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Reddit fetch failed" });
+  }
+});
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
