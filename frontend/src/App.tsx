@@ -1776,6 +1776,12 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                       <ResultCard title="Thread Titles" items={results.titles} emoji="📝" color="#22c55e" />
                       <ResultCard title="Tweet Threads" items={results.captions} emoji="💬" color="#f59e0b" />
                     </>
+                  ) : platform === "Reddit" ? (
+                    <>
+                      <ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" />
+                      <ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" />
+                      <ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#a855f7" />
+                    </>
                   ) : (
                     <>
                       <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" />
