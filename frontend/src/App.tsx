@@ -1632,26 +1632,35 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                  {["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit", "Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"].map(p => (
-                    <button key={p} className="tbtn" onClick={() => {
-                        const freePlatforms = ["Instagram", "YouTube"];
-                        const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook"];
-                        const proPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook", "TikTok", "Reddit", "Google Ads", "Meta Ads", "YouTube Ads", "Native Ads"];
-                        const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
-                        isLocked ? setShowPaywall(true) : setPlatform(p);
-                      }}
-                      style={{
-                        background: platform === p ? "#a855f712" : "#0d0d0d",
-                        border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`,
-                        color: platform === p ? "#a855f7" : (plan === "free" && !["Instagram","YouTube"].includes(p)) ? "#2a2a2a" : "#444",
-                        padding: "0.28rem 0.75rem", borderRadius: "20px",
-                        cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
-                        transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
-                      }}>
-                      {(plan === "free" && !["Instagram","YouTube"].includes(p)) ? "🔒 " : ""}{p}
-                    </button>
-                  ))}
-                </div>
+                  {[
+  { group: "📱 Social Media", platforms: ["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit"] },
+  { group: "📢 Advertising", platforms: ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"] }
+].map(({ group, platforms }) => (
+  <div key={group} style={{ width: "100%", marginBottom: "0.75rem" }}>
+    <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem", textTransform: "uppercase" }}>{group}</p>
+    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+      {platforms.map(p => (
+        <button key={p} className="tbtn" onClick={() => {
+          const freePlatforms = ["Instagram", "YouTube"];
+          const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook"];
+          const proPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook", "TikTok", "Reddit", "Google Ads", "Meta Ads", "YouTube Ads", "Native Ads"];
+          const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
+          isLocked ? setShowPaywall(true) : setPlatform(p);
+        }}
+          style={{
+            background: platform === p ? "#a855f712" : "#0d0d0d",
+            border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`,
+            color: platform === p ? "#a855f7" : (plan === "free" && !["Instagram","YouTube"].includes(p)) ? "#2a2a2a" : "#444",
+            padding: "0.28rem 0.75rem", borderRadius: "20px",
+            cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
+            transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+          }}>
+          {(plan === "free" && !["Instagram","YouTube"].includes(p)) ? "🔒 " : ""}{p}
+        </button>
+      ))}
+    </div>
+  </div>
+))}                </div>
               </div>
 
               {/* Keyword */}
