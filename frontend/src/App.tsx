@@ -1233,6 +1233,8 @@ if (session?.user?.email === ADMIN_EMAIL) {
       "Pinterest": `You are a Pinterest SEO expert. Generate hooks as 5 pin titles (keyword-rich, 60-80 chars, benefit-focused), titles as 5 board name ideas (specific, searchable), captions as 3 pin descriptions (200-300 chars, natural keywords, CTA).`,
       "WhatsApp": `You are a WhatsApp marketing expert. Generate hooks as 5 broadcast openers (personal, direct, 50-80 chars), titles as 5 message subject lines (30-50 chars), captions as 3 broadcast messages (150-200 chars, conversational, clear CTA).`,
       "Snapchat": `You are a Snapchat content expert. Generate hooks as 5 snap story hooks (fun, FOMO, 30-50 chars), titles as 5 story ideas (trendy, youth-focused), captions as 3 snap captions (20-40 chars, emoji-heavy, casual).`,
+      "Reddit": `You are a Reddit content expert. Generate hooks as 5 viral post titles (curiosity-driven, discussion-starter, 60-80 chars), titles as 5 subreddit suggestions specific to the niche, captions as 3 Reddit post bodies (200-300 chars, conversational, value-first, no self-promotion), scripts as 5 comment hooks to drive engagement.`,
+      "YouTube Ads": `You are a YouTube Ads expert. Generate hooks as 5 skippable ad hooks (first 5 seconds, must stop skip, 10-15 words), titles as 5 ad headlines (40-60 chars, benefit-focused), captions as 3 ad scripts (Hook 5sec → Problem 10sec → Solution 15sec → CTA 5sec format).`,
     };
 
     const nicheContext: Record<string, string> = {
