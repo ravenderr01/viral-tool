@@ -1258,6 +1258,7 @@ if (session?.user?.email === ADMIN_EMAIL) {
     };
 
     const platformGuide = platformInstructions[platform] || platformInstructions["Instagram"];
+console.log("Platform selected:", platform, "Guide found:", !!platformInstructions[platform]);
     const nicheGuide = nicheContext[niche] || "general content creation";
 
     const prompt = `${platformGuide}
