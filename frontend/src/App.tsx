@@ -1178,7 +1178,7 @@ export default function ViralContentTool() {
   const [results, setResults]     = useState<any>(null);
   const [error, setError]         = useState("");
   const [usageCount, setUsageCount] = useState(0);
-  const [plan, setPlan]           = useState("free");
+  const [plan, setPlan]           = useState(localStorage.getItem("viral_plan") || "free");
   const [showPaywall, setShowPaywall] = useState(false);
   const [payingPlan, setPayingPlan]   = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -1209,6 +1209,8 @@ const [showProfile, setShowProfile] = useState(false);
       setAuthLoading(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
+        const savedPlan = localStorage.getItem("viral_plan");
+if (savedPlan) setPlan(savedPlan);
         setProfile(data ?? null);
 const ADMIN_EMAIL = "ravenderr01@gmail.com";
 if (session?.user?.email === ADMIN_EMAIL) {
