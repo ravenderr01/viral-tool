@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const BACKEND = "https://viral-tool-1.onrender.com";
 
-const SYSTEM_PROMPT = `You are VCI Assistant — the official AI guide for VCI (Viral Content Intelligence), a powerful content creation tool for creators, marketers, and agencies.
+const SYSTEM_PROMPT = `You are  — the official AI guide for VCI (Viral Content Intelligence), a powerful content creation tool for creators, marketers, and agencies.
 
 YOUR PERSONALITY:
 - Friendly, helpful, enthusiastic about content creation
@@ -76,7 +76,7 @@ export default function VCIAssistant({ niche, platform, keyword, plan }: {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 Hi! I'm **VCI Assistant** — your personal content strategy guide!\n\nI can help you:\n• 🎯 Choose the right platform & niche\n• ⚡ Generate better viral hooks\n• 📅 Plan your content strategy\n• 💡 Understand any VCI feature\n\nWhat would you like to create today?"
+      content: "👋 Hi! I'm **** — your personal content strategy guide!\n\nI can help you:\n• 🎯 Choose the right platform & niche\n• ⚡ Generate better viral hooks\n• 📅 Plan your content strategy\n• 💡 Understand any VCI feature\n\nWhat would you like to create today?"
     }
   ]);
   const [input, setInput] = useState("");
@@ -228,7 +228,7 @@ export default function VCIAssistant({ niche, platform, keyword, plan }: {
               fontSize: "1.1rem", flexShrink: 0
             }}>🤖</div>
             <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "0.9rem", color: "#fff" }}>VCI Assistant</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "0.9rem", color: "#fff" }}></div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s infinite" }} />
                 <span style={{ color: "#22c55e", fontSize: "0.65rem", fontWeight: 600 }}>Online — Ready to help</span>
