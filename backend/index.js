@@ -11,54 +11,35 @@ app.post("/api/generate", async (req, res) => {
   console.log("Request received");
   try {
     const { messages, max_tokens } = req.body;
+
+    // Vira Assistant ke liye — system prompt based request
+    if (req.body.system) {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          max_tokens: req.body.max_tokens || 500,
+          temperature: 0.8,
+          messages: [
+            { role: "system", content: req.body.system },
+            ...req.body.messages
+          ]
+        })
+      });
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      return res.json({ content: [{ type: "text", text }] });
+    }
+
     const userMessage = messages[messages.length - 1].content;
 
     const isGoogleAds = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
     const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
-// VCI Assistant ke liye
-if (req.body.system) {
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": Bearer ${process.env.GROQ_API_KEY}
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: req.body.max_tokens || 500,
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: req.body.system },
-        ...req.body.messages
-      ]
-    })
-  });
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || "";
-  return res.json({ content: [{ type: "text", text }] });
-}
-// Vira Assistant ke liye
-if (req.body.system) {
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: req.body.max_tokens || 500,
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: req.body.system },
-        ...req.body.messages
-      ]
-    })
-  });
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || "";
-  return res.json({ content: [{ type: "text", text }] });
-}
+
     const systemPrompt = isGoogleAds ?
       `You are a Google Ads expert. CRITICAL RULES:
       1. hooks (Google Search Headlines): MUST be 25-30 characters. Use urgency + benefit. Example: "Expert Fitness Coach Today"
@@ -135,7 +116,7 @@ if (req.body.system) {
   }
 });
 
-// ✅ NEW: Platform Trends endpoint — Groq se platform-specific trending ideas
+// Platform Trends endpoint
 app.post("/api/trends/platform", async (req, res) => {
   try {
     const { platform, niche, keyword, country } = req.body;
@@ -157,7 +138,7 @@ Return ONLY a valid JSON object like this:
   "pro_tip": "One specific actionable tip for ${platform} ${niche} content right now"
 }
 
-Make it VERY specific to ${platform} format — e.g. for Instagram focus on Reels, for YouTube focus on video titles/thumbnails, for TikTok focus on sounds/trends.
+Make it VERY specific to ${platform} format.
 Keyword context: ${keyword || niche}
 Return only JSON, no extra text.`;
 
@@ -171,14 +152,12 @@ Return only JSON, no extra text.`;
         model: "llama-3.3-70b-versatile",
         max_tokens: 1500,
         temperature: 0.8,
-        messages: [
-          { role: "user", content: prompt }
-        ]
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || " ";
+    const text = data.choices?.[0]?.message?.content || "";
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
     res.json(parsed);
@@ -248,7 +227,23 @@ app.get("/api/trends/youtube-search", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
+// Reddit Trends endpoint
+app.get("/api/trends/reddit", async (req, res) => {
+  try {
+    const subreddit = req.query.subreddit || "all";
+    const time = req.query.time || "day";
+    const limit = req.query.limit || 10;
+    const response = await fetch(
+      `https://www.reddit.com/r/${subreddit}/top.json?limit=${limit}&t=${time}`,
+      { headers: { "User-Agent": "VCI-Tool/1.0" } }
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Reddit fetch failed" });
+  }
+});
+
 // Referral endpoint
 app.post("/api/referral/apply", async (req, res) => {
   const { referral_code, new_user_id } = req.body;
@@ -317,25 +312,6 @@ app.post("/api/referral/apply", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-// Reddit Trends endpoint
-app.get("/api/trends/reddit", async (req, res) => {
-  try {
-    const subreddit = req.query.subreddit || "all";
-    const time = req.query.time || "day";
-    const limit = req.query.limit || 10;
-    
-    const response = await fetch(
-      `https://www.reddit.com/r/${subreddit}/top.json?limit=${limit}&t=${time}`,
-      {
-        headers: {
-          "User-Agent": "VCI-Tool/1.0"
-        }
-      }
-    );
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: "Reddit fetch failed" });
-  }
-});
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
