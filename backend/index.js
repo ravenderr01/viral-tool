@@ -15,7 +15,50 @@ app.post("/api/generate", async (req, res) => {
 
     const isGoogleAds = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
     const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
-
+// VCI Assistant ke liye
+if (req.body.system) {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": Bearer ${process.env.GROQ_API_KEY}
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: req.body.max_tokens || 500,
+      temperature: 0.8,
+      messages: [
+        { role: "system", content: req.body.system },
+        ...req.body.messages
+      ]
+    })
+  });
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || "";
+  return res.json({ content: [{ type: "text", text }] });
+}
+// Vira Assistant ke liye
+if (req.body.system) {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: req.body.max_tokens || 500,
+      temperature: 0.8,
+      messages: [
+        { role: "system", content: req.body.system },
+        ...req.body.messages
+      ]
+    })
+  });
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || "";
+  return res.json({ content: [{ type: "text", text }] });
+}
     const systemPrompt = isGoogleAds ?
       `You are a Google Ads expert. CRITICAL RULES:
       1. hooks (Google Search Headlines): MUST be 25-30 characters. Use urgency + benefit. Example: "Expert Fitness Coach Today"
@@ -135,7 +178,7 @@ Return only JSON, no extra text.`;
     });
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "{}";
+    const text = data.choices?.[0]?.message?.content || " ";
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
     res.json(parsed);
