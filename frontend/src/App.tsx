@@ -1,3 +1,4 @@
+import AdminDashboard from "./AdminDashboard";
 import { useState, useEffect, useRef } from "react";
 import VCIAssistant from "./VCIAssistant";
 import { supabase } from "./supabaseClient";
@@ -1189,6 +1190,7 @@ const [showContact, setShowContact] = useState(false);
 const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null>(null);
 const [showReview, setShowReview] = useState(false);
 const [showPlans, setShowPlans] = useState(false);
+const [showAdmin, setShowAdmin] = useState(false);
 const [reviewText, setReviewText] = useState("");
 const [reviewRole, setReviewRole] = useState("");
 const [reviewStars, setReviewStars] = useState(5);
@@ -1196,7 +1198,12 @@ const [reviewSubmitted, setReviewSubmitted] = useState(false);
 const [reviewLoading, setReviewLoading] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
-const [profile, setProfile] = useState<any>(null);
+const [profile, setProfile] = useState<any>(() => {
+  try {
+    const saved = localStorage.getItem("viral_profile");
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+});
 const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
@@ -1667,6 +1674,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
+  
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
@@ -1702,6 +1710,15 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           background: "#08040f", borderBottom: "1px solid #1a1040",
           padding: "1.5rem 1.5rem 0", textAlign: "center", position: "relative"
         }}>
+        {user?.email === "ravenderro1@gmail.com" && (
+  <button onClick={() => setShowAdmin(true)} style={{
+    position: "absolute", top: "1rem", right: "34rem",
+    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+    color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px",
+    cursor: "pointer", fontSize: "0.78rem", fontWeight: 700,
+    fontFamily: "'DM Sans',sans-serif"
+  }}>🔧 Admin</button>
+)}
           <button onClick={() => supabase.auth.signOut()} style={{
             position: "absolute", top: "1rem", right: "1rem",
             background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)",
