@@ -12,8 +12,35 @@ app.post("/api/generate", async (req, res) => {
   try {
     const { messages, max_tokens } = req.body;
 
-    // Vira Assistant ke liye — system prompt based request
+    // Vira Assistant + Image AI ke liye — system prompt based request
     if (req.body.system) {
+      const hasImage = req.body.messages?.some((m) =>
+        Array.isArray(m.content) && m.content.some((c) => c.type === "image")
+      );
+
+      if (hasImage) {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.2-11b-vision-preview",
+            max_tokens: req.body.max_tokens || 1500,
+            temperature: 0.8,
+            messages: [
+              { role: "system", content: req.body.system },
+              ...req.body.messages
+            ]
+          })
+        });
+        const data = await response.json();
+        console.log("Vision response:", JSON.stringify(data).slice(0, 300));
+        const text = data.choices?.[0]?.message?.content || "";
+        return res.json({ content: [{ type: "text", text }] });
+      }
+
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
