@@ -1212,6 +1212,9 @@ const [showProfile, setShowProfile] = useState(false);
         const savedPlan = localStorage.getItem("viral_plan");
 if (savedPlan) setPlan(savedPlan);
         setProfile(data ?? null);
+if (data?.referral_code) {
+  localStorage.setItem("viral_profile", JSON.stringify(data));
+}
 const ADMIN_EMAIL = "ravenderr01@gmail.com";
 if (session?.user?.email === ADMIN_EMAIL) {
   setPlan("agency");
