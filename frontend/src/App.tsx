@@ -1710,7 +1710,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           background: "#08040f", borderBottom: "1px solid #1a1040",
           padding: "1.5rem 1.5rem 0", textAlign: "center", position: "relative"
         }}>
-        {user?.email === "ravenderro1@gmail.com" && (
+        {user?.email === "ravenderr01@gmail.com" && (
   <button onClick={() => setShowAdmin(true)} style={{
     position: "absolute", top: "1rem", right: "34rem",
     background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
