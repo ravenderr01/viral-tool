@@ -1674,7 +1674,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
-  if (showAdmin && user?.email === "ravenderr01@gmail.com") return <AdminDashboard onBack={() => setShowAdmin(false)} />;
+  if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />; === "ravenderr01@gmail.com") return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
