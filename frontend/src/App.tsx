@@ -1,4 +1,5 @@
 import AdminDashboard from "./AdminDashboard";
+import ImageContent from "./ImageContent";
 import { useState, useEffect, useRef } from "react";
 import VCIAssistant from "./VCIAssistant";
 import { supabase } from "./supabaseClient";
@@ -1664,6 +1665,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
     { id: "calendar", label: "Calendar",  emoji: "📅" },
     { id: "pack",     label: "Pack",      emoji: "📦" },
     { id: "trends",   label: "Trends",    emoji: "📈" },
+  { id: "image",    label: "Image AI",  emoji: "🖼️" },
   ];
 
   if (authLoading) return (
@@ -2218,7 +2220,15 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             />
             )
           )}
-
+{/* ── TAB: IMAGE AI ── */}
+{activeTab === "image" && (
+  <ImageContent
+    plan={plan}
+    onUpgrade={() => setShowPaywall(true)}
+    credits={usageCount}
+    onCreditUsed={incrementUsage}
+  />
+)}
           {/* ── TAB: TRENDS ── */}
           {activeTab === "trends" && (
             (plan === "free" || plan === "starter") ? (
