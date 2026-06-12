@@ -2225,7 +2225,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   <ImageContent
     plan={plan}
     onUpgrade={() => setShowPaywall(true)}
-    credits={usageCount}
+    credits={remaining}
     onCreditUsed={incrementUsage}
   />
 )}
