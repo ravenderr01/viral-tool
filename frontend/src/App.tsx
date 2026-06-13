@@ -1248,8 +1248,17 @@ if (session?.user?.email === ADMIN_EMAIL) {
   const usedPct   = Math.min(100, (usageCount / limit) * 100);
   const langLabel = getLangLabel(selectedLang);
 
-  const incrementUsage = () => {
-    const newCount = usageCount + 1;
+  const CREDIT_COSTS: Record<string, number> = {
+    generate: 1,
+    score: 1,
+    image: 2,
+    pack: 3,
+    calendar: 5,
+  };
+
+  const incrementUsage = (feature: string = "generate") => {
+    const cost = CREDIT_COSTS[feature] || 1;
+    const newCount = usageCount + cost;
     setUsageCount(newCount);
     localStorage.setItem("viral_usage", newCount.toString());
   };
@@ -2217,6 +2226,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               plan={plan} usageCount={usageCount} limit={limit}
               onUpgrade={() => setShowPaywall(true)}
               keyword={keyword} niche={niche} langLabel={langLabel}
+              creditCost={5}
             />
             )
           )}
@@ -2261,6 +2271,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               plan={plan} usageCount={usageCount} limit={limit}
               onUpgrade={() => setShowPaywall(true)}
               keyword={keyword} niche={niche} platform={platform} langLabel={langLabel}
+              creditCost={3}
             />
             )
           )}
