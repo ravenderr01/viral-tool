@@ -46,7 +46,7 @@ app.post("/api/generate", async (req, res) => {
             "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
           },
           body: JSON.stringify({
-            model: "llama-3.2-11b-vision-preview",
+            model: "llama-3.2-90b-vision-preview",
             max_tokens: req.body.max_tokens || 1500,
             temperature: 0.8,
             messages: [
