@@ -13,14 +13,14 @@ app.post("/api/generate", async (req, res) => {
   try {
     const { messages, max_tokens } = req.body;
 
-    // Vira Assistant + Image AI ke liye — system prompt based request
+    // Vira Assistant + Image AI ke liye
     if (req.body.system) {
       const hasImage = req.body.messages?.some((m) =>
         Array.isArray(m.content) && m.content.some((c) => c.type === "image")
       );
 
       if (hasImage) {
-        // Convert messages for Groq vision format
+        // Convert to Groq vision format
         const groqMessages = req.body.messages.map((m) => {
           if (Array.isArray(m.content)) {
             const newContent = m.content.map((c) => {
@@ -60,27 +60,8 @@ app.post("/api/generate", async (req, res) => {
         const text = data.choices?.[0]?.message?.content || "";
         return res.json({ content: [{ type: "text", text }] });
       }
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "llama-3.2-11b-vision-preview",
-            max_tokens: req.body.max_tokens || 1500,
-            temperature: 0.8,
-            messages: [
-              { role: "system", content: req.body.system },
-              ...req.body.messages
-            ]
-          })
-        });
-        const data = await response.json();
-        console.log("Vision response:", JSON.stringify(data).slice(0, 300));
-        const text = data.choices?.[0]?.message?.content || "";
-        return res.json({ content: [{ type: "text", text }] });
-      }
 
+      // Regular text (Vira Assistant)
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -187,25 +168,17 @@ app.post("/api/generate", async (req, res) => {
 app.post("/api/trends/platform", async (req, res) => {
   try {
     const { platform, niche, keyword, country } = req.body;
-
     const prompt = `You are a viral content trend analyst. Generate CURRENT trending content ideas for ${platform} in the ${niche} niche for ${country}.
-
 Return ONLY a valid JSON object like this:
 {
   "platform": "${platform}",
   "niche": "${niche}",
-  "trending_formats": [
-    { "format": "Format name", "description": "What it is", "example": "Specific example title/idea", "why_trending": "Why it works now" }
-  ],
-  "trending_topics": [
-    { "topic": "Topic name", "hook": "Hook idea for this topic", "content_angle": "Unique angle to cover this" }
-  ],
+  "trending_formats": [{ "format": "Format name", "description": "What it is", "example": "Specific example", "why_trending": "Why it works now" }],
+  "trending_topics": [{ "topic": "Topic name", "hook": "Hook idea", "content_angle": "Unique angle" }],
   "best_posting_times": "Best times to post on ${platform}",
   "trending_hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"],
   "pro_tip": "One specific actionable tip for ${platform} ${niche} content right now"
 }
-
-Make it VERY specific to ${platform} format.
 Keyword context: ${keyword || niche}
 Return only JSON, no extra text.`;
 
@@ -228,14 +201,13 @@ Return only JSON, no extra text.`;
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
     res.json(parsed);
-
   } catch (err) {
     console.error("Platform trends error:", err);
     res.status(500).json({ error: "Platform trends fetch failed" });
   }
 });
 
-// Google Trends endpoint (SerpApi)
+// Google Trends endpoint
 app.get("/api/trends/google", async (req, res) => {
   try {
     const query = req.query.q || "trending";
@@ -250,7 +222,7 @@ app.get("/api/trends/google", async (req, res) => {
   }
 });
 
-// Google Trending Searches endpoint (SerpApi)
+// Google Trending Searches endpoint
 app.get("/api/trends/google-trending", async (req, res) => {
   try {
     const country = req.query.country || "IN";
@@ -264,7 +236,7 @@ app.get("/api/trends/google-trending", async (req, res) => {
   }
 });
 
-// YouTube Trends endpoint (Official API)
+// YouTube Trends endpoint
 app.get("/api/trends/youtube", async (req, res) => {
   try {
     const country = req.query.country || "IN";
@@ -279,7 +251,7 @@ app.get("/api/trends/youtube", async (req, res) => {
   }
 });
 
-// YouTube Search Trending endpoint
+// YouTube Search endpoint
 app.get("/api/trends/youtube-search", async (req, res) => {
   try {
     const query = req.query.q || "trending";
@@ -351,26 +323,16 @@ app.post("/api/referral/apply", async (req, res) => {
       return res.json({ success: false, message: "Already used a referral code" });
     }
 
-    const { error: refUpdateErr } = await supabase
-      .from("users")
-      .update({
-        credits_remaining: (referrer.credits_remaining || 0) + 10,
-        referral_count: (referrer.referral_count || 0) + 1
-      })
-      .eq("id", referrer.id);
+    await supabase.from("users").update({
+      credits_remaining: (referrer.credits_remaining || 0) + 10,
+      referral_count: (referrer.referral_count || 0) + 1
+    }).eq("id", referrer.id);
 
-    console.log("Referrer update error:", refUpdateErr);
-
-    const { error: newUpdateErr } = await supabase
-      .from("users")
-      .update({
-        credits_remaining: (newUser.credits_remaining || 10) + 10,
-        credits_total: 20,
-        referred_by: referral_code.toUpperCase()
-      })
-      .eq("id", new_user_id);
-
-    console.log("New user update error:", newUpdateErr);
+    await supabase.from("users").update({
+      credits_remaining: (newUser.credits_remaining || 10) + 10,
+      credits_total: 20,
+      referred_by: referral_code.toUpperCase()
+    }).eq("id", new_user_id);
 
     res.json({ success: true, message: "Referral applied successfully!" });
 
