@@ -20,7 +20,46 @@ app.post("/api/generate", async (req, res) => {
       );
 
       if (hasImage) {
+        // Convert messages for Groq vision format
+        const groqMessages = req.body.messages.map((m) => {
+          if (Array.isArray(m.content)) {
+            const newContent = m.content.map((c) => {
+              if (c.type === "image") {
+                return {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${c.source.media_type};base64,${c.source.data}`
+                  }
+                };
+              }
+              return c;
+            });
+            return { ...m, content: newContent };
+          }
+          return m;
+        });
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.2-11b-vision-preview",
+            max_tokens: req.body.max_tokens || 1500,
+            temperature: 0.8,
+            messages: [
+              { role: "system", content: req.body.system },
+              ...groqMessages
+            ]
+          })
+        });
+        const data = await response.json();
+        console.log("Vision response:", JSON.stringify(data).slice(0, 300));
+        const text = data.choices?.[0]?.message?.content || "";
+        return res.json({ content: [{ type: "text", text }] });
+      }
           method: "POST",
           headers: {
             "Content-Type": "application/json",
