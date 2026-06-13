@@ -1196,6 +1196,8 @@ const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null
 const [showReview, setShowReview] = useState(false);
 const [showPlans, setShowPlans] = useState(false);
 const [showAdmin, setShowAdmin] = useState(false);
+const [userType, setUserType] = useState<string | null>(null);
+const [showOnboarding, setShowOnboarding] = useState(false);
 const [reviewText, setReviewText] = useState("");
 const [reviewRole, setReviewRole] = useState("");
 const [reviewStars, setReviewStars] = useState(5);
@@ -1222,6 +1224,11 @@ const [showProfile, setShowProfile] = useState(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setProfile(data ?? null);
+        if (!data?.user_type) {
+  setShowOnboarding(true);
+} else {
+  setUserType(data.user_type);
+}
         
 if (data?.referral_code) {
   localStorage.setItem("viral_profile", JSON.stringify(data));
@@ -1686,7 +1693,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
-  
+  if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={(type) => { setUserType(type); setShowOnboarding(false); }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
