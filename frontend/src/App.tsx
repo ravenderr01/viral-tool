@@ -17,10 +17,12 @@ const SUPPORT_PHONE = "+91 9315133390";
 // ============================================
 
 const PLANS = {
-  free:    { label: "Free",    limit: 3,    priceINR: 0,    priceUSD: 0  },
-  starter: { label: "Starter", limit: 50,   priceINR: 499,  priceUSD: 6,  badge: "🔥 Popular" },
-  pro:     { label: "Pro",     limit: 150,  priceINR: 1499, priceUSD: 18, badge: "⚡ Best Value" },
-  agency:  { label: "Agency",  limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
+  free:        { label: "Free",        limit: 10,   priceINR: 0,    priceUSD: 0  },
+  starter:     { label: "Starter",     limit: 100,  priceINR: 299,  priceUSD: 4,  badge: "🔥 Popular" },
+  pro_creator: { label: "Pro Creator", limit: 400,  priceINR: 999,  priceUSD: 12, badge: "⚡ Best Value" },
+  growth:      { label: "Growth",      limit: 150,  priceINR: 799,  priceUSD: 10, badge: "📈 Business" },
+  business:    { label: "Business",    limit: 400,  priceINR: 1999, priceUSD: 24, badge: "💎 Pro" },
+  agency:      { label: "Agency",      limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
 };
 
 const NICHE_EXAMPLES = {
