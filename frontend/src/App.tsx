@@ -1903,7 +1903,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", marginBottom: "0.3rem" }}>
               <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#a855f7" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
               <span style={{ color: remaining === 0 ? "#ef4444" : remaining <= 3 ? "#f59e0b" : "#22c55e", fontWeight: 700 }}>
-                {remaining === 0 ? "⛔ Limit reached" : `${remaining} left`}
+                {remaining === 0 ? "⛔ Limit reached" : `${remaining} / ${limit} credits`}
               </span>
             </div>
             <div style={{ background: "#141414", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
@@ -1925,7 +1925,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji}
                 active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["score","calendar","pack","trends"].includes(t.id)} />
+                isPro={["score","calendar","pack","trends","image"].includes(t.id) && !["pro","agency","Agency"].includes(plan)} />
             ))}
           </div>
         </div>
