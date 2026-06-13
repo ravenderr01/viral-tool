@@ -143,6 +143,7 @@ export default function ImageContent({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [keyword, setKeyword] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isLocked = !["pro", "agency", "Agency"].includes(plan);
@@ -185,9 +186,12 @@ export default function ImageContent({
       const platformPrompt = PLATFORM_PROMPTS[platform] || PLATFORM_PROMPTS["Instagram"];
 
       const prompt = `You are an expert content creator and marketer. Analyze this image carefully and generate highly specific, platform-optimized content.
+      
 
 PLATFORM: ${platform}
 OUTPUT LANGUAGE: Write EVERYTHING strictly in ${langLabel} only
+
+${keyword ? `KEYWORD/TOPIC CONTEXT: "${keyword}" — Use this keyword to make content more specific and targeted.` : ""}
 
 STEP 1 — Analyze the image:
 Look at: subject/product, colors, mood, setting, people, text, brand elements, emotions conveyed
@@ -334,7 +338,25 @@ Respond ONLY in this exact JSON (no markdown):
             </>
           )}
         </div>
-
+{/* Keyword Input */}
+<div style={{ marginBottom: "1rem" }}>
+  <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>
+    KEYWORD / TOPIC <span style={{ color: "#555", fontWeight: 400 }}>(Optional — leave empty to analyze image only)</span>
+  </label>
+  <input
+    value={keyword}
+    onChange={e => setKeyword(e.target.value)}
+    placeholder="e.g. weight loss, travel vlog, product launch..."
+    style={{
+      width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e",
+      borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff",
+      fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif",
+      transition: "border 0.2s"
+    }}
+    onFocus={e => e.target.style.borderColor = "#a855f7"}
+    onBlur={e => e.target.style.borderColor = "#1e1e1e"}
+  />
+</div>
         {/* Platform Selector */}
         <div style={{ marginBottom: "1rem" }}>
           <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
@@ -392,7 +414,7 @@ Respond ONLY in this exact JSON (no markdown):
             fontFamily: "'Syne',sans-serif", transition: "all 0.3s",
             boxShadow: image && !loading ? "0 8px 32px rgba(168,85,247,0.4)" : "none"
           }}>
-          {loading ? "🖼️ Analyzing image & generating..." : `⚡ Generate ${platform} Content (1 credit)`}
+          {loading ? "🖼️ Analyzing image & generating..." : `⚡ Generate ${platform} Content ${keyword ? `— "${keyword}"` : "— Image Only"} (1 credit)`}
         </button>
       </div>
 
