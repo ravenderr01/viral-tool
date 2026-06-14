@@ -1245,12 +1245,18 @@ if (session?.user?.email === ADMIN_EMAIL) {
     });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
-        const { data } = await supabase.from("users").select("user_type").eq("id", session.user.id).single();
+        const { data } = await supabase.from("users").select("user_type, plan, referral_code").eq("id", session.user.id).single();
+        setUser(session.user);
         if (!data?.user_type) {
           setShowOnboarding(true);
+        } else {
+          setUserType(data.user_type);
         }
+        setProfileLoading(false);
+      } else {
+        setUser(null);
+        setProfileLoading(false);
       }
     });
 
