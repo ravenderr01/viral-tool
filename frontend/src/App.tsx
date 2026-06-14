@@ -1220,10 +1220,10 @@ const [showProfile, setShowProfile] = useState(false);
     // Auth check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAuthLoading(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setProfile(data ?? null);
-        setAuthLoading(false);
         if (!data?.user_type) {
   setShowOnboarding(true);
 } else {
