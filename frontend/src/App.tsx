@@ -1205,6 +1205,7 @@ const [reviewSubmitted, setReviewSubmitted] = useState(false);
 const [reviewLoading, setReviewLoading] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [authLoading, setAuthLoading] = useState(true);
+const [profileLoading, setProfileLoading] = useState(true);
 const [profile, setProfile] = useState<any>(() => {
   try {
     const saved = localStorage.getItem("viral_profile");
