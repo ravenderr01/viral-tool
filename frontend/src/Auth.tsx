@@ -343,11 +343,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                       <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className="auth-input" style={inputStyle} />
                     </div>
                     <div>
-  <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>REFERRAL CODE (Optional)</label>
-  <input value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
-    placeholder="Enter referral code (optional)"
-    className="auth-input" style={inputStyle} />
-</div>
+  
                   </>
                 )}
 
