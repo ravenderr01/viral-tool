@@ -1224,10 +1224,10 @@ const [showProfile, setShowProfile] = useState(false);
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setProfile(data ?? null);
-        if (!data?.user_type) {
+        if (!data?.user_type && data?.plan === "free") {
   setShowOnboarding(true);
 } else {
-  setUserType(data.user_type);
+  setUserType(data?.user_type || "creator");
 }
         
 if (data?.referral_code) {
@@ -1251,7 +1251,7 @@ if (session?.user?.email === ADMIN_EMAIL) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const limit     = plan === "free" ? 3 : (PLANS[plan as keyof typeof PLANS]?.limit || 3);
+  const limit = PLANS[plan as keyof typeof PLANS]?.limit || 10;
   const remaining = Math.max(0, limit - usageCount);
   const usedPct   = Math.min(100, (usageCount / limit) * 100);
   const langLabel = getLangLabel(selectedLang);
@@ -2180,7 +2180,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                     🔥 Unlock Hook Score, Calendar & Content Packs
                   </div>
                   <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>
-                    Starter ₹749 · Pro ₹1499 · Bundle ₹3999
+                    Starter ₹299 · Pro Creator ₹999 · Business ₹1,999 · Agency ₹4,999
                   </div>
                   <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
                     <button onClick={() => setShowPaywall(true)} style={{
@@ -2201,11 +2201,11 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
           {/* ── TAB: HOOK SCORE ── */}
           {activeTab === "score" && (
-            (plan === "free" || plan === "starter") ? (
+            (plan === "free") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer is available on paid plans only.</p>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer unlocks from Starter plan onwards.</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
                   🚀 Upgrade Now
                 </button>
@@ -2221,7 +2221,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
           {/* ── TAB: CALENDAR ── */}
           {activeTab === "calendar" && (
-            (plan === "free" || plan === "starter" || plan === "pro") ? (
+            (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
@@ -2266,7 +2266,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
           {/* ── TAB: PACK ── */}
           {activeTab === "pack" && (
-            (plan === "free" || plan === "starter" || plan === "pro") ? (
+            (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Feature</h3>
