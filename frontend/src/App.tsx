@@ -1244,8 +1244,14 @@ if (session?.user?.email === ADMIN_EMAIL) {
       }
     });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data } = await supabase.from("users").select("user_type").eq("id", session.user.id).single();
+        if (!data?.user_type) {
+          setShowOnboarding(true);
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -1698,7 +1704,6 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
-  if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={(type) => { setUserType(type); setShowOnboarding(false); }} />;
 
   return (
     <>
