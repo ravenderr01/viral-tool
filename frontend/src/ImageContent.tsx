@@ -127,12 +127,13 @@ interface ResultData {
 }
 
 export default function ImageContent({
-  plan, onUpgrade, credits, onCreditUsed
+  plan, onUpgrade, credits, onCreditUsed, langLabel = "English"
 }: {
   plan: string;
   onUpgrade: () => void;
   credits: number;
   onCreditUsed: () => void;
+  langLabel?: string;
 }) {
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
