@@ -1247,8 +1247,24 @@ if (session?.user?.email === ADMIN_EMAIL) {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const { data } = await supabase.from("users").select("user_type, plan, referral_code").eq("id", session.user.id).single();
+        const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setUser(session.user);
+        setProfile(data ?? null);
+        
+        // Plan set karo
+        const ADMIN_EMAIL = "ravenderr01@gmail.com";
+        if (session.user.email === ADMIN_EMAIL) {
+          setPlan("agency");
+        } else if (data?.plan) {
+          setPlan(data.plan);
+        }
+
+        // Credits set karo
+        if (data?.credits_remaining !== undefined) {
+          setUsageCount((data.credits_total || 10) - data.credits_remaining);
+        }
+
+        // Onboarding check
         if (!data?.user_type) {
           setShowOnboarding(true);
         } else {
@@ -1257,6 +1273,8 @@ if (session?.user?.email === ADMIN_EMAIL) {
         setProfileLoading(false);
       } else {
         setUser(null);
+        setProfile(null);
+        setPlan("free");
         setProfileLoading(false);
       }
     });
