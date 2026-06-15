@@ -60,7 +60,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [referralCode, setReferralCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -90,16 +89,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           phone: phone,
         }).eq("id", data.user.id);
       }
-      if (data.user && referralCode) {
-  await fetch("https://viral-tool-1.onrender.com/api/referral/apply", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      referral_code: referralCode,
-      new_user_id: data.user.id
-    })
-  });
-}
       setMessage("✅ Account created! Please login.");
       setMode("login");
     }
@@ -146,14 +135,9 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         @media (max-width: 768px) { .auth-left { display: none !important; } .auth-right { max-width: 100% !important; flex: 1 !important; } }
       `}</style>
 
-      {/* ── OUTER WRAPPER ── */}
       <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#06040f",
-        position: "relative",
-        overflow: "hidden",
+        minHeight: "100vh", display: "flex", flexDirection: "column",
+        background: "#06040f", position: "relative", overflow: "hidden",
         fontFamily: "'DM Sans', sans-serif"
       }}>
 
@@ -178,33 +162,20 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           }} />
         </div>
 
-        
-        {/* ── MAIN ROW (left + right side by side) ── */}
-        <div style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "row",   /* KEY FIX — row not column */
-          position: "relative",
-          zIndex: 1
-        }}>
+        {/* Main Row */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "row", position: "relative", zIndex: 1 }}>
 
-          {/* ── LEFT SIDE — Features ── */}
+          {/* Left Side */}
           {mode === "login" && (
             <div className="auth-left" style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              padding: "5rem 3rem 3rem",
-              overflowY: "auto"
+              flex: 1, display: "flex", flexDirection: "column",
+              justifyContent: "center", padding: "5rem 3rem 3rem", overflowY: "auto"
             }}>
-              {/* Logo */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "3rem" }}>
                 <div style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", borderRadius: "12px", padding: "0.5rem 0.8rem", fontSize: "1.2rem" }}>⚡</div>
                 <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "1.1rem", background: "linear-gradient(135deg,#fff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>VCI</span>
               </div>
 
-              {/* Headline */}
               <div style={{ marginBottom: "2.5rem" }}>
                 <h1 style={{
                   fontFamily: "'Outfit',sans-serif", fontSize: "clamp(2rem,3.5vw,3rem)",
@@ -219,7 +190,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 </p>
               </div>
 
-              {/* Stats */}
               <div style={{ display: "flex", gap: "1.5rem", marginBottom: "2.5rem", flexWrap: "wrap" }}>
                 {[
                   { number: "10x", label: "Faster Content" },
@@ -233,7 +203,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 ))}
               </div>
 
-              {/* Features list */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "2.5rem" }}>
                 {[
                   { icon: "🎣", title: "Viral Hook Generator", desc: "Platform-specific hooks that stop the scroll" },
@@ -257,7 +226,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 ))}
               </div>
 
-              {/* Trust */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <div style={{ display: "flex" }}>
                   {["R","P","A","S","V"].map((l, i) => (
@@ -269,38 +237,27 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
             </div>
           )}
 
-          {/* ── RIGHT SIDE — Form ── */}
+          {/* Right Side - Form */}
           <div className="auth-right" style={{
             flex: mode === "login" ? "0 0 480px" : 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             padding: mode === "login" ? "5rem 2rem 2rem" : "2rem",
             background: mode === "login" ? "rgba(0,0,0,0.3)" : "transparent",
             borderLeft: mode === "login" ? "1px solid rgba(139,92,246,0.1)" : "none",
-            backdropFilter: mode === "login" ? "blur(10px)" : "none",
-            overflowY: "auto"
+            backdropFilter: mode === "login" ? "blur(10px)" : "none", overflowY: "auto"
           }}>
-
-            {/* Card */}
             <div style={{
               width: "100%", maxWidth: mode === "signup" ? 520 : 420,
-              background: "rgba(255,255,255,0.03)",
-              backdropFilter: "blur(24px)",
-              border: "1px solid rgba(139,92,246,0.2)",
-              borderRadius: "28px", padding: "2.5rem",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-              animation: "slideUp 0.5s ease",
-              transition: "max-width 0.3s"
+              background: "rgba(255,255,255,0.03)", backdropFilter: "blur(24px)",
+              border: "1px solid rgba(139,92,246,0.2)", borderRadius: "28px", padding: "2.5rem",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "slideUp 0.5s ease"
             }}>
-              {/* Header */}
               <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
                 <div style={{
                   display: "inline-flex", alignItems: "center", gap: "0.4rem",
                   background: "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(168,85,247,0.1))",
-                  border: "1px solid rgba(139,92,246,0.35)",
-                  borderRadius: "20px", padding: "0.3rem 1rem", marginBottom: "1rem"
+                  border: "1px solid rgba(139,92,246,0.35)", borderRadius: "20px",
+                  padding: "0.3rem 1rem", marginBottom: "1rem"
                 }}>
                   <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif" }}>⚡ VCI — Viral Content Intelligence</span>
                 </div>
@@ -317,14 +274,12 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 </p>
               </div>
 
-              {/* Reviews */}
               {(mode === "signup" || mode === "login") && (
                 <div style={{ marginBottom: "1rem" }}>
                   <ReviewCarousel reviews={reviews} />
                 </div>
               )}
 
-              {/* Form fields */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                 {mode === "signup" && (
                   <>
@@ -342,8 +297,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                       <label style={{ color: "#6b7280", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.35rem" }}>PHONE NUMBER *</label>
                       <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className="auth-input" style={inputStyle} />
                     </div>
-                    <div>
-  
                   </>
                 )}
 
@@ -382,22 +335,19 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 </button>
               </div>
 
-              {/* Divider */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: "1.25rem 0" }}>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
                 <span style={{ color: "#374151", fontSize: "0.75rem" }}>or</span>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
               </div>
 
-              {/* Mode switcher */}
               <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                 {mode === "login" && (
                   <>
                     <button onClick={() => { setMode("signup"); setError(""); setMessage(""); }} style={{
                       background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)",
                       borderRadius: "10px", color: "#c084fc", cursor: "pointer",
-                      fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem",
-                      fontFamily: "'DM Sans',sans-serif"
+                      fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem", fontFamily: "'DM Sans',sans-serif"
                     }}>
                       Don't have an account? <strong>Sign Up Free →</strong>
                     </button>
@@ -410,8 +360,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                   <button onClick={() => { setMode("login"); setError(""); setMessage(""); }} style={{
                     background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)",
                     borderRadius: "10px", color: "#c084fc", cursor: "pointer",
-                    fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem",
-                    fontFamily: "'DM Sans',sans-serif"
+                    fontSize: "0.85rem", fontWeight: 600, padding: "0.6rem", fontFamily: "'DM Sans',sans-serif"
                   }}>
                     Already have an account? <strong>Login →</strong>
                   </button>
@@ -423,7 +372,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 )}
               </div>
 
-              {/* Trust badges */}
               <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: "1.5rem" }}>
                 {[["🔒", "Secure"], ["⚡", "Fast"], ["🆓", "Free Trial"]].map(([icon, label]) => (
                   <div key={label} style={{ textAlign: "center" }}>
@@ -438,11 +386,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
 
         {/* Footer */}
         {mode === "login" && (
-          <div style={{
-            textAlign: "center", padding: "1rem",
-            borderTop: "1px solid rgba(139,92,246,0.1)",
-            position: "relative", zIndex: 1
-          }}>
+          <div style={{ textAlign: "center", padding: "1rem", borderTop: "1px solid rgba(139,92,246,0.1)", position: "relative", zIndex: 1 }}>
             <p style={{ color: "#6b7280", fontSize: "0.72rem", margin: 0, fontFamily: "'DM Sans',sans-serif" }}>
               Designed & Developed by{" "}
               <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span>
