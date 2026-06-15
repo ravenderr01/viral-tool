@@ -893,7 +893,14 @@ Respond ONLY in JSON:
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      let parsed;
+      try {
+        parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      } catch {
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) parsed = JSON.parse(match[0]);
+        else throw new Error("Parse failed");
+      }
       setResults(parsed);
       incrementUsage();
       await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: parsed.viralHooks || [], titles: parsed.titles || [], captions: parsed.captions || [], trending_topics: parsed.trendingTopics || [] });
