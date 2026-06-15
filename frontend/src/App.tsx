@@ -970,6 +970,36 @@ Respond ONLY in JSON:
         {/* Header */}
         <div style={{ background: "#08040f", borderBottom: "1px solid #1a1040", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
+          {/* LEFT floating stats */}
+          <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 0 }}>
+            {[
+              { num: "500+", label: "Creators", color: "#a855f7" },
+              { num: "15+", label: "Platforms", color: "#22c55e" },
+              { num: "30+", label: "Languages", color: "#06b6d4" },
+              { num: "10x", label: "Faster", color: "#f59e0b" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${s.color}30`, borderRadius: "10px", padding: "0.4rem 0.65rem", textAlign: "center", minWidth: "70px" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: s.color }}>{s.num}</div>
+                <div style={{ fontSize: "0.58rem", color: "#444", fontWeight: 600 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT floating features */}
+          <div style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 0 }}>
+            {[
+              { icon: "🎣", label: "Viral Hooks", color: "#a855f7" },
+              { icon: "📅", label: "30-Day Cal", color: "#06b6d4" },
+              { icon: "📦", label: "Content Pack", color: "#f59e0b" },
+              { icon: "🖼️", label: "Image AI", color: "#22c55e" },
+            ].map((f, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${f.color}30`, borderRadius: "10px", padding: "0.4rem 0.65rem", textAlign: "center", minWidth: "80px" }}>
+                <div style={{ fontSize: "1rem" }}>{f.icon}</div>
+                <div style={{ fontSize: "0.58rem", color: "#444", fontWeight: 600 }}>{f.label}</div>
+              </div>
+            ))}
+          </div>
+
           {/* Admin Button */}
           {user?.email === "ravenderr01@gmail.com" && (
             <button onClick={() => setShowAdmin(true)} style={{ position: "absolute", top: "1rem", right: "34rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🔧 Admin</button>
