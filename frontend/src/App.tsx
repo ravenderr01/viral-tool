@@ -960,6 +960,10 @@ Respond ONLY in JSON:
         @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(168,85,247,0.25)} 50%{box-shadow:0 0 50px rgba(168,85,247,0.55)} }
         .gbtn:hover:not(:disabled) { transform:translateY(-2px); }
         .tbtn:hover { border-color:#a855f7!important; color:#a855f7!important; }
+        @media (max-width: 768px) {
+  .desktop-btn { display: none !important; }
+  .mobile-header { padding: 0.75rem 1rem 0.5rem !important; }
+}
         input,textarea { box-sizing:border-box; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
@@ -978,10 +982,16 @@ Respond ONLY in JSON:
           )}
 
           {/* Top Buttons */}
-          <button onClick={() => supabase.auth.signOut()} style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
-          <button onClick={() => setShowPlans(true)} style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
-          <button onClick={() => setShowContact(true)} style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
-          <button onClick={() => setShowReview(true)} style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
+          <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
+          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
+          <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
+          <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
+
+          {/* Mobile Top Bar */}
+          <div style={{ display: "none" }} className="mobile-top-bar">
+            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",color:"#a855f7",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
+          </div>
 
           {/* Profile */}
           <div style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
@@ -1012,7 +1022,12 @@ Respond ONLY in JSON:
               </div>
             )}
           </div>
-
+{/* Mobile Top Bar */}
+<div style={{ display: "none" }} className="mobile-top-bar">
+  <style>{`@media(max-width:768px){.mobile-top-bar{display:flex!important;justify-content:space-between;align-items:center;padding:0.5rem 1rem;position:absolute;top:0;left:0;right:0;z-index:10}}`}</style>
+  <button onClick={() => setShowPlans(true)} style={{ background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",color:"#a855f7",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+  <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
+</div>
           {/* Title */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px", padding: "0.2rem 0.85rem", marginBottom: "0.5rem" }}>
             <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
