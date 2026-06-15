@@ -4,21 +4,14 @@ import { supabase } from "./supabaseClient";
 const ADMIN_EMAIL = "ravenderro1@gmail.com";
 
 const PLAN_COLORS: Record<string, string> = {
-  free: "#6b7280",
-  starter: "#22c55e",
-  growth: "#a855f7",
-  pro: "#06b6d4",
-  agency: "#f59e0b",
-  Agency: "#f59e0b",
+  free: "#6b7280", starter: "#22c55e", growth: "#a855f7",
+  pro: "#06b6d4", pro_creator: "#06b6d4", business: "#f97316",
+  agency: "#f59e0b", Agency: "#f59e0b",
 };
 
 const PLAN_CREDITS: Record<string, number> = {
-  free: 10,
-  starter: 75,
-  growth: 250,
-  pro: 600,
-  agency: 1500,
-  Agency: 1500,
+  free: 10, starter: 100, growth: 150,
+  pro: 400, pro_creator: 400, business: 400, agency: 1000, Agency: 1000,
 };
 
 export default function AdminDashboard({ onBack }: { onBack: () => void }) {
@@ -32,38 +25,30 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
   const [editCredits, setEditCredits] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({
     total: 0, free: 0, starter: 0, growth: 0, pro: 0, agency: 0,
-    totalCreditsUsed: 0, todaySignups: 0, totalReferrals: 0,
-    revenue: 0
+    totalCreditsUsed: 0, todaySignups: 0, totalReferrals: 0, revenue: 0
   });
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
-    const { data: usersData } = await supabase
-      .from("users")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: reviewsData } = await supabase
-      .from("reviews")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data: usersData } = await supabase.from("users").select("*").order("created_at", { ascending: false });
+    const { data: reviewsData } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
 
     if (usersData) {
       setUsers(usersData);
       const today = new Date().toISOString().split("T")[0];
-      const planRevenue: Record<string, number> = { starter: 299, growth: 799, pro: 1999, agency: 4999 };
+      const planRevenue: Record<string, number> = { starter: 299, growth: 799, pro: 1999, pro_creator: 999, business: 1999, agency: 4999 };
       setStats({
         total: usersData.length,
         free: usersData.filter(u => !u.plan || u.plan === "free").length,
         starter: usersData.filter(u => u.plan === "starter").length,
         growth: usersData.filter(u => u.plan === "growth").length,
-        pro: usersData.filter(u => u.plan === "pro").length,
+        pro: usersData.filter(u => u.plan === "pro" || u.plan === "pro_creator" || u.plan === "business").length,
         agency: usersData.filter(u => u.plan === "agency" || u.plan === "Agency").length,
         totalCreditsUsed: usersData.reduce((a, u) => a + (u.generations_used_today || 0), 0),
         todaySignups: usersData.filter(u => u.created_at?.startsWith(today)).length,
@@ -91,6 +76,18 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
     setSaving(false);
   };
 
+  const deleteUser = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    await supabase.from("users").delete().eq("id", deleteConfirm.id);
+    await supabase.auth.admin?.deleteUser(deleteConfirm.id).catch(() => {});
+    setMessage(`🗑 ${deleteConfirm.email} deleted!`);
+    setDeleteConfirm(null);
+    setTimeout(() => setMessage(""), 3000);
+    fetchAll();
+    setDeleting(false);
+  };
+
   const approveReview = async (id: string) => {
     await supabase.from("reviews").update({ approved: true }).eq("id", id);
     fetchAll();
@@ -105,12 +102,6 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
     u.plan?.toLowerCase().includes(search.toLowerCase())
   );
-
-  const TABS = [
-    { id: "stats", label: "📊 Stats", },
-    { id: "users", label: "👥 Users", },
-    { id: "reviews", label: "⭐ Reviews", },
-  ];
 
   return (
     <>
@@ -145,7 +136,7 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
 
           {/* Tabs */}
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", background: "rgba(255,255,255,0.03)", borderRadius: "12px", padding: "0.4rem" }}>
-            {TABS.map(t => (
+            {[{ id: "stats", label: "📊 Stats" }, { id: "users", label: "👥 Users" }, { id: "reviews", label: "⭐ Reviews" }].map(t => (
               <button key={t.id} onClick={() => setActiveTab(t.id as any)}
                 style={{ flex: 1, padding: "0.6rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: activeTab === t.id ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "transparent", color: activeTab === t.id ? "#fff" : "#555", transition: "all 0.2s" }}>
                 {t.label}
@@ -160,14 +151,12 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
               {/* STATS TAB */}
               {activeTab === "stats" && (
                 <div style={{ animation: "slideUp 0.4s ease" }}>
-                  {/* Revenue Card */}
                   <div style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(124,58,237,0.1))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "16px", padding: "1.5rem", marginBottom: "1.5rem", textAlign: "center" }}>
                     <p style={{ margin: "0 0 0.3rem", color: "#a855f7", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em" }}>💰 ESTIMATED MONTHLY REVENUE</p>
                     <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: "2.5rem", fontWeight: 900, color: "#fff" }}>₹{stats.revenue.toLocaleString("en-IN")}</div>
                     <p style={{ margin: "0.3rem 0 0", color: "#555", fontSize: "0.75rem" }}>Based on current paid plans</p>
                   </div>
 
-                  {/* Stats Grid */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
                     {[
                       { label: "Total Users", value: stats.total, color: "#fff", emoji: "👥" },
@@ -183,19 +172,18 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
                     ))}
                   </div>
 
-                  {/* Plan Breakdown */}
                   <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "1.25rem" }}>
                     <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "#555", fontWeight: 700, letterSpacing: "0.08em" }}>📊 PLAN BREAKDOWN</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                       {[
                         { plan: "Agency", count: stats.agency, price: 4999, color: "#f59e0b" },
-                        { plan: "Pro", count: stats.pro, price: 1999, color: "#06b6d4" },
+                        { plan: "Pro / Business", count: stats.pro, price: 1499, color: "#06b6d4" },
                         { plan: "Growth", count: stats.growth, price: 799, color: "#a855f7" },
                         { plan: "Starter", count: stats.starter, price: 299, color: "#22c55e" },
                         { plan: "Free", count: stats.free, price: 0, color: "#6b7280" },
                       ].map((p, i) => (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ width: 70, color: p.color, fontWeight: 700, fontSize: "0.82rem" }}>{p.plan}</div>
+                          <div style={{ width: 80, color: p.color, fontWeight: 700, fontSize: "0.82rem" }}>{p.plan}</div>
                           <div style={{ flex: 1, height: 8, background: "#111", borderRadius: "4px", overflow: "hidden" }}>
                             <div style={{ width: `${stats.total ? (p.count / stats.total) * 100 : 0}%`, height: "100%", background: p.color, borderRadius: "4px", transition: "width 0.5s" }} />
                           </div>
@@ -211,26 +199,23 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
               {/* USERS TAB */}
               {activeTab === "users" && (
                 <div style={{ animation: "slideUp 0.4s ease" }}>
-                  {/* Search */}
                   <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="🔍 Search by email or plan..."
                     style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: "1rem" }} />
 
                   <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", overflow: "hidden" }}>
-                    {/* Table Header */}
-                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px", gap: "0.5rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.03)", borderBottom: "1px solid #111" }}>
-                      {["Email", "Plan", "Credits", "Used Today", "Referrals", "Action"].map(h => (
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 120px", gap: "0.5rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.03)", borderBottom: "1px solid #111" }}>
+                      {["Email", "Plan", "Credits", "Used Today", "Actions"].map(h => (
                         <div key={h} style={{ color: "#444", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em" }}>{h}</div>
                       ))}
                     </div>
 
-                    {/* Table Rows */}
                     <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
-                      {filteredUsers.map((u, i) => {
+                      {filteredUsers.map((u) => {
                         const planKey = u.plan?.toLowerCase() || "free";
                         const planColor = PLAN_COLORS[planKey] || "#6b7280";
                         return (
-                          <div key={u.id} className="row-hover" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 80px", gap: "0.5rem", padding: "0.75rem 1rem", borderBottom: "1px solid #0d0d0d", alignItems: "center", transition: "background 0.2s" }}>
+                          <div key={u.id} className="row-hover" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 120px", gap: "0.5rem", padding: "0.75rem 1rem", borderBottom: "1px solid #0d0d0d", alignItems: "center", transition: "background 0.2s" }}>
                             <div>
                               <div style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 600 }}>{u.email}</div>
                               <div style={{ color: "#333", fontSize: "0.65rem" }}>{u.first_name} {u.last_name}</div>
@@ -246,11 +231,16 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
                               <div style={{ color: "#333", fontSize: "0.65rem" }}>/ {u.credits_total ?? "—"}</div>
                             </div>
                             <div style={{ color: "#f59e0b", fontSize: "0.82rem", fontWeight: 600 }}>{u.generations_used_today || 0}</div>
-                            <div style={{ color: "#a855f7", fontSize: "0.82rem", fontWeight: 600 }}>{u.referral_count || 0}</div>
-                            <button onClick={() => { setEditUser(u); setEditPlan(u.plan || "free"); setEditCredits(u.credits_remaining?.toString() || "10"); }}
-                              style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.3rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
-                              Edit
-                            </button>
+                            <div style={{ display: "flex", gap: "0.35rem" }}>
+                              <button onClick={() => { setEditUser(u); setEditPlan(u.plan || "free"); setEditCredits(u.credits_remaining?.toString() || "10"); }}
+                                style={{ flex: 1, background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.3rem 0.4rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>
+                                ✏️ Edit
+                              </button>
+                              <button onClick={() => setDeleteConfirm(u)}
+                                style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.3rem 0.4rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>
+                                🗑
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -264,7 +254,7 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
               {activeTab === "reviews" && (
                 <div style={{ animation: "slideUp 0.4s ease" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
-                    {reviews.map((r, i) => (
+                    {reviews.map((r) => (
                       <div key={r.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${r.approved ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: "14px", padding: "1rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                           <div>
@@ -284,21 +274,13 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
                         <div style={{ color: "#333", fontSize: "0.65rem", marginBottom: "0.75rem" }}>{new Date(r.created_at).toLocaleDateString("en-IN")}</div>
                         <div style={{ display: "flex", gap: "0.5rem" }}>
                           {!r.approved && (
-                            <button onClick={() => approveReview(r.id)}
-                              style={{ flex: 1, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>
-                              ✓ Approve
-                            </button>
+                            <button onClick={() => approveReview(r.id)} style={{ flex: 1, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>✓ Approve</button>
                           )}
-                          <button onClick={() => deleteReview(r.id)}
-                            style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>
-                            🗑 Delete
-                          </button>
+                          <button onClick={() => deleteReview(r.id)} style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>🗑 Delete</button>
                         </div>
                       </div>
                     ))}
-                    {reviews.length === 0 && (
-                      <div style={{ textAlign: "center", padding: "2rem", color: "#333" }}>No reviews yet</div>
-                    )}
+                    {reviews.length === 0 && <div style={{ textAlign: "center", padding: "2rem", color: "#333" }}>No reviews yet</div>}
                   </div>
                 </div>
               )}
@@ -317,7 +299,7 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ color: "#555", fontSize: "0.68rem", fontWeight: 700, display: "block", marginBottom: "0.4rem" }}>PLAN</label>
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                {["free", "starter", "growth", "pro", "agency"].map(p => (
+                {["free", "starter", "pro_creator", "growth", "business", "agency"].map(p => (
                   <button key={p} onClick={() => { setEditPlan(p); setEditCredits(PLAN_CREDITS[p].toString()); }}
                     style={{ background: editPlan === p ? `${PLAN_COLORS[p]}20` : "#0d0d0d", border: `1px solid ${editPlan === p ? PLAN_COLORS[p] : "#1a1a1a"}`, color: editPlan === p ? PLAN_COLORS[p] : "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, textTransform: "capitalize" }}>
                     {p}
@@ -335,10 +317,32 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
 
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <button onClick={updateUser} disabled={saving}
-                style={{ flex: 1, background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", padding: "0.8rem", borderRadius: "10px", cursor: saving ? "not-allowed" : "pointer", fontWeight: 800, fontSize: "0.88rem", fontFamily: "'Outfit',sans-serif" }}>
+                style={{ flex: 1, background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", padding: "0.8rem", borderRadius: "10px", cursor: saving ? "not-allowed" : "pointer", fontWeight: 800, fontSize: "0.88rem" }}>
                 {saving ? "Saving..." : "✅ Save Changes"}
               </button>
               <button onClick={() => setEditUser(null)}
+                style={{ flex: 1, background: "#111", border: "1px solid #222", color: "#555", padding: "0.8rem", borderRadius: "10px", cursor: "pointer", fontWeight: 700, fontSize: "0.88rem" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#0a0a0a", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "20px", padding: "1.75rem", maxWidth: "380px", width: "100%", animation: "slideUp 0.3s ease", textAlign: "center" }}>
+            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⚠️</div>
+            <h3 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "1.1rem", fontWeight: 800, color: "#fff", margin: "0 0 0.5rem" }}>Delete User?</h3>
+            <p style={{ color: "#ef4444", fontSize: "0.85rem", margin: "0 0 0.5rem", fontWeight: 600 }}>{deleteConfirm.email}</p>
+            <p style={{ color: "#555", fontSize: "0.78rem", margin: "0 0 1.5rem" }}>This action cannot be undone. All user data will be permanently deleted.</p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button onClick={deleteUser} disabled={deleting}
+                style={{ flex: 1, background: "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: "#fff", padding: "0.8rem", borderRadius: "10px", cursor: deleting ? "not-allowed" : "pointer", fontWeight: 800, fontSize: "0.88rem" }}>
+                {deleting ? "Deleting..." : "🗑 Yes, Delete"}
+              </button>
+              <button onClick={() => setDeleteConfirm(null)}
                 style={{ flex: 1, background: "#111", border: "1px solid #222", color: "#555", padding: "0.8rem", borderRadius: "10px", cursor: "pointer", fontWeight: 700, fontSize: "0.88rem" }}>
                 Cancel
               </button>
