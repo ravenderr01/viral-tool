@@ -971,7 +971,7 @@ Respond ONLY in JSON:
         <div style={{ background: "#08040f", borderBottom: "1px solid #1a1040", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
           {/* LEFT — Animated Stats */}
-          <div style={{ position: "absolute", left: "0.75rem", top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "0.6rem", zIndex: 1 }}>
+          <div style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.6rem", zIndex: 1 }}>
             <style>{`
               @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
               @keyframes glowPulse { 0%,100%{box-shadow:0 0 8px rgba(168,85,247,0.3)} 50%{box-shadow:0 0 20px rgba(168,85,247,0.7)} }
@@ -1006,7 +1006,7 @@ Respond ONLY in JSON:
           </div>
 
           {/* RIGHT — Animated Features */}
-          <div style={{ position: "absolute", right: "0.75rem", top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "0.6rem", zIndex: 1 }}>
+          <div style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.6rem", zIndex: 1 }}>
             {[
               { icon: "🎣", label: "Viral Hooks", color: "#a855f7", delay: "0.2s" },
               { icon: "📅", label: "30-Day Cal", color: "#06b6d4", delay: "0.7s" },
