@@ -343,4 +343,12 @@ app.post("/api/referral/apply", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+// Keep alive — ping every 14 minutes
+setInterval(() => {
+  fetch(`https://viral-tool-1.onrender.com/health`)
+    .then(() => console.log("Keep alive ping sent"))
+    .catch(() => {});
+}, 14 * 60 * 1000);
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
