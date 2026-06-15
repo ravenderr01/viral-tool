@@ -2144,48 +2144,71 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               {/* Keyword */}
               <div style={{ marginBottom: "0.75rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>OUTPUT LANGUAGE</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
-                {LANGUAGE_GROUPS.map(group => {
-                  const allLocked = group.languages.every(l => {
-                    const freeLangs = ["en"];
-                    const starterLangs = ["en", "hi"];
-                    const indianLangs = ["hi","bn","ta","te","mr","gu","kn","ml","pa","or","as","ur"];
-                    if (plan === "free") return !freeLangs.includes(l.code);
-                    if (plan === "starter") return !starterLangs.includes(l.code);
-                    if (plan === "growth") return false;
-                    return false;
-                  });
-                  return (
-                    <div key={group.code}>
-                      <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", margin: "0 0 0.35rem" }}>
-                        {group.country}
-                      </p>
-                      <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-                        {group.languages.map(lang => {
-                          const freeLangs = ["en"];
-                          const starterLangs = ["en", "hi"];
-                          const isLocked = 
-                            (plan === "free" && !freeLangs.includes(lang.code)) ||
-                            (plan === "starter" && !starterLangs.includes(lang.code));
-                          return (
-                            <button key={lang.code} onClick={() => isLocked ? setShowPaywall(true) : setSelectedLang(lang.code)}
-                              style={{
-                                background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "#0d0d0d",
-                                border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1a1a1a"}`,
-                                color: selectedLang === lang.code ? "#a855f7" : isLocked ? "#2a2a2a" : "#444",
-                                padding: "0.25rem 0.65rem", borderRadius: "20px",
-                                cursor: "pointer", fontSize: "0.73rem", fontWeight: 600,
-                                transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
-                              }}>
-                              {isLocked ? "🔒 " : ""}{lang.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Selected language display */}
+              <div style={{ marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                <span style={{ background: "rgba(168,85,247,0.15)", border: "1px solid #a855f7", color: "#a855f7", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>
+                  ✓ {getLangLabel(selectedLang)}
+                </span>
+                <span style={{ color: "#333", fontSize: "0.72rem" }}>← Click country to change</span>
               </div>
+              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+                {LANGUAGE_GROUPS.map(group => (
+                  <div key={group.code} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => {
+                        const el = document.getElementById(`lang-${group.code}`);
+                        if (el) el.style.display = el.style.display === "none" ? "flex" : "none";
+                      }}
+                      style={{
+                        background: group.languages.some(l => l.code === selectedLang) ? "rgba(168,85,247,0.15)" : "#0d0d0d",
+                        border: `1px solid ${group.languages.some(l => l.code === selectedLang) ? "#a855f7" : "#1a1a1a"}`,
+                        color: group.languages.some(l => l.code === selectedLang) ? "#a855f7" : "#444",
+                        padding: "0.28rem 0.75rem", borderRadius: "20px",
+                        cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
+                        transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+                      }}>
+                      {group.country} ▾
+                    </button>
+                    <div id={`lang-${group.code}`} style={{
+                      display: "none", position: "absolute", top: "110%", left: 0,
+                      background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "12px",
+                      padding: "0.5rem", zIndex: 50, minWidth: "160px",
+                      flexDirection: "column", gap: "0.3rem",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+                    }}>
+                      {group.languages.map(lang => {
+                        const freeLangs = ["en"];
+                        const starterLangs = ["en", "hi"];
+                        const isLocked = 
+                          (plan === "free" && !freeLangs.includes(lang.code)) ||
+                          (plan === "starter" && !starterLangs.includes(lang.code)) &&
+                          !["pro_creator", "growth", "business", "agency"].includes(plan);
+                        return (
+                          <button key={lang.code}
+                            onClick={() => {
+                              if (isLocked) { setShowPaywall(true); return; }
+                              setSelectedLang(lang.code);
+                              const el = document.getElementById(`lang-${group.code}`);
+                              if (el) el.style.display = "none";
+                            }}
+                            style={{
+                              background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "transparent",
+                              border: "none",
+                              color: selectedLang === lang.code ? "#a855f7" : isLocked ? "#333" : "#ccc",
+                              padding: "0.4rem 0.75rem", borderRadius: "8px",
+                              cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
+                              textAlign: "left", width: "100%",
+                              fontFamily: "'DM Sans',sans-serif"
+                            }}>
+                            {isLocked ? "🔒 " : selectedLang === lang.code ? "✓ " : ""}{lang.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+                
 
               <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
                 <input value={keyword}
