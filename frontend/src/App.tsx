@@ -2280,7 +2280,6 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             )
           )}
         </div>
-      </div>
 
       {/* Footer */}
       <div style={{
