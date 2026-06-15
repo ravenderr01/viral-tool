@@ -1742,7 +1742,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         {/* ── Header ── */}
         <div style={{
           background: "#08040f", borderBottom: "1px solid #1a1040",
-          padding: "1.5rem 1.5rem 0", textAlign: "center", position: "relative"
+          padding: "1.5rem 1.5rem 1rem", textAlign: "center", position: "relative", minHeight: "120px"
         }}>
         {user?.email === "ravenderr01@gmail.com" && (
   <button onClick={() => setShowAdmin(true)} style={{
@@ -1849,17 +1849,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                   <div style={{ color: "#555", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
                     📞 {profile.phone}
                   </div>
-             )}
-    <p style={{ margin: "0.4rem 0 0", color: "#444", fontSize: "0.68rem" }}>
-      Friend joins → You get <strong style={{ color: "#22c55e" }}>+10 credits</strong> · They get <strong style={{ color: "#22c55e" }}>+10 credits</strong>
-    </p>
-    {profile?.referral_count > 0 && (
-      <p style={{ margin: "0.3rem 0 0", color: "#22c55e", fontSize: "0.68rem", fontWeight: 700 }}>
-        ✅ {profile.referral_count} successful referrals!
-      </p>
-)}
-  </div>
-)}
+                )}
                 <div style={{ color: "#333", fontSize: "0.72rem", marginBottom: "1rem" }}>
                   📅 Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                 </div>
@@ -1886,7 +1876,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                   Logout
                 </button>
               </div>
-           )
+            )}
           </div>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.4rem",
@@ -2280,6 +2270,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             )
           )}
         </div>
+      </div>
 
       {/* Footer */}
       <div style={{
