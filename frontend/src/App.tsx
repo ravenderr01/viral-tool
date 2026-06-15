@@ -51,23 +51,143 @@ const NICHE_EXAMPLES = {
   Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
 };
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const LANGUAGES = [
-  { code: "en", label: "🇬🇧 English" },
-  { code: "hi", label: "🇮🇳 Hindi" },
-  { code: "es", label: "🇪🇸 Spanish" },
-  { code: "fr", label: "🇫🇷 French" },
-  { code: "de", label: "🇩🇪 German" },
-  { code: "ar", label: "🇸🇦 Arabic" },
-  { code: "pt", label: "🇧🇷 Portuguese" },
-  { code: "id", label: "🇮🇩 Indonesian" },
-  { code: "tr", label: "🇹🇷 Turkish" },
-  { code: "bn", label: "🇧🇩 Bengali" },
-  { code: "ur", label: "🇵🇰 Urdu" },
-  { code: "zh", label: "🇨🇳 Chinese" },
-  { code: "ja", label: "🇯🇵 Japanese" },
-  { code: "ko", label: "🇰🇷 Korean" },
-  { code: "ru", label: "🇷🇺 Russian" },
+const LANGUAGE_GROUPS = [
+  {
+    country: "🇮🇳 India",
+    code: "IN",
+    languages: [
+      { code: "hi", label: "Hindi" },
+      { code: "bn", label: "Bengali" },
+      { code: "ta", label: "Tamil" },
+      { code: "te", label: "Telugu" },
+      { code: "mr", label: "Marathi" },
+      { code: "gu", label: "Gujarati" },
+      { code: "kn", label: "Kannada" },
+      { code: "ml", label: "Malayalam" },
+      { code: "pa", label: "Punjabi" },
+      { code: "or", label: "Odia" },
+      { code: "as", label: "Assamese" },
+      { code: "ur", label: "Urdu" },
+    ]
+  },
+  {
+    country: "🇬🇧 English",
+    code: "EN",
+    languages: [
+      { code: "en", label: "English" },
+    ]
+  },
+  {
+    country: "🇺🇸 USA",
+    code: "US",
+    languages: [
+      { code: "en-us", label: "American English" },
+      { code: "es-us", label: "Spanish (US)" },
+    ]
+  },
+  {
+    country: "🇩🇪 Germany",
+    code: "DE",
+    languages: [
+      { code: "de", label: "German" },
+    ]
+  },
+  {
+    country: "🇫🇷 France",
+    code: "FR",
+    languages: [
+      { code: "fr", label: "French" },
+    ]
+  },
+  {
+    country: "🇪🇸 Spain",
+    code: "ES",
+    languages: [
+      { code: "es", label: "Spanish" },
+    ]
+  },
+  {
+    country: "🇮🇹 Italy",
+    code: "IT",
+    languages: [
+      { code: "it", label: "Italian" },
+    ]
+  },
+  {
+    country: "🇷🇺 Russia",
+    code: "RU",
+    languages: [
+      { code: "ru", label: "Russian" },
+    ]
+  },
+  {
+    country: "🇨🇳 China",
+    code: "CN",
+    languages: [
+      { code: "zh", label: "Chinese (Mandarin)" },
+      { code: "zh-yue", label: "Cantonese" },
+    ]
+  },
+  {
+    country: "🇯🇵 Japan",
+    code: "JP",
+    languages: [
+      { code: "ja", label: "Japanese" },
+    ]
+  },
+  {
+    country: "🇰🇷 Korea",
+    code: "KR",
+    languages: [
+      { code: "ko", label: "Korean" },
+    ]
+  },
+  {
+    country: "🇸🇦 Arabic",
+    code: "AR",
+    languages: [
+      { code: "ar", label: "Arabic" },
+      { code: "ar-eg", label: "Egyptian Arabic" },
+    ]
+  },
+  {
+    country: "🇵🇰 Pakistan",
+    code: "PK",
+    languages: [
+      { code: "ur", label: "Urdu" },
+    ]
+  },
+  {
+    country: "🇹🇭 Thailand",
+    code: "TH",
+    languages: [
+      { code: "th", label: "Thai" },
+    ]
+  },
+  {
+    country: "🇧🇷 Brazil",
+    code: "BR",
+    languages: [
+      { code: "pt", label: "Portuguese" },
+    ]
+  },
+  {
+    country: "🇮🇩 Indonesia",
+    code: "ID",
+    languages: [
+      { code: "id", label: "Indonesian" },
+    ]
+  },
+  {
+    country: "🇹🇷 Turkey",
+    code: "TR",
+    languages: [
+      { code: "tr", label: "Turkish" },
+    ]
+  },
 ];
+
+const LANGUAGES = LANGUAGE_GROUPS.flatMap(g => g.languages);
 const CONTENT_TYPES = ["Tips","Story","Mistakes","Behind the Scenes","Q&A","Tutorial","Motivation","Trend","Case Study","Poll","Review","Challenge"];
 
 function getBrowserLang() {
@@ -76,11 +196,15 @@ function getBrowserLang() {
 }
 
 const LANG_LABELS: Record<string, string> = {
-  en: "English", hi: "Hindi", es: "Spanish", fr: "French",
-  de: "German",  pt: "Portuguese", ar: "Arabic", zh: "Chinese",
-  ja: "Japanese", ko: "Korean", ru: "Russian", it: "Italian",
-  tr: "Turkish",  nl: "Dutch", pl: "Polish", id: "Indonesian",
-  vi: "Vietnamese", th: "Thai", bn: "Bengali", ur: "Urdu",
+  en: "English", "en-us": "American English", "es-us": "Spanish (US)",
+  hi: "Hindi", bn: "Bengali", ta: "Tamil", te: "Telugu",
+  mr: "Marathi", gu: "Gujarati", kn: "Kannada", ml: "Malayalam",
+  pa: "Punjabi", or: "Odia", as: "Assamese",
+  es: "Spanish", fr: "French", de: "German", it: "Italian",
+  pt: "Portuguese", ar: "Arabic", "ar-eg": "Egyptian Arabic",
+  zh: "Chinese (Mandarin)", "zh-yue": "Cantonese",
+  ja: "Japanese", ko: "Korean", ru: "Russian",
+  tr: "Turkish", id: "Indonesian", th: "Thai", ur: "Urdu",
 };
 
 function getLangLabel(code: string) {
@@ -2020,25 +2144,47 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               {/* Keyword */}
               <div style={{ marginBottom: "0.75rem" }}>
                 <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>OUTPUT LANGUAGE</label>
-              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-                {LANGUAGES.map(lang => (
-                  <button key={lang.code} onClick={() => {
-                      const freeLangs = ["en"];
-                      const paidLangs = ["en", "hi"];
-                      const isLocked = (plan === "free" && !freeLangs.includes(lang.code)) || (plan === "starter" && !paidLangs.includes(lang.code)) || (plan === "pro" && !paidLangs.includes(lang.code));
-                      isLocked ? setShowPaywall(true) : setSelectedLang(lang.code);
-                    }}
-                    style={{
-                      background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "#0d0d0d",
-                      border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1a1a1a"}`,
-                      color: selectedLang === lang.code ? "#a855f7" : (plan === "free" && !["en"].includes(lang.code)) ? "#2a2a2a" : "#444",
-                      padding: "0.28rem 0.75rem", borderRadius: "20px",
-                      cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
-                      transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
-                    }}>
-                    {(plan === "free" && !["en"].includes(lang.code)) ? "🔒 " : ""}{lang.label}
-                  </button>
-                ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
+                {LANGUAGE_GROUPS.map(group => {
+                  const allLocked = group.languages.every(l => {
+                    const freeLangs = ["en"];
+                    const starterLangs = ["en", "hi"];
+                    const indianLangs = ["hi","bn","ta","te","mr","gu","kn","ml","pa","or","as","ur"];
+                    if (plan === "free") return !freeLangs.includes(l.code);
+                    if (plan === "starter") return !starterLangs.includes(l.code);
+                    if (plan === "growth") return false;
+                    return false;
+                  });
+                  return (
+                    <div key={group.code}>
+                      <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", margin: "0 0 0.35rem" }}>
+                        {group.country}
+                      </p>
+                      <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                        {group.languages.map(lang => {
+                          const freeLangs = ["en"];
+                          const starterLangs = ["en", "hi"];
+                          const isLocked = 
+                            (plan === "free" && !freeLangs.includes(lang.code)) ||
+                            (plan === "starter" && !starterLangs.includes(lang.code));
+                          return (
+                            <button key={lang.code} onClick={() => isLocked ? setShowPaywall(true) : setSelectedLang(lang.code)}
+                              style={{
+                                background: selectedLang === lang.code ? "rgba(168,85,247,0.15)" : "#0d0d0d",
+                                border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1a1a1a"}`,
+                                color: selectedLang === lang.code ? "#a855f7" : isLocked ? "#2a2a2a" : "#444",
+                                padding: "0.25rem 0.65rem", borderRadius: "20px",
+                                cursor: "pointer", fontSize: "0.73rem", fontWeight: 600,
+                                transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif"
+                              }}>
+                              {isLocked ? "🔒 " : ""}{lang.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
