@@ -970,32 +970,60 @@ Respond ONLY in JSON:
         {/* Header */}
         <div style={{ background: "#08040f", borderBottom: "1px solid #1a1040", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
-          {/* LEFT floating stats */}
-          <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 0 }}>
+          {/* LEFT — Animated Stats */}
+          <div style={{ position: "absolute", left: "0.75rem", top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "0.6rem", zIndex: 1 }}>
+            <style>{`
+              @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+              @keyframes glowPulse { 0%,100%{box-shadow:0 0 8px rgba(168,85,247,0.3)} 50%{box-shadow:0 0 20px rgba(168,85,247,0.7)} }
+              @keyframes countUp { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+              .stat-card { transition: all 0.3s; cursor: default; }
+              .stat-card:hover { transform: scale(1.08) translateX(4px) !important; }
+            `}</style>
             {[
-              { num: "500+", label: "Creators", color: "#a855f7" },
-              { num: "15+", label: "Platforms", color: "#22c55e" },
-              { num: "30+", label: "Languages", color: "#06b6d4" },
-              { num: "10x", label: "Faster", color: "#f59e0b" },
+              { num: "500+", label: "Creators", color: "#a855f7", delay: "0s" },
+              { num: "15+", label: "Platforms", color: "#22c55e", delay: "0.5s" },
+              { num: "30+", label: "Languages", color: "#06b6d4", delay: "1s" },
+              { num: "10x", label: "Faster", color: "#f59e0b", delay: "1.5s" },
             ].map((s, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${s.color}30`, borderRadius: "10px", padding: "0.4rem 0.65rem", textAlign: "center", minWidth: "70px" }}>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: s.color }}>{s.num}</div>
-                <div style={{ fontSize: "0.58rem", color: "#444", fontWeight: 600 }}>{s.label}</div>
+              <div key={i} className="stat-card" style={{
+                background: `linear-gradient(135deg, ${s.color}12, ${s.color}06)`,
+                border: `1px solid ${s.color}50`,
+                borderRadius: "12px", padding: "0.5rem 0.75rem",
+                textAlign: "center", minWidth: "75px",
+                animation: `floatUp 3s ease-in-out ${s.delay} infinite`,
+                boxShadow: `0 4px 15px ${s.color}20`,
+                backdropFilter: "blur(10px)",
+              }}>
+                <div style={{
+                  fontFamily: "'Syne',sans-serif", fontWeight: 900,
+                  fontSize: "1.1rem", color: s.color,
+                  textShadow: `0 0 12px ${s.color}80`,
+                  animation: `countUp 0.5s ease ${s.delay}`,
+                }}>{s.num}</div>
+                <div style={{ fontSize: "0.6rem", color: "#888", fontWeight: 700, letterSpacing: "0.04em" }}>{s.label}</div>
               </div>
             ))}
           </div>
 
-          {/* RIGHT floating features */}
-          <div style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 0 }}>
+          {/* RIGHT — Animated Features */}
+          <div style={{ position: "absolute", right: "0.75rem", top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "0.6rem", zIndex: 1 }}>
             {[
-              { icon: "🎣", label: "Viral Hooks", color: "#a855f7" },
-              { icon: "📅", label: "30-Day Cal", color: "#06b6d4" },
-              { icon: "📦", label: "Content Pack", color: "#f59e0b" },
-              { icon: "🖼️", label: "Image AI", color: "#22c55e" },
+              { icon: "🎣", label: "Viral Hooks", color: "#a855f7", delay: "0.2s" },
+              { icon: "📅", label: "30-Day Cal", color: "#06b6d4", delay: "0.7s" },
+              { icon: "📦", label: "Content Pack", color: "#f59e0b", delay: "1.2s" },
+              { icon: "🖼️", label: "Image AI", color: "#22c55e", delay: "1.7s" },
             ].map((f, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${f.color}30`, borderRadius: "10px", padding: "0.4rem 0.65rem", textAlign: "center", minWidth: "80px" }}>
-                <div style={{ fontSize: "1rem" }}>{f.icon}</div>
-                <div style={{ fontSize: "0.58rem", color: "#444", fontWeight: 600 }}>{f.label}</div>
+              <div key={i} className="stat-card" style={{
+                background: `linear-gradient(135deg, ${f.color}12, ${f.color}06)`,
+                border: `1px solid ${f.color}50`,
+                borderRadius: "12px", padding: "0.5rem 0.75rem",
+                textAlign: "center", minWidth: "82px",
+                animation: `floatUp 3s ease-in-out ${f.delay} infinite`,
+                boxShadow: `0 4px 15px ${f.color}20`,
+                backdropFilter: "blur(10px)",
+              }}>
+                <div style={{ fontSize: "1.3rem", filter: `drop-shadow(0 0 6px ${f.color}80)` }}>{f.icon}</div>
+                <div style={{ fontSize: "0.6rem", color: "#888", fontWeight: 700, letterSpacing: "0.04em", marginTop: "0.2rem" }}>{f.label}</div>
               </div>
             ))}
           </div>
