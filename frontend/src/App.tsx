@@ -388,8 +388,12 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
               <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 LINE-BY-LINE FIXES</p>
               {result.line_fixes.map((fix: any, i: number) => (
                 <div key={i} style={{ background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.5rem" }}>
-                  <div style={{ color: "#ef4444", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "0.25rem" }}>"{fix.original}"</div>
-                  <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>⚠️ {fix.problem}</div>
+                  <div style={{ color: "#ef4444", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "0.25rem" }}>
+                    {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
+                  </div>
+                  <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>
+                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Content mein yeh improvements karo"}
+                  </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
                     <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
                     <span style={{ color: "#22c55e", fontSize: "0.78rem", lineHeight: 1.5 }}>{fix.fixed}</span>
