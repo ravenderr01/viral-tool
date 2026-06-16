@@ -180,103 +180,258 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
 }
 
 function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
-  const [hookInput, setHookInput] = useState("");
+  const [contentInput, setContentInput] = useState("");
+  const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const SCORE_PLATFORMS = [
+    { id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" },
+    { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" },
+    { id: "Facebook", emoji: "📘" }, { id: "TikTok", emoji: "🎵" },
+    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
+  ];
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   const analyze = async () => {
-    if (!hookInput.trim()) { setError("Enter a hook to analyze."); return; }
+    if (!contentInput.trim()) { setError("Apna content ya hook paste karo."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are a harsh viral content critic. Analyze this hook brutally honestly: "${hookInput}"
+    const prompt = `You are an expert viral content analyst and coach. Analyze this content for ${platform}:
 
-LANGUAGE RULE: Detect the language of the hook and respond in the SAME language and script. If hook is in Hindi/Devanagari, respond fully in Hindi. If Tamil script, respond in Tamil. Match exactly.
+CONTENT TO ANALYZE:
+"""
+${contentInput}
+"""
 
-Scoring rules:
-- Most hooks score 3-6. Only truly exceptional hooks get 8+
-- Be STRICT. A generic hook = 2-3/10
-- Curiosity: Does it make people NEED to know more?
-- Emotion: Does it trigger fear, excitement, anger, or hope?
-- Virality: Would people share this?
-- Overall: Average of above 3, rounded
-- Improved version must use power words, numbers, emotion triggers - completely rewritten
+PLATFORM: ${platform}
 
-Respond ONLY in this exact JSON (no markdown):
-{"curiosity":0,"emotion":0,"virality":0,"overall":0,"verdict":"honest verdict","improved":"completely rewritten viral hook","improved_curiosity":0,"improved_emotion":0,"improved_virality":0,"improved_overall":0,"why":"explain what was weak"}`;
+LANGUAGE RULE: Detect the language of the content and respond in the SAME language. Hindi content = Hindi response. English = English.
+
+ANALYSIS RULES:
+- Score out of 100 (not 10). Be strict — average content scores 40-60.
+- Analyze the FULL content, not just first line
+- Give LINE-BY-LINE feedback on weak parts
+- Give 3 platform-specific improved versions
+- Identify exactly what's strong and what's weak
+
+Respond ONLY in this exact JSON (no markdown, no extra text):
+{
+  "scores": {
+    "curiosity": 0,
+    "emotion": 0,
+    "virality": 0,
+    "clarity": 0,
+    "overall": 0
+  },
+  "grade": "A/B/C/D/F",
+  "verdict": "2-3 line honest verdict",
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+  "line_fixes": [
+    {"original": "exact weak line from content", "problem": "why it's weak", "fixed": "improved version"}
+  ],
+  "platform_versions": {
+    "version1": {"label": "Curiosity Version", "content": "complete rewritten content"},
+    "version2": {"label": "Emotion Version", "content": "complete rewritten content"},
+    "version3": {"label": "Power Version", "content": "complete rewritten content"}
+  },
+  "pro_tips": ["tip 1 specific to ${platform}", "tip 2", "tip 3"]
+}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 500, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      setResult(JSON.parse(text.replace(/```json|```/g, "").trim()));
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
     } catch { setError("Analysis failed. Try again."); }
     setLoading(false);
   };
 
-  const scoreColor = (s: number) => s >= 8 ? "#22c55e" : s >= 5 ? "#f59e0b" : "#ef4444";
-  const overallGrade = result ? (result.overall >= 8 ? "🔥 Viral Ready" : result.overall >= 5 ? "⚡ Needs Work" : "💀 Weak Hook") : "";
+  const scoreColor = (s: number) => s >= 80 ? "#22c55e" : s >= 60 ? "#f59e0b" : s >= 40 ? "#f97316" : "#ef4444";
+  const gradeColor = (g: string) => g === "A" ? "#22c55e" : g === "B" ? "#06b6d4" : g === "C" ? "#f59e0b" : g === "D" ? "#f97316" : "#ef4444";
+  const gradeLabel = (g: string) => g === "A" ? "🔥 Viral Ready!" : g === "B" ? "⚡ Almost There" : g === "C" ? "📈 Needs Work" : g === "D" ? "⚠️ Weak Content" : "💀 Rewrite Needed";
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "linear-gradient(135deg, #0d0d0d, #111)", border: "1px solid #1e1e1e", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+
+      {/* Input Card */}
+      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1e1e1e", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.3rem" }}>📊</span>
+          <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
-            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>Hook Score Analyzer</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Paste your hook → get a viral score + improved version</p>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Poora content paste karo → detailed analysis + fixes + 3 improved versions</p>
           </div>
         </div>
-        <textarea value={hookInput} onChange={e => { setHookInput(e.target.value); setError(""); }}
-          placeholder='e.g. "5 tips to lose weight fast"' rows={2}
-          style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.9rem", outline: "none", resize: "none", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.5, transition: "border 0.2s", marginBottom: "0.75rem" }}
-          onFocus={e => e.target.style.borderColor = "#a855f7"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
+
+        {/* Platform selector */}
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>PLATFORM SELECT KARO</label>
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+            {SCORE_PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? "rgba(168,85,247,0.15)" : "#0a0a0a", border: `1px solid ${platform === p.id ? "#a855f7" : "#1a1a1a"}`, color: platform === p.id ? "#a855f7" : "#555", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content textarea */}
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>
+            APNA CONTENT PASTE KARO
+            <span style={{ color: "#222", fontWeight: 400, marginLeft: "0.5rem" }}>
+              (caption, hook, script, ad copy — kuch bhi)
+            </span>
+          </label>
+          <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
+            placeholder={`Yahan apna ${platform} content paste karo...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
+            rows={6}
+            style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
+            onFocus={e => e.target.style.borderColor = "#a855f7"}
+            onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
+            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — sab analyze hoga</span>
+            <span style={{ color: "#333", fontSize: "0.65rem" }}>{contentInput.length} chars</span>
+          </div>
+        </div>
+
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#818cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
-          {loading ? "⚡ Analyzing..." : "🔍 Analyze My Hook"}
+
+        <button onClick={analyze} disabled={loading}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#818cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
+          {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform} (1 credit)`}
         </button>
       </div>
+
+      {/* Results */}
       {result && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          <div style={{ background: result.overall >= 8 ? "#22c55e15" : result.overall >= 5 ? "#f59e0b15" : "#ef444415", border: `1px solid ${result.overall >= 8 ? "#22c55e40" : result.overall >= 5 ? "#f59e0b40" : "#ef444440"}`, borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: "1rem" }}>{overallGrade}</span>
-            <span style={{ color: "#555", fontSize: "0.78rem" }}>Overall: <strong style={{ color: "#fff" }}>{result.overall}/10</strong></span>
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+
+          {/* Overall Score Banner */}
+          <div style={{ background: `${gradeColor(result.grade)}15`, border: `2px solid ${gradeColor(result.grade)}40`, borderRadius: "16px", padding: "1.25rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{gradeLabel(result.grade)}</div>
+                <div style={{ color: "#666", fontSize: "0.75rem", marginTop: "0.2rem" }}>{result.verdict}</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "3rem", color: gradeColor(result.grade), lineHeight: 1 }}>{result.grade}</div>
+                <div style={{ color: "#555", fontSize: "0.65rem", fontWeight: 700 }}>GRADE</div>
+              </div>
+            </div>
           </div>
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1.25rem", marginBottom: "0.75rem", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.5rem" }}>
-            <ScoreRing score={result.curiosity} label="CURIOSITY" color={scoreColor(result.curiosity)} />
-            <ScoreRing score={result.emotion} label="EMOTION" color={scoreColor(result.emotion)} />
-            <ScoreRing score={result.virality} label="VIRALITY" color={scoreColor(result.virality)} />
-          </div>
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.3rem", fontSize: "0.7rem", color: "#444", fontWeight: 700 }}>VERDICT</p>
-            <p style={{ margin: 0, color: "#ccc", fontSize: "0.85rem", lineHeight: 1.6 }}>{result.verdict}</p>
-            <p style={{ margin: "0.5rem 0 0", color: "#555", fontSize: "0.78rem", lineHeight: 1.6 }}>{result.why}</p>
-          </div>
-          <div style={{ background: "linear-gradient(135deg,#0a1a0a,#0d1a0d)", border: "1px solid #22c55e30", borderRadius: "14px", padding: "1rem" }}>
-            <p style={{ margin: "0 0 0.5rem", fontSize: "0.7rem", color: "#22c55e", fontWeight: 700 }}>✨ IMPROVED VERSION</p>
-            <p style={{ margin: "0 0 0.75rem", color: "#e2e2e2", fontSize: "0.92rem", lineHeight: 1.6, fontWeight: 500 }}>{result.improved}</p>
-            {result.improved_overall && (
-              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                {[["CURIOSITY", result.improved_curiosity], ["EMOTION", result.improved_emotion], ["VIRALITY", result.improved_virality]].map(([label, score]: any) => (
-                  <div key={label} style={{ textAlign: "center", flex: 1, background: "#0a1a0a", border: "1px solid #22c55e30", borderRadius: "8px", padding: "0.5rem" }}>
-                    <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.2rem" }}>{score}</div>
-                    <div style={{ color: "#444", fontSize: "0.6rem", fontWeight: 700 }}>{label}</div>
-                  </div>
-                ))}
-                <div style={{ textAlign: "center", flex: 1, background: "#0a1a0a", border: "1px solid #22c55e50", borderRadius: "8px", padding: "0.5rem" }}>
-                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.2rem" }}>{result.improved_overall}</div>
-                  <div style={{ color: "#444", fontSize: "0.6rem", fontWeight: 700 }}>OVERALL</div>
+
+          {/* Score Bars — /100 */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1.25rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 1rem", fontSize: "0.7rem", color: "#444", fontWeight: 700, letterSpacing: "0.06em" }}>📊 DETAILED SCORES /100</p>
+            {[
+              ["Curiosity", result.scores?.curiosity, "#a855f7"],
+              ["Emotion", result.scores?.emotion, "#ec4899"],
+              ["Virality", result.scores?.virality, "#f59e0b"],
+              ["Clarity", result.scores?.clarity, "#06b6d4"],
+              ["Overall", result.scores?.overall, "#22c55e"],
+            ].map(([label, score, color]: any) => (
+              <div key={label} style={{ marginBottom: "0.6rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.2rem" }}>
+                  <span style={{ color: "#888", fontSize: "0.72rem", fontWeight: 600 }}>{label}</span>
+                  <span style={{ color, fontWeight: 800, fontSize: "0.78rem" }}>{score}/100</span>
+                </div>
+                <div style={{ background: "#141414", borderRadius: "4px", height: "6px", overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: "4px", background: color, width: `${score}%`, transition: "width 1s ease" }} />
                 </div>
               </div>
-            )}
-            <button onClick={() => navigator.clipboard.writeText(result.improved)} style={{ background: "#22c55e18", border: "1px solid #22c55e40", color: "#22c55e", padding: "0.3rem 0.8rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
-              Copy Improved Hook
-            </button>
+            ))}
           </div>
+
+          {/* Strengths & Weaknesses */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#081a08", border: "1px solid #22c55e30", borderRadius: "12px", padding: "0.85rem" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>✅ STRONG POINTS</p>
+              {(result.strengths || []).map((s: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.3rem" }}>
+                  <span style={{ color: "#22c55e", fontSize: "0.7rem", flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#aaa", fontSize: "0.72rem", lineHeight: 1.4 }}>{s}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "#1a0808", border: "1px solid #ef444430", borderRadius: "12px", padding: "0.85rem" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>❌ WEAK POINTS</p>
+              {(result.weaknesses || []).map((w: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.3rem" }}>
+                  <span style={{ color: "#ef4444", fontSize: "0.7rem", flexShrink: 0 }}>✗</span>
+                  <span style={{ color: "#aaa", fontSize: "0.72rem", lineHeight: 1.4 }}>{w}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Line by Line Fixes */}
+          {result.line_fixes && result.line_fixes.length > 0 && (
+            <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 LINE-BY-LINE FIXES</p>
+              {result.line_fixes.map((fix: any, i: number) => (
+                <div key={i} style={{ background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.5rem" }}>
+                  <div style={{ color: "#ef4444", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "0.25rem" }}>"{fix.original}"</div>
+                  <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>⚠️ {fix.problem}</div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
+                    <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
+                    <span style={{ color: "#22c55e", fontSize: "0.78rem", lineHeight: 1.5 }}>{fix.fixed}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 3 Platform Versions */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
+            {result.platform_versions && Object.entries(result.platform_versions).map(([key, ver]: any, i) => {
+              const colors = ["#a855f7", "#06b6d4", "#22c55e"];
+              const color = colors[i] || "#a855f7";
+              return (
+                <div key={key} style={{ background: `${color}08`, border: `1px solid ${color}25`, borderRadius: "10px", padding: "0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <span style={{ color, fontSize: "0.7rem", fontWeight: 700 }}>✨ {ver.label}</span>
+                    <button onClick={() => copyText(ver.content, key)}
+                      style={{ background: copiedKey === key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === key ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === key ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
+                      {copiedKey === key ? "✓ Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <p style={{ margin: 0, color: "#ddd", fontSize: "0.83rem", lineHeight: 1.6 }}>{ver.content}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pro Tips */}
+          {result.pro_tips && result.pro_tips.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #818cf830", borderRadius: "14px", padding: "1rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#818cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
+              {result.pro_tips.map((tip: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                  <span style={{ color: "#818cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
