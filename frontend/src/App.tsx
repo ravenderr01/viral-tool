@@ -848,7 +848,7 @@ function ResultCard({ title, items, emoji, color }: any) {
 
 function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
   return (
-    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "#a855f715" : "transparent", color: active ? "#a855f7" : "#444", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #a855f7" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
       <span style={{ fontSize: "1rem" }}>{emoji}</span>
       <span>{label}</span>
       {isPro && !active && (
@@ -1113,12 +1113,12 @@ Respond ONLY in JSON:
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #06040f; }
+        body { margin: 0; background: #0a0a0a; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(168,85,247,0.25)} 50%{box-shadow:0 0 50px rgba(168,85,247,0.55)} }
-        .gbtn:hover:not(:disabled) { transform:translateY(-2px); }
-        .tbtn:hover { border-color:#a855f7!important; color:#a855f7!important; }
+        @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
+        .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
+        .tbtn:hover { border-color:#7c3aed!important; color:#7c3aed!important; }
         @media (max-width: 768px) {
   .desktop-btn { display: none !important; }
   .mobile-header { padding: 0.75rem 1rem 0.5rem !important; }
@@ -1128,10 +1128,10 @@ Respond ONLY in JSON:
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#06040f", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
 
         {/* Header */}
-        <div style={{ background: "#08040f", borderBottom: "1px solid #1a1040", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
+        <div style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
           
 
@@ -1188,10 +1188,10 @@ Respond ONLY in JSON:
   <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
 </div>
           {/* Title */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#a855f710", border: "1px solid #a855f725", borderRadius: "20px", padding: "0.2rem 0.85rem", marginBottom: "0.5rem" }}>
-            <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: "20px", padding: "0.2rem 0.85rem", marginBottom: "0.5rem" }}>
+            <span style={{ fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
           </div>
-          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", background: "linear-gradient(135deg,#ffffff 10%, #ff9a6c 50%, #a855f7 90%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", background: "linear-gradient(135deg,#ffffff 0%, #e2e8f0 50%, #c4b5fd 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Viral Content Intelligence
           </h1>
           <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Hook Score · 30-Day Calendar · Content Pack · Instant Generation</p>
@@ -1203,7 +1203,7 @@ Respond ONLY in JSON:
               {[...Array(2)].map((_, ri) => (
                 <span key={ri}>
                   {["⚡ 500+ Creators", "🎣 Viral Hooks", "📅 30-Day Cal", "🌐 30+ Languages", "📦 Content Pack", "🖼️ Image AI", "🔥 20% OFF — First 100 Users"].map((item, i) => (
-                    <span key={i} style={{ color: i === 6 ? "#f59e0b" : "#555", fontSize: "0.68rem", fontWeight: i === 6 ? 800 : 600, padding: "0 1rem" }}>
+                    <span key={i} style={{ color: i === 6 ? "#8b5cf6" : "#404040", fontSize: "0.68rem", fontWeight: i === 6 ? 800 : 600, padding: "0 1rem" }}>
                       {item} <span style={{ color: "#222" }}>·</span>
                     </span>
                   ))}
@@ -1342,7 +1342,7 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#0d0d0d" : "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: loading ? "#2a2a2a" : "#000", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s", animation: !loading ? "glow 3s infinite" : "none", marginBottom: "1.5rem" }}>
+              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#0d0d0d" : "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: loading ? "#2a2a2a" : "#000", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
                 {loading ? <span style={{ animation: "pulse 1s infinite" }}>⚡ Generating in {langLabel}...</span> : "⚡ Generate Viral Content"}
               </button>
 
@@ -1393,7 +1393,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer unlocks from Starter plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
@@ -1407,7 +1407,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>30-Day Content Calendar uses 5 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} />
@@ -1426,7 +1426,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>AI Trend Intelligence is available from Growth plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
@@ -1440,7 +1440,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Content Pack uses 3 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} />
