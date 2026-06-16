@@ -105,7 +105,7 @@ function BeforeAfterDemo() {
     }
 
     if (phase === "after") {
-      setDisplayViews(demo.before.views);
+      setDisplayViews(0);
       t2 = setTimeout(() => setPhase("counting"), 300);
     }
 
@@ -205,7 +205,7 @@ function BeforeAfterDemo() {
 
                 <div style={{ textAlign: "right" }}>
                   <div style={{ color: "#ef4444", fontWeight: 800, fontSize: "1rem" }}>
-                    {!isAfter ? formatViews(demo.before.views) : formatViews(displayViews)}
+                    {formatViews(demo.before.views)}
                   </div>
                   <div style={{ color: "#2a2a2a", fontSize: "0.6rem" }}>views 😢</div>
                 </div>
