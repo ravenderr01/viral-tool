@@ -281,7 +281,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
         {/* Platform selector */}
         <div style={{ marginBottom: "0.75rem" }}>
-          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>PLATFORM SELECT KARO</label>
+          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>SELECT PLATFORM</label>
           <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
             {SCORE_PLATFORMS.map(p => (
               <button key={p.id} onClick={() => setPlatform(p.id)}
@@ -301,7 +301,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             </span>
           </label>
           <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
-            placeholder={`Yahan apna ${platform} content paste karo...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
+            placeholder={`Paste your ${platform} content here...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
             rows={6}
             style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
             onFocus={e => e.target.style.borderColor = "#a855f7"}
