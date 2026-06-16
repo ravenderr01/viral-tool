@@ -323,7 +323,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               <div style={{ width: 30, height: 30, background: "#6d28d9", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>⚡</div>
               <div>
                 <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em" }}>VCI</span>
-                <span style={{ color: "#2a2a2a", fontSize: "0.65rem", fontWeight: 500, marginLeft: "0.4rem", letterSpacing: "0.06em" }}>VIRAL CONTENT INTELLIGENCE</span>
+                <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 500, marginLeft: "0.4rem", letterSpacing: "0.06em" }}>VIRAL CONTENT INTELLIGENCE</span>
               </div>
             </div>
 
@@ -331,7 +331,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
             <div style={{ marginBottom: "2.5rem" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "0.2rem 0.7rem", marginBottom: "1.25rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 2s infinite" }} />
-                <span style={{ color: "#52525b", fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.04em" }}>500+ creators & agencies use VCI</span>
+                <span style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.04em" }}>500+ creators & agencies use VCI</span>
               </div>
 
               <h1 style={{ fontSize: "clamp(1.8rem,2.8vw,2.6rem)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.03em", marginBottom: "1rem", color: "#fff" }}>
@@ -339,14 +339,14 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 <span style={{ color: "#6d28d9" }}>Start going viral.</span>
               </h1>
 
-              <p style={{ color: "#3f3f46", fontSize: "0.88rem", lineHeight: 1.8, maxWidth: 380, fontWeight: 400 }}>
+              <p style={{ color: "#71717a", fontSize: "0.9rem", lineHeight: 1.8, maxWidth: 380, fontWeight: 400 }}>
                 Platform-specific viral content powered by real YouTube and Google trend data. Not templates — actual intelligence.
               </p>
             </div>
 
             {/* LIVE DEMO */}
             <div style={{ marginBottom: "2rem", animation: "float 4s ease-in-out infinite" }}>
-              <div style={{ color: "#2a2a2a", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.75rem", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <div style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.75rem", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 1.5s infinite" }} />
                 LIVE DEMO
               </div>
@@ -362,14 +362,14 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               ].map((s, i) => (
                 <div key={i}>
                   <div style={{ color: "#fff", fontWeight: 800, fontSize: "1.3rem", letterSpacing: "-0.03em" }}>{s.num}</div>
-                  <div style={{ color: "#2a2a2a", fontSize: "0.68rem", fontWeight: 500, marginTop: "0.1rem" }}>{s.label}</div>
+                  <div style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 500, marginTop: "0.1rem" }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Reviews marquee */}
             <div style={{ overflow: "hidden" }}>
-              <div style={{ color: "#1f1f1f", fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.65rem", fontFamily: "'DM Mono', monospace" }}>CREATOR REVIEWS</div>
+              <div style={{ color: "#3f3f46", fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.65rem", fontFamily: "'DM Mono', monospace" }}>CREATOR REVIEWS</div>
               <div className="marquee-track">
                 {[...allReviews, ...allReviews].map((r, i) => (
                   <div key={i} style={{ background: "#080808", border: "1px solid #111", borderRadius: "8px", padding: "0.65rem 0.85rem", minWidth: "190px", maxWidth: "190px", marginRight: "0.5rem", flexShrink: 0 }}>
@@ -387,7 +387,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="auth-right" style={{ width: 440, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 2rem", background: "#000", overflowY: "auto" }}>
+        <div className="auth-right" style={{ width: 480, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 2.5rem", background: "#000000", overflowY: "auto", borderLeft: "1px solid #111" }}>
 
           <div style={{ width: "100%", maxWidth: 360, animation: "slideUp 0.4s ease" }}>
 
@@ -521,7 +521,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
 
             {/* Footer */}
             <div style={{ marginTop: "2rem", textAlign: "center" as const }}>
-              <p style={{ color: "#1a1a1a", fontSize: "0.65rem" }}>
+              <p style={{ color: "#3f3f46", fontSize: "0.65rem" }}>
                 © {new Date().getFullYear()} Global Web Info Vision
                 <span style={{ margin: "0 0.4rem" }}>·</span>
                 <button onClick={() => setShowLegal("privacy")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.65rem" }}>Privacy</button>
