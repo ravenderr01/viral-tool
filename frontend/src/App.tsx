@@ -207,7 +207,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   ];
 
   const STYLES = ["Tutorial", "Story", "POV", "Challenge", "Before/After", "Motivation", "Tips", "Review", "Day in Life", "Comedy"];
-  const DURATIONS = ["15 sec", "30 sec", "60 sec", "90 sec", "3 min"];
+  const DURATIONS = ["15 sec", "30 sec", "60 sec", "90 sec"];
 
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -416,7 +416,7 @@ Respond ONLY in JSON:
 
           <button onClick={generateScript} disabled={generateLoading}
             style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
-            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform} (1 credit)`}
+            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform} (2 credits)`}
           </button>
         </div>
       )}
@@ -1427,7 +1427,7 @@ export default function ViralContentTool() {
   const langLabel = getLangLabel(selectedLang);
   const langStrict = getLangStrict(selectedLang);
 
-  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5 };
+  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 2, scriptimprove: 1 };
 
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
@@ -1923,11 +1923,12 @@ Respond ONLY in JSON:
 
           {/* TAB: SCRIPT LAB */}
           {activeTab === "scriptlab" && (
-            (plan === "free" || plan === "starter") ? (
+            (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Script Lab unlocks from Pro Creator plan onwards.</p>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Script Lab unlocks from Pro Creator plan onwards.</p>
+                <p style={{ color: "#444", fontSize: "0.78rem", marginBottom: "1.5rem" }}>Generate viral reel scripts up to 90 seconds + Before/After improvement</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
