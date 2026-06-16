@@ -466,10 +466,16 @@ Respond ONLY in JSON:
           <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
               <p style={{ margin: 0, fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📝 COMPLETE WORD-FOR-WORD SCRIPT</p>
-              <button onClick={() => copyText(generateResult.script, "fullscript")}
-                style={{ background: copiedKey === "fullscript" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "fullscript" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "fullscript" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
-                {copiedKey === "fullscript" ? "✓ Copied!" : "📋 Copy"}
-              </button>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button onClick={() => copyText(generateResult.script, "fullscript")}
+                  style={{ background: copiedKey === "fullscript" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "fullscript" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "fullscript" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                  {copiedKey === "fullscript" ? "✓ Copied!" : "📋 Copy"}
+                </button>
+                <button onClick={() => { setScript(generateResult.script); setMode("improve"); window.scrollTo(0, 0); }}
+                  style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.4)", color: "#8b5cf6", padding: "0.2rem 0.75rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                  ✨ Send to Improve →
+                </button>
+              </div>
             </div>
             <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{generateResult.script}</p>
           </div>
