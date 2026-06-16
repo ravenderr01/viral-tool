@@ -179,6 +179,263 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
   );
 }
 
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+  const [script, setScript] = useState("");
+  const [platform, setPlatform] = useState("Instagram");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const PLATFORMS = [
+    { id: "Instagram", emoji: "📸", color: "#e1306c" },
+    { id: "YouTube", emoji: "▶️", color: "#ef4444" },
+    { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
+    { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
+    { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
+    { id: "Facebook", emoji: "📘", color: "#1877f2" },
+    { id: "Meta Ads", emoji: "📢", color: "#6d28d9" },
+    { id: "Google Ads", emoji: "🔍", color: "#22c55e" },
+  ];
+
+  const analyze = async () => {
+    if (!script.trim()) { setError("Apna script ya content paste karo."); return; }
+    if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye — kam se kam 5 words."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const prompt = `You are an expert content coach and viral script analyst.
+
+Analyze this ${platform} script/content and provide a detailed before/after comparison:
+
+ORIGINAL SCRIPT:
+"""
+${script}
+"""
+
+PLATFORM: ${platform}
+LANGUAGE RULE: Detect language of script and respond in SAME language.
+
+Analyze strictly and provide:
+
+BEFORE ANALYSIS:
+- Score each line/section
+- Identify exactly what's weak and why
+- Overall score /100
+
+AFTER IMPROVEMENT:
+- Completely rewrite the script for ${platform}
+- Make it viral, engaging, platform-specific
+- Keep the core message but make it powerful
+
+Respond ONLY in this JSON (no markdown):
+{
+  "before": {
+    "score": 0,
+    "grade": "A/B/C/D/F",
+    "lines": [
+      {"text": "original line", "score": 0, "issue": "what's wrong", "type": "weak/strong/neutral"}
+    ],
+    "summary": "overall verdict of original"
+  },
+  "after": {
+    "score": 0,
+    "grade": "A/B/C/D/F",
+    "script": "complete improved script here",
+    "lines": [
+      {"text": "improved line", "reason": "why this works"}
+    ],
+    "summary": "why improved version is better"
+  },
+  "improvements": ["improvement 1", "improvement 2", "improvement 3"],
+  "score_jump": "+X points",
+  "platform_tips": ["tip 1 for ${platform}", "tip 2", "tip 3"]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+    } catch { setError("Analysis failed. Try again."); }
+    setLoading(false);
+  };
+
+  const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
+  const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+
+      {/* Header */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
+          <div style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", borderRadius: "10px", padding: "0.5rem 0.7rem", fontSize: "1.3rem" }}>🎬</div>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Script Lab</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.75rem" }}>Paste your script → Get Before/After comparison + improved version</p>
+          </div>
+        </div>
+
+        {/* Platform */}
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+            {PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s" }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Script Input */}
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>
+            YOUR SCRIPT / CONTENT
+            <span style={{ color: "#3f3f46", fontWeight: 400, marginLeft: "0.5rem" }}>(hook, caption, reel script, ad copy — anything)</span>
+          </label>
+          <textarea value={script} onChange={e => { setScript(e.target.value); setError(""); }}
+            placeholder={`Paste your ${platform} script here...\n\nExample:\n"5 tips for weight loss that actually work.\nFirst tip: drink more water..."\n\nOr paste your complete reel script!`}
+            rows={7}
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
+            onFocus={e => e.target.style.borderColor = "#6d28d9"}
+            onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.35rem" }}>
+            <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>Min 5 words · Hook, caption, reel script, ad copy</span>
+            <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>{script.length} chars</span>
+          </div>
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={analyze} disabled={loading}
+          style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
+          {loading ? "🔍 Analyzing your script..." : `🎬 Analyze & Improve for ${platform} (1 credit)`}
+        </button>
+      </div>
+
+      {/* Results — Before/After */}
+      {result && (
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+
+          {/* Score Jump Banner */}
+          <div style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(109,40,217,0.1))", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: "#fff" }}>🚀 Score Improved!</div>
+              <div style={{ color: "#71717a", fontSize: "0.75rem", marginTop: "0.2rem" }}>Your script got significantly better</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(result.before?.grade), lineHeight: 1 }}>{result.before?.score}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>BEFORE</div>
+              </div>
+              <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1.5rem" }}>→</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(result.after?.grade), lineHeight: 1 }}>{result.after?.score}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>AFTER</div>
+              </div>
+              <div style={{ background: "#22c55e15", border: "1px solid #22c55e30", borderRadius: "8px", padding: "0.4rem 0.75rem", textAlign: "center" }}>
+                <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1rem", fontFamily: "'Syne',sans-serif" }}>{result.score_jump}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>JUMP</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Before / After Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+
+            {/* BEFORE */}
+            <div style={{ background: "#0f0f0f", border: "1px solid #ef444430", borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ background: "rgba(239,68,68,0.1)", borderBottom: "1px solid #ef444420", padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ color: "#ef4444", fontWeight: 800, fontSize: "0.82rem", fontFamily: "'Syne',sans-serif" }}>❌ BEFORE</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span style={{ color: gradeColor(result.before?.grade), fontWeight: 900, fontSize: "1.2rem", fontFamily: "'Syne',sans-serif" }}>{result.before?.grade}</span>
+                  <span style={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700 }}>{result.before?.score}/100</span>
+                </div>
+              </div>
+              <div style={{ padding: "0.85rem" }}>
+                <p style={{ margin: "0 0 0.75rem", color: "#71717a", fontSize: "0.72rem", lineHeight: 1.5, fontStyle: "italic" }}>{result.before?.summary}</p>
+                {(result.before?.lines || []).map((line: any, i: number) => (
+                  <div key={i} style={{ background: `${lineColor(line.type)}10`, border: `1px solid ${lineColor(line.type)}20`, borderLeft: `3px solid ${lineColor(line.type)}`, borderRadius: "6px", padding: "0.5rem 0.65rem", marginBottom: "0.4rem" }}>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.5 }}>{line.text}</p>
+                    {line.issue && <p style={{ margin: "0.25rem 0 0", color: lineColor(line.type), fontSize: "0.65rem" }}>⚠️ {line.issue}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AFTER */}
+            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ background: "rgba(34,197,94,0.1)", borderBottom: "1px solid #22c55e20", padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.82rem", fontFamily: "'Syne',sans-serif" }}>✅ AFTER</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span style={{ color: gradeColor(result.after?.grade), fontWeight: 900, fontSize: "1.2rem", fontFamily: "'Syne',sans-serif" }}>{result.after?.grade}</span>
+                  <span style={{ color: "#22c55e", fontSize: "0.75rem", fontWeight: 700 }}>{result.after?.score}/100</span>
+                </div>
+              </div>
+              <div style={{ padding: "0.85rem" }}>
+                <p style={{ margin: "0 0 0.75rem", color: "#71717a", fontSize: "0.72rem", lineHeight: 1.5, fontStyle: "italic" }}>{result.after?.summary}</p>
+                {(result.after?.lines || []).map((line: any, i: number) => (
+                  <div key={i} style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderLeft: "3px solid #22c55e", borderRadius: "6px", padding: "0.5rem 0.65rem", marginBottom: "0.4rem" }}>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.5 }}>{line.text}</p>
+                    {line.reason && <p style={{ margin: "0.25rem 0 0", color: "#22c55e", fontSize: "0.65rem" }}>✓ {line.reason}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Full Improved Script */}
+          <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1.1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.7rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✨ FULL IMPROVED SCRIPT — READY TO USE</p>
+              <button onClick={() => { navigator.clipboard.writeText(result.after?.script || ""); setCopiedKey("script"); setTimeout(() => setCopiedKey(null), 2000); }}
+                style={{ background: copiedKey === "script" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "script" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "script" ? "#22c55e" : "#555", padding: "0.25rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
+                {copiedKey === "script" ? "✓ Copied!" : "📋 Copy Script"}
+              </button>
+            </div>
+            <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.88rem", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{result.after?.script}</p>
+          </div>
+
+          {/* What Improved */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>📈 WHAT WE IMPROVED</p>
+            {(result.improvements || []).map((imp: string, i: number) => (
+              <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                <span style={{ color: "#22c55e", fontSize: "0.78rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                <span style={{ color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.5 }}>{imp}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Platform Tips */}
+          {result.platform_tips && (
+            <div style={{ background: "linear-gradient(135deg,#08080f,#0a0a14)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
+              {result.platform_tips.map((tip: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}>
+                  <span style={{ color: "#8b5cf6", fontSize: "0.75rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                  <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
@@ -1086,6 +1343,7 @@ Respond ONLY in JSON:
     { id: "pack", label: "Pack", emoji: "📦" },
     { id: "trends", label: "Trends", emoji: "📈" },
     { id: "image", label: "Image AI", emoji: "🖼️" },
+    { id: "scriptlab", label: "Script Lab", emoji: "🎬" },
   ];
 
   if (authLoading || profileLoading) return (
@@ -1430,6 +1688,20 @@ Respond ONLY in JSON:
               </div>
             ) : (
               <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
+            )
+          )}
+
+          {/* TAB: SCRIPT LAB */}
+          {activeTab === "scriptlab" && (
+            (plan === "free" || plan === "starter") ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Script Lab unlocks from Pro Creator plan onwards.</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+              </div>
+            ) : (
+              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
             )
           )}
 
