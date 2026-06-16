@@ -237,7 +237,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   "strengths": ["strength 1", "strength 2", "strength 3"],
   "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
   "line_fixes": [
-    {"original": "exact weak line from content", "problem": "why it's weak", "fixed": "improved version"}
+    {"original": "exact weak line or phrase from content (never write 'none')", "problem": "specific reason why this line is weak", "fixed": "completely rewritten better version"}
   ],
   "platform_versions": {
     "version1": {"label": "Curiosity Version", "content": "complete rewritten content"},
@@ -1288,7 +1288,7 @@ Respond ONLY in JSON:
                     const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
                     return (
                       <button key={n} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setNiche(n)}
-                        style={{ background: niche === n ? "#a855f712" : "#0d0d0d", border: `1px solid ${niche === n ? "#a855f7" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s" }}>
+                        style={{ background: niche === n ? "#a855f712" : "#0d0d0d", border: `1px solid ${niche === n ? "#a855f7" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
                         {isLocked ? "🔒 " : ""}{n}
                       </button>
                     );
@@ -1312,7 +1312,7 @@ Respond ONLY in JSON:
                         const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
-                            style={{ background: platform === p ? "#a855f712" : "#0d0d0d", border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`, color: platform === p ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s" }}>
+                            style={{ background: platform === p ? "#a855f712" : "#0d0d0d", border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`, color: platform === p ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
                             {isLocked ? "🔒 " : ""}{p}
                           </button>
                         );
