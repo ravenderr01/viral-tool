@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import Legal from "./Legal";
 
@@ -13,209 +13,290 @@ const DEFAULT_REVIEWS = [
   { name: "Deepak N.", role: "LinkedIn Consultant", review: "Best tool for LinkedIn content. Professional hooks every time.", stars: 5 },
 ];
 
-// Animated Demo Component
-function LiveDemo() {
-  const [phase, setPhase] = useState<"typing" | "selecting" | "generating" | "results" | "views">("typing");
-  const [typedText, setTypedText] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState("");
-  const [visibleHooks, setVisibleHooks] = useState<number>(0);
-  const [viewCount, setViewCount] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
+const DEMO_CASES = [
+  {
+    platform: "Instagram",
+    emoji: "📸",
+    color: "#e1306c",
+    before: {
+      hook: "5 weight loss tips that work",
+      views: 234,
+      grade: "D",
+      score: 28,
+      issues: ["Too generic", "No emotion", "Boring opener"],
+    },
+    after: {
+      hook: "I lost 10kg without the gym — here's exactly what I did 🔥",
+      views: 47200,
+      grade: "A",
+      score: 91,
+      wins: ["Emotional & personal", "Curiosity gap", "Platform-perfect"],
+    },
+  },
+  {
+    platform: "YouTube",
+    emoji: "▶️",
+    color: "#ef4444",
+    before: {
+      hook: "How to make money online in 2024",
+      views: 412,
+      grade: "D",
+      score: 31,
+      issues: ["Overused title", "No specificity", "Zero intrigue"],
+    },
+    after: {
+      hook: "I made ₹1.2L in 30 days with zero investment (Full breakdown)",
+      views: 89400,
+      grade: "A",
+      score: 94,
+      wins: ["Specific numbers", "Personal proof", "Promise of value"],
+    },
+  },
+  {
+    platform: "LinkedIn",
+    emoji: "💼",
+    color: "#0077b5",
+    before: {
+      hook: "Here are some tips for productivity",
+      views: 89,
+      grade: "F",
+      score: 19,
+      issues: ["Vague opener", "No hook", "Forgettable"],
+    },
+    after: {
+      hook: "I work 4 hours a day and out-earn most people working 12. Here's the system:",
+      views: 34700,
+      grade: "A",
+      score: 96,
+      wins: ["Bold claim", "Creates curiosity", "Professional tone"],
+    },
+  },
+];
 
-  const keyword = "weight loss";
-  const platform = "Instagram";
-  const hooks = [
-    "I lost 10kg without going to the gym once 🔥",
-    "Nobody tells you this about weight loss...",
-    "POV: You finally found what actually works 💀",
-    "Stop doing this if you want to lose weight →",
-    "The 5-minute morning habit that changed everything",
-  ];
+function BeforeAfterDemo() {
+  const [demoIndex, setDemoIndex] = useState(0);
+  const [phase, setPhase] = useState<"before" | "transforming" | "after" | "counting">("before");
+  const [displayViews, setDisplayViews] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  const demo = DEMO_CASES[demoIndex];
 
   useEffect(() => {
-    let timeout: any;
+    let t1: any, t2: any, t3: any, t4: any;
 
-    // Phase 1: Typing keyword
-    if (phase === "typing") {
-      setTypedText("");
-      setSelectedPlatform("");
-      setVisibleHooks(0);
-      setViewCount(0);
-      setIsGenerating(false);
+    if (phase === "before") {
+      setDisplayViews(demo.before.views);
+      setProgress(0);
+      t1 = setTimeout(() => setPhase("transforming"), 2500);
+    }
 
-      let i = 0;
-      const typeInterval = setInterval(() => {
-        if (i <= keyword.length) {
-          setTypedText(keyword.slice(0, i));
-          i++;
-        } else {
-          clearInterval(typeInterval);
-          timeout = setTimeout(() => setPhase("selecting"), 600);
+    if (phase === "transforming") {
+      // Progress bar animation
+      let p = 0;
+      const pInterval = setInterval(() => {
+        p += 2;
+        setProgress(p);
+        if (p >= 100) {
+          clearInterval(pInterval);
+          setPhase("after");
         }
-      }, 80);
-      return () => { clearInterval(typeInterval); clearTimeout(timeout); };
-    }
-
-    // Phase 2: Platform selecting
-    if (phase === "selecting") {
-      timeout = setTimeout(() => {
-        setSelectedPlatform(platform);
-        setTimeout(() => setPhase("generating"), 700);
-      }, 400);
-      return () => clearTimeout(timeout);
-    }
-
-    // Phase 3: Generating
-    if (phase === "generating") {
-      setIsGenerating(true);
-      timeout = setTimeout(() => {
-        setIsGenerating(false);
-        setPhase("results");
-      }, 1800);
-      return () => clearTimeout(timeout);
-    }
-
-    // Phase 4: Results appearing
-    if (phase === "results") {
-      let count = 0;
-      const hookInterval = setInterval(() => {
-        count++;
-        setVisibleHooks(count);
-        if (count >= hooks.length) {
-          clearInterval(hookInterval);
-          timeout = setTimeout(() => setPhase("views"), 800);
-        }
-      }, 350);
-      return () => { clearInterval(hookInterval); clearTimeout(timeout); };
-    }
-
-    // Phase 5: View counter
-    if (phase === "views") {
-      let count = 0;
-      const target = 47200;
-      const increment = target / 60;
-      const viewInterval = setInterval(() => {
-        count += increment;
-        if (count >= target) {
-          count = target;
-          clearInterval(viewInterval);
-          timeout = setTimeout(() => setPhase("typing"), 2000);
-        }
-        setViewCount(Math.floor(count));
       }, 30);
-      return () => { clearInterval(viewInterval); clearTimeout(timeout); };
+      return () => clearInterval(pInterval);
     }
-  }, [phase]);
+
+    if (phase === "after") {
+      setDisplayViews(demo.before.views);
+      t2 = setTimeout(() => setPhase("counting"), 300);
+    }
+
+    if (phase === "counting") {
+      const target = demo.after.views;
+      const duration = 1800;
+      const steps = 60;
+      const increment = target / steps;
+      let current = demo.before.views;
+      const countInterval = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(countInterval);
+          t3 = setTimeout(() => {
+            setPhase("before");
+            t4 = setTimeout(() => setDemoIndex(i => (i + 1) % DEMO_CASES.length), 100);
+          }, 2800);
+        }
+        setDisplayViews(Math.floor(current));
+      }, duration / steps);
+      return () => clearInterval(countInterval);
+    }
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, [phase, demoIndex]);
 
   const formatViews = (n: number) => {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
     return n.toString();
   };
 
-  return (
-    <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "16px", overflow: "hidden", width: "100%", maxWidth: 420, boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+  const gradeColor = (g: string) => ({
+    A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444"
+  }[g] || "#71717a");
 
-      {/* Window chrome */}
-      <div style={{ background: "#0d0d0d", borderBottom: "1px solid #1a1a1a", padding: "0.65rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <div style={{ display: "flex", gap: "0.35rem" }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444", opacity: 0.7 }} />
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f59e0b", opacity: 0.7 }} />
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e", opacity: 0.7 }} />
+  const isAfter = phase === "after" || phase === "counting";
+
+  return (
+    <div style={{ width: "100%", maxWidth: 420 }}>
+
+      {/* Platform indicator */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          {DEMO_CASES.map((d, i) => (
+            <div key={i} style={{
+              width: i === demoIndex ? 20 : 6, height: 6,
+              borderRadius: "3px",
+              background: i === demoIndex ? demo.color : "#1f1f1f",
+              transition: "all 0.4s",
+            }} />
+          ))}
         </div>
-        <div style={{ flex: 1, textAlign: "center" }}>
-          <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontFamily: "monospace" }}>getvci.com</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+          <span style={{ fontSize: "0.75rem" }}>{demo.emoji}</span>
+          <span style={{ color: demo.color, fontSize: "0.7rem", fontWeight: 700 }}>{demo.platform}</span>
         </div>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s infinite" }} />
       </div>
 
-      {/* App content */}
-      <div style={{ padding: "1.25rem" }}>
+      {/* Main demo card */}
+      <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "16px", overflow: "hidden" }}>
 
-        {/* VCI badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "1rem" }}>
-          <div style={{ width: 22, height: 22, background: "#6d28d9", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem" }}>⚡</div>
-          <span style={{ color: "#71717a", fontSize: "0.7rem", fontWeight: 600 }}>VCI — Viral Content Intelligence</span>
-        </div>
-
-        {/* Platform selector */}
-        <div style={{ marginBottom: "0.75rem" }}>
-          <div style={{ color: "#3f3f46", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.35rem", fontFamily: "monospace" }}>PLATFORM</div>
-          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-            {["Instagram", "YouTube", "TikTok", "LinkedIn"].map(p => (
-              <div key={p} style={{
-                background: selectedPlatform === p ? "rgba(109,40,217,0.15)" : "#0d0d0d",
-                border: `1px solid ${selectedPlatform === p ? "#6d28d9" : "#1a1a1a"}`,
-                color: selectedPlatform === p ? "#8b5cf6" : "#3f3f46",
-                padding: "0.2rem 0.55rem", borderRadius: "20px", fontSize: "0.65rem", fontWeight: 600,
-                transition: "all 0.3s",
-              }}>{p}</div>
-            ))}
+        {/* Card header */}
+        <div style={{ background: "#0d0d0d", borderBottom: "1px solid #111", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.3rem" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", opacity: 0.6 }} />
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", opacity: 0.6 }} />
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", opacity: 0.6 }} />
           </div>
+          <span style={{ color: "#3f3f46", fontSize: "0.62rem", fontFamily: "monospace", flex: 1, textAlign: "center" }}>getvci.com</span>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s infinite" }} />
         </div>
 
-        {/* Keyword input */}
-        <div style={{ marginBottom: "0.75rem" }}>
-          <div style={{ color: "#3f3f46", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.35rem", fontFamily: "monospace" }}>KEYWORD</div>
-          <div style={{ background: "#0d0d0d", border: `1px solid ${phase === "typing" ? "#6d28d9" : "#1a1a1a"}`, borderRadius: "8px", padding: "0.5rem 0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "border 0.3s" }}>
-            <span style={{ color: typedText ? "#f1f5f9" : "#3f3f46", fontSize: "0.82rem" }}>
-              {typedText || "Enter keyword..."}
-            </span>
-            {phase === "typing" && (
-              <span style={{ display: "inline-block", width: 2, height: "1em", background: "#6d28d9", animation: "blink 1s infinite", verticalAlign: "text-bottom" }} />
-            )}
-          </div>
-        </div>
+        <div style={{ padding: "1.1rem" }}>
 
-        {/* Generate button */}
-        <button style={{
-          width: "100%", padding: "0.65rem", borderRadius: "8px", border: "none",
-          background: isGenerating ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)",
-          color: isGenerating ? "#52525b" : "#fff",
-          fontWeight: 700, fontSize: "0.82rem", cursor: "default",
-          marginBottom: "1rem", transition: "all 0.3s",
-          fontFamily: "'Inter', sans-serif",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
-        }}>
-          {isGenerating ? (
-            <>
-              <span style={{ display: "inline-block", width: 12, height: 12, border: "2px solid #3f3f46", borderTopColor: "#6d28d9", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-              Generating...
-            </>
-          ) : phase === "typing" || phase === "selecting" ? "⚡ Generate Viral Content" : "⚡ Generated!"}
-        </button>
-
-        {/* Results */}
-        {(phase === "results" || phase === "views") && (
-          <div>
-            <div style={{ color: "#3f3f46", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.5rem", fontFamily: "monospace" }}>
-              VIRAL HOOKS FOR INSTAGRAM
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-              {hooks.slice(0, visibleHooks).map((hook, i) => (
-                <div key={i} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "7px", padding: "0.5rem 0.65rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", animation: "slideUp 0.3s ease" }}>
-                  <span style={{ color: "#d4d4d8", fontSize: "0.72rem", lineHeight: 1.4 }}>{hook}</span>
-                  <button style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", color: "#8b5cf6", padding: "0.1rem 0.4rem", borderRadius: "4px", fontSize: "0.55rem", cursor: "default", fontWeight: 700, flexShrink: 0 }}>Copy</button>
-                </div>
-              ))}
+          {/* BEFORE section */}
+          <div style={{ marginBottom: "0.85rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
+              <span style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "0.58rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "4px", letterSpacing: "0.04em" }}>BEFORE VCI</span>
+              <div style={{ flex: 1, height: 1, background: "#111" }} />
             </div>
 
-            {/* View counter */}
-            {phase === "views" && viewCount > 0 && (
-              <div style={{ marginTop: "0.85rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "8px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between", animation: "slideUp 0.4s ease" }}>
-                <div>
-                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em" }}>{formatViews(viewCount)} views</div>
-                  <div style={{ color: "#3f3f46", fontSize: "0.62rem", marginTop: "0.1rem" }}>in 24 hours 🔥</div>
+            <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: "10px", padding: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", color: "#71717a", fontSize: "0.8rem", lineHeight: 1.5, fontStyle: "italic" }}>"{demo.before.hook}"</p>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ color: gradeColor(demo.before.grade), fontWeight: 900, fontSize: "1.2rem", lineHeight: 1 }}>{demo.before.grade}</div>
+                    <div style={{ color: "#2a2a2a", fontSize: "0.55rem", fontWeight: 600 }}>GRADE</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ color: "#ef4444", fontWeight: 800, fontSize: "0.9rem" }}>{demo.before.score}/100</div>
+                    <div style={{ color: "#2a2a2a", fontSize: "0.55rem", fontWeight: 600 }}>SCORE</div>
+                  </div>
                 </div>
+
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ color: "#22c55e", fontSize: "0.65rem", fontWeight: 700 }}>↑ 2,340%</div>
-                  <div style={{ color: "#3f3f46", fontSize: "0.6rem" }}>vs last post</div>
+                  <div style={{ color: "#ef4444", fontWeight: 800, fontSize: "1rem" }}>
+                    {!isAfter ? formatViews(demo.before.views) : formatViews(displayViews)}
+                  </div>
+                  <div style={{ color: "#2a2a2a", fontSize: "0.6rem" }}>views 😢</div>
                 </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                {demo.before.issues.map((issue, i) => (
+                  <span key={i} style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: "0.58rem", padding: "0.1rem 0.45rem", borderRadius: "4px", fontWeight: 500 }}>✗ {issue}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Transform section */}
+          <div style={{ marginBottom: "0.85rem" }}>
+            {phase === "transforming" ? (
+              <div style={{ background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "10px", padding: "0.75rem 1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
+                  <div style={{ width: 14, height: 14, border: "2px solid #3f3f46", borderTopColor: "#6d28d9", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
+                  <span style={{ color: "#8b5cf6", fontSize: "0.75rem", fontWeight: 600 }}>VCI is analyzing & rewriting...</span>
+                </div>
+                <div style={{ background: "#0a0a0a", borderRadius: "4px", height: 4, overflow: "hidden" }}>
+                  <div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg, #6d28d9, #8b5cf6)", borderRadius: "4px", transition: "width 0.05s linear" }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
+                  <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Real trend data injected</span>
+                  <span style={{ color: "#6d28d9", fontSize: "0.6rem", fontWeight: 700 }}>{progress}%</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                <div style={{ flex: 1, height: 1, background: "#111" }} />
+                <div style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "20px", padding: "0.2rem 0.75rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <span style={{ fontSize: "0.6rem" }}>⚡</span>
+                  <span style={{ color: "#8b5cf6", fontSize: "0.62rem", fontWeight: 600 }}>VCI transformed</span>
+                </div>
+                <div style={{ flex: 1, height: 1, background: "#111" }} />
               </div>
             )}
           </div>
-        )}
+
+          {/* AFTER section */}
+          {isAfter && (
+            <div style={{ animation: "slideUp 0.4s ease" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
+                <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", fontSize: "0.58rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "4px", letterSpacing: "0.04em" }}>AFTER VCI</span>
+                <div style={{ flex: 1, height: 1, background: "#111" }} />
+              </div>
+
+              <div style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "10px", padding: "0.75rem" }}>
+                <p style={{ margin: "0 0 0.6rem", color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.5, fontWeight: 500 }}>"{demo.after.hook}"</p>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ color: gradeColor(demo.after.grade), fontWeight: 900, fontSize: "1.2rem", lineHeight: 1 }}>{demo.after.grade}</div>
+                      <div style={{ color: "#3f3f46", fontSize: "0.55rem", fontWeight: 600 }}>GRADE</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.9rem" }}>{demo.after.score}/100</div>
+                      <div style={{ color: "#3f3f46", fontSize: "0.55rem", fontWeight: 600 }}>SCORE</div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em", transition: "all 0.1s" }}>
+                      {formatViews(displayViews)}
+                    </div>
+                    <div style={{ color: "#3f3f46", fontSize: "0.6rem" }}>views 🔥</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  {demo.after.wins.map((win, i) => (
+                    <span key={i} style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: "0.58rem", padding: "0.1rem 0.45rem", borderRadius: "4px", fontWeight: 500 }}>✓ {win}</span>
+                  ))}
+                </div>
+
+                {/* Growth badge */}
+                {phase === "counting" && displayViews > demo.before.views * 5 && (
+                  <div style={{ marginTop: "0.6rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "8px", padding: "0.4rem 0.65rem", display: "flex", justifyContent: "space-between", alignItems: "center", animation: "slideUp 0.3s ease" }}>
+                    <span style={{ color: "#52525b", fontSize: "0.65rem" }}>Growth vs before</span>
+                    <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.82rem" }}>
+                      +{Math.round((demo.after.views / demo.before.views - 1) * 100).toLocaleString()}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -276,13 +357,10 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #000; font-family: 'Inter', sans-serif; }
-        @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-6px)} }
+        @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
         .auth-input {
           width: 100%; background: #0a0a0a; border: 1px solid #1f1f1f;
           border-radius: 10px; padding: 0.85rem 1rem; color: #f5f5f5;
@@ -294,7 +372,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         .submit-btn {
           width: 100%; padding: 0.9rem; border-radius: 10px; border: none;
           font-weight: 700; font-size: 0.9rem; cursor: pointer;
-          font-family: 'Inter', sans-serif; transition: all 0.2s; letter-spacing: 0.01em;
+          font-family: 'Inter', sans-serif; transition: all 0.2s;
         }
         .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(109,40,217,0.25); }
         .submit-btn:disabled { cursor: not-allowed; opacity: 0.5; }
@@ -308,49 +386,41 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", fontFamily: "'Inter', sans-serif" }}>
 
         {/* ── LEFT PANEL ── */}
-        <div className="auth-left" style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", position: "relative", overflow: "hidden", background: "#000" }}>
+        <div className="auth-left" style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(#0f0f0f 1px, transparent 1px), linear-gradient(90deg, #0f0f0f 1px, transparent 1px)", backgroundSize: "44px 44px", opacity: 0.5 }} />
+          <div style={{ position: "absolute", top: -80, left: "20%", width: 350, height: 350, background: "radial-gradient(circle, rgba(109,40,217,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-          {/* Subtle grid background */}
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(#0f0f0f 1px, transparent 1px), linear-gradient(90deg, #0f0f0f 1px, transparent 1px)", backgroundSize: "40px 40px", opacity: 0.6 }} />
-
-          {/* Subtle purple glow top */}
-          <div style={{ position: "absolute", top: -100, left: "30%", width: 300, height: 300, background: "radial-gradient(circle, rgba(109,40,217,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "2.5rem 3rem" }}>
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "2.5rem 3rem", overflowY: "auto" }}>
 
             {/* Logo */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "3rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "2.5rem" }}>
               <div style={{ width: 30, height: 30, background: "#6d28d9", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>⚡</div>
-              <div>
-                <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em" }}>VCI</span>
-                <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 500, marginLeft: "0.4rem", letterSpacing: "0.06em" }}>VIRAL CONTENT INTELLIGENCE</span>
-              </div>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em" }}>VCI</span>
+              <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.06em" }}>VIRAL CONTENT INTELLIGENCE</span>
             </div>
 
             {/* Headline */}
-            <div style={{ marginBottom: "2.5rem" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "0.2rem 0.7rem", marginBottom: "1.25rem" }}>
+            <div style={{ marginBottom: "2rem" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "0.2rem 0.7rem", marginBottom: "1rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 2s infinite" }} />
-                <span style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.04em" }}>500+ creators & agencies use VCI</span>
+                <span style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 500 }}>500+ creators & agencies use VCI</span>
               </div>
-
-              <h1 style={{ fontSize: "clamp(1.8rem,2.8vw,2.6rem)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.03em", marginBottom: "1rem", color: "#fff" }}>
+              <h1 style={{ fontSize: "clamp(1.8rem,2.8vw,2.5rem)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.03em", marginBottom: "0.75rem", color: "#fff" }}>
                 Stop guessing.<br />
                 <span style={{ color: "#6d28d9" }}>Start going viral.</span>
               </h1>
-
-              <p style={{ color: "#71717a", fontSize: "0.9rem", lineHeight: 1.8, maxWidth: 380, fontWeight: 400 }}>
-                Platform-specific viral content powered by real YouTube and Google trend data. Not templates — actual intelligence.
+              <p style={{ color: "#71717a", fontSize: "0.88rem", lineHeight: 1.8, maxWidth: 380 }}>
+                See exactly how VCI transforms weak content into viral posts — backed by real YouTube & Google trend data.
               </p>
             </div>
 
-            {/* LIVE DEMO */}
-            <div style={{ marginBottom: "2rem", animation: "float 4s ease-in-out infinite" }}>
-              <div style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.75rem", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            {/* Before/After Demo */}
+            <div style={{ marginBottom: "2rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 1.5s infinite" }} />
-                LIVE DEMO
+                <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace" }}>LIVE BEFORE / AFTER DEMO</span>
               </div>
-              <LiveDemo />
+              <BeforeAfterDemo />
             </div>
 
             {/* Stats */}
@@ -377,8 +447,8 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                       <span style={{ color: "#d4d4d8", fontWeight: 600, fontSize: "0.7rem" }}>{r.name}</span>
                       <span style={{ color: "#713f12", fontSize: "0.55rem" }}>{"★".repeat(r.stars)}</span>
                     </div>
-                    <div style={{ color: "#2a2a2a", fontSize: "0.58rem", marginBottom: "0.25rem" }}>{r.role}</div>
-                    <p style={{ color: "#3f3f46", fontSize: "0.65rem", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>"{r.review}"</p>
+                    <div style={{ color: "#3f3f46", fontSize: "0.58rem", marginBottom: "0.25rem" }}>{r.role}</div>
+                    <p style={{ color: "#52525b", fontSize: "0.65rem", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>"{r.review}"</p>
                   </div>
                 ))}
               </div>
@@ -387,23 +457,20 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="auth-right" style={{ width: 480, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 2.5rem", background: "#000000", overflowY: "auto", borderLeft: "1px solid #111" }}>
+        <div className="auth-right" style={{ width: 480, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 2.5rem", background: "#000", overflowY: "auto", borderLeft: "1px solid #111" }}>
 
-          <div style={{ width: "100%", maxWidth: 360, animation: "slideUp 0.4s ease" }}>
+          <div style={{ width: "100%", maxWidth: 380, animation: "slideUp 0.4s ease" }}>
 
-            {/* Form header */}
             <div style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#fff", fontWeight: 700, fontSize: "1.35rem", letterSpacing: "-0.02em", marginBottom: "0.4rem" }}>
+              <h2 style={{ color: "#fff", fontWeight: 700, fontSize: "1.4rem", letterSpacing: "-0.02em", marginBottom: "0.4rem" }}>
                 {mode === "login" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset password"}
               </h2>
-              <p style={{ color: "#52525b", fontSize: "0.82rem", fontWeight: 400 }}>
+              <p style={{ color: "#52525b", fontSize: "0.85rem" }}>
                 {mode === "login" ? "Sign in to your VCI dashboard" : mode === "signup" ? "Start creating viral content for free" : "We'll send you a reset link"}
               </p>
             </div>
 
-            {/* Fields */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
-
               {mode === "signup" && (
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
@@ -431,32 +498,18 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               {mode !== "forgot" && (
                 <div style={{ position: "relative" }}>
                   {mode === "signup" && <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>Password</label>}
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Min 6 characters"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                    className="auth-input"
-                    style={{ paddingRight: "3.5rem" }}
-                  />
+                  <input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" value={password}
+                    onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                    className="auth-input" style={{ paddingRight: "3.5rem" }} />
                   <button onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: "absolute", right: "0.75rem", top: mode === "signup" ? "calc(50% + 0.75rem)" : "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#52525b", cursor: "pointer", fontSize: "0.7rem", padding: "0.25rem", fontFamily: "'Inter', sans-serif" }}>
+                    style={{ position: "absolute", right: "0.75rem", top: mode === "signup" ? "calc(50% + 0.75rem)" : "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#52525b", cursor: "pointer", fontSize: "0.7rem", fontFamily: "'Inter', sans-serif" }}>
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
               )}
 
-              {error && (
-                <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#f87171", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  ⚠ {error}
-                </div>
-              )}
-              {message && (
-                <div style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#4ade80", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  ✓ {message}
-                </div>
-              )}
+              {error && <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#f87171", fontSize: "0.8rem" }}>⚠ {error}</div>}
+              {message && <div style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#4ade80", fontSize: "0.8rem" }}>✓ {message}</div>}
 
               <button onClick={handleSubmit} disabled={loading} className="submit-btn"
                 style={{ background: loading ? "#0a0a0a" : "#6d28d9", color: loading ? "#52525b" : "#fff", border: loading ? "1px solid #1f1f1f" : "none", marginTop: "0.25rem" }}>
@@ -464,14 +517,12 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               </button>
             </div>
 
-            {/* Divider */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: "1.5rem 0" }}>
               <div style={{ flex: 1, height: 1, background: "#0f0f0f" }} />
-              <span style={{ color: "#1f1f1f", fontSize: "0.72rem" }}>or</span>
+              <span style={{ color: "#2a2a2a", fontSize: "0.72rem" }}>or</span>
               <div style={{ flex: 1, height: 1, background: "#0f0f0f" }} />
             </div>
 
-            {/* Mode switcher */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               {mode === "login" && (
                 <>
@@ -480,7 +531,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                     Don't have an account? <span style={{ color: "#8b5cf6", fontWeight: 600 }}>Sign up free</span>
                   </button>
                   <button onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="mode-link"
-                    style={{ color: "#2a2a2a", fontSize: "0.75rem", textAlign: "center" as const }}>
+                    style={{ color: "#3f3f46", fontSize: "0.75rem", textAlign: "center" as const }}>
                     Forgot your password?
                   </button>
                 </>
@@ -499,29 +550,27 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
               )}
             </div>
 
-            {/* Free plan info */}
             {mode !== "forgot" && (
               <div style={{ marginTop: "2rem", padding: "1rem", background: "#080808", border: "1px solid #111", borderRadius: "10px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <span style={{ color: "#2a2a2a", fontSize: "0.68rem", fontWeight: 500 }}>Free plan includes</span>
+                  <span style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 500 }}>Free plan includes</span>
                   <span style={{ color: "#6d28d9", fontSize: "0.68rem", fontWeight: 600 }}>No card needed</span>
                 </div>
                 <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                   {["10 credits", "Viral hooks", "Instagram + YouTube"].map(f => (
-                    <span key={f} style={{ background: "#0d0d0d", border: "1px solid #111", color: "#3f3f46", padding: "0.18rem 0.55rem", borderRadius: "5px", fontSize: "0.65rem" }}>✓ {f}</span>
+                    <span key={f} style={{ background: "#0d0d0d", border: "1px solid #111", color: "#52525b", padding: "0.18rem 0.55rem", borderRadius: "5px", fontSize: "0.65rem" }}>✓ {f}</span>
                   ))}
                 </div>
                 {mode === "login" && (
-                  <div style={{ marginTop: "0.6rem", color: "#1f1f1f", fontSize: "0.65rem" }}>
-                    Pro plans from <strong style={{ color: "#2a2a2a" }}>₹299/month</strong> · Cancel anytime
+                  <div style={{ marginTop: "0.6rem", color: "#2a2a2a", fontSize: "0.65rem" }}>
+                    Pro plans from <strong style={{ color: "#3f3f46" }}>₹299/month</strong> · Cancel anytime
                   </div>
                 )}
               </div>
             )}
 
-            {/* Footer */}
             <div style={{ marginTop: "2rem", textAlign: "center" as const }}>
-              <p style={{ color: "#3f3f46", fontSize: "0.65rem" }}>
+              <p style={{ color: "#1f1f1f", fontSize: "0.65rem" }}>
                 © {new Date().getFullYear()} Global Web Info Vision
                 <span style={{ margin: "0 0.4rem" }}>·</span>
                 <button onClick={() => setShowLegal("privacy")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.65rem" }}>Privacy</button>
