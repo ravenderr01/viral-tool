@@ -268,7 +268,7 @@ Respond ONLY in JSON:
   };
 
   const generateScript = async () => {
-    if (!keyword.trim()) { setError("Keyword daalo pehle."); return; }
+    if (!keyword.trim()) { setError("Please enter a keyword first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setGenerateLoading(true); setError(""); setGenerateResult(null);
 
@@ -416,7 +416,7 @@ Respond ONLY in JSON:
 
           <button onClick={generateScript} disabled={generateLoading}
             style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
-            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform} (2 credits)`}
+            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform}`}
           </button>
         </div>
       )}
@@ -547,13 +547,13 @@ Respond ONLY in JSON:
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>YOUR SCRIPT / CONTENT</label>
             <textarea value={script} onChange={e => { setScript(e.target.value); setError(""); }}
-              placeholder={`Paste your ${platform} script here...\n\nExamples:\n• "5 tips for weight loss that actually work"\n• Your complete reel script\n• Instagram caption\n• Ad copy`}
+              placeholder={`Paste your ${platform} script here...\n\nExamples:\n• "5 tips for weight loss that actually work"\n• Your complete reel script\n• Instagram caption or ad copy`}
               rows={7}
               style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
               onFocus={e => e.target.style.borderColor = "#6d28d9"}
               onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
-              <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>Hook, caption, reel script, ad copy — anything works</span>
+              <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>Hook, caption, reel script or ad copy</span>
               <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>{script.length} chars</span>
             </div>
           </div>
@@ -562,7 +562,7 @@ Respond ONLY in JSON:
 
           <button onClick={analyzeScript} disabled={improveLoading}
             style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
-            {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform} (1 credit)`}
+            {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform}`}
           </button>
         </div>
       )}
@@ -803,7 +803,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
         <button onClick={analyze} disabled={loading}
           style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#8b8cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
-          {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform} (1 credit)`}
+          {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform}`}
         </button>
       </div>
 
