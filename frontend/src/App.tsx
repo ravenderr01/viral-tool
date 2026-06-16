@@ -270,7 +270,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
     <div style={{ animation: "slideUp 0.4s ease" }}>
 
       {/* Input Card */}
-      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1e1e1e", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
@@ -285,7 +285,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
             {SCORE_PLATFORMS.map(p => (
               <button key={p.id} onClick={() => setPlatform(p.id)}
-                style={{ background: platform === p.id ? "rgba(168,85,247,0.15)" : "#0a0a0a", border: `1px solid ${platform === p.id ? "#a855f7" : "#1a1a1a"}`, color: platform === p.id ? "#a855f7" : "#555", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}>
+                style={{ background: platform === p.id ? "rgba(124,58,237,0.1)" : "#0a0a0a", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1a1a1a"}`, color: platform === p.id ? "#6d28d9" : "#555", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}>
                 {p.emoji} {p.id}
               </button>
             ))}
@@ -303,19 +303,19 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
             placeholder={`Paste your ${platform} content here...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
             rows={6}
-            style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
-            onFocus={e => e.target.style.borderColor = "#a855f7"}
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
+            onFocus={e => e.target.style.borderColor = "#6d28d9"}
             onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
             <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — sab analyze hoga</span>
-            <span style={{ color: "#333", fontSize: "0.65rem" }}>{contentInput.length} chars</span>
+            <span style={{ color: "#52525b", fontSize: "0.68rem" }}>{contentInput.length} chars</span>
           </div>
         </div>
 
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
 
         <button onClick={analyze} disabled={loading}
-          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#818cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#8b8cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
           {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform} (1 credit)`}
         </button>
       </div>
@@ -339,10 +339,10 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           </div>
 
           {/* Score Bars — /100 */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1.25rem", marginBottom: "0.75rem" }}>
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1.25rem", marginBottom: "0.75rem" }}>
             <p style={{ margin: "0 0 1rem", fontSize: "0.7rem", color: "#444", fontWeight: 700, letterSpacing: "0.06em" }}>📊 DETAILED SCORES /100</p>
             {[
-              ["Curiosity", result.scores?.curiosity, "#a855f7"],
+              ["Curiosity", result.scores?.curiosity, "#6d28d9"],
               ["Emotion", result.scores?.emotion, "#ec4899"],
               ["Virality", result.scores?.virality, "#f59e0b"],
               ["Clarity", result.scores?.clarity, "#06b6d4"],
@@ -384,10 +384,10 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
           {/* Line by Line Fixes */}
           {result.line_fixes && result.line_fixes.length > 0 && (
-            <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
               <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 LINE-BY-LINE FIXES</p>
               {result.line_fixes.map((fix: any, i: number) => (
-                <div key={i} style={{ background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.5rem" }}>
+                <div key={i} style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.5rem" }}>
                   <div style={{ color: "#ef4444", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "0.25rem" }}>
                     {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
                   </div>
@@ -404,11 +404,11 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           )}
 
           {/* 3 Platform Versions */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#6d28d9", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
             {result.platform_versions && Object.entries(result.platform_versions).map(([key, ver]: any, i) => {
-              const colors = ["#a855f7", "#06b6d4", "#22c55e"];
-              const color = colors[i] || "#a855f7";
+              const colors = ["#6d28d9", "#06b6d4", "#22c55e"];
+              const color = colors[i] || "#6d28d9";
               return (
                 <div key={key} style={{ background: `${color}08`, border: `1px solid ${color}25`, borderRadius: "10px", padding: "0.85rem", marginBottom: "0.5rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
@@ -426,11 +426,11 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
 
           {/* Pro Tips */}
           {result.pro_tips && result.pro_tips.length > 0 && (
-            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #818cf830", borderRadius: "14px", padding: "1rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#818cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
+            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #8b8cf830", borderRadius: "14px", padding: "1rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b8cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
               {result.pro_tips.map((tip: string, i: number) => (
                 <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                  <span style={{ color: "#818cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#8b8cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
                   <span style={{ color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
                 </div>
               ))}
@@ -493,8 +493,8 @@ Generate exactly 30 days.`;
   useEffect(() => { setCalKeyword(keyword || ""); }, [keyword]);
 
   const TYPE_COLORS: Record<string, string> = {
-    Tips: "#818cf8", Story: "#f59e0b", Mistakes: "#ef4444", Tutorial: "#22c55e",
-    Motivation: "#a855f7", Trend: "#06b6d4", "Case Study": "#a855f7",
+    Tips: "#8b8cf8", Story: "#f59e0b", Mistakes: "#ef4444", Tutorial: "#22c55e",
+    Motivation: "#6d28d9", Trend: "#06b6d4", "Case Study": "#6d28d9",
     Poll: "#ec4899", Review: "#84cc16", Challenge: "#f97316",
     "Behind the Scenes": "#64748b", "Q&A": "#14b8a6"
   };
@@ -504,7 +504,7 @@ Generate exactly 30 days.`;
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📅</span>
           <div>
@@ -514,11 +514,11 @@ Generate exactly 30 days.`;
         </div>
         <input value={calKeyword} onChange={e => { setCalKeyword(e.target.value); setError(""); }}
           placeholder="Topic or keyword (e.g. weight loss)"
-          style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", transition: "border 0.2s", marginBottom: "0.75rem" }}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", transition: "border 0.2s", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#06b6d4"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
         <div style={{ marginBottom: "0.75rem" }}>
-          <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+          <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
           <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
             {CAL_PLATFORMS.map(p => (
               <button key={p.id} onClick={() => setCalPlatform(p.id)} style={{ background: calPlatform === p.id ? `${p.color}18` : "#0a0a0a", border: `1px solid ${calPlatform === p.id ? p.color : "#1a1a1a"}`, color: calPlatform === p.id ? p.color : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif" }}>
@@ -542,9 +542,9 @@ Generate exactly 30 days.`;
               <div style={{ fontSize: "0.65rem", color: "#333", fontWeight: 700, letterSpacing: "0.08em", marginBottom: "0.4rem" }}>WEEK {week}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                 {calendar.filter(d => getWeek(d.day) === week).map((day) => {
-                  const color = TYPE_COLORS[day.type] || "#a855f7";
+                  const color = TYPE_COLORS[day.type] || "#6d28d9";
                   return (
-                    <div key={day.day} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", cursor: "pointer" }}
+                    <div key={day.day} style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = color + "40")}
                       onMouseLeave={e => (e.currentTarget.style.borderColor = "#1a1a1a")}
                       onClick={() => { navigator.clipboard.writeText(day.hook); setCopiedDay(day.day); setTimeout(() => setCopiedDay(null), 1500); }}>
@@ -638,22 +638,22 @@ Respond ONLY in JSON:
 
   const sectionLabels: Record<string, any[]> = {
     instagram: [
-      { key: "hooks", label: "Viral Hooks", emoji: "🎣", color: "#a855f7" },
-      { key: "titles", label: "Post Titles", emoji: "📝", color: "#818cf8" },
+      { key: "hooks", label: "Viral Hooks", emoji: "🎣", color: "#6d28d9" },
+      { key: "titles", label: "Post Titles", emoji: "📝", color: "#8b8cf8" },
       { key: "captions", label: "Captions", emoji: "💬", color: "#22c55e" },
       { key: "scripts", label: "Reel Scripts", emoji: "🎬", color: "#f59e0b" },
       { key: "hashtags", label: "Hashtags", emoji: "#️⃣", color: "#06b6d4" },
     ],
     youtube: [
-      { key: "hooks", label: "Video Hooks", emoji: "🎬", color: "#a855f7" },
-      { key: "titles", label: "SEO Titles", emoji: "📝", color: "#818cf8" },
+      { key: "hooks", label: "Video Hooks", emoji: "🎬", color: "#6d28d9" },
+      { key: "titles", label: "SEO Titles", emoji: "📝", color: "#8b8cf8" },
       { key: "captions", label: "Descriptions", emoji: "💬", color: "#22c55e" },
       { key: "scripts", label: "Intro Scripts", emoji: "🎙️", color: "#f59e0b" },
       { key: "hashtags", label: "YouTube Tags", emoji: "#️⃣", color: "#06b6d4" },
     ],
     ads: [
-      { key: "hooks", label: "Google Headlines", emoji: "📢", color: "#a855f7" },
-      { key: "titles", label: "Meta Headlines", emoji: "📘", color: "#818cf8" },
+      { key: "hooks", label: "Google Headlines", emoji: "📢", color: "#6d28d9" },
+      { key: "titles", label: "Meta Headlines", emoji: "📘", color: "#8b8cf8" },
       { key: "captions", label: "Ad Descriptions", emoji: "💬", color: "#22c55e" },
       { key: "scripts", label: "Meta Ad Copies", emoji: "🎯", color: "#f59e0b" },
       { key: "hashtags", label: "Hashtags", emoji: "#️⃣", color: "#06b6d4" },
@@ -668,7 +668,7 @@ Respond ONLY in JSON:
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📦</span>
           <div>
@@ -679,15 +679,15 @@ Respond ONLY in JSON:
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
           {PACK_TYPES.map(pt => (
             <button key={pt.id} onClick={() => { setPackType(pt.id as any); setPack(null); }}
-              style={{ background: packType === pt.id ? "rgba(168,85,247,0.15)" : "#0a0a0a", border: `1px solid ${packType === pt.id ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
-              <span style={{ color: packType === pt.id ? "#a855f7" : "#fff", fontWeight: 700, fontSize: "0.85rem" }}>{pt.label}</span>
+              style={{ background: packType === pt.id ? "rgba(124,58,237,0.1)" : "#0a0a0a", border: `1px solid ${packType === pt.id ? "#6d28d9" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+              <span style={{ color: packType === pt.id ? "#6d28d9" : "#fff", fontWeight: 700, fontSize: "0.85rem" }}>{pt.label}</span>
               <span style={{ color: "#444", fontSize: "0.72rem" }}>{pt.desc}</span>
             </button>
           ))}
         </div>
         <input value={packKeyword} onChange={e => { setPackKeyword(e.target.value); setError(""); }}
           placeholder="Enter keyword (e.g. meal prep)"
-          style={{ width: "100%", background: "#0a0a0a", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: "0.75rem" }}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#f59e0b"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
         <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
@@ -700,7 +700,7 @@ Respond ONLY in JSON:
             const items = pack[key] || [];
             const isOpen = openSection === key;
             return (
-              <div key={key} style={{ background: "#0d0d0d", border: `1px solid ${isOpen ? color + "40" : "#1a1a1a"}`, borderRadius: "12px", marginBottom: "0.5rem", overflow: "hidden" }}>
+              <div key={key} style={{ background: "#0f0f0f", border: `1px solid ${isOpen ? color + "40" : "#1a1a1a"}`, borderRadius: "12px", marginBottom: "0.5rem", overflow: "hidden" }}>
                 <div onClick={() => setOpenSection(isOpen ? null : key)} style={{ padding: "0.85rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <span>{emoji}</span>
@@ -741,28 +741,28 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto" }}>
-      <div style={{ background: "#0a0a0a", border: "1px solid #a855f7", borderRadius: "20px", padding: "1.75rem", maxWidth: "460px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
+      <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "460px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
         <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "2rem" }}>💳</div>
-          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", margin: "0.5rem 0", color: "#a855f7" }}>Complete Payment</h2>
-          <div style={{ display: "inline-block", background: "#a855f718", border: "1px solid #a855f740", borderRadius: "20px", padding: "0.3rem 1rem" }}>
-            <span style={{ fontWeight: 800 }}>{planData?.label} — <span style={{ color: "#a855f7" }}>₹{planData?.priceINR} / ${planData?.priceUSD}</span></span>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", margin: "0.5rem 0", color: "#6d28d9" }}>Complete Payment</h2>
+          <div style={{ display: "inline-block", background: "#6d28d918", border: "1px solid #6d28d940", borderRadius: "20px", padding: "0.3rem 1rem" }}>
+            <span style={{ fontWeight: 800 }}>{planData?.label} — <span style={{ color: "#6d28d9" }}>₹{planData?.priceINR} / ${planData?.priceUSD}</span></span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "0.4rem", background: "#111", borderRadius: "10px", padding: "0.3rem", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", gap: "0.4rem", background: "#111111", borderRadius: "10px", padding: "0.3rem", marginBottom: "1.25rem" }}>
           {[["INR", "🇮🇳 UPI (India)"], ["USD", "🌍 PayPal (Worldwide)"]].map(([c, label]) => (
-            <button key={c} onClick={() => setCurrency(c)} style={{ flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none", background: currency === c ? "#a855f7" : "transparent", color: currency === c ? "#000" : "#666", fontWeight: 700, cursor: "pointer", fontSize: "0.82rem" }}>{label}</button>
+            <button key={c} onClick={() => setCurrency(c)} style={{ flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none", background: currency === c ? "#6d28d9" : "transparent", color: currency === c ? "#000" : "#666", fontWeight: 700, cursor: "pointer", fontSize: "0.82rem" }}>{label}</button>
           ))}
         </div>
         {currency === "INR" && (
           <div style={{ textAlign: "center", marginBottom: "1rem" }}>
             <p style={{ color: "#555", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>📱 Scan with PhonePe / GPay / Paytm</p>
-            <div style={{ background: "#111", border: "2px solid #a855f730", borderRadius: "14px", padding: "1rem", display: "inline-block", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#111111", border: "2px solid #6d28d930", borderRadius: "14px", padding: "1rem", display: "inline-block", marginBottom: "0.75rem" }}>
               <img src={getUPIQR(YOUR_UPI_ID, planData?.priceINR)} alt="UPI QR" style={{ width: "160px", height: "160px", borderRadius: "8px", display: "block" }} />
             </div>
-            <div style={{ background: "#0a0a0a", border: "1px solid #a855f725", borderRadius: "10px", padding: "0.6rem 1rem", margin: "0 auto 0.75rem", maxWidth: "300px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-              <span style={{ color: "#a855f7", fontWeight: 700, wordBreak: "break-all" }}>{YOUR_UPI_ID}</span>
-              <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e22" : "#a855f718", border: `1px solid ${copied ? "#22c55e" : "#a855f740"}`, color: copied ? "#22c55e" : "#a855f7", padding: "0.25rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
+            <div style={{ background: "#080808", border: "1px solid #6d28d925", borderRadius: "10px", padding: "0.6rem 1rem", margin: "0 auto 0.75rem", maxWidth: "300px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+              <span style={{ color: "#6d28d9", fontWeight: 700, wordBreak: "break-all" }}>{YOUR_UPI_ID}</span>
+              <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e22" : "#6d28d918", border: `1px solid ${copied ? "#22c55e" : "#6d28d940"}`, color: copied ? "#22c55e" : "#6d28d9", padding: "0.25rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
                 {copied ? "✓" : "Copy"}
               </button>
             </div>
@@ -798,27 +798,27 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
   const [selected, setSelected] = useState("starter");
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-      <div style={{ background: "#0a0a0a", border: "1px solid #a855f7", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
+      <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "2rem" }}>🚀</div>
-          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#a855f7" }}>Free Limit Reached!</h2>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#6d28d9" }}>Free Limit Reached!</h2>
           <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Upgrade to unlock Hook Scoring, 30-Day Calendars, Content Packs & more.</p>
         </div>
         <div style={{ display: "grid", gap: "0.65rem", marginBottom: "1.25rem" }}>
           {Object.entries(PLANS).filter(([k]) => k !== "free").map(([key, plan]: any) => (
-            <div key={key} onClick={() => setSelected(key)} style={{ border: `${selected === key ? "2" : "1"}px solid ${selected === key ? "#a855f7" : "#1e1e1e"}`, borderRadius: "12px", padding: "0.9rem 1rem", background: selected === key ? "rgba(168,85,247,0.07)" : "#0d0d0d", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div key={key} onClick={() => setSelected(key)} style={{ border: `${selected === key ? "2" : "1"}px solid ${selected === key ? "#6d28d9" : "#1e1e1e"}`, borderRadius: "12px", padding: "0.9rem 1rem", background: selected === key ? "rgba(168,85,247,0.07)" : "#0d0d0d", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{plan.label} {plan.badge}</div>
                 <div style={{ color: "#444", fontSize: "0.76rem" }}>{plan.limit} credits/mo</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#a855f7" }}>₹{plan.priceINR}</div>
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#6d28d9" }}>₹{plan.priceINR}</div>
                 <div style={{ color: "#333", fontSize: "0.72rem" }}>${plan.priceUSD} / mo</div>
               </div>
             </div>
           ))}
         </div>
-        <button onClick={() => onSelectPlan(selected)} style={{ width: "100%", padding: "0.9rem", borderRadius: "10px", background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", marginBottom: "0.5rem" }}>
+        <button onClick={() => onSelectPlan(selected)} style={{ width: "100%", padding: "0.9rem", borderRadius: "10px", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", marginBottom: "0.5rem" }}>
           Get {PLANS[selected as keyof typeof PLANS]?.label} — ₹{PLANS[selected as keyof typeof PLANS]?.priceINR} →
         </button>
         <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem" }}>Maybe later</button>
@@ -830,7 +830,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
 function ResultCard({ title, items, emoji, color }: any) {
   const [copied, setCopied] = useState(false);
   return (
-    <div style={{ background: "#0d0d0d", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
+    <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
         <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
         <button onClick={() => { navigator.clipboard.writeText(items.join("\n")); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
@@ -848,11 +848,11 @@ function ResultCard({ title, items, emoji, color }: any) {
 
 function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
   return (
-    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
       <span style={{ fontSize: "1rem" }}>{emoji}</span>
       <span>{label}</span>
       {isPro && !active && (
-        <span style={{ position: "absolute", top: 4, right: 4, fontSize: "0.5rem", background: "#a855f720", border: "1px solid #a855f740", color: "#a855f7", borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700 }}>PRO</span>
+        <span style={{ position: "absolute", top: 4, right: 4, fontSize: "0.5rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700 }}>PRO</span>
       )}
     </button>
   );
@@ -1089,8 +1089,8 @@ Respond ONLY in JSON:
   ];
 
   if (authLoading || profileLoading) return (
-    <div style={{ minHeight: "100vh", background: "#06040f", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#a855f7", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
+    <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: "#6d28d9", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
     </div>
   );
 
@@ -1113,12 +1113,12 @@ Respond ONLY in JSON:
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #0a0a0a; }
+        body { margin: 0; background: #000000; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
-        .tbtn:hover { border-color:#7c3aed!important; color:#7c3aed!important; }
+        .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
         @media (max-width: 768px) {
   .desktop-btn { display: none !important; }
   .mobile-header { padding: 0.75rem 1rem 0.5rem !important; }
@@ -1128,10 +1128,10 @@ Respond ONLY in JSON:
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif" }}>
 
         {/* Header */}
-        <div style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
+        <div style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
           
 
@@ -1141,26 +1141,26 @@ Respond ONLY in JSON:
           )}
 
           {/* Top Buttons */}
-          <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
-          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
+          <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
+          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
-            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",color:"#a855f7",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
             <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
           </div>
 
           {/* Profile */}
           <div style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(139,92,246,0.4)" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
             {showProfile && (
-              <div style={{ position: "absolute", top: "48px", left: 0, background: "#0d0d0d", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "16px", padding: "1.25rem", minWidth: "240px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 100, animation: "slideUp 0.2s ease" }}>
+              <div style={{ position: "absolute", top: "48px", left: 0, background: "#0f0f0f", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "16px", padding: "1.25rem", minWidth: "240px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 100, animation: "slideUp 0.2s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.3rem", color: "#fff", flexShrink: 0 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.3rem", color: "#fff", flexShrink: 0 }}>
                     {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
                   </div>
                   <div>
@@ -1168,14 +1168,14 @@ Respond ONLY in JSON:
                     <div style={{ color: "#555", fontSize: "0.75rem" }}>{user?.email}</div>
                   </div>
                 </div>
-                <div style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between" }}>
+                <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: "8px", padding: "0.5rem 0.75rem", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "#888", fontSize: "0.75rem" }}>Current Plan</span>
-                  <span style={{ color: "#a855f7", fontWeight: 700, fontSize: "0.82rem" }}>{plan} ✨</span>
+                  <span style={{ color: "#6d28d9", fontWeight: 700, fontSize: "0.82rem" }}>{plan} ✨</span>
                 </div>
                 {profile?.phone && <div style={{ color: "#555", fontSize: "0.75rem", marginBottom: "0.75rem" }}>📞 {profile.phone}</div>}
                 <div style={{ color: "#333", fontSize: "0.72rem", marginBottom: "1rem" }}>📅 Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                 {profile?.plan === "free" && (
-                  <button onClick={() => { setShowPaywall(true); setShowProfile(false); }} style={{ width: "100%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.5rem" }}>🚀 Upgrade Plan</button>
+                  <button onClick={() => { setShowPaywall(true); setShowProfile(false); }} style={{ width: "100%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.5rem" }}>🚀 Upgrade Plan</button>
                 )}
                 <button onClick={() => supabase.auth.signOut()} style={{ width: "100%", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem" }}>Logout</button>
               </div>
@@ -1184,26 +1184,26 @@ Respond ONLY in JSON:
 {/* Mobile Top Bar */}
 <div style={{ display: "none" }} className="mobile-top-bar">
   <style>{`@media(max-width:768px){.mobile-top-bar{display:flex!important;justify-content:space-between;align-items:center;padding:0.5rem 1rem;position:absolute;top:0;left:0;right:0;z-index:10}}`}</style>
-  <button onClick={() => setShowPlans(true)} style={{ background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",color:"#a855f7",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+  <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
   <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
 </div>
           {/* Title */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: "20px", padding: "0.2rem 0.85rem", marginBottom: "0.5rem" }}>
             <span style={{ fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
           </div>
-          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", background: "linear-gradient(135deg,#ffffff 0%, #e2e8f0 50%, #c4b5fd 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", color: "#ffffff" }}>
             Viral Content Intelligence
           </h1>
-          <p style={{ color: "#444", fontSize: "0.8rem", margin: "0 0 0.5rem" }}>Hook Score · 30-Day Calendar · Content Pack · Instant Generation</p>
+          <p style={{ color: "#6b7280", fontSize: "0.82rem", margin: "0 0 0.5rem" }}>Hook Score · 30-Day Calendar · Content Pack · Instant Generation</p>
 
           {/* Scrolling Ticker */}
-          <div style={{ overflow: "hidden", background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)", borderRadius: "20px", padding: "0.25rem 0", marginBottom: "0.75rem", maxWidth: "500px", margin: "0 auto 0.75rem" }}>
+          <div style={{ overflow: "hidden", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", padding: "0.25rem 0", marginBottom: "0.75rem", maxWidth: "500px", margin: "0 auto 0.75rem" }}>
             <style>{`.ticker{display:flex;animation:tickerScroll 20s linear infinite;white-space:nowrap} @keyframes tickerScroll{0%{transform:translateX(0)} 100%{transform:translateX(-50%)}}`}</style>
             <div className="ticker">
               {[...Array(2)].map((_, ri) => (
                 <span key={ri}>
                   {["⚡ 500+ Creators", "🎣 Viral Hooks", "📅 30-Day Cal", "🌐 30+ Languages", "📦 Content Pack", "🖼️ Image AI", "🔥 20% OFF — First 100 Users"].map((item, i) => (
-                    <span key={i} style={{ color: i === 6 ? "#8b5cf6" : "#404040", fontSize: "0.68rem", fontWeight: i === 6 ? 800 : 600, padding: "0 1rem" }}>
+                    <span key={i} style={{ color: i === 6 ? "#8b5cf6" : "#3f3f46", fontSize: "0.68rem", fontWeight: i === 6 ? 800 : 600, padding: "0 1rem" }}>
                       {item} <span style={{ color: "#222" }}>·</span>
                     </span>
                   ))}
@@ -1214,14 +1214,14 @@ Respond ONLY in JSON:
 
           {/* Global Language Selector */}
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <span style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.06em" }}>🌐</span>
+            <span style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em" }}>🌐</span>
             <div style={{ position: "relative" }}>
               <button onClick={() => setShowLangDropdown(!showLangDropdown)}
-                style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.3rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.3rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 {LANGUAGE_GROUPS.find(g => g.languages.some(l => l.code === selectedLang))?.country} — {getLangLabel(selectedLang)} ▾
               </button>
               {showLangDropdown && (
-                <div style={{ position: "absolute", top: "110%", left: "50%", transform: "translateX(-50%)", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "14px", padding: "0.75rem", zIndex: 200, width: "300px", boxShadow: "0 8px 40px rgba(0,0,0,0.7)", maxHeight: "400px", overflowY: "auto" }}>
+                <div style={{ position: "absolute", top: "110%", left: "50%", transform: "translateX(-50%)", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "0.75rem", zIndex: 200, width: "300px", boxShadow: "0 8px 40px rgba(0,0,0,0.7)", maxHeight: "400px", overflowY: "auto" }}>
                   <p style={{ color: "#333", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.5rem", letterSpacing: "0.06em" }}>SELECT LANGUAGE</p>
                   {LANGUAGE_GROUPS.map(group => (
                     <div key={group.code} style={{ marginBottom: "0.5rem" }}>
@@ -1237,7 +1237,7 @@ Respond ONLY in JSON:
                                 setSelectedLang(lang.code);
                                 setShowLangDropdown(false);
                               }}
-                              style={{ background: selectedLang === lang.code ? "rgba(168,85,247,0.2)" : "#111", border: `1px solid ${selectedLang === lang.code ? "#a855f7" : "#1e1e1e"}`, color: selectedLang === lang.code ? "#a855f7" : isLocked ? "#2a2a2a" : "#888", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}>
+                              style={{ background: selectedLang === lang.code ? "rgba(124,58,237,0.12)" : "#111", border: `1px solid ${selectedLang === lang.code ? "#6d28d9" : "#1e1e1e"}`, color: selectedLang === lang.code ? "#6d28d9" : isLocked ? "#2a2a2a" : "#888", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}>
                               {isLocked ? "🔒 " : ""}{lang.label}
                             </button>
                           );
@@ -1251,20 +1251,20 @@ Respond ONLY in JSON:
           </div>
 
           {/* Credits bar */}
-          <div style={{ maxWidth: "260px", margin: "0 auto 1rem", background: "#0d0d0d", border: "1px solid #161616", borderRadius: "10px", padding: "0.6rem 0.9rem" }}>
+          <div style={{ maxWidth: "260px", margin: "0 auto 1rem", background: "#0f0f0f", border: "1px solid #161616", borderRadius: "10px", padding: "0.6rem 0.9rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", marginBottom: "0.3rem" }}>
-              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#a855f7" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
+              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#8b5cf6" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
               <span style={{ color: remaining === 0 ? "#ef4444" : remaining <= 3 ? "#f59e0b" : "#22c55e", fontWeight: 700 }}>
                 {remaining === 0 ? "⛔ Limit reached" : `${remaining} / ${limit} credits`}
               </span>
             </div>
             <div style={{ background: "#141414", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", borderRadius: "4px", background: remaining === 0 ? "#ef4444" : "linear-gradient(90deg,#a855f7,#c084fc)", width: `${usedPct}%`, transition: "width 0.5s" }} />
+              <div style={{ height: "100%", borderRadius: "4px", background: remaining === 0 ? "#ef4444" : "linear-gradient(90deg,#6d28d9,#9d71f5)", width: `${usedPct}%`, transition: "width 0.5s" }} />
             </div>
           </div>
 
           {/* Tabs */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#0a0a0a", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
+          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#080808", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji} active={activeTab === t.id} onClick={setActiveTab}
                 isPro={["score","calendar","pack","trends","image"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
@@ -1280,7 +1280,7 @@ Respond ONLY in JSON:
             <div>
               {/* Niche */}
               <div style={{ marginBottom: "1rem" }}>
-                <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>NICHE</label>
+                <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>NICHE</label>
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => {
                     const freeNiches = ["Fitness", "Business", "Daily Vlog"];
@@ -1288,7 +1288,7 @@ Respond ONLY in JSON:
                     const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
                     return (
                       <button key={n} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setNiche(n)}
-                        style={{ background: niche === n ? "#a855f712" : "#0d0d0d", border: `1px solid ${niche === n ? "#a855f7" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
+                        style={{ background: niche === n ? "#6d28d912" : "#0d0d0d", border: `1px solid ${niche === n ? "#6d28d9" : "#1a1a1a"}`, color: niche === n ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
                         {isLocked ? "🔒 " : ""}{n}
                       </button>
                     );
@@ -1298,7 +1298,7 @@ Respond ONLY in JSON:
 
               {/* Platform */}
               <div style={{ marginBottom: "1rem" }}>
-                <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
+                <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 {[
                   { group: "📱 SOCIAL MEDIA", platforms: ["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit"] },
                   { group: "📢 ADVERTISING", platforms: ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"] }
@@ -1312,7 +1312,7 @@ Respond ONLY in JSON:
                         const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
-                            style={{ background: platform === p ? "#a855f712" : "#0d0d0d", border: `1px solid ${platform === p ? "#a855f7" : "#1a1a1a"}`, color: platform === p ? "#a855f7" : isLocked ? "#2a2a2a" : "#444", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
+                            style={{ background: platform === p ? "#6d28d912" : "#0d0d0d", border: `1px solid ${platform === p ? "#6d28d9" : "#1a1a1a"}`, color: platform === p ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
                             {isLocked ? "🔒 " : ""}{p}
                           </button>
                         );
@@ -1324,11 +1324,11 @@ Respond ONLY in JSON:
 
               {/* Keyword */}
               <div style={{ marginBottom: "0.75rem" }}>
-                <label style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
+                <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
                 <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }} onKeyDown={e => e.key === "Enter" && handleGenerate()}
                   placeholder={`e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}`}
-                  style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
-                  onFocus={e => e.target.style.borderColor = "#a855f7"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
+                  style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
+                  onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
                 <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
                   {(NICHE_EXAMPLES[niche] || []).slice(0, 3).map(ex => (
                     <button key={ex} onClick={() => setKeyword(ex)} style={{ background: "none", border: "1px solid #141414", color: "#2a2a2a", padding: "0.18rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}
@@ -1342,31 +1342,31 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#0d0d0d" : "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: loading ? "#2a2a2a" : "#000", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
+              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
                 {loading ? <span style={{ animation: "pulse 1s infinite" }}>⚡ Generating in {langLabel}...</span> : "⚡ Generate Viral Content"}
               </button>
 
               {results && (
                 <div style={{ animation: "slideUp 0.4s ease" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "#a855f708", border: "1px solid #a855f720", borderRadius: "8px", fontSize: "0.75rem", color: "#a855f7" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "#6d28d908", border: "1px solid #6d28d920", borderRadius: "8px", fontSize: "0.75rem", color: "#6d28d9" }}>
                     🌐 Generated in <strong>{langLabel}</strong>
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>💡 Try Hook Score tab</span>
                   </div>
                   {["Google Ads", "Meta Ads", "Native Ads"].includes(platform) ? (
-                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#818cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#a855f7" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /></>
+                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /></>
                   ) : platform === "YouTube" ? (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#a855f7" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
                   ) : platform === "Reddit" ? (
-                    <><ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" /><ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" /><ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#a855f7" /></>
+                    <><ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" /><ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" /><ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#6d28d9" /></>
                   ) : (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#818cf8" /><ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#a855f7" /><ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" /><ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" /></>
                   )}
-                  <div style={{ background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
+                  <div style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
                     <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "#444", fontWeight: 600 }}>WANT MORE FROM THIS KEYWORD?</p>
                     <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                       {[["📊 Score my hooks", "score"], ["📅 Plan 30 days", "calendar"], ["📦 Full content pack", "pack"]].map(([label, tab]) => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "#111", border: "1px solid #1e1e1e", color: "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}
-                          onMouseEnter={e => { (e.currentTarget.style.borderColor = "#a855f7"); (e.currentTarget.style.color = "#a855f7"); }}
+                        <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "#111111", border: "1px solid #1f1f1f", color: "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}
+                          onMouseEnter={e => { (e.currentTarget.style.borderColor = "#6d28d9"); (e.currentTarget.style.color = "#6d28d9"); }}
                           onMouseLeave={e => { (e.currentTarget.style.borderColor = "#1e1e1e"); (e.currentTarget.style.color = "#555"); }}>
                           {label}
                         </button>
@@ -1377,10 +1377,10 @@ Respond ONLY in JSON:
               )}
 
               {plan === "free" && (
-                <div style={{ background: "#a855f708", border: "1px solid #a855f718", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
+                <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
                   <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>🔥 Unlock Hook Score, Calendar & Content Packs</div>
                   <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>Starter ₹299 · Pro Creator ₹999 · Business ₹1,999 · Agency ₹4,999</div>
-                  <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
+                  <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
                 </div>
               )}
             </div>
@@ -1393,7 +1393,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer unlocks from Starter plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
@@ -1407,7 +1407,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>30-Day Content Calendar uses 5 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} />
@@ -1426,7 +1426,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>AI Trend Intelligence is available from Growth plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
@@ -1440,7 +1440,7 @@ Respond ONLY in JSON:
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
                 <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Content Pack uses 3 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
               <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} />
@@ -1452,7 +1452,7 @@ Respond ONLY in JSON:
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "1.5rem 1rem", borderTop: "1px solid rgba(139,92,246,0.1)", marginTop: "2rem" }}>
         <p style={{ color: "#2a2a2a", fontSize: "0.72rem", margin: 0 }}>
-          Designed & Developed by <span style={{ color: "#a855f7", fontWeight: 700 }}>Global Web Info Vision</span> © {new Date().getFullYear()} All Rights Reserved.
+          Designed & Developed by <span style={{ color: "#6d28d9", fontWeight: 700 }}>Global Web Info Vision</span> © {new Date().getFullYear()} All Rights Reserved.
           {" "}<span style={{ margin: "0 0.5rem", color: "#1a1a1a" }}>|</span>
           <button onClick={() => setLegalPage("privacy")} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.72rem" }}>Privacy Policy</button>
           <span style={{ margin: "0 0.3rem", color: "#1a1a1a" }}>·</span>
@@ -1465,7 +1465,7 @@ Respond ONLY in JSON:
       {/* Review Modal */}
       {showReview && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-          <div style={{ background: "#0a0a0a", border: "1px solid rgba(251,191,36,0.3)", borderRadius: "20px", padding: "2rem", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease" }}>
+          <div style={{ background: "#080808", border: "1px solid rgba(251,191,36,0.3)", borderRadius: "20px", padding: "2rem", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease" }}>
             {!reviewSubmitted ? (
               <>
                 <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
@@ -1479,9 +1479,9 @@ Respond ONLY in JSON:
                   ))}
                 </div>
                 <input value={reviewRole} onChange={e => setReviewRole(e.target.value)} placeholder="Your role (e.g. Instagram Creator)"
-                  style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", outline: "none", marginBottom: "0.75rem" }} />
+                  style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", outline: "none", marginBottom: "0.75rem" }} />
                 <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Share your experience with VCI..." rows={4}
-                  style={{ width: "100%", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", outline: "none", resize: "none", marginBottom: "1rem" }} />
+                  style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.85rem", outline: "none", resize: "none", marginBottom: "1rem" }} />
                 <button onClick={handleReviewSubmit} disabled={reviewLoading || !reviewText.trim()} style={{ width: "100%", padding: "0.85rem", borderRadius: "10px", background: !reviewText.trim() ? "rgba(251,191,36,0.2)" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: !reviewText.trim() ? "#555" : "#000", fontWeight: 800, cursor: !reviewText.trim() ? "not-allowed" : "pointer", marginBottom: "0.5rem" }}>
                   {reviewLoading ? "⚡ Submitting..." : "⭐ Submit Review"}
                 </button>
