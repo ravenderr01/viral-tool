@@ -415,7 +415,7 @@ Respond ONLY in this exact JSON (no markdown):
             fontFamily: "'Syne',sans-serif", transition: "all 0.3s",
             boxShadow: image && !loading ? "0 8px 32px rgba(168,85,247,0.4)" : "none"
           }}>
-          {loading ? "🖼️ Analyzing image & generating..." : `⚡ Generate ${platform} Content ${keyword ? `— "${keyword}"` : "— Image Only"} (1 credit)`}
+          {loading ? "🖼️ Analyzing image & generating..." : `⚡ Generate ${platform} Content ${keyword ? `— "${keyword}"` : "— Image Only"}`}
         </button>
       </div>
 
