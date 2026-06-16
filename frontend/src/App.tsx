@@ -178,12 +178,22 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-
 function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+  const [mode, setMode] = useState<"improve" | "generate">("improve");
+
+  // Improve mode states
   const [script, setScript] = useState("");
+  const [improveResult, setImproveResult] = useState<any>(null);
+  const [improveLoading, setImproveLoading] = useState(false);
+
+  // Generate mode states
+  const [keyword, setKeyword] = useState("");
+  const [style, setStyle] = useState("Tutorial");
+  const [duration, setDuration] = useState("30 sec");
+  const [generateResult, setGenerateResult] = useState<any>(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
+
   const [platform, setPlatform] = useState("Instagram");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -194,62 +204,52 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
     { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
     { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
     { id: "Facebook", emoji: "📘", color: "#1877f2" },
-    { id: "Meta Ads", emoji: "📢", color: "#6d28d9" },
-    { id: "Google Ads", emoji: "🔍", color: "#22c55e" },
   ];
 
-  const analyze = async () => {
-    if (!script.trim()) { setError("Apna script ya content paste karo."); return; }
-    if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye — kam se kam 5 words."); return; }
+  const STYLES = ["Tutorial", "Story", "POV", "Challenge", "Before/After", "Motivation", "Tips", "Review", "Day in Life", "Comedy"];
+  const DURATIONS = ["15 sec", "30 sec", "60 sec", "90 sec", "3 min"];
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
+  const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
+
+  const analyzeScript = async () => {
+    if (!script.trim()) { setError("Apna script paste karo."); return; }
+    if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setResult(null);
+    setImproveLoading(true); setError(""); setImproveResult(null);
 
-    const prompt = `You are an expert content coach and viral script analyst.
-
-Analyze this ${platform} script/content and provide a detailed before/after comparison:
+    const prompt = `You are an expert content coach. Analyze this ${platform} script and provide before/after comparison.
 
 ORIGINAL SCRIPT:
-"""
-${script}
-"""
+"""${script}"""
 
 PLATFORM: ${platform}
-LANGUAGE RULE: Detect language of script and respond in SAME language.
+LANGUAGE: Detect and respond in same language as the script.
 
-Analyze strictly and provide:
-
-BEFORE ANALYSIS:
-- Score each line/section
-- Identify exactly what's weak and why
-- Overall score /100
-
-AFTER IMPROVEMENT:
-- Completely rewrite the script for ${platform}
-- Make it viral, engaging, platform-specific
-- Keep the core message but make it powerful
-
-Respond ONLY in this JSON (no markdown):
+Respond ONLY in JSON:
 {
   "before": {
     "score": 0,
-    "grade": "A/B/C/D/F",
-    "lines": [
-      {"text": "original line", "score": 0, "issue": "what's wrong", "type": "weak/strong/neutral"}
-    ],
-    "summary": "overall verdict of original"
+    "grade": "C",
+    "lines": [{"text": "line", "score": 0, "issue": "problem", "type": "weak/strong/neutral"}],
+    "summary": "verdict"
   },
   "after": {
     "score": 0,
-    "grade": "A/B/C/D/F",
-    "script": "complete improved script here",
-    "lines": [
-      {"text": "improved line", "reason": "why this works"}
-    ],
-    "summary": "why improved version is better"
+    "grade": "A",
+    "script": "complete improved script",
+    "lines": [{"text": "line", "reason": "why it works"}],
+    "summary": "why better"
   },
   "improvements": ["improvement 1", "improvement 2", "improvement 3"],
   "score_jump": "+X points",
-  "platform_tips": ["tip 1 for ${platform}", "tip 2", "tip 3"]
+  "platform_tips": ["tip 1", "tip 2", "tip 3"]
 }`;
 
     try {
@@ -262,167 +262,261 @@ Respond ONLY in this JSON (no markdown):
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
-      setResult(parsed);
+      setImproveResult(parsed);
     } catch { setError("Analysis failed. Try again."); }
-    setLoading(false);
+    setImproveLoading(false);
   };
 
-  const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
-  const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
+  const generateScript = async () => {
+    if (!keyword.trim()) { setError("Keyword daalo pehle."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setGenerateLoading(true); setError(""); setGenerateResult(null);
+
+    const durationGuide: Record<string, string> = {
+      "15 sec": "Hook (0-3s) + Key Point (3-12s) + CTA (12-15s). Very short and punchy.",
+      "30 sec": "Hook (0-3s) + Problem (3-8s) + Solution (8-25s) + CTA (25-30s)",
+      "60 sec": "Hook (0-5s) + Problem (5-15s) + 3 Key Points (15-50s) + CTA (50-60s)",
+      "90 sec": "Hook + Story + 3-5 tips + Examples + CTA. More storytelling.",
+      "3 min": "Full tutorial format: Hook + Problem + Step by step solution + Results + CTA",
+    };
+
+    const platformGuide: Record<string, string> = {
+      "Instagram": "Instagram Reels — vertical 9:16, hook in first 3 seconds, trending audio suggestion, end with save/share CTA",
+      "YouTube": "YouTube Shorts or Long form — strong hook, value delivery, subscribe CTA",
+      "TikTok": "TikTok — fast paced, trending sounds, pattern interrupt hook, duet/stitch friendly",
+      "LinkedIn": "LinkedIn — professional story format, insight-driven, no trending audio needed",
+      "Twitter / X": "Twitter/X — punchy thread format or video script, controversial hook",
+      "Facebook": "Facebook Reels — emotional hook, community focused, share CTA",
+    };
+
+    const prompt = `You are a viral ${platform} content creator and script writer.
+
+Create a complete ${duration} ${style} script for ${platform} about: "${keyword}"
+
+Platform: ${platform}
+Style: ${style}
+Duration: ${duration}
+Format Guide: ${durationGuide[duration]}
+Platform Guide: ${platformGuide[platform]}
+Language: ${langStrict}
+
+Create a script that will go VIRAL. Be specific, emotional, and platform-perfect.
+
+Respond ONLY in JSON:
+{
+  "title": "Catchy title for this script",
+  "hook": "First 3 seconds — attention grabbing opener",
+  "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions",
+  "sections": [
+    {"time": "0-3s", "label": "HOOK", "content": "exact words to say", "direction": "what to show/do"},
+    {"time": "3-10s", "label": "PROBLEM", "content": "exact words", "direction": "visual direction"},
+    {"time": "10-25s", "label": "SOLUTION", "content": "exact words", "direction": "visual direction"},
+    {"time": "25-30s", "label": "CTA", "content": "exact words", "direction": "visual direction"}
+  ],
+  "caption": "Ready-to-post caption with emojis",
+  "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+  "thumbnail_idea": "What to show in thumbnail/cover",
+  "audio_suggestion": "Type of music/sound that works best",
+  "pro_tips": ["tip 1", "tip 2", "tip 3"]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setGenerateResult(parsed);
+    } catch { setError("Generation failed. Try again."); }
+    setGenerateLoading(false);
+  };
 
   return (
     <div style={{ animation: "slideUp 0.4s ease" }}>
 
-      {/* Header */}
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
-          <div style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", borderRadius: "10px", padding: "0.5rem 0.7rem", fontSize: "1.3rem" }}>🎬</div>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Script Lab</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.75rem" }}>Paste your script → Get Before/After comparison + improved version</p>
-          </div>
-        </div>
-
-        {/* Platform */}
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
-          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-            {PLATFORMS.map(p => (
-              <button key={p.id} onClick={() => setPlatform(p.id)}
-                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s" }}>
-                {p.emoji} {p.id}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Script Input */}
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>
-            YOUR SCRIPT / CONTENT
-            <span style={{ color: "#3f3f46", fontWeight: 400, marginLeft: "0.5rem" }}>(hook, caption, reel script, ad copy — anything)</span>
-          </label>
-          <textarea value={script} onChange={e => { setScript(e.target.value); setError(""); }}
-            placeholder={`Paste your ${platform} script here...\n\nExample:\n"5 tips for weight loss that actually work.\nFirst tip: drink more water..."\n\nOr paste your complete reel script!`}
-            rows={7}
-            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
-            onFocus={e => e.target.style.borderColor = "#6d28d9"}
-            onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.35rem" }}>
-            <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>Min 5 words · Hook, caption, reel script, ad copy</span>
-            <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>{script.length} chars</span>
-          </div>
-        </div>
-
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-
-        <button onClick={analyze} disabled={loading}
-          style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
-          {loading ? "🔍 Analyzing your script..." : `🎬 Analyze & Improve for ${platform} (1 credit)`}
-        </button>
+      {/* Mode Toggle */}
+      <div style={{ display: "flex", background: "#0f0f0f", borderRadius: "14px", padding: "0.35rem", marginBottom: "1rem", border: "1px solid #1f1f1f" }}>
+        {[
+          { id: "generate", label: "🎬 Generate Script", desc: "Fresh reel script banao" },
+          { id: "improve", label: "✨ Improve Script", desc: "Existing script better banao" },
+        ].map(m => (
+          <button key={m.id} onClick={() => { setMode(m.id as any); setError(""); }}
+            style={{ flex: 1, padding: "0.65rem 1rem", borderRadius: "10px", border: "none", cursor: "pointer", transition: "all 0.2s", background: mode === m.id ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: mode === m.id ? "#fff" : "#52525b", fontWeight: mode === m.id ? 800 : 500, fontFamily: "'DM Sans',sans-serif", fontSize: "0.85rem", textAlign: "center" as const }}>
+            <div>{m.label}</div>
+            <div style={{ fontSize: "0.65rem", opacity: 0.7, marginTop: "0.1rem" }}>{m.desc}</div>
+          </button>
+        ))}
       </div>
 
-      {/* Results — Before/After */}
-      {result && (
+      {/* Platform Selector */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+        <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.5rem" }}>SELECT PLATFORM</label>
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+          {PLATFORMS.map(p => (
+            <button key={p.id} onClick={() => setPlatform(p.id)}
+              style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
+              {p.emoji} {p.id}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* GENERATE MODE */}
+      {mode === "generate" && (
+        <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+            <span style={{ fontSize: "1.3rem" }}>🎬</span>
+            <div>
+              <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
+              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Keyword daalo → complete word-for-word script ready</p>
+            </div>
+          </div>
+
+          {/* Keyword */}
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
+            <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }}
+              placeholder={`e.g. weight loss, morning routine, AI tools...`}
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'DM Sans',sans-serif", transition: "border 0.2s" }}
+              onFocus={e => e.target.style.borderColor = "#6d28d9"}
+              onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+          </div>
+
+          {/* Style */}
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SCRIPT STYLE</label>
+            <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+              {STYLES.map(s => (
+                <button key={s} onClick={() => setStyle(s)}
+                  style={{ background: style === s ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${style === s ? "#6d28d9" : "#1f1f1f"}`, color: style === s ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>DURATION</label>
+            <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+              {DURATIONS.map(d => (
+                <button key={d} onClick={() => setDuration(d)}
+                  style={{ background: duration === d ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${duration === d ? "#6d28d9" : "#1f1f1f"}`, color: duration === d ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, transition: "all 0.2s" }}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+          <button onClick={generateScript} disabled={generateLoading}
+            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
+            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform} (1 credit)`}
+          </button>
+        </div>
+      )}
+
+      {/* GENERATE RESULT */}
+      {mode === "generate" && generateResult && (
         <div style={{ animation: "slideUp 0.5s ease" }}>
 
-          {/* Score Jump Banner */}
-          <div style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(109,40,217,0.1))", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: "#fff" }}>🚀 Score Improved!</div>
-              <div style={{ color: "#71717a", fontSize: "0.75rem", marginTop: "0.2rem" }}>Your script got significantly better</div>
+          {/* Title + Hook */}
+          <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "14px", padding: "1.1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+              <div>
+                <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎬 SCRIPT TITLE</p>
+                <p style={{ margin: 0, color: "#fff", fontSize: "1rem", fontWeight: 800, fontFamily: "'Syne',sans-serif" }}>{generateResult.title}</p>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                <span style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", borderRadius: "20px", padding: "0.2rem 0.6rem", fontSize: "0.68rem", fontWeight: 700 }}>{platform}</span>
+                <span style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", borderRadius: "20px", padding: "0.2rem 0.6rem", fontSize: "0.68rem", fontWeight: 700 }}>{duration}</span>
+              </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(result.before?.grade), lineHeight: 1 }}>{result.before?.score}</div>
-                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>BEFORE</div>
-              </div>
-              <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1.5rem" }}>→</div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(result.after?.grade), lineHeight: 1 }}>{result.after?.score}</div>
-                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>AFTER</div>
-              </div>
-              <div style={{ background: "#22c55e15", border: "1px solid #22c55e30", borderRadius: "8px", padding: "0.4rem 0.75rem", textAlign: "center" }}>
-                <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1rem", fontFamily: "'Syne',sans-serif" }}>{result.score_jump}</div>
-                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>JUMP</div>
-              </div>
+            <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "8px", padding: "0.6rem 0.85rem", marginTop: "0.5rem" }}>
+              <p style={{ margin: "0 0 0.2rem", fontSize: "0.62rem", color: "#8b5cf6", fontWeight: 700 }}>⚡ HOOK (First 3 seconds)</p>
+              <p style={{ margin: 0, color: "#f1f5f9", fontSize: "0.88rem", fontWeight: 600, lineHeight: 1.5 }}>{generateResult.hook}</p>
             </div>
           </div>
 
-          {/* Before / After Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
-
-            {/* BEFORE */}
-            <div style={{ background: "#0f0f0f", border: "1px solid #ef444430", borderRadius: "14px", overflow: "hidden" }}>
-              <div style={{ background: "rgba(239,68,68,0.1)", borderBottom: "1px solid #ef444420", padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <span style={{ color: "#ef4444", fontWeight: 800, fontSize: "0.82rem", fontFamily: "'Syne',sans-serif" }}>❌ BEFORE</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{ color: gradeColor(result.before?.grade), fontWeight: 900, fontSize: "1.2rem", fontFamily: "'Syne',sans-serif" }}>{result.before?.grade}</span>
-                  <span style={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700 }}>{result.before?.score}/100</span>
-                </div>
-              </div>
-              <div style={{ padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.75rem", color: "#71717a", fontSize: "0.72rem", lineHeight: 1.5, fontStyle: "italic" }}>{result.before?.summary}</p>
-                {(result.before?.lines || []).map((line: any, i: number) => (
-                  <div key={i} style={{ background: `${lineColor(line.type)}10`, border: `1px solid ${lineColor(line.type)}20`, borderLeft: `3px solid ${lineColor(line.type)}`, borderRadius: "6px", padding: "0.5rem 0.65rem", marginBottom: "0.4rem" }}>
-                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.5 }}>{line.text}</p>
-                    {line.issue && <p style={{ margin: "0.25rem 0 0", color: lineColor(line.type), fontSize: "0.65rem" }}>⚠️ {line.issue}</p>}
+          {/* Script Sections */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎙️ SCRIPT BREAKDOWN</p>
+            {(generateResult.sections || []).map((sec: any, i: number) => {
+              const sectionColors: Record<string, string> = { HOOK: "#8b5cf6", PROBLEM: "#ef4444", SOLUTION: "#22c55e", CTA: "#f59e0b", INTRO: "#8b5cf6", TIPS: "#06b6d4", STORY: "#f59e0b", BODY: "#22c55e" };
+              const color = sectionColors[sec.label] || "#8b5cf6";
+              return (
+                <div key={i} style={{ background: `${color}08`, border: `1px solid ${color}20`, borderLeft: `3px solid ${color}`, borderRadius: "8px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                    <span style={{ color, fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.06em" }}>{sec.label}</span>
+                    <span style={{ color: "#3f3f46", fontSize: "0.62rem" }}>{sec.time}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AFTER */}
-            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", overflow: "hidden" }}>
-              <div style={{ background: "rgba(34,197,94,0.1)", borderBottom: "1px solid #22c55e20", padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.82rem", fontFamily: "'Syne',sans-serif" }}>✅ AFTER</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{ color: gradeColor(result.after?.grade), fontWeight: 900, fontSize: "1.2rem", fontFamily: "'Syne',sans-serif" }}>{result.after?.grade}</span>
-                  <span style={{ color: "#22c55e", fontSize: "0.75rem", fontWeight: 700 }}>{result.after?.score}/100</span>
+                  <p style={{ margin: "0 0 0.3rem", color: "#f1f5f9", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 500 }}>{sec.content}</p>
+                  {sec.direction && <p style={{ margin: 0, color: "#52525b", fontSize: "0.68rem", lineHeight: 1.4 }}>📷 {sec.direction}</p>}
                 </div>
-              </div>
-              <div style={{ padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.75rem", color: "#71717a", fontSize: "0.72rem", lineHeight: 1.5, fontStyle: "italic" }}>{result.after?.summary}</p>
-                {(result.after?.lines || []).map((line: any, i: number) => (
-                  <div key={i} style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderLeft: "3px solid #22c55e", borderRadius: "6px", padding: "0.5rem 0.65rem", marginBottom: "0.4rem" }}>
-                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.5 }}>{line.text}</p>
-                    {line.reason && <p style={{ margin: "0.25rem 0 0", color: "#22c55e", fontSize: "0.65rem" }}>✓ {line.reason}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Full Improved Script */}
-          <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1.1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <p style={{ margin: 0, fontSize: "0.7rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✨ FULL IMPROVED SCRIPT — READY TO USE</p>
-              <button onClick={() => { navigator.clipboard.writeText(result.after?.script || ""); setCopiedKey("script"); setTimeout(() => setCopiedKey(null), 2000); }}
-                style={{ background: copiedKey === "script" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "script" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "script" ? "#22c55e" : "#555", padding: "0.25rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700 }}>
-                {copiedKey === "script" ? "✓ Copied!" : "📋 Copy Script"}
+          {/* Full Script */}
+          <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📝 COMPLETE WORD-FOR-WORD SCRIPT</p>
+              <button onClick={() => copyText(generateResult.script, "fullscript")}
+                style={{ background: copiedKey === "fullscript" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "fullscript" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "fullscript" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "fullscript" ? "✓ Copied!" : "📋 Copy"}
               </button>
             </div>
-            <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.88rem", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{result.after?.script}</p>
+            <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{generateResult.script}</p>
           </div>
 
-          {/* What Improved */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>📈 WHAT WE IMPROVED</p>
-            {(result.improvements || []).map((imp: string, i: number) => (
-              <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                <span style={{ color: "#22c55e", fontSize: "0.78rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
-                <span style={{ color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.5 }}>{imp}</span>
+          {/* Caption + Hashtags */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💬 CAPTION</p>
+                <button onClick={() => copyText(generateResult.caption, "caption")} style={{ background: "none", border: "none", color: copiedKey === "caption" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "caption" ? "✓" : "Copy"}</button>
               </div>
-            ))}
+              <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.6 }}>{generateResult.caption}</p>
+            </div>
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "#06b6d4", fontWeight: 700 }}>#️⃣ HASHTAGS</p>
+                <button onClick={() => copyText((generateResult.hashtags || []).join(" "), "hashtags")} style={{ background: "none", border: "none", color: copiedKey === "hashtags" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "hashtags" ? "✓" : "Copy"}</button>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                {(generateResult.hashtags || []).map((tag: string, i: number) => (
+                  <span key={i} style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", padding: "0.15rem 0.45rem", borderRadius: "20px", fontSize: "0.68rem", fontWeight: 600 }}>{tag}</span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Platform Tips */}
-          {result.platform_tips && (
+          {/* Thumbnail + Audio */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            {generateResult.thumbnail_idea && (
+              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🖼️ THUMBNAIL IDEA</p>
+                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.thumbnail_idea}</p>
+              </div>
+            )}
+            {generateResult.audio_suggestion && (
+              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
+                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pro Tips */}
+          {generateResult.pro_tips && (
             <div style={{ background: "linear-gradient(135deg,#08080f,#0a0a14)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
-              {result.platform_tips.map((tip: string, i: number) => (
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS</p>
+              {generateResult.pro_tips.map((tip: string, i: number) => (
                 <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}>
                   <span style={{ color: "#8b5cf6", fontSize: "0.75rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
                   <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
@@ -432,10 +526,140 @@ Respond ONLY in this JSON (no markdown):
           )}
         </div>
       )}
+
+      {/* IMPROVE MODE */}
+      {mode === "improve" && (
+        <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+            <span style={{ fontSize: "1.3rem" }}>✨</span>
+            <div>
+              <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Improve Existing Script</h3>
+              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste your script → Before/After comparison + improved version</p>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>YOUR SCRIPT / CONTENT</label>
+            <textarea value={script} onChange={e => { setScript(e.target.value); setError(""); }}
+              placeholder={`Paste your ${platform} script here...\n\nExamples:\n• "5 tips for weight loss that actually work"\n• Your complete reel script\n• Instagram caption\n• Ad copy`}
+              rows={7}
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
+              onFocus={e => e.target.style.borderColor = "#6d28d9"}
+              onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
+              <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>Hook, caption, reel script, ad copy — anything works</span>
+              <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>{script.length} chars</span>
+            </div>
+          </div>
+
+          {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+          <button onClick={analyzeScript} disabled={improveLoading}
+            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
+            {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform} (1 credit)`}
+          </button>
+        </div>
+      )}
+
+      {/* IMPROVE RESULT */}
+      {mode === "improve" && improveResult && (
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+          {/* Score Jump */}
+          <div style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(109,40,217,0.08))", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: "#fff" }}>🚀 Script Improved!</div>
+              <div style={{ color: "#71717a", fontSize: "0.72rem", marginTop: "0.2rem" }}>Your script got significantly better</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.before?.grade), lineHeight: 1 }}>{improveResult.before?.score}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>BEFORE</div>
+              </div>
+              <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1.5rem" }}>→</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.after?.grade), lineHeight: 1 }}>{improveResult.after?.score}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>AFTER</div>
+              </div>
+              <div style={{ background: "#22c55e12", border: "1px solid #22c55e25", borderRadius: "8px", padding: "0.4rem 0.75rem", textAlign: "center" }}>
+                <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1rem", fontFamily: "'Syne',sans-serif" }}>{improveResult.score_jump}</div>
+                <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>JUMP</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Before / After Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#0f0f0f", border: "1px solid #ef444325", borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ background: "rgba(239,68,68,0.08)", borderBottom: "1px solid #ef444420", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ color: "#ef4444", fontWeight: 800, fontSize: "0.8rem" }}>❌ BEFORE</span>
+                <span style={{ color: gradeColor(improveResult.before?.grade), fontWeight: 900, fontSize: "1rem" }}>{improveResult.before?.grade} · {improveResult.before?.score}/100</span>
+              </div>
+              <div style={{ padding: "0.75rem" }}>
+                <p style={{ margin: "0 0 0.6rem", color: "#71717a", fontSize: "0.7rem", fontStyle: "italic", lineHeight: 1.5 }}>{improveResult.before?.summary}</p>
+                {(improveResult.before?.lines || []).map((line: any, i: number) => (
+                  <div key={i} style={{ borderLeft: `2px solid ${lineColor(line.type)}`, paddingLeft: "0.5rem", marginBottom: "0.4rem" }}>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.75rem", lineHeight: 1.5 }}>{line.text}</p>
+                    {line.issue && <p style={{ margin: "0.2rem 0 0", color: lineColor(line.type), fontSize: "0.62rem" }}>⚠️ {line.issue}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e25", borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ background: "rgba(34,197,94,0.08)", borderBottom: "1px solid #22c55e20", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.8rem" }}>✅ AFTER</span>
+                <span style={{ color: gradeColor(improveResult.after?.grade), fontWeight: 900, fontSize: "1rem" }}>{improveResult.after?.grade} · {improveResult.after?.score}/100</span>
+              </div>
+              <div style={{ padding: "0.75rem" }}>
+                <p style={{ margin: "0 0 0.6rem", color: "#71717a", fontSize: "0.7rem", fontStyle: "italic", lineHeight: 1.5 }}>{improveResult.after?.summary}</p>
+                {(improveResult.after?.lines || []).map((line: any, i: number) => (
+                  <div key={i} style={{ borderLeft: "2px solid #22c55e", paddingLeft: "0.5rem", marginBottom: "0.4rem" }}>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.75rem", lineHeight: 1.5 }}>{line.text}</p>
+                    {line.reason && <p style={{ margin: "0.2rem 0 0", color: "#22c55e", fontSize: "0.62rem" }}>✓ {line.reason}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Full Improved Script */}
+          <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✨ FULL IMPROVED SCRIPT</p>
+              <button onClick={() => copyText(improveResult.after?.script || "", "improved")}
+                style={{ background: copiedKey === "improved" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "improved" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "improved" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "improved" ? "✓ Copied!" : "📋 Copy"}
+              </button>
+            </div>
+            <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{improveResult.after?.script}</p>
+          </div>
+
+          {/* Improvements + Tips */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📈 IMPROVEMENTS</p>
+              {(improveResult.improvements || []).map((imp: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.35rem" }}>
+                  <span style={{ color: "#22c55e", fontSize: "0.72rem", flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#a1a1aa", fontSize: "0.72rem", lineHeight: 1.5 }}>{imp}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>💡 PLATFORM TIPS</p>
+              {(improveResult.platform_tips || []).map((tip: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.35rem" }}>
+                  <span style={{ color: "#8b5cf6", fontSize: "0.72rem", flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#a1a1aa", fontSize: "0.72rem", lineHeight: 1.5 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
 function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
