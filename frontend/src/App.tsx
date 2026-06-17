@@ -282,7 +282,7 @@ Respond ONLY in JSON:
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
@@ -350,7 +350,7 @@ Respond ONLY in JSON:
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
@@ -516,9 +516,7 @@ Respond ONLY in JSON:
             <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
                 <p style={{ margin: 0, fontSize: "0.65rem", color: "#06b6d4", fontWeight: 700 }}>#️⃣ HASHTAGS</p>
-                <button onClick={() => copyText((generateResult.hashtags || []).join("
-
-")), "hashtags")} style={{ background: "none", border: "none", color: copiedKey === "hashtags" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "hashtags" ? "✓" : "Copy"}</button>
+                <button onClick={() => copyText((generateResult.hashtags || []).join(" "), "hashtags")} style={{ background: "none", border: "none", color: copiedKey === "hashtags" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "hashtags" ? "✓" : "Copy"}</button>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
                 {(generateResult.hashtags || []).map((tag: string, i: number) => (
@@ -766,7 +764,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
@@ -996,7 +994,7 @@ Generate exactly 30 days.`;
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
       setCalendar(parsed.days || []);
     } catch { setError("Calendar generation failed. Try again."); }
@@ -1141,7 +1139,7 @@ Respond ONLY in JSON:
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       setPack(JSON.parse(text.replace(/```json|```/g, "").trim()));
     } catch { setError("Pack generation failed. Try again."); }
     setLoading(false);
@@ -1565,7 +1563,7 @@ Respond ONLY in JSON:
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const text = data.content?.map((i: any) => i.text || "").join(" ") || "";
       let parsed;
       try {
         parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
