@@ -1277,14 +1277,16 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are a ${platform} content expert for ${niche} niche.
+    const prompt = `You are a ${platform} content expert.
 Keyword: "${kw}"
 Platform: ${platform}
 OUTPUT LANGUAGE: ${langStrict}
 
+IMPORTANT: Generate content ONLY about the keyword "${kw}". Ignore any other context.
+
 Generate ONLY:
-1. 5 ready-to-post captions (with emojis, CTA, engaging tone)
-2. 20 relevant hashtags (mix of popular + niche)
+1. 5 ready-to-post captions (with emojis, CTA, engaging tone) — all about "${kw}"
+2. 20 relevant hashtags specific to "${kw}"
 
 Respond ONLY in JSON:
 {"captions":["caption 1","caption 2","caption 3","caption 4","caption 5"],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8","#tag9","#tag10","#tag11","#tag12","#tag13","#tag14","#tag15","#tag16","#tag17","#tag18","#tag19","#tag20"]}`;
