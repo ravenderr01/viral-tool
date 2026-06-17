@@ -1628,6 +1628,11 @@ Respond ONLY in JSON:
         * { box-sizing: border-box; }
         body { margin: 0; background: #000000; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+        @keyframes floatUp { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
+        @keyframes floatDown { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(8px)} }
+        .sidebar-card { transition: all 0.3s; }
+        .sidebar-card:hover { border-color: rgba(109,40,217,0.3) !important; transform: translateY(-2px); }
+        @media (max-width: 1200px) { .left-sidebar, .right-sidebar { display: none !important; } }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
@@ -1641,7 +1646,45 @@ Respond ONLY in JSON:
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif", position: "relative" }}>
+
+        {/* LEFT SIDEBAR */}
+        <div className="left-sidebar" style={{ position: "fixed", left: "1.25rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "155px" }}>
+          {[
+            { icon: "📸", label: "47.2K views", sub: "Instagram Reel", color: "#e1306c", anim: "floatUp 3.5s ease-in-out infinite" },
+            { icon: "📊", label: "Grade A — 91/100", sub: "Hook Score", color: "#22c55e", anim: "floatDown 4s ease-in-out infinite" },
+            { icon: "🎬", label: "Script Ready", sub: "30 sec reel", color: "#6d28d9", anim: "floatUp 4.5s ease-in-out infinite" },
+            { icon: "📈", label: "Trending ↑", sub: "Google Trends", color: "#0891b2", anim: "floatDown 3.8s ease-in-out infinite" },
+            { icon: "🌐", label: "30+ Languages", sub: "Hindi · Tamil · Telugu", color: "#f59e0b", anim: "floatUp 5s ease-in-out infinite" },
+          ].map((item, i) => (
+            <div key={i} className="sidebar-card" style={{ background: "#080808", border: `1px solid ${item.color}18`, borderRadius: "10px", padding: "0.6rem 0.75rem", animation: item.anim, opacity: 0.7 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
+                <span style={{ fontSize: "0.75rem" }}>{item.icon}</span>
+                <span style={{ color: item.color, fontWeight: 700, fontSize: "0.68rem", lineHeight: 1.3 }}>{item.label}</span>
+              </div>
+              <div style={{ color: "#3f3f46", fontSize: "0.58rem", paddingLeft: "1.1rem" }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT SIDEBAR */}
+        <div className="right-sidebar" style={{ position: "fixed", right: "1.25rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "155px" }}>
+          {[
+            { icon: "⚡", label: "10 sec", sub: "Generation time", color: "#6d28d9", anim: "floatDown 3.5s ease-in-out infinite" },
+            { icon: "▶️", label: "89.4K views", sub: "YouTube Short", color: "#ef4444", anim: "floatUp 4s ease-in-out infinite" },
+            { icon: "📅", label: "30-Day Plan", sub: "Content Calendar", color: "#059669", anim: "floatDown 4.5s ease-in-out infinite" },
+            { icon: "💎", label: "₹299/month", sub: "Starter Plan", color: "#22c55e", anim: "floatUp 3.8s ease-in-out infinite" },
+            { icon: "🎯", label: "Platform-Specific", sub: "15+ Platforms", color: "#be185d", anim: "floatDown 5s ease-in-out infinite" },
+          ].map((item, i) => (
+            <div key={i} className="sidebar-card" style={{ background: "#080808", border: `1px solid ${item.color}18`, borderRadius: "10px", padding: "0.6rem 0.75rem", animation: item.anim, opacity: 0.7 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
+                <span style={{ fontSize: "0.75rem" }}>{item.icon}</span>
+                <span style={{ color: item.color, fontWeight: 700, fontSize: "0.68rem", lineHeight: 1.3 }}>{item.label}</span>
+              </div>
+              <div style={{ color: "#3f3f46", fontSize: "0.58rem", paddingLeft: "1.1rem" }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
 
         {/* Header */}
         <div style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
