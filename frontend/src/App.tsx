@@ -176,7 +176,7 @@ function AnimatedScore({ target, color }: { target: number; color: string }) {
     }, 30);
     return () => clearInterval(timer);
   }, [target]);
-  return <span style={{ color, fontWeight: 800, fontSize: "1.4rem", fontFamily: "'Inter',sans-serif" }}>{val}</span>;
+  return <span style={{ color, fontWeight: 800, fontSize: "1.4rem", fontFamily: "'Syne',sans-serif" }}>{val}</span>;
 }
 
 function ScoreRing({ score, label, color }: { score: number; label: string; color: string }) {
@@ -369,7 +369,7 @@ Respond ONLY in JSON:
           { id: "improve", label: "✨ Improve Script", desc: "Existing script better banao" },
         ].map(m => (
           <button key={m.id} onClick={() => { setMode(m.id as any); setError(""); }}
-            style={{ flex: 1, padding: "0.65rem 1rem", borderRadius: "10px", border: "none", cursor: "pointer", transition: "all 0.2s", background: mode === m.id ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: mode === m.id ? "#fff" : "#52525b", fontWeight: mode === m.id ? 800 : 500, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", textAlign: "center" as const }}>
+            style={{ flex: 1, padding: "0.65rem 1rem", borderRadius: "10px", border: "none", cursor: "pointer", transition: "all 0.2s", background: mode === m.id ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: mode === m.id ? "#fff" : "#52525b", fontWeight: mode === m.id ? 800 : 500, fontFamily: "'DM Sans',sans-serif", fontSize: "0.85rem", textAlign: "center" as const }}>
             <div>{m.label}</div>
             <div style={{ fontSize: "0.65rem", opacity: 0.7, marginTop: "0.1rem" }}>{m.desc}</div>
           </button>
@@ -395,7 +395,7 @@ Respond ONLY in JSON:
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
             <span style={{ fontSize: "1.3rem" }}>🎬</span>
             <div>
-              <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
+              <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
               <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Keyword daalo → complete word-for-word script ready</p>
             </div>
           </div>
@@ -405,7 +405,7 @@ Respond ONLY in JSON:
             <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
             <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }}
               placeholder={`e.g. weight loss, morning routine, AI tools...`}
-              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'DM Sans',sans-serif", transition: "border 0.2s" }}
               onFocus={e => e.target.style.borderColor = "#6d28d9"}
               onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
           </div>
@@ -439,7 +439,7 @@ Respond ONLY in JSON:
           {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
 
           <button onClick={generateScript} disabled={generateLoading}
-            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
             {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform}`}
           </button>
         </div>
@@ -454,7 +454,7 @@ Respond ONLY in JSON:
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
               <div>
                 <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎬 SCRIPT TITLE</p>
-                <p style={{ margin: 0, color: "#fff", fontSize: "1rem", fontWeight: 800, fontFamily: "'Inter',sans-serif" }}>{generateResult.title}</p>
+                <p style={{ margin: 0, color: "#fff", fontSize: "1rem", fontWeight: 800, fontFamily: "'Syne',sans-serif" }}>{generateResult.title}</p>
               </div>
               <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
                 <span style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", borderRadius: "20px", padding: "0.2rem 0.6rem", fontSize: "0.68rem", fontWeight: 700 }}>{platform}</span>
@@ -563,7 +563,7 @@ Respond ONLY in JSON:
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
             <span style={{ fontSize: "1.3rem" }}>✨</span>
             <div>
-              <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Improve Existing Script</h3>
+              <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Improve Existing Script</h3>
               <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste your script → Before/After comparison + improved version</p>
             </div>
           </div>
@@ -573,7 +573,7 @@ Respond ONLY in JSON:
             <textarea value={script} onChange={e => { setScript(e.target.value); setError(""); }}
               placeholder={`Paste your ${platform} script here...\n\nExamples:\n• "5 tips for weight loss that actually work"\n• Your complete reel script\n• Instagram caption or ad copy`}
               rows={7}
-              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7, transition: "border 0.2s" }}
               onFocus={e => e.target.style.borderColor = "#6d28d9"}
               onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
@@ -585,7 +585,7 @@ Respond ONLY in JSON:
           {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
 
           <button onClick={analyzeScript} disabled={improveLoading}
-            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
             {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform}`}
           </button>
         </div>
@@ -597,21 +597,21 @@ Respond ONLY in JSON:
           {/* Score Jump */}
           <div style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(109,40,217,0.08))", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1rem", color: "#fff" }}>🚀 Script Improved!</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1rem", color: "#fff" }}>🚀 Script Improved!</div>
               <div style={{ color: "#71717a", fontSize: "0.72rem", marginTop: "0.2rem" }}>Your script got significantly better</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.before?.grade), lineHeight: 1 }}>{improveResult.before?.score}</div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.before?.grade), lineHeight: 1 }}>{improveResult.before?.score}</div>
                 <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>BEFORE</div>
               </div>
               <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1.5rem" }}>→</div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.after?.grade), lineHeight: 1 }}>{improveResult.after?.score}</div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.8rem", color: gradeColor(improveResult.after?.grade), lineHeight: 1 }}>{improveResult.after?.score}</div>
                 <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>AFTER</div>
               </div>
               <div style={{ background: "#22c55e12", border: "1px solid #22c55e25", borderRadius: "8px", padding: "0.4rem 0.75rem", textAlign: "center" }}>
-                <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1rem", fontFamily: "'Inter',sans-serif" }}>{improveResult.score_jump}</div>
+                <div style={{ color: "#22c55e", fontWeight: 900, fontSize: "1rem", fontFamily: "'Syne',sans-serif" }}>{improveResult.score_jump}</div>
                 <div style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>JUMP</div>
               </div>
             </div>
@@ -785,7 +785,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
             <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Poora content paste karo → detailed analysis + fixes + 3 improved versions</p>
           </div>
         </div>
@@ -814,7 +814,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
             placeholder={`Paste your ${platform} content here...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
             rows={6}
-            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
             onFocus={e => e.target.style.borderColor = "#6d28d9"}
             onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
@@ -826,7 +826,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
 
         <button onClick={analyze} disabled={loading}
-          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#8b8cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s" }}>
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#8b8cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s" }}>
           {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform}`}
         </button>
       </div>
@@ -839,11 +839,11 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <div style={{ background: `${gradeColor(result.grade)}15`, border: `2px solid ${gradeColor(result.grade)}40`, borderRadius: "16px", padding: "1.25rem", marginBottom: "0.75rem" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
               <div>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{gradeLabel(result.grade)}</div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{gradeLabel(result.grade)}</div>
                 <div style={{ color: "#666", fontSize: "0.75rem", marginTop: "0.2rem" }}>{result.verdict}</div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "3rem", color: gradeColor(result.grade), lineHeight: 1 }}>{result.grade}</div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 900, fontSize: "3rem", color: gradeColor(result.grade), lineHeight: 1 }}>{result.grade}</div>
                 <div style={{ color: "#555", fontSize: "0.65rem", fontWeight: 700 }}>GRADE</div>
               </div>
             </div>
@@ -1019,26 +1019,26 @@ Generate exactly 30 days.`;
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📅</span>
           <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>30-Day Content Calendar</h3>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>30-Day Content Calendar</h3>
             <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>AI auto-plans your entire month of content</p>
           </div>
         </div>
         <input value={calKeyword} onChange={e => { setCalKeyword(e.target.value); setError(""); }}
           placeholder="Topic or keyword (e.g. weight loss)"
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s", marginBottom: "0.75rem" }}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", transition: "border 0.2s", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#06b6d4"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
         <div style={{ marginBottom: "0.75rem" }}>
           <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
           <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
             {CAL_PLATFORMS.map(p => (
-              <button key={p.id} onClick={() => setCalPlatform(p.id)} style={{ background: calPlatform === p.id ? `${p.color}18` : "#0a0a0a", border: `1px solid ${calPlatform === p.id ? p.color : "#1a1a1a"}`, color: calPlatform === p.id ? p.color : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s", fontFamily: "'Inter',sans-serif" }}>
+              <button key={p.id} onClick={() => setCalPlatform(p.id)} style={{ background: calPlatform === p.id ? `${p.color}18` : "#0a0a0a", border: `1px solid ${calPlatform === p.id ? p.color : "#1a1a1a"}`, color: calPlatform === p.id ? p.color : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif" }}>
                 {p.emoji} {p.id}
               </button>
             ))}
           </div>
         </div>
-        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
           {loading ? "⚡ Planning 30 days..." : "📅 Generate My Content Calendar"}
         </button>
       </div>
@@ -1061,7 +1061,7 @@ Generate exactly 30 days.`;
                       onClick={() => { navigator.clipboard.writeText(day.hook); setCopiedDay(day.day); setTimeout(() => setCopiedDay(null), 1500); }}>
                       <div style={{ flexShrink: 0, textAlign: "center", minWidth: "36px" }}>
                         <div style={{ fontSize: "0.6rem", color: "#333", fontWeight: 700 }}>{DAYS[(day.day - 1) % 7]}</div>
-                        <div style={{ fontSize: "1rem", fontWeight: 800, color: "#fff", fontFamily: "'Inter',sans-serif" }}>{day.day}</div>
+                        <div style={{ fontSize: "1rem", fontWeight: 800, color: "#fff", fontFamily: "'Syne',sans-serif" }}>{day.day}</div>
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.2rem" }}>
@@ -1183,7 +1183,7 @@ Respond ONLY in JSON:
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📦</span>
           <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>One-Click Content Pack</h3>
+            <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: "1rem", color: "#fff" }}>One-Click Content Pack</h3>
             <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Choose your platform — get complete content pack</p>
           </div>
         </div>
@@ -1198,10 +1198,10 @@ Respond ONLY in JSON:
         </div>
         <input value={packKeyword} onChange={e => { setPackKeyword(e.target.value); setError(""); }}
           placeholder="Enter keyword (e.g. meal prep)"
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", marginBottom: "0.75rem" }}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#f59e0b"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif" }}>
           {loading ? "⚡ Building your pack..." : "📦 Generate Full Content Pack"}
         </button>
       </div>
@@ -1255,7 +1255,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
       <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "460px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
         <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
           <div style={{ fontSize: "2rem" }}>💳</div>
-          <h2 style={{ fontFamily: "'Inter',sans-serif", fontSize: "1.3rem", margin: "0.5rem 0", color: "#6d28d9" }}>Complete Payment</h2>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", margin: "0.5rem 0", color: "#6d28d9" }}>Complete Payment</h2>
           <div style={{ display: "inline-block", background: "#6d28d918", border: "1px solid #6d28d940", borderRadius: "20px", padding: "0.3rem 1rem" }}>
             <span style={{ fontWeight: 800 }}>{planData?.label} — <span style={{ color: "#6d28d9" }}>₹{planData?.priceINR} / ${planData?.priceUSD}</span></span>
           </div>
@@ -1312,7 +1312,7 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
       <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "2rem" }}>🚀</div>
-          <h2 style={{ fontFamily: "'Inter',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#6d28d9" }}>Free Limit Reached!</h2>
+          <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#6d28d9" }}>Free Limit Reached!</h2>
           <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Upgrade to unlock Hook Scoring, 30-Day Calendars, Content Packs & more.</p>
         </div>
         <div style={{ display: "grid", gap: "0.65rem", marginBottom: "1.25rem" }}>
@@ -1343,7 +1343,7 @@ function ResultCard({ title, items, emoji, color }: any) {
   return (
     <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-        <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
+        <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
         <button onClick={() => { navigator.clipboard.writeText(items.join("\n")); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
           {copied ? "✓ Copied!" : "Copy all"}
         </button>
@@ -1359,7 +1359,7 @@ function ResultCard({ title, items, emoji, color }: any) {
 
 function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
   return (
-    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
       <span style={{ fontSize: "1rem" }}>{emoji}</span>
       <span>{label}</span>
       {isPro && !active && (
@@ -1623,7 +1623,7 @@ Respond ONLY in JSON:
         <title>VCI — Viral Content Intelligence</title>
         <meta name="description" content="AI-powered tool to discover and predict viral content for creators and brands." />
       </Helmet>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; background: #000000; }
@@ -1641,14 +1641,14 @@ Respond ONLY in JSON:
           .desktop-btn { display: none !important; }
           .mobile-header { padding: 2.5rem 1rem 0.5rem !important; }
           .mobile-top-bar { display: flex !important; }
+          .mobile-profile-show { display: block !important; }
         }
         input,textarea { box-sizing:border-box; }
-        .mobile-top-bar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 50; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: #080808; border-bottom: 1px solid #1a1a1a; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'Inter',sans-serif", position: "relative" }}>
+      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif", position: "relative" }}>
 
         {/* LEFT SIDEBAR */}
         <div className="left-sidebar" style={{ position: "fixed", left: "1.25rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "155px" }}>
@@ -1704,8 +1704,43 @@ Respond ONLY in JSON:
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
+          {/* Mobile Top Bar */}
+          <div className="mobile-top-bar">
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <div onClick={(e) => { e.stopPropagation(); setShowProfile(!showProfile); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "0.85rem", color: "#fff", flexShrink: 0 }}>
+                {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+              </div>
+              <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#8b5cf6",padding:"0.3rem 0.65rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            </div>
+            <span style={{ color: "#8b5cf6", fontWeight: 800, fontSize: "0.8rem" }}>⚡ VCI</span>
+            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.65rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
+          </div>
+
+          {/* Mobile Profile Popup */}
+          {showProfile && (
+            <div style={{ display: "none" }} className="mobile-profile-show">
+              <div style={{ position: "fixed", top: "3.5rem", left: "0.75rem", background: "#0f0f0f", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "14px", padding: "1rem", minWidth: "220px", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", zIndex: 300, animation: "slideUp 0.2s ease" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.75rem" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#fff" }}>
+                    {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.82rem" }}>{profile?.first_name || "User"}</div>
+                    <div style={{ color: "#555", fontSize: "0.68rem" }}>{user?.email}</div>
+                  </div>
+                </div>
+                <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "8px", padding: "0.4rem 0.65rem", marginBottom: "0.6rem", display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#888", fontSize: "0.72rem" }}>Plan</span>
+                  <span style={{ color: "#8b5cf6", fontWeight: 700, fontSize: "0.75rem" }}>{plan} ✨</span>
+                </div>
+                <button onClick={() => supabase.auth.signOut()} style={{ width: "100%", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.78rem" }}>Logout</button>
+                <button onClick={() => setShowProfile(false)} style={{ width: "100%", background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: "0.72rem", marginTop: "0.4rem" }}>✕ Close</button>
+              </div>
+            </div>
+          )}
+
           {/* Profile */}
-          <div style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
+          <div className="desktop-btn" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
@@ -1733,19 +1768,17 @@ Respond ONLY in JSON:
               </div>
             )}
           </div>
-
-          {/* Mobile Top Bar */}
-          <div className="mobile-top-bar">
-            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#8b5cf6",padding:"0.35rem 0.75rem",borderRadius:"8px",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",fontFamily:"'Inter',sans-serif" }}>💎 Plans</button>
-            <span style={{ color: "#8b5cf6", fontWeight: 800, fontSize: "0.8rem", fontFamily:"'Inter',sans-serif" }}>⚡ VCI</span>
-            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.35rem 0.75rem",borderRadius:"8px",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",fontFamily:"'Inter',sans-serif" }}>Logout</button>
-          </div>
-
+{/* Mobile Top Bar */}
+<div style={{ display: "none" }} className="mobile-top-bar">
+  <style>{`@media(max-width:768px){.mobile-top-bar{display:flex!important;justify-content:space-between;align-items:center;padding:0.5rem 1rem;position:absolute;top:0;left:0;right:0;z-index:10}}`}</style>
+  <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+  <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
+</div>
           {/* Title */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: "20px", padding: "0.2rem 0.85rem", marginBottom: "0.5rem" }}>
             <span style={{ fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.08em" }}>⚡ VCI — Viral Content Intelligence</span>
           </div>
-          <h1 style={{ fontFamily: "'Inter',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", color: "#ffffff" }}>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "clamp(1.4rem,5vw,2.2rem)", fontWeight: 800, margin: "0 0 0.3rem", color: "#ffffff" }}>
             Viral Content Intelligence
           </h1>
           <p style={{ color: "#6b7280", fontSize: "0.82rem", margin: "0 0 0.5rem" }}>Hook Score · 30-Day Calendar · Content Pack · Instant Generation</p>
@@ -1911,7 +1944,7 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
+              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Syne',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
                 {loading ? <span style={{ animation: "pulse 1s infinite" }}>⚡ Generating in {langLabel}...</span> : "⚡ Generate Viral Content"}
               </button>
 
@@ -1947,7 +1980,7 @@ Respond ONLY in JSON:
 
               {plan === "free" && (
                 <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>🔥 Unlock Hook Score, Calendar & Content Packs</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>🔥 Unlock Hook Score, Calendar & Content Packs</div>
                   <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>Starter ₹299 · Pro Creator ₹999 · Business ₹1,999 · Agency ₹4,999</div>
                   <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
                 </div>
@@ -1960,7 +1993,7 @@ Respond ONLY in JSON:
             plan === "free" ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer unlocks from Starter plan onwards.</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
@@ -1974,7 +2007,7 @@ Respond ONLY in JSON:
             (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>30-Day Content Calendar uses 5 credits per generation.</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
@@ -1993,7 +2026,7 @@ Respond ONLY in JSON:
             (plan === "free" || plan === "starter") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>AI Trend Intelligence is available from Growth plan onwards.</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
@@ -2007,7 +2040,7 @@ Respond ONLY in JSON:
             (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator Feature</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Script Lab unlocks from Pro Creator plan onwards.</p>
                 <p style={{ color: "#444", fontSize: "0.78rem", marginBottom: "1.5rem" }}>Generate viral reel scripts up to 90 seconds + Before/After improvement</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
@@ -2022,7 +2055,7 @@ Respond ONLY in JSON:
             (plan === "free" || plan === "starter" || plan === "growth") ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
                 <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Content Pack uses 3 credits per generation.</p>
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
