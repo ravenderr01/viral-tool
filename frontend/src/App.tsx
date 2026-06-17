@@ -24,6 +24,30 @@ const PLANS = {
   agency:      { label: "Agency",      limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
 };
 
+const detectNiche = (keyword: string, currentNiche: string): string => {
+  const kw = keyword.toLowerCase();
+  if (kw.match(/weight|gym|fitness|workout|diet|protein|fat|muscle|exercise|yoga/)) return "Fitness";
+  if (kw.match(/money|income|invest|business|startup|freelanc|passive|earn|profit|revenue/)) return "Business";
+  if (kw.match(/\bai\b|tech|code|app|software|chatgpt|programming|developer|crypto|saas/)) return "Tech";
+  if (kw.match(/food|recipe|cook|eat|meal|biryani|street food|restaurant|bake|chef/)) return "Food";
+  if (kw.match(/travel|trip|tour|vacation|hotel|flight|destination|backpack|explore/)) return "Travel";
+  if (kw.match(/fashion|style|outfit|clothes|wear|dress|skincare|beauty|makeup|glow/)) return "Fashion & Style";
+  if (kw.match(/cricket|football|sport|match|player|team|ipl|fifa|basketball|badminton/)) return "Sports";
+  if (kw.match(/motivation|mindset|success|hustle|inspire|goal|discipline|growth/)) return "Motivational";
+  if (kw.match(/meditation|spiritual|manifest|chakra|astrology|mindful|universe/)) return "Spirituality";
+  if (kw.match(/mental|anxiety|stress|depression|therapy|self care|emotion|healing/)) return "Mental Health";
+  if (kw.match(/real estate|property|house|rent|flat|plot|home buying|apartment/)) return "Real Estate";
+  if (kw.match(/study|learn|education|course|exam|college|school|skill|tutorial/)) return "Education";
+  if (kw.match(/facebook ads|google ads|marketing|campaign|funnel|conversion|copywriting/)) return "Ads & Marketing";
+  if (kw.match(/gaming|pubg|free fire|esport|minecraft|stream|gamer|valorant/)) return "Gaming";
+  if (kw.match(/vlog|day in my life|daily routine|morning routine|night routine|lifestyle vlog/)) return "Daily Vlog";
+  if (kw.match(/comedy|funny|meme|joke|prank|skit|humor|roast/)) return "Comedy & Entertainment";
+  if (kw.match(/budget|save money|tax|mutual fund|sip|loan|personal finance|stock market/)) return "Personal Finance";
+  if (kw.match(/lifestyle|minimalism|productivity|habit|self improvement|declutter/)) return "Lifestyle";
+  if (kw.match(/health|wellness|immune|vitamin|nutrition|sleep|detox|ayurveda/)) return "Health & Wellness";
+  return currentNiche;
+};
+
 const NICHE_EXAMPLES: Record<string, string[]> = {
   Fitness:              ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
   Business:             ["passive income", "side hustle", "startup tips", "freelancing"],
@@ -1349,6 +1373,7 @@ export default function ViralContentTool() {
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [niche, setNiche] = useState("Fitness");
+  const [showNiche, setShowNiche] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState("");
@@ -1605,12 +1630,6 @@ Respond ONLY in JSON:
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
-        @keyframes floatUp { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
-        @keyframes floatDown { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(8px)} }
-        @keyframes countUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-        .sidebar-card { transition: all 0.3s; }
-        .sidebar-card:hover { border-color: rgba(109,40,217,0.3) !important; transform: translateY(-2px); }
-        @media (max-width: 1200px) { .left-sidebar, .right-sidebar { display: none !important; } }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
         @media (max-width: 768px) {
@@ -1622,45 +1641,7 @@ Respond ONLY in JSON:
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif", position: "relative" }}>
-
-        {/* LEFT SIDEBAR */}
-        <div className="left-sidebar" style={{ position: "fixed", left: "1.5rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "160px" }}>
-          {[
-            { icon: "📸", label: "47.2K views", sub: "Instagram Reel", color: "#e1306c", anim: "floatUp 3.5s ease-in-out infinite" },
-            { icon: "📊", label: "Grade A — 91/100", sub: "Hook Score", color: "#22c55e", anim: "floatDown 4s ease-in-out infinite" },
-            { icon: "🎬", label: "Script Ready", sub: "30 sec reel", color: "#6d28d9", anim: "floatUp 4.5s ease-in-out infinite" },
-            { icon: "📈", label: "Trending ↑", sub: "Google Trends", color: "#0891b2", anim: "floatDown 3.8s ease-in-out infinite" },
-            { icon: "🌐", label: "30+ Languages", sub: "Hindi · Tamil · Telugu", color: "#f59e0b", anim: "floatUp 5s ease-in-out infinite" },
-          ].map((item, i) => (
-            <div key={i} className="sidebar-card" style={{ background: "#080808", border: `1px solid ${item.color}18`, borderRadius: "10px", padding: "0.6rem 0.75rem", animation: item.anim, opacity: 0.75 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
-                <span style={{ fontSize: "0.75rem" }}>{item.icon}</span>
-                <span style={{ color: item.color, fontWeight: 700, fontSize: "0.7rem", lineHeight: 1.3 }}>{item.label}</span>
-              </div>
-              <div style={{ color: "#3f3f46", fontSize: "0.58rem", paddingLeft: "1.1rem" }}>{item.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* RIGHT SIDEBAR */}
-        <div className="right-sidebar" style={{ position: "fixed", right: "1.5rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "160px" }}>
-          {[
-            { icon: "⚡", label: "10 sec", sub: "Generation time", color: "#6d28d9", anim: "floatDown 3.5s ease-in-out infinite" },
-            { icon: "▶️", label: "89.4K views", sub: "YouTube Short", color: "#ef4444", anim: "floatUp 4s ease-in-out infinite" },
-            { icon: "📅", label: "30-Day Plan", sub: "Content Calendar", color: "#059669", anim: "floatDown 4.5s ease-in-out infinite" },
-            { icon: "💎", label: "₹299/month", sub: "Starter Plan", color: "#22c55e", anim: "floatUp 3.8s ease-in-out infinite" },
-            { icon: "🎯", label: "Platform-Specific", sub: "15+ Platforms", color: "#be185d", anim: "floatDown 5s ease-in-out infinite" },
-          ].map((item, i) => (
-            <div key={i} className="sidebar-card" style={{ background: "#080808", border: `1px solid ${item.color}18`, borderRadius: "10px", padding: "0.6rem 0.75rem", animation: item.anim, opacity: 0.75 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
-                <span style={{ fontSize: "0.75rem" }}>{item.icon}</span>
-                <span style={{ color: item.color, fontWeight: 700, fontSize: "0.7rem", lineHeight: 1.3 }}>{item.label}</span>
-              </div>
-              <div style={{ color: "#3f3f46", fontSize: "0.58rem", paddingLeft: "1.1rem" }}>{item.sub}</div>
-            </div>
-          ))}
-        </div>
+      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'DM Sans',sans-serif" }}>
 
         {/* Header */}
         <div style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
@@ -1812,8 +1793,15 @@ Respond ONLY in JSON:
             <div>
               {/* Niche */}
               <div style={{ marginBottom: "1rem" }}>
-                <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>NICHE</label>
-                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", cursor: "pointer" }} onClick={() => setShowNiche(!showNiche)}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer" }}>NICHE</label>
+                    <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>{niche}</span>
+                    <span style={{ color: "#3f3f46", fontSize: "0.6rem" }}>auto-detected</span>
+                  </div>
+                  <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 600 }}>{showNiche ? "▲ Hide" : "▼ Change"}</span>
+                </div>
+                {showNiche && <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => {
                     const freeNiches = ["Fitness", "Business", "Daily Vlog"];
                     const starterNiches = Object.keys(NICHE_EXAMPLES).filter(x => x !== "Ads & Marketing" && x !== "Real Estate" && x !== "Comedy & Entertainment");
@@ -1825,7 +1813,7 @@ Respond ONLY in JSON:
                       </button>
                     );
                   })}
-                </div>
+                </div>}
               </div>
 
               {/* Platform */}
@@ -1857,7 +1845,15 @@ Respond ONLY in JSON:
               {/* Keyword */}
               <div style={{ marginBottom: "0.75rem" }}>
                 <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>KEYWORD</label>
-                <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }} onKeyDown={e => e.key === "Enter" && handleGenerate()}
+                <input value={keyword} onChange={e => {
+                    const val = e.target.value;
+                    setKeyword(val);
+                    setError("");
+                    if (val.length > 3) {
+                      const detected = detectNiche(val, niche);
+                      if (detected !== niche) setNiche(detected);
+                    }
+                  }} onKeyDown={e => e.key === "Enter" && handleGenerate()}
                   placeholder={`e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}`}
                   style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
                   onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
