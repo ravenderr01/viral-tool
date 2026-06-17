@@ -1244,6 +1244,182 @@ Respond ONLY in JSON:
   );
 }
 
+
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict }: any) {
+  const [kw, setKw] = useState(keyword || "");
+  const [platform, setPlatform] = useState("Instagram");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const PLATFORMS = [
+    { id: "Instagram", emoji: "📸", color: "#e1306c" },
+    { id: "YouTube", emoji: "▶️", color: "#ef4444" },
+    { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
+    { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
+    { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
+    { id: "Facebook", emoji: "📘", color: "#1877f2" },
+    { id: "Pinterest", emoji: "📌", color: "#e60023" },
+    { id: "WhatsApp", emoji: "💬", color: "#25d366" },
+  ];
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  useEffect(() => { setKw(keyword || ""); }, [keyword]);
+
+  const generate = async () => {
+    if (!kw.trim()) { setError("Please enter a keyword first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const prompt = `You are a ${platform} content expert for ${niche} niche.
+Keyword: "${kw}"
+Platform: ${platform}
+OUTPUT LANGUAGE: ${langStrict}
+
+Generate ONLY:
+1. 5 ready-to-post captions (with emojis, CTA, engaging tone)
+2. 20 relevant hashtags (mix of popular + niche)
+
+Each caption must be:
+- Platform-specific tone for ${platform}
+- Include emoji
+- Include call-to-action
+- Ready to copy-paste
+
+Respond ONLY in JSON:
+{
+  "captions": ["caption 1", "caption 2", "caption 3", "caption 4", "caption 5"],
+  "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5", "#tag6", "#tag7", "#tag8", "#tag9", "#tag10", "#tag11", "#tag12", "#tag13", "#tag14", "#tag15", "#tag16", "#tag17", "#tag18", "#tag19", "#tag20"]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse"); }
+      setResult(parsed);
+    } catch { setError("Generation failed. Try again."); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      {/* Input Card */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.25rem" }}>
+          <div style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "10px", padding: "0.4rem 0.6rem", fontSize: "1.2rem" }}>📋</div>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Caption & Hashtags</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Platform select karo → keyword daalo → ready-to-post content!</p>
+          </div>
+        </div>
+
+        {/* Platform */}
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+            {PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Keyword */}
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
+          <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
+            onKeyDown={e => e.key === "Enter" && generate()}
+            placeholder={`e.g. weight loss, morning routine, travel...`}
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
+            onFocus={e => e.target.style.borderColor = "#6d28d9"}
+            onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={generate} disabled={loading}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s" }}>
+          {loading ? "✨ Generating..." : `📋 Generate Captions & Hashtags for ${platform}`}
+        </button>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+
+          {/* Platform badge */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", borderRadius: "20px", padding: "0.2rem 0.75rem", fontSize: "0.7rem", fontWeight: 700 }}>
+              ✓ Ready for {platform}
+            </span>
+            <span style={{ color: "#3f3f46", fontSize: "0.68rem" }}>Copy & post directly!</span>
+          </div>
+
+          {/* Captions */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>💬 CAPTIONS (5 ready-to-post)</p>
+              <button onClick={() => copyText((result.captions || []).join("
+
+"), "allcaptions")}
+                style={{ background: copiedKey === "allcaptions" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allcaptions" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allcaptions" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "allcaptions" ? "✓ Copied!" : "Copy All"}
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              {(result.captions || []).map((cap: string, i: number) => (
+                <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.7, flex: 1 }}>{cap}</p>
+                    <button onClick={() => copyText(cap, `cap${i}`)}
+                      style={{ background: copiedKey === `cap${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `cap${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `cap${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0, marginTop: "0.1rem" }}>
+                      {copiedKey === `cap${i}` ? "✓" : "📋"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Hashtags */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>#️⃣ HASHTAGS (20 optimized)</p>
+              <button onClick={() => copyText((result.hashtags || []).join(" "), "allhash")}
+                style={{ background: copiedKey === "allhash" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allhash" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allhash" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "allhash" ? "✓ Copied!" : "Copy All"}
+              </button>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+              {(result.hashtags || []).map((tag: string, i: number) => (
+                <button key={i} onClick={() => copyText(tag, `tag${i}`)}
+                  style={{ background: copiedKey === `tag${i}` ? "rgba(6,182,212,0.15)" : "rgba(6,182,212,0.06)", border: `1px solid ${copiedKey === `tag${i}` ? "#06b6d4" : "rgba(6,182,212,0.2)"}`, color: copiedKey === `tag${i}` ? "#06b6d4" : "#52525b", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.15s" }}>
+                  {copiedKey === `tag${i}` ? "✓ " : ""}{tag}
+                </button>
+              ))}
+            </div>
+            <p style={{ margin: "0.75rem 0 0", color: "#3f3f46", fontSize: "0.65rem" }}>💡 Click any hashtag to copy individually · Click "Copy All" to copy all at once</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PaymentModal({ plan, onClose, onPaid }: any) {
   const [currency, setCurrency] = useState("INR");
   const [copied, setCopied] = useState(false);
@@ -1594,6 +1770,7 @@ Respond ONLY in JSON:
   const tabs = [
     { id: "generate", label: "Generate", emoji: "⚡" },
     { id: "score", label: "Hook Score", emoji: "📊" },
+    { id: "caption", label: "Captions", emoji: "📋" },
     { id: "calendar", label: "Calendar", emoji: "📅" },
     { id: "pack", label: "Pack", emoji: "📦" },
     { id: "trends", label: "Trends", emoji: "📈" },
@@ -2016,6 +2193,11 @@ Respond ONLY in JSON:
             ) : (
               <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
             )
+          )}
+
+          {/* TAB: CAPTION & HASHTAGS */}
+          {activeTab === "caption" && (
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} />
           )}
 
           {/* TAB: PACK */}
