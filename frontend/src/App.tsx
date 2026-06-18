@@ -361,7 +361,7 @@ Respond ONLY in JSON:
   "thumbnail_idea": "Specific thumbnail concept",
   "audio_suggestion": "Specific music type for ${platform}",
   "pro_tips": ["Specific tip 1", "Specific tip 2", "Specific tip 3"]
-}\`
+}`; 
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
