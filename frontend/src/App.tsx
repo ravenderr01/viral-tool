@@ -1792,11 +1792,11 @@ Respond ONLY in JSON:
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
         @media (max-width: 768px) {
           .desktop-btn { display: none !important; }
-          .mobile-header { padding: 2.5rem 1rem 0.5rem !important; }
+          .mobile-header { padding: 3.5rem 1rem 0.5rem !important; }
           .mobile-top-bar { display: flex !important; }
           .mobile-profile-show { display: block !important; }
         }
-        .mobile-top-bar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 50; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: #080808; border-bottom: 1px solid #1a1a1a; }
+        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: #080808; border-bottom: 1px solid #1a1a1a; }
         .mobile-profile-show { display: none; }
         input,textarea { box-sizing:border-box; }
         ::-webkit-scrollbar { width:4px; }
@@ -1844,7 +1844,7 @@ Respond ONLY in JSON:
         </div>
 
         {/* Header */}
-        <div style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
+        <div className="mobile-header" style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
 
           
 
@@ -1866,7 +1866,7 @@ Respond ONLY in JSON:
           </div>
 
           {/* Profile */}
-          <div style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
+          <div className="desktop-btn" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
