@@ -2259,26 +2259,26 @@ Respond ONLY in JSON:
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: "#fff" }}>❓ Frequently Asked Questions</h2>
-                <p style={{ margin: "0.25rem 0 0", color: "#555", fontSize: "0.78rem" }}>VCI ke baare mein sab kuch jaano</p>
+                <p style={{ margin: "0.25rem 0 0", color: "#555", fontSize: "0.78rem" }}>Everything you need to know about VCI</p>
               </div>
               <button onClick={() => setShowFaq(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
             {[
-              { q: "VCI kya hai?", a: "VCI (Viral Content Intelligence) ek AI-powered tool hai jo creators aur businesses ke liye viral content generate karta hai — hooks, captions, hashtags, scripts, calendars sab kuch ek jagah mein!" },
-              { q: "Free trial mein kya milta hai?", a: "Free mein 5 credits milte hain. Aap Generate, Hook Score, aur Caption & Hashtags features use kar sakte hain. Sab niches, platforms, aur 30+ languages open hain trial mein!" },
-              { q: "1 credit = kya hota hai?", a: "Generate = 1 credit, Hook Score = 1 credit, Caption & Hashtags = 2 credits, Script Lab = 2 credits, Content Pack = 3 credits, 30-Day Calendar = 5 credits." },
-              { q: "Payment ke baad plan kab activate hoga?", a: "Payment screenshot WhatsApp pe bhejne ke baad 2 ghante ke andar manually activate kar diya jaayega. UPI: 9315133390@ptyes" },
-              { q: "Konsa plan lena chahiye?", a: "Creator ho? Starter ₹299 (100 credits + Script Lab). Serious creator? Pro Creator ₹999 (400 credits + Calendar + Pack + Trends). Business/Ads run karte ho? Growth ₹799 ya Business ₹1,999." },
-              { q: "Kya credits monthly renew hote hain?", a: "Haan! Har mahine aapke plan ke according credits renew hote hain. Unused credits carry forward nahi hote." },
-              { q: "Kya refund milta hai?", a: "Haan, 7 din ke andar refund request kar sakte hain agar tool kaam na kare. Support ke liye WhatsApp karo: +91 9315133390" },
-              { q: "Mobile pe kaise use karein?", a: "getvci.com mobile browser mein kholo. Chrome mein 'Add to Home Screen' se app jaisa install ho jaata hai. iOS pe Safari se bhi install kar sakte hain!" },
-              { q: "Kya Hindi aur regional languages mein content ban sakta hai?", a: "Bilkul! 30+ languages support hain — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam aur bahut saari aur languages." },
-              { q: "Script Lab kya hai?", a: "Script Lab mein aap 15/30/60/90 second ke word-for-word reel scripts generate kar sakte hain. Existing script improve bhi kar sakte hain Before/After comparison ke saath. Starter plan se available hai." },
+              { q: "What is VCI?", a: "VCI (Viral Content Intelligence) is an AI-powered tool that generates viral content for creators and businesses — hooks, captions, hashtags, scripts, calendars, all in one place!" },
+              { q: "What do I get in the free trial?", a: "You get 5 free credits. You can use Generate, Hook Score, and Caption & Hashtags features. All niches, platforms, and 30+ languages are open in the trial!" },
+              { q: "What does 1 credit equal?", a: "Generate = 1 credit, Hook Score = 1 credit, Caption & Hashtags = 2 credits, Script Lab = 2 credits, Content Pack = 3 credits, 30-Day Calendar = 5 credits." },
+              { q: "How soon will my plan be activated after payment?", a: "Send your payment screenshot on WhatsApp and your plan will be manually activated within 2 hours. UPI: 9315133390@ptyes" },
+              { q: "Which plan should I choose?", a: "Just starting out? Starter ₹299 (100 credits + Script Lab). Serious creator? Pro Creator ₹999 (400 credits + Calendar + Pack + Trends). Running ads/business? Growth ₹799 or Business ₹1,999." },
+              { q: "Do credits renew every month?", a: "Yes! Credits renew every month according to your plan. Unused credits do not carry forward to the next month." },
+              { q: "Is there a refund policy?", a: "Yes, you can request a refund within 7 days if the tool doesn't work as expected. Contact support on WhatsApp: +91 9315133390" },
+              { q: "How do I use VCI on mobile?", a: "Open getvci.com in your mobile browser. On Chrome, tap 'Add to Home Screen' to install it like an app. On iPhone, use Safari and tap 'Add to Home Screen'!" },
+              { q: "Is Hindi and regional language content supported?", a: "Absolutely! 30+ languages are supported — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam and many more." },
+              { q: "What is Script Lab?", a: "Script Lab lets you generate complete word-for-word reel scripts for 15/30/60/90 seconds. You can also improve existing scripts with a Before/After comparison. Available from the Starter plan onwards." },
             ].map((faq, i) => (
               <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}
             <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
-              <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Aur koi sawaal hai? 🙋</p>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Have more questions? 🙋</p>
               <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
                 💬 WhatsApp karo
               </a>
