@@ -313,36 +313,55 @@ Respond ONLY in JSON:
       "Facebook": "Facebook Reels — emotional hook, community focused, share CTA",
     };
 
-    const prompt = `You are a viral ${platform} content creator and script writer.
+    const wordCounts: Record<string, number> = {
+      "15 sec": 40, "30 sec": 80, "60 sec": 160, "90 sec": 240
+    };
+    const sections: Record<string, string> = {
+      "15 sec": "HOOK (0-3s), KEY POINT (3-12s), CTA (12-15s)",
+      "30 sec": "HOOK (0-3s), PROBLEM (3-8s), SOLUTION (8-25s), CTA (25-30s)",
+      "60 sec": "HOOK (0-5s), PROBLEM (5-15s), POINT 1 (15-25s), POINT 2 (25-35s), POINT 3 (35-50s), CTA (50-60s)",
+      "90 sec": "HOOK (0-5s), STORY (5-20s), TIP 1 (20-35s), TIP 2 (35-50s), TIP 3 (50-70s), RESULT (70-80s), CTA (80-90s)"
+    };
+    const wc = wordCounts[duration] || 80;
+    const sec = sections[duration] || sections["30 sec"];
 
-Create a complete ${duration} ${style} script for ${platform} about: "${keyword}"
+    const prompt = `You are a viral ${platform} content creator and expert script writer.
 
+TASK: Write a COMPLETE ${duration} ${style} script about: "${keyword}"
+
+CRITICAL: Script MUST be ${duration} long = approximately ${wc} spoken words. Do NOT write less.
+
+Language: ${langStrict}
 Platform: ${platform}
 Style: ${style}
-Duration: ${duration}
-Format Guide: ${durationGuide[duration]}
+Sections: ${sec}
 Platform Guide: ${platformGuide[platform]}
-Language: ${langStrict}
 
-Create a script that will go VIRAL. Be specific, emotional, and platform-perfect.
+QUALITY RULES:
+- Hook MUST stop scroll in first 2 seconds — use shock, curiosity, or bold claim
+- Be SPECIFIC about "${keyword}" — use real numbers, facts, exact tips
+- Every section must have enough content to fill its time slot
+- Script must sound natural when spoken aloud
+- End with strong CTA (follow/subscribe/save/comment)
+- Do NOT use generic phrases like "teen baatein" — give the actual points
 
 Respond ONLY in JSON:
 {
-  "title": "Catchy title for this script",
-  "hook": "First 3 seconds — attention grabbing opener",
-  "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions",
+  "title": "Catchy viral title",
+  "hook": "Exact hook — first 2-3 seconds, must stop scroll",
+  "script": "COMPLETE word-for-word script with ALL sections filled. Each section must have enough words to fill its time. Include [PAUSE], [SHOW: description], [CUT TO: scene] directions.",
   "sections": [
-    {"time": "0-3s", "label": "HOOK", "content": "exact words to say", "direction": "what to show/do"},
-    {"time": "3-10s", "label": "PROBLEM", "content": "exact words", "direction": "visual direction"},
-    {"time": "10-25s", "label": "SOLUTION", "content": "exact words", "direction": "visual direction"},
-    {"time": "25-30s", "label": "CTA", "content": "exact words", "direction": "visual direction"}
+    {"time": "0-3s", "label": "HOOK", "content": "exact words for this section — enough to fill the time", "direction": "what to show on screen"},
+    {"time": "3-8s", "label": "PROBLEM", "content": "exact words", "direction": "visual"},
+    {"time": "8-25s", "label": "SOLUTION", "content": "exact words with specific tips about ${keyword}", "direction": "visual"},
+    {"time": "25-30s", "label": "CTA", "content": "exact CTA words", "direction": "visual"}
   ],
   "caption": "Ready-to-post caption with emojis",
-  "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
-  "thumbnail_idea": "What to show in thumbnail/cover",
-  "audio_suggestion": "Type of music/sound that works best",
-  "pro_tips": ["tip 1", "tip 2", "tip 3"]
-}`;
+  "hashtags": ["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8","#tag9","#tag10"],
+  "thumbnail_idea": "Specific thumbnail concept",
+  "audio_suggestion": "Specific music type for ${platform}",
+  "pro_tips": ["Specific tip 1", "Specific tip 2", "Specific tip 3"]
+}\`
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -2019,9 +2038,7 @@ Respond ONLY in JSON:
                     <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem" }}>{group}</p>
                     <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                       {platforms.map(p => {
-                        const adsPlatforms = ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"];
-                        const creatorPlans = ["free", "starter", "pro_creator"];
-                        const isLocked = creatorPlans.includes(plan) && adsPlatforms.includes(p);
+                        const isLocked = false; // All platforms open for all plans
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
                             style={{ background: platform === p ? "#6d28d912" : "#0d0d0d", border: `1px solid ${platform === p ? "#6d28d9" : "#1a1a1a"}`, color: platform === p ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
