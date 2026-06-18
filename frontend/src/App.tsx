@@ -93,6 +93,20 @@ const CROSS_SELL_NICHES: Record<string, { niche: string; reason: string; keyword
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+// Reusable credits remaining bar
+function CreditBar({ remaining, cost, label }: { remaining: number; cost: number; label?: string }) {
+  const enough = remaining >= cost;
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#080808", border: `1px solid ${enough ? "#1a1a1a" : "rgba(239,68,68,0.2)"}`, borderRadius: "10px", padding: "0.5rem 0.85rem", marginBottom: "0.65rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+        <span style={{ color: "#52525b", fontSize: "0.7rem" }}>{label || "This action"}: <strong style={{ color: enough ? "#8b5cf6" : "#ef4444" }}>{cost} credit{cost !== 1 ? "s" : ""}</strong></span>
+      </div>
+      <span style={{ color: enough ? "#22c55e" : "#ef4444", fontSize: "0.72rem", fontWeight: 700 }}>{remaining} left{!enough ? " ⛔" : ""}</span>
+    </div>
+  );
+}
+
+
 
 const LANGUAGE_GROUPS = [
   { country: "🇮🇳 India", code: "IN", languages: [
@@ -222,7 +236,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, remaining }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -604,6 +618,7 @@ Respond ONLY in JSON:
 
           {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
 
+          <CreditBar remaining={remaining} cost={1} label="Improve Script" />
           <button onClick={analyzeScript} disabled={improveLoading}
             style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
             {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform}`}
@@ -710,7 +725,7 @@ Respond ONLY in JSON:
     </div>
   );
 }
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, remaining }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -973,7 +988,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   );
 }
 
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict }: any) {
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, remaining }: any) {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<any[]>([]);
   const [calKeyword, setCalKeyword] = useState(keyword || "");
@@ -1058,6 +1073,7 @@ Generate exactly 30 days.`;
             ))}
           </div>
         </div>
+        <CreditBar remaining={remaining} cost={5} label="30-Day Calendar" />
         <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "⚡ Planning 30 days..." : "📅 Generate My Content Calendar"}
         </button>
@@ -1103,7 +1119,7 @@ Generate exactly 30 days.`;
   );
 }
 
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict }: any) {
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, remaining }: any) {
   const [loading, setLoading] = useState(false);
   const [pack, setPack] = useState<any>(null);
   const [packKeyword, setPackKeyword] = useState(keyword || "");
@@ -1221,6 +1237,7 @@ Respond ONLY in JSON:
           style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#f59e0b"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
+        <CreditBar remaining={remaining} cost={3} label="Content Pack" />
         <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "⚡ Building your pack..." : "📦 Generate Full Content Pack"}
         </button>
@@ -1265,7 +1282,7 @@ Respond ONLY in JSON:
 }
 
 
-function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed }: any) {
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, remaining }: any) {
   const [kw, setKw] = useState(keyword || "");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1358,6 +1375,7 @@ Respond ONLY in JSON:
             onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+        <CreditBar remaining={remaining} cost={2} label="Captions & Hashtags" />
         <button onClick={generate} disabled={loading}
           style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "✨ Generating..." : `📋 Generate Captions & Hashtags for ${platform}`}
@@ -2113,6 +2131,7 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
+              <CreditBar remaining={remaining} cost={1} label="Generate" />
               <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                 {loading
                   ? <><RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ animation: "pulse 1s infinite" }}>Generating in {langLabel}...</span></>
@@ -2205,7 +2224,7 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} remaining={remaining} />
           )}
 
           {/* TAB: CALENDAR */}
@@ -2218,7 +2237,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} />
+              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} remaining={remaining} />
             )
           )}
 
@@ -2258,7 +2277,7 @@ Respond ONLY in JSON:
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} />
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} remaining={remaining} />
           )}
 
           {/* TAB: PACK */}
@@ -2271,7 +2290,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} />
+              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} remaining={remaining} />
             )
           )}
         </div>
