@@ -10,6 +10,10 @@ import Trends from "./Trends";
 import Legal from "./Legal";
 import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
+import {
+  Zap, BarChart2, FileText, CalendarDays, Package, TrendingUp, Image, Film,
+  Sparkles, ArrowRight, Tag, RefreshCw
+} from "lucide-react";
 
 const YOUR_UPI_ID    = "9315133390@ptyes";
 const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
@@ -70,6 +74,22 @@ const NICHE_EXAMPLES: Record<string, string[]> = {
   Motivational:         ["success mindset", "morning motivation", "self improvement", "hustle tips"],
   "Health & Wellness":  ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
   Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
+};
+
+// Cross-selling: jo niche hai uske related niches suggest karo
+const CROSS_SELL_NICHES: Record<string, { niche: string; reason: string; keywords: string[] }[]> = {
+  Fitness:           [{ niche: "Health & Wellness", reason: "Fitness creators ka wellness content bhi trend karta hai", keywords: ["nutrition tips", "sleep tips", "detox"] }, { niche: "Motivational", reason: "Gym motivation content viral hota hai", keywords: ["success mindset", "discipline", "hustle tips"] }, { niche: "Food", reason: "Meal prep aur diet content fitness ke saath fit hota hai", keywords: ["meal prep", "protein meals", "healthy recipes"] }],
+  Business:          [{ niche: "Personal Finance", reason: "Business creators ko finance content bhi follow karte hain", keywords: ["invest money", "passive income", "budget tips"] }, { niche: "Motivational", reason: "Entrepreneur motivation viral hota hai", keywords: ["success mindset", "hustle tips", "growth"] }, { niche: "Tech", reason: "AI tools aur automation business ke liye hot topic hai", keywords: ["AI tools", "ChatGPT hacks", "automation"] }],
+  Tech:              [{ niche: "Business", reason: "Tech creators startup content bhi banate hain", keywords: ["startup tips", "side hustle", "freelancing"] }, { niche: "Education", reason: "Coding tutorials aur e-learning popular hai", keywords: ["coding tips", "online course", "skill development"] }, { niche: "Gaming", reason: "Tech aur gaming audience overlap hoti hai", keywords: ["gaming setup", "game review", "esports"] }],
+  Lifestyle:         [{ niche: "Mental Health", reason: "Lifestyle audience wellness content pasand karta hai", keywords: ["self care", "anxiety tips", "mindfulness"] }, { niche: "Fashion & Style", reason: "Lifestyle aur fashion content overlap karta hai", keywords: ["outfit ideas", "style guide", "trendy outfits"] }, { niche: "Daily Vlog", reason: "Lifestyle creators vlogs bhi banate hain", keywords: ["day in my life", "morning routine", "life update"] }],
+  Food:              [{ niche: "Health & Wellness", reason: "Healthy food content viral hota hai", keywords: ["nutrition tips", "healthy lifestyle", "detox"] }, { niche: "Fitness", reason: "Diet aur fitness content saath kaam karta hai", keywords: ["protein diet", "meal prep", "weight loss"] }, { niche: "Travel", reason: "Food travel content ka growing trend hai", keywords: ["street food", "food tour", "travel vlog"] }],
+  "Daily Vlog":      [{ niche: "Lifestyle", reason: "Vloggers ke liye lifestyle content natural hai", keywords: ["morning routine", "productivity", "self improvement"] }, { niche: "Travel", reason: "Travel vlogs bahut popular hain", keywords: ["travel tips", "solo travel", "budget travel"] }, { niche: "Mental Health", reason: "Vlog audience se connect ke liye", keywords: ["self care", "stress relief", "mindfulness"] }],
+  Travel:            [{ niche: "Food", reason: "Food travel content ka growing trend hai", keywords: ["street food", "local cuisine", "food tour"] }, { niche: "Photography", reason: "Travel photographers ki demand hai", keywords: ["travel photos", "camera tips", "reels"] }, { niche: "Lifestyle", reason: "Travel aur lifestyle overlap karta hai", keywords: ["minimalism", "digital nomad", "slow living"] }],
+  "Personal Finance": [{ niche: "Business", reason: "Finance creators business content bhi banate hain", keywords: ["startup tips", "side hustle", "passive income"] }, { niche: "Motivational", reason: "Financial freedom motivation viral hai", keywords: ["success mindset", "discipline", "goal setting"] }, { niche: "Real Estate", reason: "Property investment finance ke saath overlap karta hai", keywords: ["property investment", "rental income", "real estate India"] }],
+  "Mental Health":   [{ niche: "Lifestyle", reason: "Wellness aur lifestyle connected hain", keywords: ["self care", "morning routine", "productivity"] }, { niche: "Spirituality", reason: "Mental health aur spirituality ka deep connection hai", keywords: ["meditation", "mindfulness", "spiritual growth"] }, { niche: "Motivational", reason: "Healing aur growth motivation create karta hai", keywords: ["self improvement", "healing journey", "positive mindset"] }],
+  Motivational:      [{ niche: "Business", reason: "Entrepreneur motivation content popular hai", keywords: ["startup tips", "side hustle", "passive income"] }, { niche: "Fitness", reason: "Gym motivation viral hota hai", keywords: ["gym motivation", "discipline", "workout"] }, { niche: "Mental Health", reason: "Mindset aur mental wellness overlap karta hai", keywords: ["self care", "anxiety tips", "healing"] }],
+  Gaming:            [{ niche: "Tech", reason: "Gaming aur tech audience ek hi hai", keywords: ["gaming setup", "tech review", "best gadgets"] }, { niche: "Comedy & Entertainment", reason: "Gaming comedy content bhi popular hai", keywords: ["funny gaming", "meme content", "gaming fails"] }, { niche: "Education", reason: "Game tutorials aur reviews educational hote hain", keywords: ["game guide", "how to win", "gaming tips"] }],
+  Education:         [{ niche: "Tech", reason: "EdTech content ka growing trend hai", keywords: ["AI tools", "coding tips", "app development"] }, { niche: "Business", reason: "Skill development aur business overlap karta hai", keywords: ["freelancing", "side hustle", "startup"] }, { niche: "Motivational", reason: "Students ke liye motivation viral hota hai", keywords: ["study motivation", "success mindset", "goal setting"] }],
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -1509,10 +1529,10 @@ function ResultCard({ title, items, emoji, color }: any) {
   );
 }
 
-function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
+function TabBtn({ id, label, Icon, active, onClick, isPro }: any) {
   return (
     <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
-      <span style={{ fontSize: "1rem" }}>{emoji}</span>
+      {Icon && <Icon size={16} strokeWidth={active ? 2.5 : 1.8} />}
       <span>{label}</span>
       {isPro && !active && (
         <span style={{ position: "absolute", top: 4, right: 4, fontSize: "0.5rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700 }}>PRO</span>
@@ -1762,14 +1782,14 @@ Respond ONLY in JSON:
   const handlePaid = (p: string) => { setPayingPlan(null); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 4000); };
 
   const tabs = [
-    { id: "generate", label: "Generate", emoji: "⚡" },
-    { id: "score", label: "Hook Score", emoji: "📊" },
-    { id: "caption", label: "Captions", emoji: "📋" },
-    { id: "calendar", label: "Calendar", emoji: "📅" },
-    { id: "pack", label: "Pack", emoji: "📦" },
-    { id: "trends", label: "Trends", emoji: "📈" },
-    { id: "image", label: "Image AI", emoji: "🖼️" },
-    { id: "scriptlab", label: "Script Lab", emoji: "🎬" },
+    { id: "generate", label: "Generate", Icon: Zap },
+    { id: "score", label: "Hook Score", Icon: BarChart2 },
+    { id: "caption", label: "Captions", Icon: FileText },
+    { id: "calendar", label: "Calendar", Icon: CalendarDays },
+    { id: "pack", label: "Pack", Icon: Package },
+    { id: "trends", label: "Trends", Icon: TrendingUp },
+    { id: "image", label: "Image AI", Icon: Image },
+    { id: "scriptlab", label: "Script Lab", Icon: Film },
   ];
 
   if (authLoading || profileLoading) return (
@@ -1806,6 +1826,7 @@ Respond ONLY in JSON:
         @media (max-width: 1200px) { .left-sidebar, .right-sidebar { display: none !important; } }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
         @media (max-width: 768px) {
@@ -1993,7 +2014,7 @@ Respond ONLY in JSON:
           {/* Tabs */}
           <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#080808", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
             {tabs.map(t => (
-              <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji} active={activeTab === t.id} onClick={setActiveTab}
+              <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
                 isPro={["calendar","pack","trends","image","scriptlab"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
             ))}
           </div>
@@ -2067,21 +2088,33 @@ Respond ONLY in JSON:
                   placeholder={`e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}`}
                   style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
                   onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
-                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                  {(NICHE_EXAMPLES[niche] || []).slice(0, 3).map(ex => (
-                    <button key={ex} onClick={() => setKeyword(ex)} style={{ background: "none", border: "1px solid #141414", color: "#2a2a2a", padding: "0.18rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}
-                      onMouseEnter={e => { (e.target as any).style.color = "#555"; (e.target as any).style.borderColor = "#222"; }}
-                      onMouseLeave={e => { (e.target as any).style.color = "#2a2a2a"; (e.target as any).style.borderColor = "#141414"; }}>
-                      {ex}
-                    </button>
-                  ))}
+
+                {/* Related keyword suggestions */}
+                <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
+                    <Tag size={11} color="#52525b" />
+                    <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em" }}>RELATED KEYWORDS</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                    {(NICHE_EXAMPLES[niche] || []).map(ex => (
+                      <button key={ex} onClick={() => setKeyword(ex)}
+                        style={{ background: keyword === ex ? "rgba(109,40,217,0.12)" : "#0d0d0d", border: `1px solid ${keyword === ex ? "#6d28d9" : "#1e1e1e"}`, color: keyword === ex ? "#8b5cf6" : "#444", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}
+                        onMouseEnter={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#333"; (e.currentTarget as any).style.color = "#888"; } }}
+                        onMouseLeave={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#1e1e1e"; (e.currentTarget as any).style.color = "#444"; } }}>
+                        {ex}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
-                {loading ? <span style={{ animation: "pulse 1s infinite" }}>⚡ Generating in {langLabel}...</span> : "⚡ Generate Viral Content"}
+              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                {loading
+                  ? <><RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ animation: "pulse 1s infinite" }}>Generating in {langLabel}...</span></>
+                  : <><Zap size={17} fill="#fff" /> Generate Viral Content</>
+                }
               </button>
 
               {results && (
@@ -2113,6 +2146,49 @@ Respond ONLY in JSON:
                   </div>
                 </div>
               )}
+
+              {/* CROSS-SELL: Similar niche suggestions */}
+              {results && (() => {
+                const crossItems = CROSS_SELL_NICHES[niche] || CROSS_SELL_NICHES["Fitness"];
+                return (
+                <div style={{ background: "linear-gradient(135deg,#0a0a14,#0d0d1a)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "16px", padding: "1.1rem", marginTop: "1rem", animation: "slideUp 0.5s ease" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                    <Sparkles size={14} color="#8b5cf6" />
+                    <span style={{ color: "#8b5cf6", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em" }}>YOU MIGHT ALSO LIKE</span>
+                  </div>
+                  <p style={{ color: "#444", fontSize: "0.72rem", margin: "0 0 0.75rem" }}>
+                    We've seen you're into <strong style={{ color: "#6d28d9" }}>{niche}</strong> — check these related niches that perform well together:
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    {crossItems.map((item: any, i: number) => (
+                      <div key={i}
+                        style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "0.75rem 1rem", cursor: "pointer", transition: "all 0.2s" }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#6d28d940"; e.currentTarget.style.background = "#0d0d0d"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a1a"; e.currentTarget.style.background = "#080808"; }}
+                        onClick={() => { setNiche(item.niche); setKeyword(item.keywords[0]); }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                          <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{item.niche}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#6d28d9", fontSize: "0.68rem", fontWeight: 700 }}>
+                            <span>Explore</span>
+                            <ArrowRight size={11} />
+                          </div>
+                        </div>
+                        <p style={{ color: "#444", fontSize: "0.68rem", margin: "0 0 0.4rem", lineHeight: 1.4 }}>{item.reason}</p>
+                        <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                          {item.keywords.map((kw: string) => (
+                            <span key={kw}
+                              onClick={e => { e.stopPropagation(); setNiche(item.niche); setKeyword(kw); }}
+                              style={{ background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.15)", color: "#6d28d9", padding: "0.1rem 0.45rem", borderRadius: "20px", fontSize: "0.62rem", fontWeight: 600, cursor: "pointer" }}>
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                );
+              })()}
 
               {plan === "free" && (
                 <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
