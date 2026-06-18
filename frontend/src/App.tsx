@@ -16,7 +16,7 @@ const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
 const SUPPORT_PHONE = "+91 9315133390";
 
 const PLANS = {
-  free:        { label: "Free",        limit: 10,   priceINR: 0,    priceUSD: 0  },
+  free:        { label: "Free",        limit: 5,    priceINR: 0,    priceUSD: 0  },
   starter:     { label: "Starter",     limit: 100,  priceINR: 299,  priceUSD: 4,  badge: "🔥 Popular" },
   pro_creator: { label: "Pro Creator", limit: 400,  priceINR: 999,  priceUSD: 12, badge: "⚡ Best Value" },
   growth:      { label: "Growth",      limit: 150,  priceINR: 799,  priceUSD: 10, badge: "📈 Business" },
@@ -1936,8 +1936,7 @@ Respond ONLY in JSON:
                       <p style={{ color: "#555", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.25rem" }}>{group.country}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
                         {group.languages.map(lang => {
-                          const isLocked = (plan === "free" && !freeLangs.includes(lang.code)) ||
-                            (plan === "starter" && !starterLangs.includes(lang.code) && !["pro_creator","growth","business","agency"].includes(plan));
+                          const isLocked = false;
                           return (
                             <button key={lang.code}
                               onClick={() => {
@@ -1975,7 +1974,7 @@ Respond ONLY in JSON:
           <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#080808", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji} active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["score","calendar","pack","trends","image"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
+                isPro={["calendar","pack","trends","image","scriptlab"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
             ))}
           </div>
         </div>
@@ -1998,9 +1997,8 @@ Respond ONLY in JSON:
                 </div>
                 {showNiche && <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => {
-                    const freeNiches = ["Fitness", "Business", "Daily Vlog"];
                     const starterNiches = Object.keys(NICHE_EXAMPLES).filter(x => x !== "Ads & Marketing" && x !== "Real Estate" && x !== "Comedy & Entertainment");
-                    const isLocked = (plan === "free" && !freeNiches.includes(n)) || (plan === "starter" && !starterNiches.includes(n));
+                    const isLocked = (plan === "starter" && !starterNiches.includes(n));
                     return (
                       <button key={n} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setNiche(n)}
                         style={{ background: niche === n ? "#6d28d912" : "#0d0d0d", border: `1px solid ${niche === n ? "#6d28d9" : "#1a1a1a"}`, color: niche === n ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
@@ -2022,9 +2020,8 @@ Respond ONLY in JSON:
                     <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem" }}>{group}</p>
                     <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                       {platforms.map(p => {
-                        const freePlatforms = ["Instagram", "YouTube"];
                         const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook"];
-                        const isLocked = (plan === "free" && !freePlatforms.includes(p)) || (plan === "starter" && !starterPlatforms.includes(p));
+                        const isLocked = (plan === "starter" && !starterPlatforms.includes(p));
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
                             style={{ background: platform === p ? "#6d28d912" : "#0d0d0d", border: `1px solid ${platform === p ? "#6d28d9" : "#1a1a1a"}`, color: platform === p ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
@@ -2111,16 +2108,7 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            plan === "free" ? (
-              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Hook Score Analyzer unlocks from Starter plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
-              </div>
-            ) : (
-              <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
-            )
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
           )}
 
           {/* TAB: CALENDAR */}
