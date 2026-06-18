@@ -93,20 +93,6 @@ const CROSS_SELL_NICHES: Record<string, { niche: string; reason: string; keyword
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-// Reusable credits remaining bar
-function CreditBar({ remaining, cost, label }: { remaining: number; cost: number; label?: string }) {
-  const enough = remaining >= cost;
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#080808", border: `1px solid ${enough ? "#1a1a1a" : "rgba(239,68,68,0.2)"}`, borderRadius: "10px", padding: "0.5rem 0.85rem", marginBottom: "0.65rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-        <span style={{ color: "#52525b", fontSize: "0.7rem" }}>{label || "This action"}: <strong style={{ color: enough ? "#8b5cf6" : "#ef4444" }}>{cost} credit{cost !== 1 ? "s" : ""}</strong></span>
-      </div>
-      <span style={{ color: enough ? "#22c55e" : "#ef4444", fontSize: "0.72rem", fontWeight: 700 }}>{remaining} left{!enough ? " ⛔" : ""}</span>
-    </div>
-  );
-}
-
-
 
 const LANGUAGE_GROUPS = [
   { country: "🇮🇳 India", code: "IN", languages: [
@@ -236,7 +222,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, remaining }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -250,6 +236,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, remaining }
   const [duration, setDuration] = useState("30 sec");
   const [generateResult, setGenerateResult] = useState<any>(null);
   const [generateLoading, setGenerateLoading] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   const [platform, setPlatform] = useState("Instagram");
   const [error, setError] = useState("");
@@ -325,10 +312,69 @@ Respond ONLY in JSON:
     setImproveLoading(false);
   };
 
+
+  const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280; canvas.height = 720;
+    const ctx = canvas.getContext("2d")!;
+    const pColors: Record<string, string[]> = {
+      "Instagram": ["#1a0010", "#e1306c", "#fd1d1d"],
+      "YouTube":   ["#1a0000", "#ff0000", "#cc0000"],
+      "TikTok":    ["#010101", "#69c9d0", "#ee1d52"],
+      "LinkedIn":  ["#001428", "#0077b5", "#00a0dc"],
+      "Twitter / X":["#000000","#1da1f2","#14171a"],
+      "Facebook":  ["#001848", "#1877f2", "#42a5f5"],
+    };
+    const colors = pColors[plt] || ["#0d0d0d", "#6d28d9", "#8b5cf6"];
+    const bg = ctx.createLinearGradient(0, 0, 1280, 720);
+    bg.addColorStop(0, colors[0]); bg.addColorStop(0.7, colors[1] + "33"); bg.addColorStop(1, colors[0]);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, 1280, 720);
+    // Grid
+    ctx.strokeStyle = "rgba(255,255,255,0.03)"; ctx.lineWidth = 1;
+    for (let x = 0; x < 1280; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,720); ctx.stroke(); }
+    for (let y = 0; y < 720; y += 80) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(1280,y); ctx.stroke(); }
+    // Glow
+    const glow = ctx.createRadialGradient(640, 360, 0, 640, 360, 480);
+    glow.addColorStop(0, colors[1] + "44"); glow.addColorStop(1, "transparent");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, 1280, 720);
+    // Platform badge
+    ctx.fillStyle = colors[1] + "dd";
+    ctx.beginPath(); (ctx as any).roundRect(50, 45, 260, 46, 23); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 20px Arial"; ctx.textAlign = "left";
+    ctx.fillText(plt + "  ·  " + sty, 70, 75);
+    // Duration badge
+    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    ctx.beginPath(); (ctx as any).roundRect(50, 105, 110, 36, 18); ctx.fill();
+    ctx.fillStyle = colors[1]; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 128);
+    // Title wrap
+    const wrap = (text: string, x: number, y: number, maxW: number, lh: number, fs: number) => {
+      ctx.font = "bold " + fs + "px Arial";
+      const words = text.split(" "); let line = ""; let cy = y;
+      for (const w of words) {
+        const t = line + w + " ";
+        if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line.trim(), x, cy); line = w + " "; cy += lh; }
+        else line = t;
+      }
+      ctx.fillText(line.trim(), x, cy); return cy;
+    };
+    ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 24;
+    ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+    const te = wrap(title.toUpperCase(), 50, 260, 1180, 80, 68);
+    ctx.shadowBlur = 10; ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.font = "400 27px Arial"; wrap('"' + hook + '"', 50, te + 50, 1100, 42, 27);
+    // Bottom bar
+    ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, 638, 1280, 82);
+    ctx.fillStyle = colors[1];
+    ctx.beginPath(); (ctx as any).roundRect(50, 654, 110, 34, 8); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 17px Arial"; ctx.textAlign = "center"; ctx.fillText("VCI", 105, 676);
+    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", 1230, 676);
+    return canvas.toDataURL("image/jpeg", 0.92);
+  };
+
   const generateScript = async () => {
     if (!keyword.trim()) { setError("Please enter a keyword first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
-    setGenerateLoading(true); setError(""); setGenerateResult(null);
+    setGenerateLoading(true); setError(""); setGenerateResult(null); setThumbnailUrl(null);
 
     const durationGuide: Record<string, string> = {
       "15 sec": "Hook (0-3s) + Key Point (3-12s) + CTA (12-15s). Very short and punchy.",
@@ -389,6 +435,8 @@ Respond ONLY in JSON:
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setGenerateResult(parsed);
+      const thumb = generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
+      setThumbnailUrl(thumb);
     } catch { setError("Generation failed. Try again."); }
     setGenerateLoading(false);
   };
@@ -560,21 +608,30 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Thumbnail + Audio */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            {generateResult.thumbnail_idea && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🖼️ THUMBNAIL IDEA</p>
-                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.thumbnail_idea}</p>
+          {/* Thumbnail */}
+          {thumbnailUrl && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "0.9rem", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🖼️ THUMBNAIL PREVIEW</p>
+                <a href={thumbnailUrl} download={`vci-thumbnail-${keyword.replace(/\s+/g,"-")}.jpg`}
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, textDecoration: "none" }}>
+                  ⬇ Download
+                </a>
               </div>
-            )}
-            {generateResult.audio_suggestion && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
-                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
-              </div>
-            )}
-          </div>
+              <img src={thumbnailUrl} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
+              {generateResult.thumbnail_idea && (
+                <p style={{ margin: "0.5rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight: 1.5 }}>💡 {generateResult.thumbnail_idea}</p>
+              )}
+            </div>
+          )}
+
+          {/* Audio */}
+          {generateResult.audio_suggestion && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
+              <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
+            </div>
+          )}
 
           {/* Pro Tips */}
           {generateResult.pro_tips && (
@@ -618,7 +675,6 @@ Respond ONLY in JSON:
 
           {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
 
-          <CreditBar remaining={remaining} cost={1} label="Improve Script" />
           <button onClick={analyzeScript} disabled={improveLoading}
             style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: improveLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: improveLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: improveLoading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
             {improveLoading ? "✨ Analyzing & Improving..." : `✨ Analyze & Improve for ${platform}`}
@@ -725,7 +781,7 @@ Respond ONLY in JSON:
     </div>
   );
 }
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, remaining }: any) {
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -988,7 +1044,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   );
 }
 
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, remaining }: any) {
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict }: any) {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<any[]>([]);
   const [calKeyword, setCalKeyword] = useState(keyword || "");
@@ -1073,7 +1129,6 @@ Generate exactly 30 days.`;
             ))}
           </div>
         </div>
-        <CreditBar remaining={remaining} cost={5} label="30-Day Calendar" />
         <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "⚡ Planning 30 days..." : "📅 Generate My Content Calendar"}
         </button>
@@ -1119,7 +1174,7 @@ Generate exactly 30 days.`;
   );
 }
 
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, remaining }: any) {
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict }: any) {
   const [loading, setLoading] = useState(false);
   const [pack, setPack] = useState<any>(null);
   const [packKeyword, setPackKeyword] = useState(keyword || "");
@@ -1237,7 +1292,6 @@ Respond ONLY in JSON:
           style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", marginBottom: "0.75rem" }}
           onFocus={e => e.target.style.borderColor = "#f59e0b"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <CreditBar remaining={remaining} cost={3} label="Content Pack" />
         <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "⚡ Building your pack..." : "📦 Generate Full Content Pack"}
         </button>
@@ -1282,7 +1336,7 @@ Respond ONLY in JSON:
 }
 
 
-function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, remaining }: any) {
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed }: any) {
   const [kw, setKw] = useState(keyword || "");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1375,7 +1429,6 @@ Respond ONLY in JSON:
             onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-        <CreditBar remaining={remaining} cost={2} label="Captions & Hashtags" />
         <button onClick={generate} disabled={loading}
           style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
           {loading ? "✨ Generating..." : `📋 Generate Captions & Hashtags for ${platform}`}
@@ -1663,7 +1716,7 @@ export default function ViralContentTool() {
   const langLabel = getLangLabel(selectedLang);
   const langStrict = getLangStrict(selectedLang);
 
-  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 2, scriptimprove: 1 };
+  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 6, scriptimprove: 2 };
 
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
@@ -2131,7 +2184,6 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <CreditBar remaining={remaining} cost={1} label="Generate" />
               <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                 {loading
                   ? <><RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ animation: "pulse 1s infinite" }}>Generating in {langLabel}...</span></>
@@ -2224,7 +2276,7 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} remaining={remaining} />
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
           )}
 
           {/* TAB: CALENDAR */}
@@ -2237,7 +2289,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} remaining={remaining} />
+              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} />
             )
           )}
 
@@ -2277,7 +2329,7 @@ Respond ONLY in JSON:
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} remaining={remaining} />
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} />
           )}
 
           {/* TAB: PACK */}
@@ -2290,7 +2342,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} remaining={remaining} />
+              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} />
             )
           )}
         </div>
