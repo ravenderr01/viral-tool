@@ -313,55 +313,36 @@ Respond ONLY in JSON:
       "Facebook": "Facebook Reels — emotional hook, community focused, share CTA",
     };
 
-    const wordCounts: Record<string, number> = {
-      "15 sec": 40, "30 sec": 80, "60 sec": 160, "90 sec": 240
-    };
-    const sections: Record<string, string> = {
-      "15 sec": "HOOK (0-3s), KEY POINT (3-12s), CTA (12-15s)",
-      "30 sec": "HOOK (0-3s), PROBLEM (3-8s), SOLUTION (8-25s), CTA (25-30s)",
-      "60 sec": "HOOK (0-5s), PROBLEM (5-15s), POINT 1 (15-25s), POINT 2 (25-35s), POINT 3 (35-50s), CTA (50-60s)",
-      "90 sec": "HOOK (0-5s), STORY (5-20s), TIP 1 (20-35s), TIP 2 (35-50s), TIP 3 (50-70s), RESULT (70-80s), CTA (80-90s)"
-    };
-    const wc = wordCounts[duration] || 80;
-    const sec = sections[duration] || sections["30 sec"];
+    const prompt = `You are a viral ${platform} content creator and script writer.
 
-    const prompt = `You are a viral ${platform} content creator and expert script writer.
+Create a complete ${duration} ${style} script for ${platform} about: "${keyword}"
 
-TASK: Write a COMPLETE ${duration} ${style} script about: "${keyword}"
-
-CRITICAL: Script MUST be ${duration} long = approximately ${wc} spoken words. Do NOT write less.
-
-Language: ${langStrict}
 Platform: ${platform}
 Style: ${style}
-Sections: ${sec}
+Duration: ${duration}
+Format Guide: ${durationGuide[duration]}
 Platform Guide: ${platformGuide[platform]}
+Language: ${langStrict}
 
-QUALITY RULES:
-- Hook MUST stop scroll in first 2 seconds — use shock, curiosity, or bold claim
-- Be SPECIFIC about "${keyword}" — use real numbers, facts, exact tips
-- Every section must have enough content to fill its time slot
-- Script must sound natural when spoken aloud
-- End with strong CTA (follow/subscribe/save/comment)
-- Do NOT use generic phrases like "teen baatein" — give the actual points
+Create a script that will go VIRAL. Be specific, emotional, and platform-perfect.
 
 Respond ONLY in JSON:
 {
-  "title": "Catchy viral title",
-  "hook": "Exact hook — first 2-3 seconds, must stop scroll",
-  "script": "COMPLETE word-for-word script with ALL sections filled. Each section must have enough words to fill its time. Include [PAUSE], [SHOW: description], [CUT TO: scene] directions.",
+  "title": "Catchy title for this script",
+  "hook": "First 3 seconds — attention grabbing opener",
+  "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions",
   "sections": [
-    {"time": "0-3s", "label": "HOOK", "content": "exact words for this section — enough to fill the time", "direction": "what to show on screen"},
-    {"time": "3-8s", "label": "PROBLEM", "content": "exact words", "direction": "visual"},
-    {"time": "8-25s", "label": "SOLUTION", "content": "exact words with specific tips about ${keyword}", "direction": "visual"},
-    {"time": "25-30s", "label": "CTA", "content": "exact CTA words", "direction": "visual"}
+    {"time": "0-3s", "label": "HOOK", "content": "exact words to say", "direction": "what to show/do"},
+    {"time": "3-10s", "label": "PROBLEM", "content": "exact words", "direction": "visual direction"},
+    {"time": "10-25s", "label": "SOLUTION", "content": "exact words", "direction": "visual direction"},
+    {"time": "25-30s", "label": "CTA", "content": "exact words", "direction": "visual direction"}
   ],
   "caption": "Ready-to-post caption with emojis",
-  "hashtags": ["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8","#tag9","#tag10"],
-  "thumbnail_idea": "Specific thumbnail concept",
-  "audio_suggestion": "Specific music type for ${platform}",
-  "pro_tips": ["Specific tip 1", "Specific tip 2", "Specific tip 3"]
-}`; 
+  "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+  "thumbnail_idea": "What to show in thumbnail/cover",
+  "audio_suggestion": "Type of music/sound that works best",
+  "pro_tips": ["tip 1", "tip 2", "tip 3"]
+}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -1540,6 +1521,23 @@ function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
   );
 }
 
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: "1px solid #111", marginBottom: "0.1rem" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", padding: "0.85rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", gap: "0.75rem" }}>
+        <span style={{ color: open ? "#22c55e" : "#e4e4e7", fontWeight: 600, fontSize: "0.85rem", textAlign: "left" }}>{q}</span>
+        <span style={{ color: open ? "#22c55e" : "#444", fontSize: "1rem", flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>+</span>
+      </button>
+      {open && (
+        <div style={{ paddingBottom: "0.85rem", animation: "slideUp 0.2s ease" }}>
+          <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.7 }}>{a}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ViralContentTool() {
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState("Instagram");
@@ -1576,6 +1574,7 @@ export default function ViralContentTool() {
     catch { return null; }
   });
   const [showProfile, setShowProfile] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -1876,11 +1875,13 @@ Respond ONLY in JSON:
           <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
           <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
+          <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "26rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
             <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
             <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
           </div>
 
@@ -2250,6 +2251,41 @@ Respond ONLY in JSON:
       {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} />}
 
       <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
+
+      {/* FAQ Modal */}
+      {showFaq && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto" }}>
+          <div style={{ background: "#080808", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "20px", padding: "1.75rem", maxWidth: "560px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: "#fff" }}>❓ Frequently Asked Questions</h2>
+                <p style={{ margin: "0.25rem 0 0", color: "#555", fontSize: "0.78rem" }}>VCI ke baare mein sab kuch jaano</p>
+              </div>
+              <button onClick={() => setShowFaq(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+            {[
+              { q: "VCI kya hai?", a: "VCI (Viral Content Intelligence) ek AI-powered tool hai jo creators aur businesses ke liye viral content generate karta hai — hooks, captions, hashtags, scripts, calendars sab kuch ek jagah mein!" },
+              { q: "Free trial mein kya milta hai?", a: "Free mein 5 credits milte hain. Aap Generate, Hook Score, aur Caption & Hashtags features use kar sakte hain. Sab niches, platforms, aur 30+ languages open hain trial mein!" },
+              { q: "1 credit = kya hota hai?", a: "Generate = 1 credit, Hook Score = 1 credit, Caption & Hashtags = 2 credits, Script Lab = 2 credits, Content Pack = 3 credits, 30-Day Calendar = 5 credits." },
+              { q: "Payment ke baad plan kab activate hoga?", a: "Payment screenshot WhatsApp pe bhejne ke baad 2 ghante ke andar manually activate kar diya jaayega. UPI: 9315133390@ptyes" },
+              { q: "Konsa plan lena chahiye?", a: "Creator ho? Starter ₹299 (100 credits + Script Lab). Serious creator? Pro Creator ₹999 (400 credits + Calendar + Pack + Trends). Business/Ads run karte ho? Growth ₹799 ya Business ₹1,999." },
+              { q: "Kya credits monthly renew hote hain?", a: "Haan! Har mahine aapke plan ke according credits renew hote hain. Unused credits carry forward nahi hote." },
+              { q: "Kya refund milta hai?", a: "Haan, 7 din ke andar refund request kar sakte hain agar tool kaam na kare. Support ke liye WhatsApp karo: +91 9315133390" },
+              { q: "Mobile pe kaise use karein?", a: "getvci.com mobile browser mein kholo. Chrome mein 'Add to Home Screen' se app jaisa install ho jaata hai. iOS pe Safari se bhi install kar sakte hain!" },
+              { q: "Kya Hindi aur regional languages mein content ban sakta hai?", a: "Bilkul! 30+ languages support hain — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam aur bahut saari aur languages." },
+              { q: "Script Lab kya hai?", a: "Script Lab mein aap 15/30/60/90 second ke word-for-word reel scripts generate kar sakte hain. Existing script improve bhi kar sakte hain Before/After comparison ke saath. Starter plan se available hai." },
+            ].map((faq, i) => (
+              <FaqItem key={i} q={faq.q} a={faq.a} />
+            ))}
+            <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Aur koi sawaal hai? 🙋</p>
+              <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
+                💬 WhatsApp karo
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       <a href="https://wa.me/919315133390?text=Hi!%20I%20want%20to%20know%20more%20about%20Viral%20Content%20Tool" target="_blank" rel="noopener noreferrer"
         style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 999, background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", borderRadius: "50px", padding: "0.75rem 1.25rem", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(37,211,102,0.4)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
