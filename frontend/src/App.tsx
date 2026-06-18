@@ -315,38 +315,13 @@ Respond ONLY in JSON:
 
   const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
     const canvas = document.createElement("canvas");
-    canvas.width = 1280; canvas.height = 720;
+    // Platform-specific aspect ratio
+    const isVertical = ["Instagram", "TikTok"].includes(plt);
+    canvas.width = isVertical ? 1080 : 1280;
+    canvas.height = isVertical ? 1920 : 720;
+    const W = canvas.width, H = canvas.height;
     const ctx = canvas.getContext("2d")!;
-    const pColors: Record<string, string[]> = {
-      "Instagram": ["#1a0010", "#e1306c", "#fd1d1d"],
-      "YouTube":   ["#1a0000", "#ff0000", "#cc0000"],
-      "TikTok":    ["#010101", "#69c9d0", "#ee1d52"],
-      "LinkedIn":  ["#001428", "#0077b5", "#00a0dc"],
-      "Twitter / X":["#000000","#1da1f2","#14171a"],
-      "Facebook":  ["#001848", "#1877f2", "#42a5f5"],
-    };
-    const colors = pColors[plt] || ["#0d0d0d", "#6d28d9", "#8b5cf6"];
-    const bg = ctx.createLinearGradient(0, 0, 1280, 720);
-    bg.addColorStop(0, colors[0]); bg.addColorStop(0.7, colors[1] + "33"); bg.addColorStop(1, colors[0]);
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, 1280, 720);
-    // Grid
-    ctx.strokeStyle = "rgba(255,255,255,0.03)"; ctx.lineWidth = 1;
-    for (let x = 0; x < 1280; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,720); ctx.stroke(); }
-    for (let y = 0; y < 720; y += 80) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(1280,y); ctx.stroke(); }
-    // Glow
-    const glow = ctx.createRadialGradient(640, 360, 0, 640, 360, 480);
-    glow.addColorStop(0, colors[1] + "44"); glow.addColorStop(1, "transparent");
-    ctx.fillStyle = glow; ctx.fillRect(0, 0, 1280, 720);
-    // Platform badge
-    ctx.fillStyle = colors[1] + "dd";
-    ctx.beginPath(); (ctx as any).roundRect(50, 45, 260, 46, 23); ctx.fill();
-    ctx.fillStyle = "#fff"; ctx.font = "bold 20px Arial"; ctx.textAlign = "left";
-    ctx.fillText(plt + "  ·  " + sty, 70, 75);
-    // Duration badge
-    ctx.fillStyle = "rgba(255,255,255,0.1)";
-    ctx.beginPath(); (ctx as any).roundRect(50, 105, 110, 36, 18); ctx.fill();
-    ctx.fillStyle = colors[1]; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 128);
-    // Title wrap
+
     const wrap = (text: string, x: number, y: number, maxW: number, lh: number, fs: number) => {
       ctx.font = "bold " + fs + "px Arial";
       const words = text.split(" "); let line = ""; let cy = y;
@@ -357,17 +332,249 @@ Respond ONLY in JSON:
       }
       ctx.fillText(line.trim(), x, cy); return cy;
     };
-    ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 24;
-    ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-    const te = wrap(title.toUpperCase(), 50, 260, 1180, 80, 68);
-    ctx.shadowBlur = 10; ctx.fillStyle = "rgba(255,255,255,0.65)";
-    ctx.font = "400 27px Arial"; wrap('"' + hook + '"', 50, te + 50, 1100, 42, 27);
-    // Bottom bar
-    ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, 638, 1280, 82);
-    ctx.fillStyle = colors[1];
-    ctx.beginPath(); (ctx as any).roundRect(50, 654, 110, 34, 8); ctx.fill();
-    ctx.fillStyle = "#fff"; ctx.font = "bold 17px Arial"; ctx.textAlign = "center"; ctx.fillText("VCI", 105, 676);
-    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", 1230, 676);
+
+    if (plt === "Instagram") {
+      // Instagram Reel — vertical, gradient purple-pink
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, "#1a0030"); bg.addColorStop(0.5, "#6d1060"); bg.addColorStop(1, "#c2185b");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      // Diagonal stripe overlay
+      ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 2;
+      for (let i = -H; i < W + H; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke(); }
+      // Glow center
+      const g = ctx.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, 600);
+      g.addColorStop(0, "rgba(255,100,180,0.3)"); g.addColorStop(1, "transparent");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // Instagram gradient pill badge
+      const badgeGrad = ctx.createLinearGradient(60, 0, 400, 0);
+      badgeGrad.addColorStop(0, "#833ab4"); badgeGrad.addColorStop(0.5, "#fd1d1d"); badgeGrad.addColorStop(1, "#fcb045");
+      ctx.fillStyle = badgeGrad;
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 360, 54, 27); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left";
+      ctx.fillText("📸 Instagram Reel  ·  " + sty, 85, 114);
+      // Duration
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 130, 40, 20); ctx.fill();
+      ctx.fillStyle = "#fcb045"; ctx.font = "bold 20px Arial"; ctx.fillText(dur, 80, 178);
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.95)"; ctx.shadowBlur = 30;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te = wrap(title.toUpperCase(), 60, 520, W - 120, 90, 76);
+      // Hook
+      ctx.shadowBlur = 12; ctx.fillStyle = "rgba(255,220,255,0.75)";
+      ctx.font = "italic 32px Arial"; wrap('"' + hook + '"', 60, te + 60, W - 120, 48, 32);
+      // Bottom gradient + CTA
+      const bot = ctx.createLinearGradient(0, H - 220, 0, H);
+      bot.addColorStop(0, "transparent"); bot.addColorStop(1, "rgba(0,0,0,0.8)");
+      ctx.fillStyle = bot; ctx.fillRect(0, H - 220, W, 220);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
+      ctx.fillText("Follow for more 🔥", W/2, H - 100);
+      ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com", W/2, H - 60);
+
+    } else if (plt === "YouTube") {
+      // YouTube — 16:9, dark red cinematic
+      ctx.fillStyle = "#0a0000"; ctx.fillRect(0, 0, W, H);
+      // Cinematic bars
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, 40); ctx.fillRect(0, H - 40, W, 40);
+      // Red side accent
+      const redL = ctx.createLinearGradient(0, 0, 300, 0);
+      redL.addColorStop(0, "rgba(255,0,0,0.35)"); redL.addColorStop(1, "transparent");
+      ctx.fillStyle = redL; ctx.fillRect(0, 40, 300, H - 80);
+      // Play button bg glow
+      const playGlow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350);
+      playGlow.addColorStop(0, "rgba(255,0,0,0.2)"); playGlow.addColorStop(1, "transparent");
+      ctx.fillStyle = playGlow; ctx.fillRect(0, 0, W, H);
+      // Play button
+      ctx.fillStyle = "rgba(255,0,0,0.9)";
+      ctx.beginPath(); (ctx as any).roundRect(W/2 - 50, H/2 - 35, 100, 70, 14); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 36px Arial"; ctx.textAlign = "center"; ctx.fillText("▶", W/2 + 3, H/2 + 13);
+      // YouTube badge
+      ctx.fillStyle = "#ff0000";
+      ctx.beginPath(); (ctx as any).roundRect(50, 50, 200, 46, 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("▶  YouTube", 68, 81);
+      // Style + Duration
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 108, 220, 36, 6); ctx.fill();
+      ctx.fillStyle = "#aaa"; ctx.font = "16px Arial"; ctx.fillText(sty + "  ·  " + dur, 65, 131);
+      // Title — bottom third
+      ctx.shadowColor = "rgba(0,0,0,1)"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
+      const te2 = wrap(title.toUpperCase(), 50, H - 230, W - 100, 70, 58);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(255,180,180,0.7)";
+      ctx.font = "italic 24px Arial"; wrap('"' + hook + '"', 50, te2 + 30, W - 100, 36, 24);
+      // Bottom bar
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, H - 42, W, 42);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 30, H - 16);
+
+    } else if (plt === "TikTok") {
+      // TikTok — vertical 9:16, black with cyan+red duotone
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+      // Scanline effect
+      for (let y2 = 0; y2 < H; y2 += 4) {
+        ctx.fillStyle = y2 % 8 === 0 ? "rgba(105,201,208,0.03)" : "rgba(238,29,82,0.02)";
+        ctx.fillRect(0, y2, W, 2);
+      }
+      // Cyan left glow, red right glow
+      const cyanG = ctx.createRadialGradient(0, H/2, 0, 0, H/2, 500);
+      cyanG.addColorStop(0, "rgba(105,201,208,0.25)"); cyanG.addColorStop(1, "transparent");
+      ctx.fillStyle = cyanG; ctx.fillRect(0, 0, W, H);
+      const redG2 = ctx.createRadialGradient(W, H/2, 0, W, H/2, 500);
+      redG2.addColorStop(0, "rgba(238,29,82,0.25)"); redG2.addColorStop(1, "transparent");
+      ctx.fillStyle = redG2; ctx.fillRect(0, 0, W, H);
+      // TikTok badge
+      ctx.fillStyle = "#000";
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.fill();
+      ctx.strokeStyle = "#69c9d0"; ctx.lineWidth = 2;
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.stroke();
+      ctx.fillStyle = "#69c9d0"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left"; ctx.fillText("♪ TikTok  ·  " + sty, 80, 115);
+      ctx.fillStyle = "rgba(238,29,82,0.15)";
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.fill();
+      ctx.strokeStyle = "#ee1d52"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.stroke();
+      ctx.fillStyle = "#ee1d52"; ctx.font = "bold 19px Arial"; ctx.fillText(dur, 80, 177);
+      // Title
+      ctx.shadowColor = "#69c9d0"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te3 = wrap(title.toUpperCase(), 60, 500, W - 120, 90, 72);
+      ctx.shadowColor = "#ee1d52"; ctx.shadowBlur = 12;
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "italic 30px Arial"; wrap('"' + hook + '"', 60, te3 + 55, W - 120, 46, 30);
+      // Bottom TikTok UI simulation
+      ctx.shadowBlur = 0;
+      const botG2 = ctx.createLinearGradient(0, H - 300, 0, H);
+      botG2.addColorStop(0, "transparent"); botG2.addColorStop(1, "rgba(0,0,0,0.9)");
+      ctx.fillStyle = botG2; ctx.fillRect(0, H - 300, W, 300);
+      ctx.fillStyle = "#fff"; ctx.font = "bold 26px Arial"; ctx.textAlign = "left"; ctx.fillText("@creator", 60, H - 120);
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com · #viral", 60, H - 82);
+      // Right side icons
+      const icons = ["❤️", "💬", "↪️", "🎵"];
+      icons.forEach((ic, ii) => {
+        ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.fillText(ic, W - 65, H - 420 + ii * 90);
+      });
+
+    } else if (plt === "LinkedIn") {
+      // LinkedIn — professional blue, clean
+      ctx.fillStyle = "#012a4a"; ctx.fillRect(0, 0, W, H);
+      const liGrad = ctx.createLinearGradient(0, 0, W, H);
+      liGrad.addColorStop(0, "#013a5c"); liGrad.addColorStop(1, "#001d3d");
+      ctx.fillStyle = liGrad; ctx.fillRect(0, 0, W, H);
+      // Blue accent bar left
+      ctx.fillStyle = "#0077b5"; ctx.fillRect(0, 0, 8, H);
+      // Grid dots
+      for (let gx = 60; gx < W; gx += 80) {
+        for (let gy = 60; gy < H; gy += 80) {
+          ctx.fillStyle = "rgba(0,119,181,0.12)"; ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      // LinkedIn badge
+      ctx.fillStyle = "#0077b5";
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 230, 50, 6); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("in  LinkedIn  ·  " + sty, 70, 80);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 112, 140, 36, 6); ctx.fill();
+      ctx.fillStyle = "#00a0dc"; ctx.font = "16px Arial"; ctx.fillText(dur, 68, 135);
+      // Horizontal divider
+      ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(50, 190); ctx.lineTo(W - 50, 190); ctx.stroke();
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 16;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te4 = wrap(title, 50, 250, W - 100, 72, 62);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(180,220,255,0.8)";
+      ctx.font = "26px Arial"; wrap('"' + hook + '"', 50, te4 + 40, W - 100, 40, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(50, H - 60); ctx.lineTo(W - 50, H - 60); ctx.stroke();
+      ctx.fillStyle = "#0077b5"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("Viral Content Intelligence", 50, H - 28);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 28);
+
+    } else if (plt === "Twitter / X") {
+      // Twitter/X — pure black, bold typography
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+      // Subtle noise texture
+      for (let i = 0; i < 3000; i++) {
+        const nx = Math.random() * W, ny = Math.random() * H;
+        ctx.fillStyle = "rgba(255,255,255,0.015)"; ctx.fillRect(nx, ny, 1, 1);
+      }
+      // X logo watermark
+      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.font = "bold 500px Arial"; ctx.textAlign = "center"; ctx.fillText("𝕏", W/2, H/2 + 160);
+      // Blue accent line top
+      ctx.fillStyle = "#1da1f2"; ctx.fillRect(0, 0, W, 5);
+      // Badge
+      ctx.fillStyle = "#1da1f2";
+      ctx.beginPath(); (ctx as any).roundRect(50, 40, 200, 48, 24); ctx.fill();
+      ctx.fillStyle = "#000"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏  Twitter  ·  " + sty, 68, 72);
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 104, 110, 34, 17); ctx.fill();
+      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.fillText(dur, 67, 126);
+      // Title — huge bold
+      ctx.shadowColor = "rgba(29,161,242,0.3)"; ctx.shadowBlur = 30;
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
+      const te5 = wrap(title, 50, 230, W - 100, 78, 66);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(150,200,255,0.7)";
+      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te5 + 36, W - 100, 38, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(29,161,242,0.12)"; ctx.fillRect(0, H - 52, W, 52);
+      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏 getvci.com", 50, H - 20);
+
+    } else if (plt === "Facebook") {
+      // Facebook — blue gradient, community feel
+      const fbBg = ctx.createLinearGradient(0, 0, W, H);
+      fbBg.addColorStop(0, "#001848"); fbBg.addColorStop(0.6, "#1a3a7a"); fbBg.addColorStop(1, "#0d2261");
+      ctx.fillStyle = fbBg; ctx.fillRect(0, 0, W, H);
+      // Circle pattern
+      for (let ci = 0; ci < 8; ci++) {
+        ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(W * 0.8, H * 0.2, 80 + ci * 70, 0, Math.PI * 2); ctx.stroke();
+      }
+      // FB badge
+      const fbGrad = ctx.createLinearGradient(50, 0, 290, 0);
+      fbGrad.addColorStop(0, "#1877f2"); fbGrad.addColorStop(1, "#42a5f5");
+      ctx.fillStyle = fbGrad;
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 260, 50, 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 23px Arial"; ctx.textAlign = "left"; ctx.fillText("f  Facebook  ·  " + sty, 70, 81);
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 112, 130, 36, 6); ctx.fill();
+      ctx.fillStyle = "#90caf9"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 135);
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te6 = wrap(title.toUpperCase(), 50, 250, W - 100, 75, 62);
+      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,230,255,0.75)";
+      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te6 + 40, W - 100, 40, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
+      ctx.fillStyle = "#1877f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("f  VCI — Viral Content Intelligence", 50, H - 20);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
+
+    } else {
+      // Default — VCI purple (other platforms)
+      const defBg = ctx.createLinearGradient(0, 0, W, H);
+      defBg.addColorStop(0, "#050010"); defBg.addColorStop(0.6, "#1a0a3a"); defBg.addColorStop(1, "#050010");
+      ctx.fillStyle = defBg; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(109,40,217,0.08)"; ctx.lineWidth = 1;
+      for (let x2 = 0; x2 < W; x2 += 80) { ctx.beginPath(); ctx.moveTo(x2,0); ctx.lineTo(x2,H); ctx.stroke(); }
+      for (let y2 = 0; y2 < H; y2 += 80) { ctx.beginPath(); ctx.moveTo(0,y2); ctx.lineTo(W,y2); ctx.stroke(); }
+      const glow2 = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 450);
+      glow2.addColorStop(0, "rgba(109,40,217,0.35)"); glow2.addColorStop(1, "transparent");
+      ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(109,40,217,0.8)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 280, 48, 24); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText(plt + "  ·  " + sty, 70, 80);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 110, 120, 36, 18); ctx.fill();
+      ctx.fillStyle = "#a78bfa"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 133);
+      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 24;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const ted = wrap(title.toUpperCase(), 50, 250, W - 100, 78, 66);
+      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,180,255,0.7)";
+      ctx.font = "italic 28px Arial"; wrap('"' + hook + '"', 50, ted + 44, W - 100, 42, 28);
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
+      ctx.fillStyle = "#7c3aed"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("VCI", 50, H - 20);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
+    }
+
     return canvas.toDataURL("image/jpeg", 0.92);
   };
 
