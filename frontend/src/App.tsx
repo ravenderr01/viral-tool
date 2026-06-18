@@ -2019,7 +2019,9 @@ Respond ONLY in JSON:
                     <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem" }}>{group}</p>
                     <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                       {platforms.map(p => {
-                        const isLocked = false; // All platforms open for all plans
+                        const adsPlatforms = ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"];
+                        const creatorPlans = ["free", "starter", "pro_creator"];
+                        const isLocked = creatorPlans.includes(plan) && adsPlatforms.includes(p);
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
                             style={{ background: platform === p ? "#6d28d912" : "#0d0d0d", border: `1px solid ${platform === p ? "#6d28d9" : "#1a1a1a"}`, color: platform === p ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
