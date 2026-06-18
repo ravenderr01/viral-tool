@@ -1531,11 +1531,14 @@ function ResultCard({ title, items, emoji, color }: any) {
 
 function TabBtn({ id, label, Icon, active, onClick, isPro }: any) {
   return (
-    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
-      {Icon && <Icon size={16} strokeWidth={active ? 2.5 : 1.8} />}
+    <button onClick={() => onClick(id)}
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(109,40,217,0.08)"; e.currentTarget.style.color = "#6d28d9"; }}}
+      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3f3f46"; }}}
+      style={{ flex: 1, padding: "0.55rem 0.2rem", borderRadius: "8px", border: "none", background: active ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: active ? "#ffffff" : "#3f3f46", fontWeight: active ? 700 : 500, fontSize: "0.68rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", boxShadow: active ? "0 2px 12px rgba(109,40,217,0.4)" : "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+      {Icon && <Icon size={15} strokeWidth={active ? 2.5 : 1.8} />}
       <span>{label}</span>
       {isPro && !active && (
-        <span style={{ position: "absolute", top: 4, right: 4, fontSize: "0.5rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700 }}>PRO</span>
+        <span style={{ position: "absolute", top: 2, right: 2, fontSize: "0.45rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.2rem", fontWeight: 700 }}>PRO</span>
       )}
     </button>
   );
@@ -2012,7 +2015,7 @@ Respond ONLY in JSON:
           </div>
 
           {/* Tabs */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#080808", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
+          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.25rem", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
                 isPro={["calendar","pack","trends","image","scriptlab"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
