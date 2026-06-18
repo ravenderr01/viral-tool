@@ -380,7 +380,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         .mode-link:hover { opacity: 0.75; }
         .marquee-track { display: flex; animation: marquee 40s linear infinite; width: max-content; }
         .marquee-track:hover { animation-play-state: paused; }
-        @media (max-width: 900px) { .auth-left { display: none !important; } .auth-right { width: 100% !important; min-height: 100vh; } }
+        @media (max-width: 900px) { .auth-left { display: none !important; } .auth-right { width: 100% !important; min-height: 100vh; padding: 1.75rem 1.25rem !important; justify-content: flex-start !important; padding-top: 2.5rem !important; } .auth-right > div { max-width: 100% !important; width: 100% !important; } .auth-input { font-size: 1rem !important; padding: 0.9rem 1rem !important; -webkit-appearance: none; } .submit-btn { padding: 1rem !important; font-size: 0.95rem !important; } } @media (max-width: 400px) { .auth-right { padding: 1.5rem 1rem !important; } }
       `}</style>
 
       <div style={{ minHeight: "100vh", background: "#000000", display: "flex", fontFamily: "'Inter', sans-serif" }}>
@@ -457,127 +457,152 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="auth-right" style={{ width: 480, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 2.5rem", background: "#000", overflowY: "auto", borderLeft: "1px solid #111" }}>
+        <div className="auth-right" style={{ width: 500, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 3rem", background: "#000", overflowY: "auto", borderLeft: "1px solid #111", boxSizing: "border-box" }}>
 
-          <div style={{ width: "100%", maxWidth: 380, animation: "slideUp 0.4s ease" }}>
+          <div style={{ width: "100%", maxWidth: 400, animation: "slideUp 0.4s ease" }}>
 
-            <div style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#fff", fontWeight: 700, fontSize: "1.4rem", letterSpacing: "-0.02em", marginBottom: "0.4rem" }}>
-                {mode === "login" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset password"}
+            {/* Logo mark — mobile only feel */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem" }}>
+              <div style={{ width: 28, height: 28, background: "linear-gradient(135deg,#6d28d9,#7c3aed)", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L20 10H13.5L13 2Z" fill="white" stroke="white" strokeWidth="1" strokeLinejoin="round"/></svg>
+              </div>
+              <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.9rem", letterSpacing: "-0.01em" }}>VCI</span>
+            </div>
+
+            {/* Heading */}
+            <div style={{ marginBottom: "1.75rem" }}>
+              <h2 style={{ color: "#fff", fontWeight: 700, fontSize: "1.55rem", letterSpacing: "-0.03em", marginBottom: "0.4rem", lineHeight: 1.2 }}>
+                {mode === "login" ? "Welcome back" : mode === "signup" ? "Get started for free" : "Reset your password"}
               </h2>
-              <p style={{ color: "#52525b", fontSize: "0.85rem" }}>
-                {mode === "login" ? "Sign in to your VCI dashboard" : mode === "signup" ? "Start creating viral content for free" : "We'll send you a reset link"}
+              <p style={{ color: "#52525b", fontSize: "0.84rem", lineHeight: 1.6 }}>
+                {mode === "login" ? "Sign in to your VCI account to continue" : mode === "signup" ? "Join 500+ creators already using VCI" : "Enter your email and we'll send a reset link"}
               </p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+            {/* Mode toggle pill */}
+            {mode !== "forgot" && (
+              <div style={{ display: "flex", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "3px", marginBottom: "1.5rem" }}>
+                {(["login", "signup"] as const).map(m => (
+                  <button key={m} onClick={() => { setMode(m); setError(""); setMessage(""); }}
+                    style={{ flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none", background: mode === m ? "#1a1a1a" : "transparent", color: mode === m ? "#fff" : "#52525b", fontWeight: mode === m ? 600 : 400, fontSize: "0.82rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.15s" }}>
+                    {m === "login" ? "Sign in" : "Sign up"}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Form fields */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
               {mode === "signup" && (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.65rem" }}>
                     <div>
-                      <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>First name</label>
+                      <label style={{ display: "block", color: "#71717a", fontSize: "0.72rem", fontWeight: 500, marginBottom: "0.4rem", letterSpacing: "0.01em" }}>First name</label>
                       <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Rahul" className="auth-input" />
                     </div>
                     <div>
-                      <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>Last name</label>
+                      <label style={{ display: "block", color: "#71717a", fontSize: "0.72rem", fontWeight: 500, marginBottom: "0.4rem", letterSpacing: "0.01em" }}>Last name</label>
                       <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Sharma" className="auth-input" />
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>Phone number</label>
+                    <label style={{ display: "block", color: "#71717a", fontSize: "0.72rem", fontWeight: 500, marginBottom: "0.4rem", letterSpacing: "0.01em" }}>Phone number</label>
                     <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" className="auth-input" />
                   </div>
                 </>
               )}
 
               <div>
-                {mode === "signup" && <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>Email address</label>}
+                <label style={{ display: "block", color: "#71717a", fontSize: "0.72rem", fontWeight: 500, marginBottom: "0.4rem", letterSpacing: "0.01em" }}>Email address</label>
                 <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="auth-input" />
               </div>
 
               {mode !== "forgot" && (
-                <div style={{ position: "relative" }}>
-                  {mode === "signup" && <label style={{ display: "block", color: "#71717a", fontSize: "0.7rem", fontWeight: 500, marginBottom: "0.35rem" }}>Password</label>}
-                  <input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" value={password}
-                    onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                    className="auth-input" style={{ paddingRight: "3.5rem" }} />
-                  <button onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: "absolute", right: "0.75rem", top: mode === "signup" ? "calc(50% + 0.75rem)" : "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#52525b", cursor: "pointer", fontSize: "0.7rem", fontFamily: "'Inter', sans-serif" }}>
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <label style={{ color: "#71717a", fontSize: "0.72rem", fontWeight: 500, letterSpacing: "0.01em" }}>Password</label>
+                    {mode === "login" && (
+                      <button onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="mode-link"
+                        style={{ color: "#6d28d9", fontSize: "0.72rem", fontWeight: 500 }}>Forgot password?</button>
+                    )}
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <input type={showPassword ? "text" : "password"} placeholder="Min. 6 characters" value={password}
+                      onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                      className="auth-input" style={{ paddingRight: "3.5rem" }} />
+                    <button onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: "absolute", right: "0.85rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#52525b", cursor: "pointer", fontSize: "0.7rem", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {error && <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#f87171", fontSize: "0.8rem" }}>⚠ {error}</div>}
-              {message && <div style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: "8px", padding: "0.6rem 0.85rem", color: "#4ade80", fontSize: "0.8rem" }}>✓ {message}</div>}
+              {error && (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "8px", padding: "0.65rem 0.85rem" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10" stroke="#f87171" strokeWidth="2"/><path d="M12 8v4M12 16h.01" stroke="#f87171" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <span style={{ color: "#f87171", fontSize: "0.8rem", lineHeight: 1.5 }}>{error}</span>
+                </div>
+              )}
+              {message && (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", padding: "0.65rem 0.85rem" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><path d="M20 6L9 17L4 12" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span style={{ color: "#4ade80", fontSize: "0.8rem", lineHeight: 1.5 }}>{message}</span>
+                </div>
+              )}
 
               <button onClick={handleSubmit} disabled={loading} className="submit-btn"
-                style={{ background: loading ? "#0a0a0a" : "#6d28d9", color: loading ? "#52525b" : "#fff", border: loading ? "1px solid #1f1f1f" : "none", marginTop: "0.25rem" }}>
-                {loading ? "Please wait..." : mode === "login" ? "Sign in →" : mode === "signup" ? "Create free account →" : "Send reset link →"}
+                style={{ background: loading ? "#0d0d0d" : "linear-gradient(135deg,#6d28d9,#7c3aed)", color: loading ? "#3f3f46" : "#fff", border: loading ? "1px solid #1a1a1a" : "none", marginTop: "0.1rem", letterSpacing: "0.01em" }}>
+                {loading
+                  ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                      <span style={{ width: 14, height: 14, border: "2px solid #333", borderTopColor: "#6d28d9", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+                      Please wait...
+                    </span>
+                  : mode === "login" ? "Sign in" : mode === "signup" ? "Create free account" : "Send reset link"
+                }
               </button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: "1.5rem 0" }}>
-              <div style={{ flex: 1, height: 1, background: "#0f0f0f" }} />
-              <span style={{ color: "#2a2a2a", fontSize: "0.72rem" }}>or</span>
-              <div style={{ flex: 1, height: 1, background: "#0f0f0f" }} />
-            </div>
+            {/* Back to login for forgot */}
+            {mode === "forgot" && (
+              <button onClick={() => { setMode("login"); setError(""); setMessage(""); }} className="mode-link"
+                style={{ color: "#52525b", fontSize: "0.8rem", textAlign: "center" as const, marginTop: "1rem", display: "block", width: "100%" }}>
+                ← Back to sign in
+              </button>
+            )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {mode === "login" && (
-                <>
-                  <button onClick={() => { setMode("signup"); setError(""); setMessage(""); }} className="mode-link"
-                    style={{ color: "#71717a", fontSize: "0.82rem", textAlign: "center" as const, padding: "0.5rem" }}>
-                    Don't have an account? <span style={{ color: "#8b5cf6", fontWeight: 600 }}>Sign up free</span>
-                  </button>
-                  <button onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="mode-link"
-                    style={{ color: "#3f3f46", fontSize: "0.75rem", textAlign: "center" as const }}>
-                    Forgot your password?
-                  </button>
-                </>
-              )}
-              {mode === "signup" && (
-                <button onClick={() => { setMode("login"); setError(""); setMessage(""); }} className="mode-link"
-                  style={{ color: "#71717a", fontSize: "0.82rem", textAlign: "center" as const, padding: "0.5rem" }}>
-                  Already have an account? <span style={{ color: "#8b5cf6", fontWeight: 600 }}>Sign in</span>
-                </button>
-              )}
-              {mode === "forgot" && (
-                <button onClick={() => { setMode("login"); setError(""); setMessage(""); }} className="mode-link"
-                  style={{ color: "#71717a", fontSize: "0.82rem", textAlign: "center" as const, padding: "0.5rem" }}>
-                  ← Back to sign in
-                </button>
-              )}
-            </div>
-
+            {/* Free plan perks */}
             {mode !== "forgot" && (
-              <div style={{ marginTop: "2rem", padding: "1rem", background: "#080808", border: "1px solid #111", borderRadius: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <span style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 500 }}>Free plan includes</span>
-                  <span style={{ color: "#6d28d9", fontSize: "0.68rem", fontWeight: 600 }}>No card needed</span>
+              <div style={{ marginTop: "1.5rem", padding: "1rem 1.1rem", background: "#060606", border: "1px solid #141414", borderRadius: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                  <span style={{ color: "#3f3f46", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.04em" }}>
+                    {mode === "signup" ? "FREE PLAN INCLUDES" : "WHAT YOU GET"}
+                  </span>
+                  <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", color: "#8b5cf6", fontSize: "0.62rem", fontWeight: 600, padding: "0.1rem 0.5rem", borderRadius: "4px" }}>No card required</span>
                 </div>
-                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                  {["10 credits", "Viral hooks", "Instagram + YouTube"].map(f => (
-                    <span key={f} style={{ background: "#0d0d0d", border: "1px solid #111", color: "#52525b", padding: "0.18rem 0.55rem", borderRadius: "5px", fontSize: "0.65rem" }}>✓ {f}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                  {(mode === "signup"
+                    ? ["10 free credits to start", "Viral hooks & title ideas", "Hook scoring (A–F grade)", "Instagram, YouTube & more"]
+                    : ["All your generated content", "Hook scores & analytics", "30-day content calendar", "Pro plans from ₹299/mo"]
+                  ).map(f => (
+                    <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#6d28d9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <span style={{ color: "#52525b", fontSize: "0.72rem" }}>{f}</span>
+                    </div>
                   ))}
                 </div>
-                {mode === "login" && (
-                  <div style={{ marginTop: "0.6rem", color: "#2a2a2a", fontSize: "0.65rem" }}>
-                    Pro plans from <strong style={{ color: "#3f3f46" }}>₹299/month</strong> · Cancel anytime
-                  </div>
-                )}
               </div>
             )}
 
-            <div style={{ marginTop: "2rem", textAlign: "center" as const }}>
-              <p style={{ color: "#1f1f1f", fontSize: "0.65rem" }}>
-                © {new Date().getFullYear()} Global Web Info Vision
-                <span style={{ margin: "0 0.4rem" }}>·</span>
-                <button onClick={() => setShowLegal("privacy")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.65rem" }}>Privacy</button>
-                <span style={{ margin: "0 0.4rem", color: "#111" }}>·</span>
-                <button onClick={() => setShowLegal("terms")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.65rem" }}>Terms</button>
-                <span style={{ margin: "0 0.4rem", color: "#111" }}>·</span>
-                <button onClick={() => setShowLegal("refund")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.65rem" }}>Refund</button>
+            {/* Footer */}
+            <div style={{ marginTop: "1.75rem", textAlign: "center" as const }}>
+              <p style={{ color: "#2a2a2a", fontSize: "0.63rem", lineHeight: 1.8 }}>
+                © {new Date().getFullYear()} Global Web Info Vision &nbsp;·&nbsp;
+                <button onClick={() => setShowLegal("privacy")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.63rem" }}>Privacy</button>
+                &nbsp;·&nbsp;
+                <button onClick={() => setShowLegal("terms")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.63rem" }}>Terms</button>
+                &nbsp;·&nbsp;
+                <button onClick={() => setShowLegal("refund")} className="mode-link" style={{ color: "#2a2a2a", fontSize: "0.63rem" }}>Refund</button>
               </p>
             </div>
           </div>
