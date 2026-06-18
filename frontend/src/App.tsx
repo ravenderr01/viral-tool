@@ -1936,7 +1936,7 @@ Respond ONLY in JSON:
                       <p style={{ color: "#555", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.25rem" }}>{group.country}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
                         {group.languages.map(lang => {
-                          const isLocked = false;
+                          const isLocked = false; // All plans get all languages
                           return (
                             <button key={lang.code}
                               onClick={() => {
@@ -1997,8 +1997,7 @@ Respond ONLY in JSON:
                 </div>
                 {showNiche && <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
                   {Object.keys(NICHE_EXAMPLES).map(n => {
-                    const starterNiches = Object.keys(NICHE_EXAMPLES).filter(x => x !== "Ads & Marketing" && x !== "Real Estate" && x !== "Comedy & Entertainment");
-                    const isLocked = (plan === "starter" && !starterNiches.includes(n));
+                    const isLocked = false; // All niches open for all plans
                     return (
                       <button key={n} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setNiche(n)}
                         style={{ background: niche === n ? "#6d28d912" : "#0d0d0d", border: `1px solid ${niche === n ? "#6d28d9" : "#1a1a1a"}`, color: niche === n ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
@@ -2020,8 +2019,7 @@ Respond ONLY in JSON:
                     <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem" }}>{group}</p>
                     <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                       {platforms.map(p => {
-                        const starterPlatforms = ["Instagram", "YouTube", "LinkedIn", "Twitter / X", "Facebook"];
-                        const isLocked = (plan === "starter" && !starterPlatforms.includes(p));
+                        const isLocked = false; // All platforms open for all plans
                         return (
                           <button key={p} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setPlatform(p)}
                             style={{ background: platform === p ? "#6d28d912" : "#0d0d0d", border: `1px solid ${platform === p ? "#6d28d9" : "#1a1a1a"}`, color: platform === p ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
@@ -2146,13 +2144,13 @@ Respond ONLY in JSON:
 
           {/* TAB: SCRIPT LAB */}
           {activeTab === "scriptlab" && (
-            (plan === "free" || plan === "starter" || plan === "growth") ? (
+            plan === "free" ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Script Lab unlocks from Pro Creator plan onwards.</p>
-                <p style={{ color: "#444", fontSize: "0.78rem", marginBottom: "1.5rem" }}>Generate viral reel scripts up to 90 seconds + Before/After improvement</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
+                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
+                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Script Lab unlocks from Starter ₹299 onwards.</p>
+                <p style={{ color: "#444", fontSize: "0.78rem", marginBottom: "1.5rem" }}>Generate viral reel scripts + Before/After improvement</p>
+                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade to Starter</button>
               </div>
             ) : (
               <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
