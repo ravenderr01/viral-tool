@@ -269,6 +269,7 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
         .card-hover { transition: all 0.25s; cursor: pointer; }
+@media (max-width: 640px) { .three-grid { grid-template-columns: 1fr !important; } }
         .card-hover:hover { transform: translateY(-4px); }
         .option-btn { transition: all 0.2s; cursor: pointer; }
         .option-btn:hover { transform: translateY(-2px); }
@@ -305,7 +306,7 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
             </div>
 
             {/* 3 Cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
 
               {/* Creator */}
               <div className="card-hover" onClick={() => setSelected("creator")} style={{ background: selected === "creator" ? "rgba(168,85,247,0.1)" : "rgba(255,255,255,0.02)", border: `2px solid ${selected === "creator" ? "#a855f7" : "rgba(255,255,255,0.06)"}`, borderRadius: "20px", padding: "1.75rem 1.25rem", textAlign: "center", boxShadow: selected === "creator" ? "0 0 40px rgba(168,85,247,0.2)" : "none" }}>
