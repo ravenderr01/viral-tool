@@ -1,7 +1,7 @@
 {
   "name": "VCI — Viral Content Intelligence",
   "short_name": "VCI",
-  "description": "AI-powered viral content generator for creators & businesses",
+  "description": "AI-powered viral content generator",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -13,17 +13,26 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["productivity", "utilities", "social"],
-  "lang": "en",
-  "dir": "ltr",
   "prefer_related_applications": false
 }
