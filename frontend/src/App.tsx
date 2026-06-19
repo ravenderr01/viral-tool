@@ -2265,47 +2265,6 @@ export default function ViralContentTool() {
     };
 
     try {
-      let realData = "";
-
-      if (platform === "YouTube" || platform === "YouTube Ads") {
-        try {
-          const [trendRes, searchRes] = await Promise.allSettled([
-            fetch(`https://viral-tool-1.onrender.com/api/trends/youtube?country=IN`),
-            fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(keyword)}&country=IN`)
-          ]);
-          let trendTitles: string[] = [], searchTitles: string[] = [];
-          if (trendRes.status === "fulfilled" && trendRes.value.ok) {
-            const d = await trendRes.value.json();
-            trendTitles = (d.items || []).slice(0, 5).map((v: any) => v.snippet?.title || "");
-          }
-          if (searchRes.status === "fulfilled" && searchRes.value.ok) {
-            const d = await searchRes.value.json();
-            searchTitles = (d.items || []).slice(0, 5).map((v: any) => v.snippet?.title || "");
-          }
-          if (trendTitles.length > 0 || searchTitles.length > 0) {
-            realData = `\nREAL YOUTUBE TRENDING:\n${trendTitles.map((t, i) => `${i+1}. ${t}`).join("\n")}\nTOP VIDEOS FOR "${keyword}":\n${searchTitles.map((t, i) => `${i+1}. ${t}`).join("\n")}`;
-          }
-        } catch (e) {}
-      } else if (platform === "Google Ads" || platform === "Meta Ads" || platform === "Native Ads") {
-        try {
-          const serpRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(keyword)}&country=IN`);
-          if (serpRes.ok) {
-            const d = await serpRes.json();
-            const relatedQueries = d.related_queries?.rising?.slice(0, 5).map((q: any) => q.query) || [];
-            if (relatedQueries.length > 0) realData = `\nRISING SEARCHES: ${relatedQueries.join(", ")}`;
-          }
-        } catch (e) {}
-      } else {
-        try {
-          const serpRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(keyword)}&country=IN`);
-          if (serpRes.ok) {
-            const d = await serpRes.json();
-            const rising = d.related_queries?.rising?.slice(0, 5).map((q: any) => q.query) || [];
-            if (rising.length > 0) realData = `\nTRENDING SEARCHES: ${rising.join(", ")}`;
-          }
-        } catch (e) {}
-      }
-
       const platformGuide: Record<string, string> = {
         "Instagram": "5 Reel opening lines, 5 post titles, 3 captions with hashtags, 5 trending topics",
         "YouTube": "5 video hooks, 5 SEO titles, 3 descriptions, 5 trending formats",
@@ -2325,7 +2284,6 @@ export default function ViralContentTool() {
 
       const prompt = `You are a ${platform} content expert for ${niche} niche.
 Keyword: "${keyword}"
-${realData}
 
 Generate: ${platformGuide[platform] || platformGuide["Instagram"]}
 
