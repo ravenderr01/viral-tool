@@ -1975,8 +1975,167 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
   );
 }
 
-function ResultCard({ title, items, emoji, color }: any) {
+// Auto-detect hook style for tagging — used for performance pattern matching
+function detectHookStyle(text: string): string {
+  const t = text.toLowerCase();
+  if (t.match(/\?$|kya|why|how|kaise|kyun/)) return "Question";
+  if (t.match(/never|always|secret|nobody|hidden|shocking|truth/)) return "Curiosity";
+  if (t.match(/before|after|transformation|from.*to/)) return "Before/After";
+  if (t.match(/\d+\s*(tips|ways|reasons|steps|mistakes|hacks)/)) return "Listicle";
+  if (t.match(/stop|don't|avoid|mistake|wrong/)) return "Warning";
+  if (t.match(/i |my |me\b/)) return "Personal Story";
+  if (t.match(/free|today|now|limited|last chance/)) return "Urgency";
+  return "Statement";
+}
+
+function PerformanceModal({ contentText, contentType, niche, platform, keyword, userId, onClose, onSaved }: any) {
+  const [views, setViews] = useState("");
+  const [likes, setLikes] = useState("");
+  const [comments, setComments] = useState("");
+  const [shares, setShares] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const save = async () => {
+    const v = parseInt(views) || 0;
+    if (v <= 0) { setError("Views daalna zaroori hai (kam se kam estimate)."); return; }
+    setSaving(true); setError("");
+
+    const l = parseInt(likes) || 0;
+    const c = parseInt(comments) || 0;
+    const s = parseInt(shares) || 0;
+    const engagementRate = v > 0 ? ((l + c + s) / v) * 100 : 0;
+    const hookStyle = detectHookStyle(contentText);
+
+    try {
+      const { error: dbError } = await supabase.from("content_performance").insert({
+        user_id: userId,
+        content_text: contentText,
+        content_type: contentType,
+        niche, platform, keyword,
+        hook_style: hookStyle,
+        views: v, likes: l, comments: c, shares: s,
+        engagement_rate: Math.round(engagementRate * 100) / 100,
+        source: "manual",
+        posted_at: new Date().toISOString(),
+      });
+      if (dbError) throw dbError;
+      onSaved();
+      onClose();
+    } catch {
+      setError("Save nahi hua. Try again.");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div style={{ background: "#0a0a0a", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "18px", padding: "1.5rem", maxWidth: "420px", width: "100%", animation: "slideUp 0.25s ease" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
+          <div>
+            <h3 style={{ margin: 0, color: "#fff", fontSize: "1rem", fontWeight: 800 }}>📈 Yeh post kaisa chala?</h3>
+            <p style={{ margin: "0.25rem 0 0", color: "#52525b", fontSize: "0.72rem" }}>Real numbers daalo — tool seekhega kya tumhare liye kaam karta hai</p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: "1.1rem" }}>✕</button>
+        </div>
+
+        <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.7rem 0.9rem", marginBottom: "1rem" }}>
+          <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5, fontStyle: "italic" }}>"{contentText.length > 80 ? contentText.slice(0, 80) + "..." : contentText}"</p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginBottom: "1rem" }}>
+          <div>
+            <label style={{ display: "block", color: "#71717a", fontSize: "0.68rem", fontWeight: 600, marginBottom: "0.3rem" }}>Views *</label>
+            <input type="number" value={views} onChange={e => setViews(e.target.value)} placeholder="1200"
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.6rem 0.75rem", color: "#fff", fontSize: "0.85rem", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", color: "#71717a", fontSize: "0.68rem", fontWeight: 600, marginBottom: "0.3rem" }}>Likes</label>
+            <input type="number" value={likes} onChange={e => setLikes(e.target.value)} placeholder="85"
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.6rem 0.75rem", color: "#fff", fontSize: "0.85rem", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", color: "#71717a", fontSize: "0.68rem", fontWeight: 600, marginBottom: "0.3rem" }}>Comments</label>
+            <input type="number" value={comments} onChange={e => setComments(e.target.value)} placeholder="12"
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.6rem 0.75rem", color: "#fff", fontSize: "0.85rem", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", color: "#71717a", fontSize: "0.68rem", fontWeight: 600, marginBottom: "0.3rem" }}>Shares</label>
+            <input type="number" value={shares} onChange={e => setShares(e.target.value)} placeholder="5"
+              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.6rem 0.75rem", color: "#fff", fontSize: "0.85rem", outline: "none" }} />
+          </div>
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.75rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={save} disabled={saving}
+          style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: saving ? "#111" : "linear-gradient(135deg,#22c55e,#16a34a)", border: "none", color: saving ? "#444" : "#000", fontWeight: 800, fontSize: "0.85rem", cursor: saving ? "not-allowed" : "pointer" }}>
+          {saving ? "Saving..." : "💾 Save Performance"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Shows "your best performing style" once user has tracked enough data
+function InsightsCard({ niche, userId }: any) {
+  const [insight, setInsight] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("content_performance")
+          .select("hook_style, engagement_rate, views")
+          .eq("user_id", userId)
+          .eq("niche", niche)
+          .not("engagement_rate", "is", null);
+
+        if (error || !data || data.length < 3) { setLoading(false); return; }
+
+        const styleStats: Record<string, { total: number; count: number }> = {};
+        data.forEach((row: any) => {
+          const style = row.hook_style || "Statement";
+          if (!styleStats[style]) styleStats[style] = { total: 0, count: 0 };
+          styleStats[style].total += row.engagement_rate || 0;
+          styleStats[style].count += 1;
+        });
+
+        let bestStyle = "", bestAvg = -1;
+        Object.entries(styleStats).forEach(([style, stat]) => {
+          const avg = stat.total / stat.count;
+          if (avg > bestAvg) { bestAvg = avg; bestStyle = style; }
+        });
+
+        setInsight({ bestStyle, bestAvg: bestAvg.toFixed(1), sampleSize: data.length });
+      } catch {}
+      setLoading(false);
+    })();
+  }, [userId, niche]);
+
+  if (loading || !insight || !insight.bestStyle) return null;
+
+  return (
+    <div style={{ background: "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.04))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "0.9rem 1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      <span style={{ fontSize: "1.4rem" }}>🧠</span>
+      <div>
+        <p style={{ margin: 0, color: "#22c55e", fontSize: "0.78rem", fontWeight: 700 }}>
+          Tumhare data se: <strong>{insight.bestStyle}</strong> style hooks best perform karte hain {niche} niche mein
+        </p>
+        <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
+          Avg engagement: {insight.bestAvg}% · Based on {insight.sampleSize} tracked posts
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ResultCard({ title, items, emoji, color, contentType, niche, platform, keyword, userId, onPerformanceSaved }: any) {
   const [copied, setCopied] = useState(false);
+  const [trackingItem, setTrackingItem] = useState<string | null>(null);
+
   return (
     <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
@@ -1985,11 +2144,30 @@ function ResultCard({ title, items, emoji, color }: any) {
           {copied ? "✓ Copied!" : "Copy all"}
         </button>
       </div>
-      <ul style={{ margin: 0, padding: "0 0 0 1rem" }}>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {items.map((item: string, i: number) => (
-          <li key={i} style={{ color: "#ccc", fontSize: "0.83rem", marginBottom: "0.35rem", lineHeight: 1.6 }}>{item}</li>
+          <li key={i} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem", color: "#ccc", fontSize: "0.83rem", marginBottom: "0.5rem", lineHeight: 1.6, paddingLeft: "1rem", position: "relative" }}>
+            <span style={{ position: "absolute", left: 0, color: color + "80" }}>•</span>
+            <span style={{ flex: 1 }}>{item}</span>
+            {userId && (
+              <button onClick={() => setTrackingItem(item)}
+                style={{ flexShrink: 0, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", padding: "0.1rem 0.4rem", borderRadius: "5px", cursor: "pointer", fontSize: "0.6rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                📈 Track
+              </button>
+            )}
+          </li>
         ))}
       </ul>
+
+      {trackingItem && (
+        <PerformanceModal
+          contentText={trackingItem}
+          contentType={contentType || "hook"}
+          niche={niche} platform={platform} keyword={keyword} userId={userId}
+          onClose={() => setTrackingItem(null)}
+          onSaved={() => onPerformanceSaved && onPerformanceSaved()}
+        />
+      )}
     </div>
   );
 }
@@ -2063,6 +2241,8 @@ export default function ViralContentTool() {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showPerfToast, setShowPerfToast] = useState(false);
+  const [myInsights, setMyInsights] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -2248,6 +2428,13 @@ Respond ONLY in JSON:
 
   const handleSelectPlan = (p: string) => { setShowPaywall(false); setPayingPlan(p); };
   const handlePaid = (p: string) => { setPayingPlan(null); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 4000); };
+
+  useEffect(() => {
+    if (showPerfToast) {
+      const t = setTimeout(() => setShowPerfToast(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [showPerfToast]);
 
   const tabs = [
     { id: "generate", label: "Generate", Icon: Zap },
@@ -2611,6 +2798,8 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
+              {user?.id && <InsightsCard niche={niche} userId={user.id} />}
+
               <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                 {loading
                   ? <><RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ animation: "pulse 1s infinite" }}>Generating in {langLabel}...</span></>
@@ -2625,13 +2814,13 @@ Respond ONLY in JSON:
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>💡 Try Hook Score tab</span>
                   </div>
                   {["Google Ads", "Meta Ads", "Native Ads"].includes(platform) ? (
-                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /></>
+                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" contentType="hook" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" contentType="title" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" contentType="caption" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /></>
                   ) : platform === "YouTube" ? (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" niche={niche} platform={platform} keyword={keyword} /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" contentType="hook" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" contentType="title" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" contentType="caption" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /></>
                   ) : platform === "Reddit" ? (
-                    <><ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" /><ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" /><ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#6d28d9" /></>
+                    <><ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" contentType="hook" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" niche={niche} platform={platform} keyword={keyword} /><ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#6d28d9" contentType="caption" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /></>
                   ) : (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" /><ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" niche={niche} platform={platform} keyword={keyword} /><ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" contentType="hook" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" contentType="title" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /><ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" contentType="caption" niche={niche} platform={platform} keyword={keyword} userId={user?.id} onPerformanceSaved={() => setShowPerfToast(true)} /></>
                   )}
                   <div style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
                     <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "#444", fontWeight: 600 }}>WANT MORE FROM THIS KEYWORD?</p>
@@ -2877,6 +3066,12 @@ Respond ONLY in JSON:
       {showSuccess && (
         <div style={{ position: "fixed", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", padding: "0.75rem 1.5rem", borderRadius: "12px", fontWeight: 800, zIndex: 9999, animation: "slideUp 0.3s ease", whiteSpace: "nowrap" }}>
           ✅ Payment received! We'll activate your plan within 2 hours.
+        </div>
+      )}
+
+      {showPerfToast && (
+        <div style={{ position: "fixed", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", padding: "0.7rem 1.4rem", borderRadius: "12px", fontWeight: 700, fontSize: "0.85rem", zIndex: 9999, animation: "slideUp 0.3s ease", whiteSpace: "nowrap" }}>
+          📈 Saved! Tool seekh raha hai tumhare liye kya kaam karta hai.
         </div>
       )}
     </>
