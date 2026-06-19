@@ -1437,13 +1437,15 @@ ${rising.join(", ") || "No data"}
 Analyze this and respond ONLY in JSON:
 {
   "competition": "Low/Medium/High",
-  "trend_score": 0,
+  "trend_score": 7,
   "best_content_types": ["type1", "type2", "type3"],
   "content_gaps": ["gap idea 1", "gap idea 2", "gap idea 3"],
   "best_posting_times": "specific advice for India",
   "summary": "2-3 line honest analysis right now",
   "opportunity": "one clear actionable opportunity for a creator"
-}`;
+}
+
+CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a number above 10 for trend_score.`;
 
       const aiRes = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -1454,6 +1456,10 @@ Analyze this and respond ONLY in JSON:
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else parsed = {}; }
+
+      if (typeof parsed.trend_score === "number") {
+        parsed.trend_score = Math.max(0, Math.min(10, Math.round(parsed.trend_score)));
+      }
 
       setData({ ...parsed, ytVideos, rising });
     } catch { setError("Analysis failed. Try again."); }
@@ -1472,13 +1478,13 @@ Analyze this and respond ONLY in JSON:
             <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Real YouTube + Google data analysis for your niche</p>
           </div>
         </div>
-        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-          <span style={{ color: "#888", fontSize: "0.82rem" }}>Analyzing:</span>
-          <div style={{ display: "flex", gap: "0.4rem" }}>
+        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: "0 0 0.5rem", color: "#888", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>ANALYZING</p>
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
             {keyword && keyword.trim() && (
-              <span style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.2rem 0.7rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>{keyword}</span>
+              <span style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>📝 {keyword}</span>
             )}
-            <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", padding: "0.2rem 0.7rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>{niche}</span>
+            <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>🏷️ {niche}</span>
           </div>
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
@@ -1497,7 +1503,7 @@ Analyze this and respond ONLY in JSON:
             </div>
             <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
               <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>TREND SCORE</p>
-              <p style={{ margin: 0, color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>{data.trend_score || 0}/10</p>
+              <p style={{ margin: 0, color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>{Math.min(10, data.trend_score || 0)}/10</p>
             </div>
           </div>
 
