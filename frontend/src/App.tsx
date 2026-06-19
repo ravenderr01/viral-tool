@@ -12,7 +12,7 @@ import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
 import {
   Zap, BarChart2, FileText, CalendarDays, Package, TrendingUp, Image, Film,
-  Sparkles, ArrowRight, Tag, RefreshCw, Search
+  Sparkles, ArrowRight, Tag, RefreshCw, Search, Flame
 } from "lucide-react";
 
 const YOUR_UPI_ID    = "9315133390@ptyes";
@@ -2078,6 +2078,72 @@ function PerformanceModal({ contentText, contentType, niche, platform, keyword, 
 }
 
 // Crowd-intelligence: shows what's trending across ALL users in this niche, last 7 days
+// Smart keyword suggestions: real crowd search data, falls back to static curated list
+function SmartKeywordSuggestions({ niche, currentKeyword, onSelect }: any) {
+  const [smartKeywords, setSmartKeywords] = useState<{ keyword: string; users: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    (async () => {
+      try {
+        // Try recent (last 7 days) trending keywords first
+        const { data: recent, error: e1 } = await supabase.rpc("get_smart_keywords", { p_niche: niche, p_limit: 6 });
+        if (!active) return;
+
+        if (!e1 && recent && recent.length >= 3) {
+          setSmartKeywords(recent.map((r: any) => ({ keyword: r.keyword, users: r.unique_users })));
+          setLoading(false);
+          return;
+        }
+
+        // Fallback: all-time popular keywords for this niche
+        const { data: allTime, error: e2 } = await supabase.rpc("get_alltime_keywords", { p_niche: niche, p_limit: 6 });
+        if (!active) return;
+
+        if (!e2 && allTime && allTime.length >= 2) {
+          setSmartKeywords(allTime.map((r: any) => ({ keyword: r.keyword, users: r.unique_users })));
+        } else {
+          setSmartKeywords([]); // not enough data yet — will fall back to static list in render
+        }
+      } catch {
+        setSmartKeywords([]);
+      }
+      setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [niche]);
+
+  // Use crowd data if available, otherwise fall back to the static curated examples
+  const showingSmart = !loading && smartKeywords.length >= 2;
+  const displayList = showingSmart
+    ? smartKeywords
+    : (NICHE_EXAMPLES[niche] || []).map(k => ({ keyword: k, users: 0 }));
+
+  return (
+    <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
+        {showingSmart ? <Flame size={11} color="#f59e0b" /> : <Tag size={11} color="#52525b" />}
+        <span style={{ color: showingSmart ? "#f59e0b" : "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em" }}>
+          {showingSmart ? "TRENDING SEARCHES" : "RELATED KEYWORDS"}
+        </span>
+      </div>
+      <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+        {displayList.map(({ keyword: ex, users }) => (
+          <button key={ex} onClick={() => onSelect(ex)}
+            style={{ background: currentKeyword === ex ? "rgba(109,40,217,0.12)" : "#0d0d0d", border: `1px solid ${currentKeyword === ex ? "#6d28d9" : "#1e1e1e"}`, color: currentKeyword === ex ? "#8b5cf6" : "#444", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+            onMouseEnter={e => { if (currentKeyword !== ex) { (e.currentTarget as any).style.borderColor = "#333"; (e.currentTarget as any).style.color = "#888"; } }}
+            onMouseLeave={e => { if (currentKeyword !== ex) { (e.currentTarget as any).style.borderColor = "#1e1e1e"; (e.currentTarget as any).style.color = "#444"; } }}>
+            {users >= 5 && <span style={{ fontSize: "0.6rem" }}>🔥</span>}
+            {ex}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TrendingNowCard({ niche }: any) {
   const [trend, setTrend] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -2817,23 +2883,8 @@ Respond ONLY in JSON:
                   style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
                   onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
 
-                {/* Related keyword suggestions */}
-                <div style={{ marginTop: "0.5rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
-                    <Tag size={11} color="#52525b" />
-                    <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em" }}>RELATED KEYWORDS</span>
-                  </div>
-                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-                    {(NICHE_EXAMPLES[niche] || []).map(ex => (
-                      <button key={ex} onClick={() => setKeyword(ex)}
-                        style={{ background: keyword === ex ? "rgba(109,40,217,0.12)" : "#0d0d0d", border: `1px solid ${keyword === ex ? "#6d28d9" : "#1e1e1e"}`, color: keyword === ex ? "#8b5cf6" : "#444", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}
-                        onMouseEnter={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#333"; (e.currentTarget as any).style.color = "#888"; } }}
-                        onMouseLeave={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#1e1e1e"; (e.currentTarget as any).style.color = "#444"; } }}>
-                        {ex}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {/* Smart keyword suggestions — crowd data + static fallback */}
+                <SmartKeywordSuggestions niche={niche} currentKeyword={keyword} onSelect={setKeyword} />
               </div>
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
