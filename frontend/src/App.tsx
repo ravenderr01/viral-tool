@@ -2077,6 +2077,45 @@ function PerformanceModal({ contentText, contentType, niche, platform, keyword, 
   );
 }
 
+// Crowd-intelligence: shows what's trending across ALL users in this niche, last 7 days
+function TrendingNowCard({ niche }: any) {
+  const [trend, setTrend] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("trending_styles")
+          .select("*")
+          .eq("niche", niche)
+          .order("generation_count", { ascending: false })
+          .limit(1);
+
+        if (error || !data || data.length === 0) { setLoading(false); return; }
+        setTrend(data[0]);
+      } catch {}
+      setLoading(false);
+    })();
+  }, [niche]);
+
+  if (loading || !trend) return null;
+
+  return (
+    <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.03))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "0.9rem 1.1rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      <span style={{ fontSize: "1.4rem" }}>🔥</span>
+      <div>
+        <p style={{ margin: 0, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700 }}>
+          Trending right now: <strong>{trend.style}</strong> style hooks <span style={{ color: "#71717a", fontWeight: 500 }}>{niche} niche mein</span>
+        </p>
+        <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
+          {trend.pct_share}% creators last 7 din mein yeh style use kar rahe hain · Based on {trend.generation_count} generations
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // Shows "your best performing style" once user has tracked enough data
 function InsightsCard({ niche, userId }: any) {
   const [insight, setInsight] = useState<any>(null);
@@ -2412,7 +2451,8 @@ Respond ONLY in JSON:
       }
       setResults(parsed);
       incrementUsage();
-      await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: parsed.viralHooks || [], titles: parsed.titles || [], captions: parsed.captions || [], trending_topics: parsed.trendingTopics || [] });
+      const detectedStyles = (parsed.viralHooks || []).map((h: string) => detectHookStyle(h));
+      await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: parsed.viralHooks || [], titles: parsed.titles || [], captions: parsed.captions || [], trending_topics: parsed.trendingTopics || [], hook_styles: detectedStyles });
       await supabase.from("users").update({ generations_used_today: (userData?.generations_used_today || 0) + 1, credits_remaining: (userData?.credits_remaining || 0) - 1 }).eq("id", user.id);
     } catch { setError("Something went wrong. Please try again."); }
     setLoading(false);
@@ -2798,6 +2838,7 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
+              <TrendingNowCard niche={niche} />
               {user?.id && <InsightsCard niche={niche} userId={user.id} />}
 
               <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
