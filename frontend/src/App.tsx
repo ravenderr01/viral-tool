@@ -12,7 +12,7 @@ import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
 import {
   Zap, BarChart2, FileText, CalendarDays, Package, TrendingUp, Image, Film,
-  Sparkles, ArrowRight, Tag, RefreshCw
+  Sparkles, ArrowRight, Tag, RefreshCw, Search
 } from "lucide-react";
 
 const YOUR_UPI_ID    = "9315133390@ptyes";
@@ -1694,6 +1694,193 @@ Respond ONLY in JSON:
   );
 }
 
+
+function NicheIntelligence({ niche, keyword, langLabel }: any) {
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState("");
+
+  const searchQuery = keyword && keyword.trim() ? `${keyword} ${niche}` : niche;
+
+  const analyze = async () => {
+    setLoading(true); setError(""); setData(null);
+
+    try {
+      const ytRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(searchQuery)}&country=IN`);
+      let ytVideos: any[] = [];
+      if (ytRes.ok) {
+        const d = await ytRes.json();
+        ytVideos = (d.items || []).slice(0, 5).map((v: any) => ({
+          title: v.snippet?.title || "",
+          channel: v.snippet?.channelTitle || "",
+        }));
+      }
+
+      const gRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(searchQuery)}&country=IN`);
+      let rising: string[] = [];
+      if (gRes.ok) {
+        const d = await gRes.json();
+        rising = (d.related_queries?.rising || []).slice(0, 8).map((q: any) => q.query);
+      }
+
+      const subjectLabel = keyword ? `${keyword} (${niche} niche)` : niche;
+      const prompt = `You are a content strategy analyst. Based on this REAL data for "${subjectLabel}" in India:
+
+TRENDING YOUTUBE VIDEOS:
+${ytVideos.map((v, i) => `${i+1}. ${v.title} (by ${v.channel})`).join("\n") || "No data"}
+
+RISING GOOGLE SEARCHES:
+${rising.join(", ") || "No data"}
+
+Analyze this and respond ONLY in JSON:
+{
+  "competition": "Low/Medium/High",
+  "trend_score": 7,
+  "best_content_types": ["type1", "type2", "type3"],
+  "content_gaps": ["gap idea 1", "gap idea 2", "gap idea 3"],
+  "best_posting_times": "specific advice for India",
+  "summary": "2-3 line honest analysis right now",
+  "opportunity": "one clear actionable opportunity for a creator"
+}
+
+CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a number above 10 for trend_score.`;
+
+      const aiRes = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      });
+      const aiData = await aiRes.json();
+      const text = aiData.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else parsed = {}; }
+
+      if (typeof parsed.trend_score === "number") {
+        parsed.trend_score = Math.max(0, Math.min(10, Math.round(parsed.trend_score)));
+      }
+
+      setData({ ...parsed, ytVideos, rising });
+    } catch { setError("Analysis failed. Try again."); }
+    setLoading(false);
+  };
+
+  const compColor = (c: string) => c === "Low" ? "#22c55e" : c === "Medium" ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+          <span style={{ fontSize: "1.4rem" }}>🔍</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Niche Intelligence</h3>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Real YouTube + Google data analysis for your niche</p>
+          </div>
+        </div>
+        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: "0 0 0.5rem", color: "#888", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>ANALYZING</p>
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+            {keyword && keyword.trim() && (
+              <span style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>📝 {keyword}</span>
+            )}
+            <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>🏷️ {niche}</span>
+          </div>
+        </div>
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
+        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#0891b2,#06b6d4)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "🔍 Analyzing real trending data..." : `🔍 Analyze "${keyword && keyword.trim() ? keyword : niche}"`}
+        </button>
+      </div>
+
+      {data && (
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            <div style={{ background: "#0f0f0f", border: `1px solid ${compColor(data.competition)}30`, borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
+              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>COMPETITION</p>
+              <p style={{ margin: 0, color: compColor(data.competition), fontWeight: 900, fontSize: "1.3rem" }}>{data.competition || "N/A"}</p>
+            </div>
+            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
+              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>TREND SCORE</p>
+              <p style={{ margin: 0, color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>{Math.min(10, data.trend_score || 0)}/10</p>
+            </div>
+          </div>
+
+          {data.summary && (
+            <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(6,182,212,0.08))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>📊 SUMMARY</p>
+              <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.85rem", lineHeight: 1.6 }}>{data.summary}</p>
+            </div>
+          )}
+
+          {data.ytVideos && data.ytVideos.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#ef4444", fontWeight: 700, letterSpacing: "0.06em" }}>▶️ TRENDING ON YOUTUBE RIGHT NOW</p>
+              {data.ytVideos.map((v: any, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.6rem", padding: "0.5rem 0", borderBottom: i < data.ytVideos.length - 1 ? "1px solid #161616" : "none" }}>
+                  <span style={{ color: "#333", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <div>
+                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.4 }}>{v.title}</p>
+                    <p style={{ margin: "0.15rem 0 0", color: "#444", fontSize: "0.68rem" }}>by {v.channel}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data.rising && data.rising.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📈 RISING SEARCHES (REAL DATA)</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                {data.rising.map((r: string, i: number) => (
+                  <span key={i} style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", padding: "0.25rem 0.65rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600 }}>{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.best_content_types && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 BEST CONTENT TYPES</p>
+              {data.best_content_types.map((t: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}>
+                  <span style={{ color: "#f59e0b", fontSize: "0.72rem", flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#bbb", fontSize: "0.78rem" }}>{t}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data.content_gaps && (
+            <div style={{ background: "linear-gradient(135deg,#0a0a14,#0d0d1a)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>💡 CONTENT GAPS</p>
+              {data.content_gaps.map((g: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                  <span style={{ color: "#a855f7", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#d4d4d8", fontSize: "0.8rem", lineHeight: 1.5 }}>{g}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data.best_posting_times && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>⏰ BEST POSTING TIME</p>
+              <p style={{ margin: 0, color: "#bbb", fontSize: "0.8rem", lineHeight: 1.5 }}>{data.best_posting_times}</p>
+            </div>
+          )}
+
+          {data.opportunity && (
+            <div style={{ background: "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(6,182,212,0.06))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "1.1rem" }}>
+              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>🚀 YOUR OPPORTUNITY</p>
+              <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 600 }}>{data.opportunity}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PaymentModal({ plan, onClose, onPaid }: any) {
   const [currency, setCurrency] = useState("INR");
   const [copied, setCopied] = useState(false);
@@ -2066,6 +2253,7 @@ Respond ONLY in JSON:
     { id: "generate", label: "Generate", Icon: Zap },
     { id: "score", label: "Hook Score", Icon: BarChart2 },
     { id: "caption", label: "Captions", Icon: FileText },
+    { id: "intelligence", label: "Intelligence", Icon: Search },
     { id: "calendar", label: "Calendar", Icon: CalendarDays },
     { id: "pack", label: "Pack", Icon: Package },
     { id: "trends", label: "Trends", Icon: TrendingUp },
@@ -2569,6 +2757,11 @@ Respond ONLY in JSON:
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
             <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} />
+          )}
+
+          {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
+          {activeTab === "intelligence" && (
+            <NicheIntelligence niche={niche} keyword={keyword} langLabel={langLabel} />
           )}
 
           {/* TAB: PACK */}
