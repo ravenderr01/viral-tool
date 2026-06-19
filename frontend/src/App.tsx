@@ -10,6 +10,10 @@ import Trends from "./Trends";
 import Legal from "./Legal";
 import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
+import {
+  Zap, BarChart2, FileText, CalendarDays, Package, TrendingUp, Image, Film,
+  Sparkles, ArrowRight, Tag, RefreshCw
+} from "lucide-react";
 
 const YOUR_UPI_ID    = "9315133390@ptyes";
 const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
@@ -70,6 +74,22 @@ const NICHE_EXAMPLES: Record<string, string[]> = {
   Motivational:         ["success mindset", "morning motivation", "self improvement", "hustle tips"],
   "Health & Wellness":  ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
   Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
+};
+
+// Cross-selling: jo niche hai uske related niches suggest karo
+const CROSS_SELL_NICHES: Record<string, { niche: string; reason: string; keywords: string[] }[]> = {
+  Fitness:           [{ niche: "Health & Wellness", reason: "Fitness creators ka wellness content bhi trend karta hai", keywords: ["nutrition tips", "sleep tips", "detox"] }, { niche: "Motivational", reason: "Gym motivation content viral hota hai", keywords: ["success mindset", "discipline", "hustle tips"] }, { niche: "Food", reason: "Meal prep aur diet content fitness ke saath fit hota hai", keywords: ["meal prep", "protein meals", "healthy recipes"] }],
+  Business:          [{ niche: "Personal Finance", reason: "Business creators ko finance content bhi follow karte hain", keywords: ["invest money", "passive income", "budget tips"] }, { niche: "Motivational", reason: "Entrepreneur motivation viral hota hai", keywords: ["success mindset", "hustle tips", "growth"] }, { niche: "Tech", reason: "AI tools aur automation business ke liye hot topic hai", keywords: ["AI tools", "ChatGPT hacks", "automation"] }],
+  Tech:              [{ niche: "Business", reason: "Tech creators startup content bhi banate hain", keywords: ["startup tips", "side hustle", "freelancing"] }, { niche: "Education", reason: "Coding tutorials aur e-learning popular hai", keywords: ["coding tips", "online course", "skill development"] }, { niche: "Gaming", reason: "Tech aur gaming audience overlap hoti hai", keywords: ["gaming setup", "game review", "esports"] }],
+  Lifestyle:         [{ niche: "Mental Health", reason: "Lifestyle audience wellness content pasand karta hai", keywords: ["self care", "anxiety tips", "mindfulness"] }, { niche: "Fashion & Style", reason: "Lifestyle aur fashion content overlap karta hai", keywords: ["outfit ideas", "style guide", "trendy outfits"] }, { niche: "Daily Vlog", reason: "Lifestyle creators vlogs bhi banate hain", keywords: ["day in my life", "morning routine", "life update"] }],
+  Food:              [{ niche: "Health & Wellness", reason: "Healthy food content viral hota hai", keywords: ["nutrition tips", "healthy lifestyle", "detox"] }, { niche: "Fitness", reason: "Diet aur fitness content saath kaam karta hai", keywords: ["protein diet", "meal prep", "weight loss"] }, { niche: "Travel", reason: "Food travel content ka growing trend hai", keywords: ["street food", "food tour", "travel vlog"] }],
+  "Daily Vlog":      [{ niche: "Lifestyle", reason: "Vloggers ke liye lifestyle content natural hai", keywords: ["morning routine", "productivity", "self improvement"] }, { niche: "Travel", reason: "Travel vlogs bahut popular hain", keywords: ["travel tips", "solo travel", "budget travel"] }, { niche: "Mental Health", reason: "Vlog audience se connect ke liye", keywords: ["self care", "stress relief", "mindfulness"] }],
+  Travel:            [{ niche: "Food", reason: "Food travel content ka growing trend hai", keywords: ["street food", "local cuisine", "food tour"] }, { niche: "Photography", reason: "Travel photographers ki demand hai", keywords: ["travel photos", "camera tips", "reels"] }, { niche: "Lifestyle", reason: "Travel aur lifestyle overlap karta hai", keywords: ["minimalism", "digital nomad", "slow living"] }],
+  "Personal Finance": [{ niche: "Business", reason: "Finance creators business content bhi banate hain", keywords: ["startup tips", "side hustle", "passive income"] }, { niche: "Motivational", reason: "Financial freedom motivation viral hai", keywords: ["success mindset", "discipline", "goal setting"] }, { niche: "Real Estate", reason: "Property investment finance ke saath overlap karta hai", keywords: ["property investment", "rental income", "real estate India"] }],
+  "Mental Health":   [{ niche: "Lifestyle", reason: "Wellness aur lifestyle connected hain", keywords: ["self care", "morning routine", "productivity"] }, { niche: "Spirituality", reason: "Mental health aur spirituality ka deep connection hai", keywords: ["meditation", "mindfulness", "spiritual growth"] }, { niche: "Motivational", reason: "Healing aur growth motivation create karta hai", keywords: ["self improvement", "healing journey", "positive mindset"] }],
+  Motivational:      [{ niche: "Business", reason: "Entrepreneur motivation content popular hai", keywords: ["startup tips", "side hustle", "passive income"] }, { niche: "Fitness", reason: "Gym motivation viral hota hai", keywords: ["gym motivation", "discipline", "workout"] }, { niche: "Mental Health", reason: "Mindset aur mental wellness overlap karta hai", keywords: ["self care", "anxiety tips", "healing"] }],
+  Gaming:            [{ niche: "Tech", reason: "Gaming aur tech audience ek hi hai", keywords: ["gaming setup", "tech review", "best gadgets"] }, { niche: "Comedy & Entertainment", reason: "Gaming comedy content bhi popular hai", keywords: ["funny gaming", "meme content", "gaming fails"] }, { niche: "Education", reason: "Game tutorials aur reviews educational hote hain", keywords: ["game guide", "how to win", "gaming tips"] }],
+  Education:         [{ niche: "Tech", reason: "EdTech content ka growing trend hai", keywords: ["AI tools", "coding tips", "app development"] }, { niche: "Business", reason: "Skill development aur business overlap karta hai", keywords: ["freelancing", "side hustle", "startup"] }, { niche: "Motivational", reason: "Students ke liye motivation viral hota hai", keywords: ["study motivation", "success mindset", "goal setting"] }],
 };
 
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -216,6 +236,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
   const [duration, setDuration] = useState("30 sec");
   const [generateResult, setGenerateResult] = useState<any>(null);
   const [generateLoading, setGenerateLoading] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   const [platform, setPlatform] = useState("Instagram");
   const [error, setError] = useState("");
@@ -291,17 +312,283 @@ Respond ONLY in JSON:
     setImproveLoading(false);
   };
 
+
+  const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
+    const canvas = document.createElement("canvas");
+    // Platform-specific aspect ratio
+    const isVertical = ["Instagram", "TikTok"].includes(plt);
+    canvas.width = isVertical ? 1080 : 1280;
+    canvas.height = isVertical ? 1920 : 720;
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext("2d")!;
+
+    const wrap = (text: string, x: number, y: number, maxW: number, lh: number, fs: number) => {
+      ctx.font = "bold " + fs + "px Arial";
+      const words = text.split(" "); let line = ""; let cy = y;
+      for (const w of words) {
+        const t = line + w + " ";
+        if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line.trim(), x, cy); line = w + " "; cy += lh; }
+        else line = t;
+      }
+      ctx.fillText(line.trim(), x, cy); return cy;
+    };
+
+    if (plt === "Instagram") {
+      // Instagram Reel — vertical, gradient purple-pink
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, "#1a0030"); bg.addColorStop(0.5, "#6d1060"); bg.addColorStop(1, "#c2185b");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      // Diagonal stripe overlay
+      ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 2;
+      for (let i = -H; i < W + H; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke(); }
+      // Glow center
+      const g = ctx.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, 600);
+      g.addColorStop(0, "rgba(255,100,180,0.3)"); g.addColorStop(1, "transparent");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // Instagram gradient pill badge
+      const badgeGrad = ctx.createLinearGradient(60, 0, 400, 0);
+      badgeGrad.addColorStop(0, "#833ab4"); badgeGrad.addColorStop(0.5, "#fd1d1d"); badgeGrad.addColorStop(1, "#fcb045");
+      ctx.fillStyle = badgeGrad;
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 360, 54, 27); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left";
+      ctx.fillText("📸 Instagram Reel  ·  " + sty, 85, 114);
+      // Duration
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 130, 40, 20); ctx.fill();
+      ctx.fillStyle = "#fcb045"; ctx.font = "bold 20px Arial"; ctx.fillText(dur, 80, 178);
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.95)"; ctx.shadowBlur = 30;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te = wrap(title.toUpperCase(), 60, 520, W - 120, 90, 76);
+      // Hook
+      ctx.shadowBlur = 12; ctx.fillStyle = "rgba(255,220,255,0.75)";
+      ctx.font = "italic 32px Arial"; wrap('"' + hook + '"', 60, te + 60, W - 120, 48, 32);
+      // Bottom gradient + CTA
+      const bot = ctx.createLinearGradient(0, H - 220, 0, H);
+      bot.addColorStop(0, "transparent"); bot.addColorStop(1, "rgba(0,0,0,0.8)");
+      ctx.fillStyle = bot; ctx.fillRect(0, H - 220, W, 220);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
+      ctx.fillText("Follow for more 🔥", W/2, H - 100);
+      ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com", W/2, H - 60);
+
+    } else if (plt === "YouTube") {
+      // YouTube — 16:9, dark red cinematic
+      ctx.fillStyle = "#0a0000"; ctx.fillRect(0, 0, W, H);
+      // Cinematic bars
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, 40); ctx.fillRect(0, H - 40, W, 40);
+      // Red side accent
+      const redL = ctx.createLinearGradient(0, 0, 300, 0);
+      redL.addColorStop(0, "rgba(255,0,0,0.35)"); redL.addColorStop(1, "transparent");
+      ctx.fillStyle = redL; ctx.fillRect(0, 40, 300, H - 80);
+      // Play button bg glow
+      const playGlow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350);
+      playGlow.addColorStop(0, "rgba(255,0,0,0.2)"); playGlow.addColorStop(1, "transparent");
+      ctx.fillStyle = playGlow; ctx.fillRect(0, 0, W, H);
+      // Play button
+      ctx.fillStyle = "rgba(255,0,0,0.9)";
+      ctx.beginPath(); (ctx as any).roundRect(W/2 - 50, H/2 - 35, 100, 70, 14); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 36px Arial"; ctx.textAlign = "center"; ctx.fillText("▶", W/2 + 3, H/2 + 13);
+      // YouTube badge
+      ctx.fillStyle = "#ff0000";
+      ctx.beginPath(); (ctx as any).roundRect(50, 50, 200, 46, 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("▶  YouTube", 68, 81);
+      // Style + Duration
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 108, 220, 36, 6); ctx.fill();
+      ctx.fillStyle = "#aaa"; ctx.font = "16px Arial"; ctx.fillText(sty + "  ·  " + dur, 65, 131);
+      // Title — bottom third
+      ctx.shadowColor = "rgba(0,0,0,1)"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
+      const te2 = wrap(title.toUpperCase(), 50, H - 230, W - 100, 70, 58);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(255,180,180,0.7)";
+      ctx.font = "italic 24px Arial"; wrap('"' + hook + '"', 50, te2 + 30, W - 100, 36, 24);
+      // Bottom bar
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, H - 42, W, 42);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 30, H - 16);
+
+    } else if (plt === "TikTok") {
+      // TikTok — vertical 9:16, black with cyan+red duotone
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+      // Scanline effect
+      for (let y2 = 0; y2 < H; y2 += 4) {
+        ctx.fillStyle = y2 % 8 === 0 ? "rgba(105,201,208,0.03)" : "rgba(238,29,82,0.02)";
+        ctx.fillRect(0, y2, W, 2);
+      }
+      // Cyan left glow, red right glow
+      const cyanG = ctx.createRadialGradient(0, H/2, 0, 0, H/2, 500);
+      cyanG.addColorStop(0, "rgba(105,201,208,0.25)"); cyanG.addColorStop(1, "transparent");
+      ctx.fillStyle = cyanG; ctx.fillRect(0, 0, W, H);
+      const redG2 = ctx.createRadialGradient(W, H/2, 0, W, H/2, 500);
+      redG2.addColorStop(0, "rgba(238,29,82,0.25)"); redG2.addColorStop(1, "transparent");
+      ctx.fillStyle = redG2; ctx.fillRect(0, 0, W, H);
+      // TikTok badge
+      ctx.fillStyle = "#000";
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.fill();
+      ctx.strokeStyle = "#69c9d0"; ctx.lineWidth = 2;
+      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.stroke();
+      ctx.fillStyle = "#69c9d0"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left"; ctx.fillText("♪ TikTok  ·  " + sty, 80, 115);
+      ctx.fillStyle = "rgba(238,29,82,0.15)";
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.fill();
+      ctx.strokeStyle = "#ee1d52"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.stroke();
+      ctx.fillStyle = "#ee1d52"; ctx.font = "bold 19px Arial"; ctx.fillText(dur, 80, 177);
+      // Title
+      ctx.shadowColor = "#69c9d0"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te3 = wrap(title.toUpperCase(), 60, 500, W - 120, 90, 72);
+      ctx.shadowColor = "#ee1d52"; ctx.shadowBlur = 12;
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "italic 30px Arial"; wrap('"' + hook + '"', 60, te3 + 55, W - 120, 46, 30);
+      // Bottom TikTok UI simulation
+      ctx.shadowBlur = 0;
+      const botG2 = ctx.createLinearGradient(0, H - 300, 0, H);
+      botG2.addColorStop(0, "transparent"); botG2.addColorStop(1, "rgba(0,0,0,0.9)");
+      ctx.fillStyle = botG2; ctx.fillRect(0, H - 300, W, 300);
+      ctx.fillStyle = "#fff"; ctx.font = "bold 26px Arial"; ctx.textAlign = "left"; ctx.fillText("@creator", 60, H - 120);
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com · #viral", 60, H - 82);
+      // Right side icons
+      const icons = ["❤️", "💬", "↪️", "🎵"];
+      icons.forEach((ic, ii) => {
+        ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.fillText(ic, W - 65, H - 420 + ii * 90);
+      });
+
+    } else if (plt === "LinkedIn") {
+      // LinkedIn — professional blue, clean
+      ctx.fillStyle = "#012a4a"; ctx.fillRect(0, 0, W, H);
+      const liGrad = ctx.createLinearGradient(0, 0, W, H);
+      liGrad.addColorStop(0, "#013a5c"); liGrad.addColorStop(1, "#001d3d");
+      ctx.fillStyle = liGrad; ctx.fillRect(0, 0, W, H);
+      // Blue accent bar left
+      ctx.fillStyle = "#0077b5"; ctx.fillRect(0, 0, 8, H);
+      // Grid dots
+      for (let gx = 60; gx < W; gx += 80) {
+        for (let gy = 60; gy < H; gy += 80) {
+          ctx.fillStyle = "rgba(0,119,181,0.12)"; ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      // LinkedIn badge
+      ctx.fillStyle = "#0077b5";
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 230, 50, 6); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("in  LinkedIn  ·  " + sty, 70, 80);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 112, 140, 36, 6); ctx.fill();
+      ctx.fillStyle = "#00a0dc"; ctx.font = "16px Arial"; ctx.fillText(dur, 68, 135);
+      // Horizontal divider
+      ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(50, 190); ctx.lineTo(W - 50, 190); ctx.stroke();
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 16;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te4 = wrap(title, 50, 250, W - 100, 72, 62);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(180,220,255,0.8)";
+      ctx.font = "26px Arial"; wrap('"' + hook + '"', 50, te4 + 40, W - 100, 40, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(50, H - 60); ctx.lineTo(W - 50, H - 60); ctx.stroke();
+      ctx.fillStyle = "#0077b5"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("Viral Content Intelligence", 50, H - 28);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 28);
+
+    } else if (plt === "Twitter / X") {
+      // Twitter/X — pure black, bold typography
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+      // Subtle noise texture
+      for (let i = 0; i < 3000; i++) {
+        const nx = Math.random() * W, ny = Math.random() * H;
+        ctx.fillStyle = "rgba(255,255,255,0.015)"; ctx.fillRect(nx, ny, 1, 1);
+      }
+      // X logo watermark
+      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.font = "bold 500px Arial"; ctx.textAlign = "center"; ctx.fillText("𝕏", W/2, H/2 + 160);
+      // Blue accent line top
+      ctx.fillStyle = "#1da1f2"; ctx.fillRect(0, 0, W, 5);
+      // Badge
+      ctx.fillStyle = "#1da1f2";
+      ctx.beginPath(); (ctx as any).roundRect(50, 40, 200, 48, 24); ctx.fill();
+      ctx.fillStyle = "#000"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏  Twitter  ·  " + sty, 68, 72);
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 104, 110, 34, 17); ctx.fill();
+      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.fillText(dur, 67, 126);
+      // Title — huge bold
+      ctx.shadowColor = "rgba(29,161,242,0.3)"; ctx.shadowBlur = 30;
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
+      const te5 = wrap(title, 50, 230, W - 100, 78, 66);
+      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(150,200,255,0.7)";
+      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te5 + 36, W - 100, 38, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(29,161,242,0.12)"; ctx.fillRect(0, H - 52, W, 52);
+      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏 getvci.com", 50, H - 20);
+
+    } else if (plt === "Facebook") {
+      // Facebook — blue gradient, community feel
+      const fbBg = ctx.createLinearGradient(0, 0, W, H);
+      fbBg.addColorStop(0, "#001848"); fbBg.addColorStop(0.6, "#1a3a7a"); fbBg.addColorStop(1, "#0d2261");
+      ctx.fillStyle = fbBg; ctx.fillRect(0, 0, W, H);
+      // Circle pattern
+      for (let ci = 0; ci < 8; ci++) {
+        ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(W * 0.8, H * 0.2, 80 + ci * 70, 0, Math.PI * 2); ctx.stroke();
+      }
+      // FB badge
+      const fbGrad = ctx.createLinearGradient(50, 0, 290, 0);
+      fbGrad.addColorStop(0, "#1877f2"); fbGrad.addColorStop(1, "#42a5f5");
+      ctx.fillStyle = fbGrad;
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 260, 50, 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 23px Arial"; ctx.textAlign = "left"; ctx.fillText("f  Facebook  ·  " + sty, 70, 81);
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 112, 130, 36, 6); ctx.fill();
+      ctx.fillStyle = "#90caf9"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 135);
+      // Title
+      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const te6 = wrap(title.toUpperCase(), 50, 250, W - 100, 75, 62);
+      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,230,255,0.75)";
+      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te6 + 40, W - 100, 40, 26);
+      // Bottom
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
+      ctx.fillStyle = "#1877f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("f  VCI — Viral Content Intelligence", 50, H - 20);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
+
+    } else {
+      // Default — VCI purple (other platforms)
+      const defBg = ctx.createLinearGradient(0, 0, W, H);
+      defBg.addColorStop(0, "#050010"); defBg.addColorStop(0.6, "#1a0a3a"); defBg.addColorStop(1, "#050010");
+      ctx.fillStyle = defBg; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(109,40,217,0.08)"; ctx.lineWidth = 1;
+      for (let x2 = 0; x2 < W; x2 += 80) { ctx.beginPath(); ctx.moveTo(x2,0); ctx.lineTo(x2,H); ctx.stroke(); }
+      for (let y2 = 0; y2 < H; y2 += 80) { ctx.beginPath(); ctx.moveTo(0,y2); ctx.lineTo(W,y2); ctx.stroke(); }
+      const glow2 = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 450);
+      glow2.addColorStop(0, "rgba(109,40,217,0.35)"); glow2.addColorStop(1, "transparent");
+      ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(109,40,217,0.8)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 48, 280, 48, 24); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText(plt + "  ·  " + sty, 70, 80);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath(); (ctx as any).roundRect(50, 110, 120, 36, 18); ctx.fill();
+      ctx.fillStyle = "#a78bfa"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 133);
+      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 24;
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+      const ted = wrap(title.toUpperCase(), 50, 250, W - 100, 78, 66);
+      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,180,255,0.7)";
+      ctx.font = "italic 28px Arial"; wrap('"' + hook + '"', 50, ted + 44, W - 100, 42, 28);
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
+      ctx.fillStyle = "#7c3aed"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("VCI", 50, H - 20);
+      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
+    }
+
+    return canvas.toDataURL("image/jpeg", 0.92);
+  };
+
   const generateScript = async () => {
     if (!keyword.trim()) { setError("Please enter a keyword first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
-    setGenerateLoading(true); setError(""); setGenerateResult(null);
+    setGenerateLoading(true); setError(""); setGenerateResult(null); setThumbnailUrl(null);
 
     const durationGuide: Record<string, string> = {
-      "15 sec": "Hook (0-3s) + Key Point (3-12s) + CTA (12-15s). Very short and punchy.",
-      "30 sec": "Hook (0-3s) + Problem (3-8s) + Solution (8-25s) + CTA (25-30s)",
-      "60 sec": "Hook (0-5s) + Problem (5-15s) + 3 Key Points (15-50s) + CTA (50-60s)",
-      "90 sec": "Hook + Story + 3-5 tips + Examples + CTA. More storytelling.",
-      "3 min": "Full tutorial format: Hook + Problem + Step by step solution + Results + CTA",
+      "15 sec": "VERY SHORT. Hook (0-3s, 1-2 sentences) + Key Point (3-12s, 2-3 sentences) + CTA (12-15s, 1 sentence). Total: ~30-40 words spoken.",
+      "30 sec": "Hook (0-3s) + Problem (3-8s) + Solution (8-25s, 3-4 sentences with details) + CTA (25-30s). Total: ~70-90 words spoken.",
+      "60 sec": "Hook (0-5s) + Problem (5-15s, 2-3 sentences) + 3 Key Points (15-50s, each point 2-3 sentences with example) + CTA (50-60s, 2 sentences). Total: ~150-180 words spoken.",
+      "90 sec": "LONG FORM. Hook (0-5s, powerful opener) + Story/Context (5-20s, set the scene with 3-4 sentences) + Main Content (20-70s, 5-6 detailed tips or story beats, each 2-3 sentences with real examples) + Recap (70-80s, summarize key points) + CTA (80-90s, strong call to action). Total: ~220-260 words spoken. WRITE FULL DETAILED CONTENT for each section.",
+      "3 min": "Full tutorial: Hook (0-10s) + Problem (10-30s) + Step-by-step solution (30-150s, 5-7 detailed steps) + Results/Proof (150-165s) + CTA (165-180s). Total: ~400-450 words.",
     };
 
     const platformGuide: Record<string, string> = {
@@ -347,7 +634,7 @@ Respond ONLY in JSON:
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -355,6 +642,8 @@ Respond ONLY in JSON:
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setGenerateResult(parsed);
+      const thumb = generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
+      setThumbnailUrl(thumb);
     } catch { setError("Generation failed. Try again."); }
     setGenerateLoading(false);
   };
@@ -526,21 +815,30 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Thumbnail + Audio */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            {generateResult.thumbnail_idea && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🖼️ THUMBNAIL IDEA</p>
-                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.thumbnail_idea}</p>
+          {/* Thumbnail */}
+          {thumbnailUrl && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "0.9rem", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🖼️ THUMBNAIL PREVIEW</p>
+                <a href={thumbnailUrl} download={`vci-thumbnail-${keyword.replace(/\s+/g,"-")}.jpg`}
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, textDecoration: "none" }}>
+                  ⬇ Download
+                </a>
               </div>
-            )}
-            {generateResult.audio_suggestion && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-                <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
-                <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
-              </div>
-            )}
-          </div>
+              <img src={thumbnailUrl} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
+              {generateResult.thumbnail_idea && (
+                <p style={{ margin: "0.5rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight: 1.5 }}>💡 {generateResult.thumbnail_idea}</p>
+              )}
+            </div>
+          )}
+
+          {/* Audio */}
+          {generateResult.audio_suggestion && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
+              <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
+            </div>
+          )}
 
           {/* Pro Tips */}
           {generateResult.pro_tips && (
@@ -1396,193 +1694,6 @@ Respond ONLY in JSON:
   );
 }
 
-
-function NicheIntelligence({ niche, keyword, langLabel }: any) {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState("");
-
-  const searchQuery = keyword && keyword.trim() ? `${keyword} ${niche}` : niche;
-
-  const analyze = async () => {
-    setLoading(true); setError(""); setData(null);
-
-    try {
-      const ytRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(searchQuery)}&country=IN`);
-      let ytVideos: any[] = [];
-      if (ytRes.ok) {
-        const d = await ytRes.json();
-        ytVideos = (d.items || []).slice(0, 5).map((v: any) => ({
-          title: v.snippet?.title || "",
-          channel: v.snippet?.channelTitle || "",
-        }));
-      }
-
-      const gRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(searchQuery)}&country=IN`);
-      let rising: string[] = [];
-      if (gRes.ok) {
-        const d = await gRes.json();
-        rising = (d.related_queries?.rising || []).slice(0, 8).map((q: any) => q.query);
-      }
-
-      const subjectLabel = keyword ? `${keyword} (${niche} niche)` : niche;
-      const prompt = `You are a content strategy analyst. Based on this REAL data for "${subjectLabel}" in India:
-
-TRENDING YOUTUBE VIDEOS:
-${ytVideos.map((v, i) => `${i+1}. ${v.title} (by ${v.channel})`).join("\n") || "No data"}
-
-RISING GOOGLE SEARCHES:
-${rising.join(", ") || "No data"}
-
-Analyze this and respond ONLY in JSON:
-{
-  "competition": "Low/Medium/High",
-  "trend_score": 7,
-  "best_content_types": ["type1", "type2", "type3"],
-  "content_gaps": ["gap idea 1", "gap idea 2", "gap idea 3"],
-  "best_posting_times": "specific advice for India",
-  "summary": "2-3 line honest analysis right now",
-  "opportunity": "one clear actionable opportunity for a creator"
-}
-
-CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a number above 10 for trend_score.`;
-
-      const aiRes = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
-      });
-      const aiData = await aiRes.json();
-      const text = aiData.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed;
-      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
-      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else parsed = {}; }
-
-      if (typeof parsed.trend_score === "number") {
-        parsed.trend_score = Math.max(0, Math.min(10, Math.round(parsed.trend_score)));
-      }
-
-      setData({ ...parsed, ytVideos, rising });
-    } catch { setError("Analysis failed. Try again."); }
-    setLoading(false);
-  };
-
-  const compColor = (c: string) => c === "Low" ? "#22c55e" : c === "Medium" ? "#f59e0b" : "#ef4444";
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.4rem" }}>🔍</span>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Niche Intelligence</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Real YouTube + Google data analysis for your niche</p>
-          </div>
-        </div>
-        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: "0 0 0.5rem", color: "#888", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>ANALYZING</p>
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-            {keyword && keyword.trim() && (
-              <span style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>📝 {keyword}</span>
-            )}
-            <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>🏷️ {niche}</span>
-          </div>
-        </div>
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#0891b2,#06b6d4)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "🔍 Analyzing real trending data..." : `🔍 Analyze "${keyword && keyword.trim() ? keyword : niche}"`}
-        </button>
-      </div>
-
-      {data && (
-        <div style={{ animation: "slideUp 0.5s ease" }}>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <div style={{ background: "#0f0f0f", border: `1px solid ${compColor(data.competition)}30`, borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>COMPETITION</p>
-              <p style={{ margin: 0, color: compColor(data.competition), fontWeight: 900, fontSize: "1.3rem" }}>{data.competition || "N/A"}</p>
-            </div>
-            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>TREND SCORE</p>
-              <p style={{ margin: 0, color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>{Math.min(10, data.trend_score || 0)}/10</p>
-            </div>
-          </div>
-
-          {data.summary && (
-            <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(6,182,212,0.08))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>📊 SUMMARY</p>
-              <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.85rem", lineHeight: 1.6 }}>{data.summary}</p>
-            </div>
-          )}
-
-          {data.ytVideos && data.ytVideos.length > 0 && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#ef4444", fontWeight: 700, letterSpacing: "0.06em" }}>▶️ TRENDING ON YOUTUBE RIGHT NOW</p>
-              {data.ytVideos.map((v: any, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.6rem", padding: "0.5rem 0", borderBottom: i < data.ytVideos.length - 1 ? "1px solid #161616" : "none" }}>
-                  <span style={{ color: "#333", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                  <div>
-                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.4 }}>{v.title}</p>
-                    <p style={{ margin: "0.15rem 0 0", color: "#444", fontSize: "0.68rem" }}>by {v.channel}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.rising && data.rising.length > 0 && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📈 RISING SEARCHES (REAL DATA)</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                {data.rising.map((r: string, i: number) => (
-                  <span key={i} style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", padding: "0.25rem 0.65rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600 }}>{r}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {data.best_content_types && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 BEST CONTENT TYPES</p>
-              {data.best_content_types.map((t: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}>
-                  <span style={{ color: "#f59e0b", fontSize: "0.72rem", flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#bbb", fontSize: "0.78rem" }}>{t}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.content_gaps && (
-            <div style={{ background: "linear-gradient(135deg,#0a0a14,#0d0d1a)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>💡 CONTENT GAPS</p>
-              {data.content_gaps.map((g: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                  <span style={{ color: "#a855f7", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ color: "#d4d4d8", fontSize: "0.8rem", lineHeight: 1.5 }}>{g}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.best_posting_times && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>⏰ BEST POSTING TIME</p>
-              <p style={{ margin: 0, color: "#bbb", fontSize: "0.8rem", lineHeight: 1.5 }}>{data.best_posting_times}</p>
-            </div>
-          )}
-
-          {data.opportunity && (
-            <div style={{ background: "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(6,182,212,0.06))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "1.1rem" }}>
-              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>🚀 YOUR OPPORTUNITY</p>
-              <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 600 }}>{data.opportunity}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function PaymentModal({ plan, onClose, onPaid }: any) {
   const [currency, setCurrency] = useState("INR");
   const [copied, setCopied] = useState(false);
@@ -1696,15 +1807,35 @@ function ResultCard({ title, items, emoji, color }: any) {
   );
 }
 
-function TabBtn({ id, label, emoji, active, onClick, isPro }: any) {
+function TabBtn({ id, label, Icon, active, onClick, isPro }: any) {
   return (
-    <button onClick={() => onClick(id)} style={{ flex: 1, padding: "0.6rem 0.25rem", borderRadius: "10px", border: "none", background: active ? "rgba(124,58,237,0.1)" : "transparent", color: active ? "#8b5cf6" : "#525252", fontWeight: active ? 700 : 500, fontSize: "0.72rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", borderBottom: active ? "2px solid #6d28d9" : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
-      <span style={{ fontSize: "1rem" }}>{emoji}</span>
+    <button onClick={() => onClick(id)}
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(109,40,217,0.08)"; e.currentTarget.style.color = "#6d28d9"; }}}
+      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3f3f46"; }}}
+      style={{ flex: 1, padding: "0.55rem 0.2rem", borderRadius: "8px", border: "none", background: active ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: active ? "#ffffff" : "#3f3f46", fontWeight: active ? 700 : 500, fontSize: "0.68rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", position: "relative", boxShadow: active ? "0 2px 12px rgba(109,40,217,0.4)" : "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+      {Icon && <Icon size={15} strokeWidth={active ? 2.5 : 1.8} />}
       <span>{label}</span>
       {isPro && !active && (
-        <span style={{ position: "absolute", top: 4, right: 4, fontSize: "0.5rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.25rem", fontWeight: 700 }}>PRO</span>
+        <span style={{ position: "absolute", top: 2, right: 2, fontSize: "0.45rem", background: "#6d28d920", border: "1px solid #6d28d940", color: "#6d28d9", borderRadius: "4px", padding: "0.05rem 0.2rem", fontWeight: 700 }}>PRO</span>
       )}
     </button>
+  );
+}
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: "1px solid #111", marginBottom: "0.1rem" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", padding: "0.85rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", gap: "0.75rem" }}>
+        <span style={{ color: open ? "#22c55e" : "#e4e4e7", fontWeight: 600, fontSize: "0.85rem", textAlign: "left" }}>{q}</span>
+        <span style={{ color: open ? "#22c55e" : "#444", fontSize: "1rem", flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>+</span>
+      </button>
+      {open && (
+        <div style={{ paddingBottom: "0.85rem", animation: "slideUp 0.2s ease" }}>
+          <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.7 }}>{a}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1744,6 +1875,7 @@ export default function ViralContentTool() {
     catch { return null; }
   });
   const [showProfile, setShowProfile] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -1791,7 +1923,7 @@ export default function ViralContentTool() {
   const langLabel = getLangLabel(selectedLang);
   const langStrict = getLangStrict(selectedLang);
 
-  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 2, scriptimprove: 1 };
+  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 6, scriptimprove: 2 };
 
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
@@ -1931,15 +2063,14 @@ Respond ONLY in JSON:
   const handlePaid = (p: string) => { setPayingPlan(null); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 4000); };
 
   const tabs = [
-    { id: "generate", label: "Generate", emoji: "⚡" },
-    { id: "score", label: "Hook Score", emoji: "📊" },
-    { id: "caption", label: "Captions", emoji: "📋" },
-    { id: "intelligence", label: "Intelligence", emoji: "🔍" },
-    { id: "calendar", label: "Calendar", emoji: "📅" },
-    { id: "pack", label: "Pack", emoji: "📦" },
-    { id: "trends", label: "Trends", emoji: "📈" },
-    { id: "image", label: "Image AI", emoji: "🖼️" },
-    { id: "scriptlab", label: "Script Lab", emoji: "🎬" },
+    { id: "generate", label: "Generate", Icon: Zap },
+    { id: "score", label: "Hook Score", Icon: BarChart2 },
+    { id: "caption", label: "Captions", Icon: FileText },
+    { id: "calendar", label: "Calendar", Icon: CalendarDays },
+    { id: "pack", label: "Pack", Icon: Package },
+    { id: "trends", label: "Trends", Icon: TrendingUp },
+    { id: "image", label: "Image AI", Icon: Image },
+    { id: "scriptlab", label: "Script Lab", Icon: Film },
   ];
 
   if (authLoading || profileLoading) return (
@@ -1967,7 +2098,8 @@ Respond ONLY in JSON:
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #000000; }
+        html, body { margin: 0; background: #000000; max-width: 100vw; overflow-x: hidden; }
+        #root { max-width: 100vw; overflow-x: hidden; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @keyframes floatUp { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
         @keyframes floatDown { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(8px)} }
@@ -1976,17 +2108,45 @@ Respond ONLY in JSON:
         @media (max-width: 1200px) { .left-sidebar, .right-sidebar { display: none !important; } }
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
+
+        /* Tab bar — scrollable row on all screens, never wraps/squeezes */
+        .tab-scroll-row {
+          display: flex;
+          gap: 0.25rem;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          scroll-snap-type: x proximity;
+        }
+        .tab-scroll-row::-webkit-scrollbar { display: none; }
+        .tab-scroll-row > button {
+          flex: 0 0 auto !important;
+          scroll-snap-align: start;
+          min-width: 78px;
+        }
+
         @media (max-width: 768px) {
           .desktop-btn { display: none !important; }
-          .mobile-header { padding: 3.5rem 1rem 0.5rem !important; }
+          .mobile-header { padding: 3.5rem 0.75rem 0.5rem !important; max-width: 100vw; overflow-x: hidden; }
           .mobile-top-bar { display: flex !important; }
           .mobile-profile-show { display: block !important; }
+          .tab-scroll-row > button { min-width: 68px; font-size: 0.62rem !important; padding: 0.5rem 0.15rem !important; }
+          .platform-btn-row { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .platform-btn-row::-webkit-scrollbar { display: none; }
+          .platform-btn-row > button { flex: 0 0 auto !important; white-space: nowrap; }
         }
-        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: #080808; border-bottom: 1px solid #1a1a1a; }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .mobile-header { padding: 1.25rem 1.5rem 1rem !important; }
+        }
+        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999; align-items: center; padding: 0.5rem 0.75rem; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 0.4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .mobile-top-bar::-webkit-scrollbar { display: none; }
+        .mobile-top-bar > button { flex-shrink: 0; }
         .mobile-profile-show { display: none; }
-        input,textarea { box-sizing:border-box; }
+        input,textarea { box-sizing:border-box; max-width: 100%; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
       `}</style>
@@ -2038,19 +2198,25 @@ Respond ONLY in JSON:
 
           {/* Admin Button */}
           {user?.email === "ravenderr01@gmail.com" && (
-            <button onClick={() => setShowAdmin(true)} style={{ position: "absolute", top: "1rem", right: "34rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🔧 Admin</button>
+            <button onClick={() => setShowAdmin(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "34rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🔧 Admin</button>
           )}
 
           {/* Top Buttons */}
           <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
           <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
+          <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "26rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
-            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
-            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.6rem",borderRadius:"8px",fontSize:"0.7rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
+            {user?.email === "ravenderr01@gmail.com" && (
+              <button onClick={() => setShowAdmin(true)} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.5rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🔧</button>
+            )}
+            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
+            <button onClick={() => setShowContact(true)} style={{ background:"rgba(6,182,212,0.1)",border:"1px solid rgba(6,182,212,0.3)",color:"#06b6d4",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Support</button>
+            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
           </div>
 
           {/* Profile */}
@@ -2159,9 +2325,9 @@ Respond ONLY in JSON:
           </div>
 
           {/* Tabs */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", gap: "0.15rem", background: "#080808", borderRadius: "12px 12px 0 0", padding: "0.5rem 0.5rem 0", borderTop: "1px solid #111", borderLeft: "1px solid #111", borderRight: "1px solid #111" }}>
+          <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
             {tabs.map(t => (
-              <TabBtn key={t.id} id={t.id} label={t.label} emoji={t.emoji} active={activeTab === t.id} onClick={setActiveTab}
+              <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
                 isPro={["calendar","pack","trends","image","scriptlab"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
             ))}
           </div>
@@ -2235,21 +2401,33 @@ Respond ONLY in JSON:
                   placeholder={`e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}`}
                   style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
                   onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
-                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                  {(NICHE_EXAMPLES[niche] || []).slice(0, 3).map(ex => (
-                    <button key={ex} onClick={() => setKeyword(ex)} style={{ background: "none", border: "1px solid #141414", color: "#2a2a2a", padding: "0.18rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}
-                      onMouseEnter={e => { (e.target as any).style.color = "#555"; (e.target as any).style.borderColor = "#222"; }}
-                      onMouseLeave={e => { (e.target as any).style.color = "#2a2a2a"; (e.target as any).style.borderColor = "#141414"; }}>
-                      {ex}
-                    </button>
-                  ))}
+
+                {/* Related keyword suggestions */}
+                <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
+                    <Tag size={11} color="#52525b" />
+                    <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em" }}>RELATED KEYWORDS</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                    {(NICHE_EXAMPLES[niche] || []).map(ex => (
+                      <button key={ex} onClick={() => setKeyword(ex)}
+                        style={{ background: keyword === ex ? "rgba(109,40,217,0.12)" : "#0d0d0d", border: `1px solid ${keyword === ex ? "#6d28d9" : "#1e1e1e"}`, color: keyword === ex ? "#8b5cf6" : "#444", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}
+                        onMouseEnter={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#333"; (e.currentTarget as any).style.color = "#888"; } }}
+                        onMouseLeave={e => { if (keyword !== ex) { (e.currentTarget as any).style.borderColor = "#1e1e1e"; (e.currentTarget as any).style.color = "#444"; } }}>
+                        {ex}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem" }}>
-                {loading ? <span style={{ animation: "pulse 1s infinite" }}>⚡ Generating in {langLabel}...</span> : "⚡ Generate Viral Content"}
+              <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                {loading
+                  ? <><RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ animation: "pulse 1s infinite" }}>Generating in {langLabel}...</span></>
+                  : <><Zap size={17} fill="#fff" /> Generate Viral Content</>
+                }
               </button>
 
               {results && (
@@ -2281,6 +2459,49 @@ Respond ONLY in JSON:
                   </div>
                 </div>
               )}
+
+              {/* CROSS-SELL: Similar niche suggestions */}
+              {results && (() => {
+                const crossItems = CROSS_SELL_NICHES[niche] || CROSS_SELL_NICHES["Fitness"];
+                return (
+                <div style={{ background: "linear-gradient(135deg,#0a0a14,#0d0d1a)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "16px", padding: "1.1rem", marginTop: "1rem", animation: "slideUp 0.5s ease" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                    <Sparkles size={14} color="#8b5cf6" />
+                    <span style={{ color: "#8b5cf6", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em" }}>YOU MIGHT ALSO LIKE</span>
+                  </div>
+                  <p style={{ color: "#444", fontSize: "0.72rem", margin: "0 0 0.75rem" }}>
+                    We've seen you're into <strong style={{ color: "#6d28d9" }}>{niche}</strong> — check these related niches that perform well together:
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    {crossItems.map((item: any, i: number) => (
+                      <div key={i}
+                        style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "0.75rem 1rem", cursor: "pointer", transition: "all 0.2s" }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#6d28d940"; e.currentTarget.style.background = "#0d0d0d"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a1a"; e.currentTarget.style.background = "#080808"; }}
+                        onClick={() => { setNiche(item.niche); setKeyword(item.keywords[0]); }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                          <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{item.niche}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#6d28d9", fontSize: "0.68rem", fontWeight: 700 }}>
+                            <span>Explore</span>
+                            <ArrowRight size={11} />
+                          </div>
+                        </div>
+                        <p style={{ color: "#444", fontSize: "0.68rem", margin: "0 0 0.4rem", lineHeight: 1.4 }}>{item.reason}</p>
+                        <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                          {item.keywords.map((kw: string) => (
+                            <span key={kw}
+                              onClick={e => { e.stopPropagation(); setNiche(item.niche); setKeyword(kw); }}
+                              style={{ background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.15)", color: "#6d28d9", padding: "0.1rem 0.45rem", borderRadius: "20px", fontSize: "0.62rem", fontWeight: 600, cursor: "pointer" }}>
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                );
+              })()}
 
               {plan === "free" && (
                 <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
@@ -2348,11 +2569,6 @@ Respond ONLY in JSON:
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
             <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} />
-          )}
-
-          {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
-          {activeTab === "intelligence" && (
-            <NicheIntelligence niche={niche} keyword={keyword} langLabel={langLabel} />
           )}
 
           {/* TAB: PACK */}
@@ -2424,6 +2640,41 @@ Respond ONLY in JSON:
       {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} />}
 
       <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
+
+      {/* FAQ Modal */}
+      {showFaq && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto" }}>
+          <div style={{ background: "#080808", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "20px", padding: "1.75rem", maxWidth: "560px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: "#fff" }}>❓ Frequently Asked Questions</h2>
+                <p style={{ margin: "0.25rem 0 0", color: "#555", fontSize: "0.78rem" }}>Everything you need to know about VCI</p>
+              </div>
+              <button onClick={() => setShowFaq(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+            {[
+              { q: "What is VCI?", a: "VCI (Viral Content Intelligence) is an AI-powered tool that generates viral content for creators and businesses — hooks, captions, hashtags, scripts, calendars, all in one place!" },
+              { q: "What do I get in the free trial?", a: "You get 5 free credits. You can use Generate, Hook Score, and Caption & Hashtags features. All niches, platforms, and 30+ languages are open in the trial!" },
+              { q: "What does 1 credit equal?", a: "Generate = 1 credit, Hook Score = 1 credit, Caption & Hashtags = 2 credits, Script Lab = 2 credits, Content Pack = 3 credits, 30-Day Calendar = 5 credits." },
+              { q: "How soon will my plan be activated after payment?", a: "Send your payment screenshot on WhatsApp and your plan will be manually activated within 2 hours. UPI: 9315133390@ptyes" },
+              { q: "Which plan should I choose?", a: "Just starting out? Starter ₹299 (100 credits + Script Lab). Serious creator? Pro Creator ₹999 (400 credits + Calendar + Pack + Trends). Running ads/business? Growth ₹799 or Business ₹1,999." },
+              { q: "Do credits renew every month?", a: "Yes! Credits renew every month according to your plan. Unused credits do not carry forward to the next month." },
+              { q: "Is there a refund policy?", a: "Yes, you can request a refund within 7 days if the tool doesn't work as expected. Contact support on WhatsApp: +91 9315133390" },
+              { q: "How do I use VCI on mobile?", a: "Open getvci.com in your mobile browser. On Chrome, tap 'Add to Home Screen' to install it like an app. On iPhone, use Safari and tap 'Add to Home Screen'!" },
+              { q: "Is Hindi and regional language content supported?", a: "Absolutely! 30+ languages are supported — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam and many more." },
+              { q: "What is Script Lab?", a: "Script Lab lets you generate complete word-for-word reel scripts for 15/30/60/90 seconds. You can also improve existing scripts with a Before/After comparison. Available from the Starter plan onwards." },
+            ].map((faq, i) => (
+              <FaqItem key={i} q={faq.q} a={faq.a} />
+            ))}
+            <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Have more questions? 🙋</p>
+              <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
+                💬 WhatsApp karo
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       <a href="https://wa.me/919315133390?text=Hi!%20I%20want%20to%20know%20more%20about%20Viral%20Content%20Tool" target="_blank" rel="noopener noreferrer"
         style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 999, background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", borderRadius: "50px", padding: "0.75rem 1.25rem", textDecoration: "none", fontWeight: 700, fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(37,211,102,0.4)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
