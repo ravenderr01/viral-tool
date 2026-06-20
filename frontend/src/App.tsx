@@ -50,6 +50,17 @@ const detectNiche = (keyword: string, currentNiche: string): string => {
   if (kw.match(/budget|save money|tax|mutual fund|sip|loan|personal finance|stock market/)) return "Personal Finance";
   if (kw.match(/lifestyle|minimalism|productivity|habit|self improvement|declutter/)) return "Lifestyle";
   if (kw.match(/health|wellness|immune|vitamin|nutrition|sleep|detox|ayurveda/)) return "Health & Wellness";
+  // E-commerce / product-selling categories (for advertisers selling physical products)
+  if (kw.match(/\bbag|handbag|backpack|purse|luggage|wallet\b/)) return "Bags & Accessories";
+  if (kw.match(/shoe|sneaker|sandal|footwear|boots|heels/)) return "Footwear";
+  if (kw.match(/jewelry|jewellery|necklace|earring|bracelet|ring\b/)) return "Jewelry";
+  if (kw.match(/furniture|sofa|table|chair|decor|home decor|interior/)) return "Home & Furniture";
+  if (kw.match(/electronics|gadget|laptop|mobile|phone|headphone|camera|smartwatch/)) return "Electronics";
+  if (kw.match(/toy|kids product|baby product|stroller|playset/)) return "Toys & Kids";
+  if (kw.match(/pet|dog food|cat food|pet accessories|pet care/)) return "Pet Products";
+  if (kw.match(/supplement|vitamin tablets|protein powder|herbal product/)) return "Supplements";
+  if (kw.match(/jewelry|watch|sunglasses|accessories|cosmetics product/)) return "Fashion Accessories";
+  if (kw.match(/sell|product|ecommerce|e-commerce|online store|shop|dropship|amazon|flipkart/)) return "E-commerce";
   return currentNiche;
 };
 
@@ -75,6 +86,16 @@ const NICHE_EXAMPLES: Record<string, string[]> = {
   Motivational:         ["success mindset", "morning motivation", "self improvement", "hustle tips"],
   "Health & Wellness":  ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
   Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
+  "Bags & Accessories": ["leather handbags", "travel backpacks", "designer wallets", "gym bags"],
+  "Footwear":           ["running shoes", "casual sneakers", "formal shoes", "sandals for women"],
+  "Jewelry":            ["gold necklace set", "silver earrings", "diamond rings", "fashion bracelets"],
+  "Home & Furniture":   ["modern sofa sets", "dining table sets", "home decor ideas", "wall art"],
+  "Electronics":        ["wireless earbuds", "smartwatch deals", "laptop accessories", "phone cases"],
+  "Toys & Kids":        ["educational toys", "baby strollers", "kids playsets", "newborn essentials"],
+  "Pet Products":       ["dog food brands", "cat toys", "pet grooming kit", "pet carriers"],
+  "Supplements":        ["whey protein", "multivitamin tablets", "ayurvedic supplements", "weight gain powder"],
+  "Fashion Accessories": ["sunglasses for men", "designer watches", "scarves for women", "belts for men"],
+  "E-commerce":         ["dropshipping products", "online store ideas", "best selling products", "ecommerce marketing"],
 };
 
 // Cross-selling: jo niche hai uske related niches suggest karo
@@ -2400,7 +2421,10 @@ export default function ViralContentTool() {
       const keywordResearchInstruction = isAdsplatform ? `
 
 ALSO generate a keyword research list for this campaign. Follow these rules strictly:
-- Suggest 8 keyword variations around "${keyword}" mixing match types: broad, phrase, and exact
+- The keyword "${keyword}" is what the advertiser is actually selling or promoting — treat it as the literal product/service/offer, not as a lifestyle topic.
+- Suggest 8 keyword variations that stay directly relevant to "${keyword}" itself (synonyms, buyer-intent phrases, use-cases, related product terms) — mixing match types: broad, phrase, and exact.
+- Do NOT force-fit unrelated themes onto the keyword. If "${keyword}" is a product (e.g. "sell bags"), all 8 suggestions must be about that product category — not about an unrelated lifestyle or fitness angle.
+- Treat the niche label "${niche}" as a loose category hint only — if it doesn't genuinely match the keyword's actual subject, ignore it and stay faithful to the keyword instead.
 - For each keyword, estimate relative search volume as "High", "Medium", or "Low" (relative comparison only — clearly an estimate, not exact data)
 - For each keyword, estimate competition as "High", "Medium", or "Low"
 - Classify search intent as "Commercial", "Informational", "Navigational", or "Transactional"
@@ -2411,8 +2435,12 @@ ALSO generate a keyword research list for this campaign. Follow these rules stri
         ? `,"keywordSuggestions":[{"keyword":"kw1","matchType":"Broad","volume":"Medium","competition":"Low","intent":"Commercial"}]`
         : "";
 
+      const adNicheNote = isAdsplatform
+        ? `\nNote: the niche label "${niche}" is a rough category guess — if "${keyword}" is clearly a product/service that doesn't match this niche, write the ad copy and keywords based on the keyword itself, not the niche label.`
+        : "";
+
       const prompt = `You are a ${platform} content expert for ${niche} niche.
-Keyword: "${keyword}"
+Keyword: "${keyword}"${adNicheNote}
 
 Generate: ${platformGuide[platform] || platformGuide["Instagram"]}${keywordResearchInstruction}
 

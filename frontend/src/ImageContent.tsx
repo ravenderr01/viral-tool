@@ -118,12 +118,21 @@ const PLATFORM_PROMPTS: Record<string, string> = {
 - hashtags: []`,
 };
 
+interface KeywordSuggestion {
+  keyword: string;
+  matchType: string;
+  volume: string;
+  competition: string;
+  intent: string;
+}
+
 interface ResultData {
   imageDescription: string;
   hooks: string[];
   titles: string[];
   captions: string[];
   hashtags: string[];
+  keywordSuggestions?: KeywordSuggestion[];
 }
 
 export default function ImageContent({
@@ -186,6 +195,24 @@ export default function ImageContent({
       const langLabel = LANG_LABELS[lang] || "English";
       const platformPrompt = PLATFORM_PROMPTS[platform] || PLATFORM_PROMPTS["Instagram"];
 
+      const isAdsplatform = ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"].includes(platform);
+
+      const keywordResearchInstruction = isAdsplatform ? `
+
+STEP 3 — ALSO generate a keyword research list based on what's actually in the image (the product/subject you identified in imageDescription):
+- Suggest 8 keyword variations directly relevant to the product/subject shown in the image — mixing match types: broad, phrase, and exact
+- Base these on the visual subject itself, not a generic guess — if the image shows bags, all 8 keywords must be about bags, not an unrelated theme
+- For each keyword, estimate relative search volume as "High", "Medium", or "Low" (clearly an estimate, not exact Google data)
+- For each keyword, estimate competition as "High", "Medium", or "Low"
+- Classify search intent as "Commercial", "Informational", "Navigational", or "Transactional"
+- COMPLY WITH GOOGLE ADS POLICY: no superlative/unverifiable claims (avoid "cure", "guaranteed", "#1", "best in the world"). Keep keywords factual and policy-safe.
+- Do not suggest trademarked brand names unless visible in the image itself.
+- Keep keywords in English/Latin script regardless of output language, since ad platforms require Latin-script targeting in most markets.` : "";
+
+      const keywordJsonField = isAdsplatform
+        ? `,\n  "keywordSuggestions": [{"keyword": "kw1", "matchType": "Broad", "volume": "Medium", "competition": "Low", "intent": "Commercial"}]`
+        : "";
+
       const prompt = `You are an expert content creator and marketer. Analyze this image carefully and generate highly specific, platform-optimized content.
       
 
@@ -199,6 +226,7 @@ Look at: subject/product, colors, mood, setting, people, text, brand elements, e
 
 STEP 2 — Generate ${platform}-specific content based on what you see:
 ${platformPrompt}
+${keywordResearchInstruction}
 
 IMPORTANT RULES:
 - Every piece of content must be DIRECTLY inspired by what's in the image
@@ -216,7 +244,7 @@ Respond ONLY in this exact JSON (no markdown):
   "hooks": ["hook1", "hook2", "hook3", "hook4", "hook5"],
   "titles": ["title1", "title2", "title3", "title4", "title5"],
   "captions": ["caption1", "caption2", "caption3"],
-  "hashtags": ["#tag1", "#tag2", "#tag3"]
+  "hashtags": ["#tag1", "#tag2", "#tag3"]${keywordJsonField}
 }`;
 
       const res = await fetch(`${BACKEND}/api/generate`, {
@@ -224,7 +252,7 @@ Respond ONLY in this exact JSON (no markdown):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
+          max_tokens: 2200,
           system: `You are a visual content expert. Analyze images and create platform-specific viral content. Always respond in valid JSON only.`,
           messages: [
             {
@@ -517,6 +545,40 @@ Respond ONLY in this exact JSON (no markdown):
                     {tag}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {result.keywordSuggestions && result.keywordSuggestions.length > 0 && (
+            <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", color: "#06b6d4", fontSize: "0.88rem" }}>🔑 Keyword Research</h3>
+                <button onClick={() => copyAll(result.keywordSuggestions!.map(k => `${k.keyword}\t${k.matchType}\tVolume: ${k.volume}\tCompetition: ${k.competition}\tIntent: ${k.intent}`), "keywords")}
+                  style={{ background: copied === "keywords" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied === "keywords" ? "#22c55e" : "#2a2a2a"}`, color: copied === "keywords" ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
+                  {copied === "keywords" ? "✓ Copied!" : "Copy all"}
+                </button>
+              </div>
+              <p style={{ margin: "0 0 0.75rem", color: "#3f3f46", fontSize: "0.65rem", lineHeight: 1.5 }}>
+                Based on the product/subject detected in your image. AI-estimated relative volume & competition — directional guidance, not exact Google data.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {result.keywordSuggestions.map((k, i) => {
+                  const levelColor = (lvl: string) => lvl === "High" ? "#ef4444" : lvl === "Medium" ? "#f59e0b" : "#22c55e";
+                  const intentColor: Record<string, string> = { Commercial: "#8b5cf6", Informational: "#06b6d4", Navigational: "#71717a", Transactional: "#22c55e" };
+                  return (
+                    <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.7rem 0.85rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                        <span style={{ color: "#e4e4e7", fontSize: "0.82rem", fontWeight: 700 }}>{k.keyword}</span>
+                        <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", fontSize: "0.6rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "8px" }}>{k.matchType}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Volume: <strong style={{ color: levelColor(k.volume) }}>{k.volume}</strong></span>
+                        <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Competition: <strong style={{ color: levelColor(k.competition) }}>{k.competition}</strong></span>
+                        <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Intent: <strong style={{ color: intentColor[k.intent] || "#71717a" }}>{k.intent}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
