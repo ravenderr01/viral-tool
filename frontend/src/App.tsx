@@ -2187,7 +2187,7 @@ function KeywordResearchCard({ keywords }: { keywords: any[] }) {
   );
 }
 
-function ResultCard({ title, items, emoji, color }: any) {
+function ResultCard({ title, items, emoji, color, charLimit }: any) {
   const [copied, setCopied] = useState(false);
   const safeItems: string[] = Array.isArray(items) ? items : [];
   if (safeItems.length === 0) return null;
@@ -2201,9 +2201,20 @@ function ResultCard({ title, items, emoji, color }: any) {
         </button>
       </div>
       <ul style={{ margin: 0, padding: "0 0 0 1rem" }}>
-        {safeItems.map((item: string, i: number) => (
-          <li key={i} style={{ color: "#ccc", fontSize: "0.83rem", marginBottom: "0.35rem", lineHeight: 1.6 }}>{item}</li>
-        ))}
+        {safeItems.map((item: string, i: number) => {
+          const len = item.length;
+          const overLimit = charLimit && len > charLimit;
+          return (
+            <li key={i} style={{ color: "#ccc", fontSize: "0.83rem", marginBottom: "0.35rem", lineHeight: 1.6, display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <span>{item}</span>
+              {charLimit && (
+                <span style={{ flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: overLimit ? "#ef4444" : "#22c55e", whiteSpace: "nowrap" }}>
+                  {len}/{charLimit}{overLimit ? " ⚠" : ""}
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -2401,6 +2412,26 @@ export default function ViralContentTool() {
     };
 
     try {
+      const adsCopyGuide: Record<string, string> = {
+        "Google Ads": `Generate professional Google Search Ads copy following these strict rules:
+- viralHooks: 5 Search Ad headlines, EACH STRICTLY 25-30 characters (count carefully, never exceed 30). Each headline must use a DIFFERENT angle: one with a number/stat, one with urgency, one with a clear benefit, one as a question, one with a direct CTA. Avoid generic filler words like "Today", "Now" stacked together — make each one sound like real Google Ads copy a paid ads professional would write.
+- titles: 5 Display/Responsive headlines, EACH STRICTLY 25-30 characters, each highlighting a distinct unique selling point (price, quality, speed, guarantee, variety) — no two headlines should repeat the same angle.
+- captions: 3 ad descriptions, EACH STRICTLY 80-90 characters, following a clear structure: specific benefit + supporting detail + soft call-to-action. Sound like a real advertiser, not a template.
+- trendingTopics: skip, leave as short relevant search terms instead (max 5 words each)`,
+        "Meta Ads": `Generate professional Meta (Facebook/Instagram) Ads copy:
+- viralHooks: 5 primary text openers (80-125 characters each), each opening with a different pain point or desire specific to "${keyword}" — vary the emotional angle (curiosity, fear of missing out, social proof, savings, convenience).
+- titles: 5 ad headlines (30-40 characters each), each a distinct, scroll-stopping benefit statement — no repeated phrasing across the 5.
+- captions: 3 full ad copies (150-200 characters), each following Problem → Agitate → Solution → CTA, written like a real performance marketer, not generic filler.`,
+        "YouTube Ads": `Generate professional YouTube Ads copy:
+- viralHooks: 5 first-5-second hook lines that stop a viewer from skipping, each using a different technique (bold claim, question, visual tease, relatable problem, social proof).
+- titles: 5 companion banner headlines (40-60 characters), each highlighting a different benefit.
+- captions: 3 full :15-second ad scripts structured as Hook(0-5s) → Value(5-12s) → CTA(12-15s), written as natural spoken dialogue, not robotic.`,
+        "Native Ads": `Generate professional Native Ads copy (editorial-style, blends with content):
+- viralHooks: 5 curiosity-driven headlines that read like real editorial content, not obvious ads — each using a distinct hook style (listicle, question, bold claim, "how I", insider secret).
+- titles: 5 article-style titles, each sounding like a genuine blog/news headline about "${keyword}".
+- captions: 3 advertorial intros (120-160 characters), informational tone, no hard selling language.`,
+      };
+
       const platformGuide: Record<string, string> = {
         "Instagram": "5 Reel opening lines, 5 post titles, 3 captions with hashtags, 5 trending topics",
         "YouTube": "5 video hooks, 5 SEO titles, 3 descriptions, 5 trending formats",
@@ -2412,10 +2443,10 @@ export default function ViralContentTool() {
         "Pinterest": "5 pin titles, 5 board names, 3 pin descriptions, 5 trending searches",
         "WhatsApp": "5 broadcast openers, 5 status ideas, 3 messages, 5 content ideas",
         "Snapchat": "5 story hooks, 5 story ideas, 3 snap texts, 5 trending formats",
-        "Google Ads": "5 search headlines (25-30 chars), 5 display headlines, 3 descriptions (80-90 chars), 5 keyword ideas",
-        "Meta Ads": "5 primary text openers, 5 ad headlines (30-40 chars), 3 ad copies, 5 ad angles",
-        "YouTube Ads": "5 first-5-second hooks, 5 banner headlines, 3 ad scripts, 5 targeting angles",
-        "Native Ads": "5 editorial headlines, 5 article titles, 3 advertorial descriptions, 5 story angles",
+        "Google Ads": adsCopyGuide["Google Ads"],
+        "Meta Ads": adsCopyGuide["Meta Ads"],
+        "YouTube Ads": adsCopyGuide["YouTube Ads"],
+        "Native Ads": adsCopyGuide["Native Ads"],
       };
 
       const isAdsplatform = ["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform);
@@ -2441,10 +2472,18 @@ ALSO generate a keyword research list for this campaign. Follow these rules stri
         ? `\nNote: the niche label "${niche}" is a rough category guess — if "${keyword}" is clearly a product/service that doesn't match this niche, write the ad copy and keywords based on the keyword itself, not the niche label.`
         : "";
 
-      const prompt = `You are a ${platform} content expert for ${niche} niche.
+      const expertPersona = isAdsplatform
+        ? `You are a senior paid-ads copywriter with 10+ years writing high-converting Google, Meta, and YouTube ad campaigns. You write copy that real advertisers pay for — never generic, never templated, never repetitive across variations.`
+        : `You are a ${platform} content expert for ${niche} niche.`;
+
+      const charLimitReminder = isAdsplatform
+        ? `\n\nCRITICAL: Before finalizing, count the characters in every headline/title/description and verify it fits the stated limit EXACTLY. If a line is too long, rewrite it shorter — never truncate mid-word. Each of the 5 headlines and 5 titles must use a genuinely different angle — no two should follow the same sentence structure or repeat words like "Today", "Now", "Sale" in more than one line.`
+        : "";
+
+      const prompt = `${expertPersona}
 Keyword: "${keyword}"${adNicheNote}
 
-Generate: ${platformGuide[platform] || platformGuide["Instagram"]}${keywordResearchInstruction}
+Generate: ${platformGuide[platform] || platformGuide["Instagram"]}${keywordResearchInstruction}${charLimitReminder}
 
 OUTPUT LANGUAGE: ${langStrict}
 IMPORTANT: Write EVERYTHING in the specified language/script. No English mixing if non-English selected.
@@ -2640,7 +2679,6 @@ Respond ONLY in JSON:
           <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "23rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
           <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "29rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
-          <button onClick={() => setShowTutorial(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "36rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}><BookOpen size={13} /> Tutorial</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
           {/* Mobile Top Bar */}
@@ -2649,7 +2687,6 @@ Respond ONLY in JSON:
               <button onClick={() => setShowAdmin(true)} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.5rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🔧</button>
             )}
             <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
-            <button onClick={() => setShowTutorial(true)} style={{ background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.25)",color:"#f59e0b",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>📘 Tutorial</button>
             <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
             <button onClick={() => setShowContact(true)} style={{ background:"rgba(6,182,212,0.1)",border:"1px solid rgba(6,182,212,0.3)",color:"#06b6d4",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Support</button>
             <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
@@ -2860,7 +2897,12 @@ Respond ONLY in JSON:
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>💡 Try Hook Score tab</span>
                   </div>
                   {["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform) ? (
-                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /><KeywordResearchCard keywords={results.keywordSuggestions} /></>
+                    <>
+                      <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} />
+                      <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" charLimit={platform === "Google Ads" ? 30 : undefined} />
+                      <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" charLimit={platform === "Google Ads" ? 90 : undefined} />
+                      <KeywordResearchCard keywords={results.keywordSuggestions} />
+                    </>
                   ) : platform === "YouTube" ? (
                     <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
                   ) : platform === "Reddit" ? (
