@@ -12,7 +12,8 @@ import Plans from "./plans";
 import { Helmet } from 'react-helmet-async';
 import {
   Zap, BarChart2, FileText, CalendarDays, Package, TrendingUp, Image, Film,
-  Sparkles, ArrowRight, Tag, RefreshCw, Search, Flame
+  Sparkles, ArrowRight, Tag, RefreshCw, Search, Flame,
+  BookOpen, MousePointerClick, Type, Check, Layers, Wand2, Hash, Clock
 } from "lucide-react";
 
 const YOUR_UPI_ID    = "9315133390@ptyes";
@@ -2055,39 +2056,111 @@ function SmartKeywordSuggestions({ niche, currentKeyword, onSelect }: any) {
   );
 }
 
-function TrendingNowCard({ niche }: any) {
+function TrendingNowCard({ niche, platform }: any) {
   const [trend, setTrend] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
     (async () => {
       try {
-        const { data, error } = await supabase
+        // Prefer a trend specific to the selected platform
+        const { data: platformData } = await supabase
+          .from("trending_styles")
+          .select("*")
+          .eq("niche", niche)
+          .eq("platform", platform)
+          .order("generation_count", { ascending: false })
+          .limit(1);
+
+        if (!active) return;
+
+        if (platformData && platformData.length > 0) {
+          setTrend(platformData[0]);
+          setLoading(false);
+          return;
+        }
+
+        // Fall back to the top trend across any platform for this niche
+        const { data: anyData, error } = await supabase
           .from("trending_styles")
           .select("*")
           .eq("niche", niche)
           .order("generation_count", { ascending: false })
           .limit(1);
 
-        if (error || !data || data.length === 0) { setLoading(false); return; }
-        setTrend(data[0]);
-      } catch {}
-      setLoading(false);
+        if (!active) return;
+        if (error || !anyData || anyData.length === 0) { setTrend(null); setLoading(false); return; }
+        setTrend(anyData[0]);
+      } catch {
+        if (active) setTrend(null);
+      }
+      if (active) setLoading(false);
     })();
-  }, [niche]);
+    return () => { active = false; };
+  }, [niche, platform]);
 
   if (loading || !trend) return null;
+
+  const samePlatform = trend.platform === platform;
 
   return (
     <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.03))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "0.9rem 1.1rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
       <span style={{ fontSize: "1.4rem" }}>🔥</span>
       <div>
         <p style={{ margin: 0, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700 }}>
-          Trending right now: <strong>{trend.style}</strong> style hooks <span style={{ color: "#71717a", fontWeight: 500 }}>{niche} niche mein</span>
+          Trending now on <strong>{trend.platform}</strong>: <strong>{trend.style}</strong> style hooks <span style={{ color: "#71717a", fontWeight: 500 }}>in {niche}</span>
         </p>
         <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
-          {trend.pct_share}% creators last 7 din mein yeh style use kar rahe hain · Based on {trend.generation_count} generations
+          {trend.pct_share}% of creators used this style in the last 7 days · Based on {trend.generation_count} generations
+          {!samePlatform && <span style={{ color: "#3f3f46" }}> · Showing top platform overall</span>}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// Keyword research table for Ads platforms — AI-estimated volume/competition, clearly labeled
+function KeywordResearchCard({ keywords }: { keywords: any[] }) {
+  const [copied, setCopied] = useState(false);
+  if (!keywords || keywords.length === 0) return null;
+
+  const levelColor = (lvl: string) => lvl === "High" ? "#ef4444" : lvl === "Medium" ? "#f59e0b" : "#22c55e";
+  const intentColor: Record<string, string> = { Commercial: "#8b5cf6", Informational: "#06b6d4", Navigational: "#71717a", Transactional: "#22c55e" };
+
+  const copyAll = () => {
+    const text = keywords.map(k => `${k.keyword}\t${k.matchType}\tVolume: ${k.volume}\tCompetition: ${k.competition}\tIntent: ${k.intent}`).join("\n");
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.9rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+        <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", color: "#06b6d4", fontSize: "0.88rem" }}>🔑 Keyword Research</h3>
+        <button onClick={copyAll} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
+          {copied ? "✓ Copied!" : "Copy all"}
+        </button>
+      </div>
+      <p style={{ margin: "0 0 0.75rem", color: "#3f3f46", fontSize: "0.65rem", lineHeight: 1.5 }}>
+        AI-estimated relative volume & competition — for directional guidance, not exact Google data. Policy-checked: no unverifiable claims or banned terms.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {keywords.map((k, i) => (
+          <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.7rem 0.85rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+              <span style={{ color: "#e4e4e7", fontSize: "0.82rem", fontWeight: 700 }}>{k.keyword}</span>
+              <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", fontSize: "0.6rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "8px" }}>{k.matchType}</span>
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Volume: <strong style={{ color: levelColor(k.volume) }}>{k.volume}</strong></span>
+              <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Competition: <strong style={{ color: levelColor(k.competition) }}>{k.competition}</strong></span>
+              <span style={{ fontSize: "0.65rem", color: "#52525b" }}>Intent: <strong style={{ color: intentColor[k.intent] || "#71717a" }}>{k.intent}</strong></span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2145,6 +2218,45 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+// Tutorial: one feature card with icon, what-it-does line, and numbered visual steps
+function TutorialFeature({ icon: Icon, color, name, tagline, steps, credit }: any) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ background: "#0d0d0d", border: `1px solid ${open ? color + "40" : "#1a1a1a"}`, borderRadius: "14px", marginBottom: "0.6rem", overflow: "hidden", transition: "border-color 0.2s" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", textAlign: "left" }}>
+        <div style={{ width: 38, height: 38, borderRadius: "10px", background: color + "15", border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={18} color={color} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>{name}</span>
+            {credit && <span style={{ background: color + "15", border: `1px solid ${color}30`, color, fontSize: "0.6rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "10px", flexShrink: 0 }}>{credit}</span>}
+          </div>
+          <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.72rem", lineHeight: 1.4 }}>{tagline}</p>
+        </div>
+        <span style={{ color: open ? color : "#444", fontSize: "1rem", flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 1rem 1rem 1rem", animation: "slideUp 0.2s ease" }}>
+          <div style={{ borderTop: `1px solid ${color}20`, paddingTop: "0.85rem" }}>
+            {steps.map((step: { label: string; detail: string }, i: number) => (
+              <div key={i} style={{ display: "flex", gap: "0.65rem", marginBottom: i < steps.length - 1 ? "0.7rem" : 0 }}>
+                <div style={{ flexShrink: 0, width: 22, height: 22, borderRadius: "50%", background: color + "18", border: `1px solid ${color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: 800, color }}>
+                  {i + 1}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.78rem", fontWeight: 700 }}>{step.label}</p>
+                  <p style={{ margin: "0.15rem 0 0", color: "#71717a", fontSize: "0.74rem", lineHeight: 1.5 }}>{step.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ViralContentTool() {
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState("Instagram");
@@ -2182,6 +2294,7 @@ export default function ViralContentTool() {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -2282,20 +2395,37 @@ export default function ViralContentTool() {
         "Native Ads": "5 editorial headlines, 5 article titles, 3 advertorial descriptions, 5 story angles",
       };
 
+      const isAdsplatform = ["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform);
+
+      const keywordResearchInstruction = isAdsplatform ? `
+
+ALSO generate a keyword research list for this campaign. Follow these rules strictly:
+- Suggest 8 keyword variations around "${keyword}" mixing match types: broad, phrase, and exact
+- For each keyword, estimate relative search volume as "High", "Medium", or "Low" (relative comparison only — clearly an estimate, not exact data)
+- For each keyword, estimate competition as "High", "Medium", or "Low"
+- Classify search intent as "Commercial", "Informational", "Navigational", or "Transactional"
+- COMPLY WITH GOOGLE ADS POLICY: do not suggest keywords containing superlative/unverifiable health, financial, or miracle claims (e.g. avoid "cure", "guaranteed", "best in the world", "#1"). Keep keywords factual and policy-safe.
+- Do not suggest trademarked brand names unless the user's own keyword already contains one.` : "";
+
+      const keywordJsonField = isAdsplatform
+        ? `,"keywordSuggestions":[{"keyword":"kw1","matchType":"Broad","volume":"Medium","competition":"Low","intent":"Commercial"}]`
+        : "";
+
       const prompt = `You are a ${platform} content expert for ${niche} niche.
 Keyword: "${keyword}"
 
-Generate: ${platformGuide[platform] || platformGuide["Instagram"]}
+Generate: ${platformGuide[platform] || platformGuide["Instagram"]}${keywordResearchInstruction}
 
 OUTPUT LANGUAGE: ${langStrict}
 IMPORTANT: Write EVERYTHING in the specified language/script. No English mixing if non-English selected.
+Keyword suggestions (if any) should stay in English/Latin script regardless of output language, since ad platforms require Latin-script targeting in most markets.
 
 Respond ONLY in JSON:
-{"trendingTopics":["t1","t2","t3","t4","t5"],"viralHooks":["h1","h2","h3","h4","h5"],"titles":["t1","t2","t3","t4","t5"],"captions":["c1","c2","c3"]}`;
+{"trendingTopics":["t1","t2","t3","t4","t5"],"viralHooks":["h1","h2","h3","h4","h5"],"titles":["t1","t2","t3","t4","t5"],"captions":["c1","c2","c3"]${keywordJsonField}}`;
 
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2200, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -2469,9 +2599,10 @@ Respond ONLY in JSON:
 
           {/* Top Buttons */}
           <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
-          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "20rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
+          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "23rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
-          <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "26rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
+          <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "29rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
+          <button onClick={() => setShowTutorial(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "36rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}><BookOpen size={13} /> Tutorial</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
 
           {/* Mobile Top Bar */}
@@ -2480,6 +2611,7 @@ Respond ONLY in JSON:
               <button onClick={() => setShowAdmin(true)} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.5rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🔧</button>
             )}
             <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
+            <button onClick={() => setShowTutorial(true)} style={{ background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.25)",color:"#f59e0b",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>📘 Tutorial</button>
             <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
             <button onClick={() => setShowContact(true)} style={{ background:"rgba(6,182,212,0.1)",border:"1px solid rgba(6,182,212,0.3)",color:"#06b6d4",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Support</button>
             <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
@@ -2674,7 +2806,7 @@ Respond ONLY in JSON:
 
               {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 0.7rem" }}>{error}</p>}
 
-              <TrendingNowCard niche={niche} />
+              <TrendingNowCard niche={niche} platform={platform} />
 
               <button className="gbtn" onClick={handleGenerate} disabled={loading} style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s", animation: "none", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                 {loading
@@ -2689,8 +2821,8 @@ Respond ONLY in JSON:
                     🌐 Generated in <strong>{langLabel}</strong>
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>💡 Try Hook Score tab</span>
                   </div>
-                  {["Google Ads", "Meta Ads", "Native Ads"].includes(platform) ? (
-                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /></>
+                  {["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform) ? (
+                    <><ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" /><ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" /><KeywordResearchCard keywords={results.keywordSuggestions} /></>
                   ) : platform === "YouTube" ? (
                     <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
                   ) : platform === "Reddit" ? (
@@ -2900,6 +3032,124 @@ Respond ONLY in JSON:
       <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
 
       {/* FAQ Modal */}
+      {showTutorial && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto" }}>
+          <div style={{ background: "#080808", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "20px", padding: "1.75rem", maxWidth: "600px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <BookOpen size={18} color="#f59e0b" />
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#fff" }}>How VCI Works</h2>
+                  <p style={{ margin: "0.1rem 0 0", color: "#555", fontSize: "0.76rem" }}>Tap any feature to see exact steps</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTutorial(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
+            </div>
+
+            <p style={{ margin: "0.75rem 0 1.1rem", color: "#71717a", fontSize: "0.78rem", lineHeight: 1.6 }}>
+              VCI has 9 tools that cover every stage of making content — from finding an idea to writing the script. Here's exactly what each one does and how to use it.
+            </p>
+
+            <TutorialFeature
+              icon={Zap} color="#6d28d9" name="Generate" credit="1 credit"
+              tagline="Turn a keyword into ready-to-post hooks, titles, and captions."
+              steps={[
+                { label: "Type a keyword", detail: "Enter any topic, like \"weight loss\" or \"crypto tips\". The niche is detected automatically." },
+                { label: "Pick a platform", detail: "Choose Instagram, YouTube, Google Ads, or any of the 15+ supported platforms — the output format adapts to match." },
+                { label: "Tap Generate", detail: "Get trending topics, viral hooks, titles, and captions in one go, ready to copy." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={BarChart2} color="#06b6d4" name="Hook Score" credit="1 credit"
+              tagline="Paste any content and get an honest grade with line-by-line fixes."
+              steps={[
+                { label: "Paste your content", detail: "Drop in a hook, caption, or script you've already written." },
+                { label: "Choose the platform", detail: "Scoring criteria adjusts for Instagram, YouTube, LinkedIn, and more." },
+                { label: "Read the breakdown", detail: "Get a grade (A–F), see exactly which lines are weak, and get 3 rewritten versions." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={FileText} color="#22c55e" name="Captions" credit="2 credits"
+              tagline="Get 5 ready-to-post captions and 20 matching hashtags."
+              steps={[
+                { label: "Select a platform", detail: "Hashtag style and caption tone change based on where you're posting." },
+                { label: "Enter your keyword", detail: "The same keyword from Generate carries over automatically." },
+                { label: "Copy and post", detail: "Tap any caption or hashtag to copy it instantly — no retyping." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={Search} color="#8b5cf6" name="Intelligence" credit="Free"
+              tagline="See real YouTube and Google data before you commit to a topic."
+              steps={[
+                { label: "Tap Analyze", detail: "VCI pulls live trending YouTube videos and rising Google searches for your niche." },
+                { label: "Check the competition score", detail: "See whether a topic is oversaturated or has room to grow." },
+                { label: "Read the opportunity tip", detail: "Get one clear, actionable angle based on what's actually happening right now." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={CalendarDays} color="#06b6d4" name="Calendar" credit="5 credits"
+              tagline="Generate a full 30-day content plan in a single tap."
+              steps={[
+                { label: "Enter your topic and platform", detail: "One keyword is enough — VCI plans variety across the month." },
+                { label: "Tap Generate Calendar", detail: "Get 30 days of hooks, organized by week, each tagged with a content type." },
+                { label: "Tap any day to copy", detail: "Grab that day's hook instantly when you're ready to post." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={Package} color="#f59e0b" name="Pack" credit="3 credits"
+              tagline="One click for a complete bundle — hooks, titles, captions, scripts, hashtags."
+              steps={[
+                { label: "Choose a pack type", detail: "Instagram & TikTok, YouTube, or Google & Meta Ads — each tuned to that platform's needs." },
+                { label: "Enter your keyword", detail: "VCI builds an entire content bundle around it." },
+                { label: "Expand any section", detail: "Open hooks, titles, captions, or hashtags and copy what you need." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={TrendingUp} color="#22c55e" name="Trends" credit="Free"
+              tagline="A live feed of what's trending in your niche right now."
+              steps={[
+                { label: "Open the Trends tab", detail: "It loads automatically based on your selected niche." },
+                { label: "Scan for ideas", detail: "Use real trending topics as a starting point before you generate content." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={Image} color="#14b8a6" name="Image AI" credit="2 credits"
+              tagline="Upload a photo and get hooks and captions written around it."
+              steps={[
+                { label: "Upload an image", detail: "A product photo, a workout shot, anything you plan to post." },
+                { label: "Select your platform", detail: "Output adapts to Instagram, YouTube, or your chosen platform." },
+                { label: "Get content based on what's in the photo", detail: "VCI reads the image and writes hooks and captions that actually match it." },
+              ]}
+            />
+
+            <TutorialFeature
+              icon={Film} color="#f97316" name="Script Lab" credit="6 credits"
+              tagline="Write a full reel script, or grade and improve one you already have."
+              steps={[
+                { label: "Choose Generate or Improve", detail: "Write a brand-new script, or paste an existing one to get it scored and rewritten." },
+                { label: "Set duration and style", detail: "15 to 90 seconds, in styles like Story, Tutorial, or POV." },
+                { label: "Get the full breakdown", detail: "A word-for-word script with timing cues, a matching thumbnail, and an audio suggestion." },
+              ]}
+            />
+
+            <div style={{ marginTop: "1.1rem", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "12px", padding: "0.85rem 1rem" }}>
+              <p style={{ margin: 0, fontSize: "0.76rem", color: "#a1a1aa", lineHeight: 1.6 }}>
+                <strong style={{ color: "#f59e0b" }}>Tip:</strong> Start with Generate to find your angle, check it with Intelligence, then move to Calendar or Script Lab once you know what to post.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showFaq && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", overflowY: "auto" }}>
           <div style={{ background: "#080808", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "20px", padding: "1.75rem", maxWidth: "560px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
