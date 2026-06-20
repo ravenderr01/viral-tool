@@ -244,7 +244,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -330,6 +330,7 @@ Respond ONLY in JSON:
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setImproveResult(parsed);
+      if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
     } catch { setError("Analysis failed. Try again."); }
     setImproveLoading(false);
   };
@@ -666,6 +667,7 @@ Respond ONLY in JSON:
       setGenerateResult(parsed);
       const thumb = generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
       setThumbnailUrl(thumb);
+      if (onSaveHistory) onSaveHistory("scriptlab", { platform, keyword, inputSummary: `${keyword} (${style}, ${duration})`, resultData: parsed });
     } catch { setError("Generation failed. Try again."); }
     setGenerateLoading(false);
   };
@@ -1010,7 +1012,7 @@ Respond ONLY in JSON:
     </div>
   );
 }
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict }: any) {
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1089,6 +1091,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setResult(parsed);
+      if (onSaveHistory) onSaveHistory("hookscore", { platform, inputSummary: contentInput.slice(0, 80), resultData: parsed });
     } catch { setError("Analysis failed. Try again."); }
     setLoading(false);
   };
@@ -1273,7 +1276,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   );
 }
 
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict }: any) {
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory }: any) {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<any[]>([]);
   const [calKeyword, setCalKeyword] = useState(keyword || "");
@@ -1316,7 +1319,9 @@ Generate exactly 30 days.`;
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-      setCalendar(parsed.days || []);
+      const days = parsed.days || [];
+      setCalendar(days);
+      if (onSaveHistory) onSaveHistory("calendar", { niche, platform: calPlatform, keyword: calKeyword, inputSummary: calKeyword, resultData: { days } });
     } catch { setError("Calendar generation failed. Try again."); }
     setLoading(false);
   };
@@ -1403,7 +1408,7 @@ Generate exactly 30 days.`;
   );
 }
 
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict }: any) {
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory }: any) {
   const [loading, setLoading] = useState(false);
   const [pack, setPack] = useState<any>(null);
   const [packKeyword, setPackKeyword] = useState(keyword || "");
@@ -1460,7 +1465,9 @@ Respond ONLY in JSON:
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      setPack(JSON.parse(text.replace(/```json|```/g, "").trim()));
+      const packData = JSON.parse(text.replace(/```json|```/g, "").trim());
+      setPack(packData);
+      if (onSaveHistory) onSaveHistory("pack", { niche, platform, keyword: packKeyword, inputSummary: `${packKeyword} (${packType})`, resultData: packData });
     } catch { setError("Pack generation failed. Try again."); }
     setLoading(false);
   };
@@ -1565,7 +1572,7 @@ Respond ONLY in JSON:
 }
 
 
-function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed }: any) {
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, onSaveHistory }: any) {
   const [kw, setKw] = useState(keyword || "");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1623,6 +1630,7 @@ Respond ONLY in JSON:
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse"); }
       setResult(parsed);
       if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("caption", { niche, platform, keyword: kw, inputSummary: kw, resultData: parsed });
     } catch { setError("Generation failed. Try again."); }
     setLoading(false);
   };
@@ -2235,6 +2243,121 @@ function TabBtn({ id, label, Icon, active, onClick, isPro }: any) {
   );
 }
 
+// History panel — shows past activity across all features, click any entry to restore it
+function HistoryPanel({ userId, onClose, onRestore }: any) {
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterFeature, setFilterFeature] = useState<string>("all");
+
+  const FEATURE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+    generate: { label: "Generate", icon: "⚡", color: "#6d28d9" },
+    hookscore: { label: "Hook Score", icon: "📊", color: "#06b6d4" },
+    caption: { label: "Captions", icon: "📋", color: "#22c55e" },
+    calendar: { label: "Calendar", icon: "📅", color: "#f59e0b" },
+    pack: { label: "Pack", icon: "📦", color: "#ec4899" },
+    scriptlab: { label: "Script Lab", icon: "🎬", color: "#f97316" },
+    scriptimprove: { label: "Script Improve", icon: "✨", color: "#a855f7" },
+  };
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("user_history")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        setHistory(data || []);
+      } catch {}
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  const filtered = filterFeature === "all" ? history : history.filter(h => h.feature === filterFeature);
+  const usedFeatures = Array.from(new Set(history.map(h => h.feature)));
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div style={{ background: "#080808", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "20px", padding: "1.5rem", maxWidth: "560px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800 }}>🕘 History</h2>
+            <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.74rem" }}>Everything you've generated, across every tool</p>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", flexShrink: 0 }}>✕</button>
+        </div>
+
+        {usedFeatures.length > 1 && (
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
+            <button onClick={() => setFilterFeature("all")} style={{ background: filterFeature === "all" ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${filterFeature === "all" ? "#6d28d9" : "#1a1a1a"}`, color: filterFeature === "all" ? "#8b5cf6" : "#555", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}>All</button>
+            {usedFeatures.map(f => {
+              const meta = FEATURE_LABELS[f] || { label: f, icon: "•", color: "#71717a" };
+              return (
+                <button key={f} onClick={() => setFilterFeature(f)}
+                  style={{ background: filterFeature === f ? meta.color + "20" : "#0d0d0d", border: `1px solid ${filterFeature === f ? meta.color : "#1a1a1a"}`, color: filterFeature === f ? meta.color : "#555", padding: "0.25rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}>
+                  {meta.icon} {meta.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {loading ? (
+            <p style={{ color: "#444", fontSize: "0.8rem", textAlign: "center", padding: "2rem 0" }}>Loading history...</p>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📭</div>
+              <p style={{ color: "#444", fontSize: "0.82rem" }}>Nothing here yet. Generate something and it'll show up.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {filtered.map(item => {
+                const meta = FEATURE_LABELS[item.feature] || { label: item.feature, icon: "•", color: "#71717a" };
+                return (
+                  <button key={item.id} onClick={() => onRestore(item)}
+                    style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "0.75rem 0.9rem", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = meta.color + "50"; e.currentTarget.style.background = "#111"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a1a"; e.currentTarget.style.background = "#0d0d0d"; }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                      <span style={{ background: meta.color + "18", border: `1px solid ${meta.color}30`, color: meta.color, fontSize: "0.62rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "10px" }}>
+                        {meta.icon} {meta.label}
+                      </span>
+                      <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>{timeAgo(item.created_at)}</span>
+                    </div>
+                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {item.input_summary || "Untitled"}
+                    </p>
+                    {(item.niche || item.platform) && (
+                      <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
+                        {item.niche}{item.niche && item.platform ? " · " : ""}{item.platform}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -2292,12 +2415,21 @@ function TutorialFeature({ icon: Icon, color, name, tagline, steps, credit }: an
 }
 
 export default function ViralContentTool() {
-  const [keyword, setKeyword] = useState("");
-  const [platform, setPlatform] = useState("Instagram");
-  const [niche, setNiche] = useState("Fitness");
+  // Persisted across refresh: keyword, platform, niche, results, and active tab
+  const [keyword, setKeyword] = useState(() => {
+    try { return localStorage.getItem("vci_keyword") || ""; } catch { return ""; }
+  });
+  const [platform, setPlatform] = useState(() => {
+    try { return localStorage.getItem("vci_platform") || "Instagram"; } catch { return "Instagram"; }
+  });
+  const [niche, setNiche] = useState(() => {
+    try { return localStorage.getItem("vci_niche") || "Fitness"; } catch { return "Fitness"; }
+  });
   const [showNiche, setShowNiche] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<any>(() => {
+    try { const saved = localStorage.getItem("vci_results"); return saved ? JSON.parse(saved) : null; } catch { return null; }
+  });
   const [error, setError] = useState("");
   const [usageCount, setUsageCount] = useState(0);
   const [plan, setPlan] = useState("free");
@@ -2306,7 +2438,9 @@ export default function ViralContentTool() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en");
   const [showLangDropdown, setShowLangDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState("generate");
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return localStorage.getItem("vci_activeTab") || "generate"; } catch { return "generate"; }
+  });
   const [showContact, setShowContact] = useState(false);
   const [legalPage, setLegalPage] = useState<"privacy" | "terms" | "refund" | null>(null);
   const [showReview, setShowReview] = useState(false);
@@ -2328,6 +2462,7 @@ export default function ViralContentTool() {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
@@ -2371,6 +2506,18 @@ export default function ViralContentTool() {
   }, []);
 
   const limit = PLANS[plan as keyof typeof PLANS]?.limit || 100;
+
+  // Persist key state to localStorage so a refresh doesn't lose progress
+  useEffect(() => { try { localStorage.setItem("vci_keyword", keyword); } catch {} }, [keyword]);
+  useEffect(() => { try { localStorage.setItem("vci_platform", platform); } catch {} }, [platform]);
+  useEffect(() => { try { localStorage.setItem("vci_niche", niche); } catch {} }, [niche]);
+  useEffect(() => { try { localStorage.setItem("vci_activeTab", activeTab); } catch {} }, [activeTab]);
+  useEffect(() => {
+    try {
+      if (results) localStorage.setItem("vci_results", JSON.stringify(results));
+      else localStorage.removeItem("vci_results");
+    } catch {}
+  }, [results]);
   const remaining = Math.max(0, limit - usageCount);
   const usedPct = Math.min(100, (usageCount / limit) * 100);
   const langLabel = getLangLabel(selectedLang);
@@ -2381,6 +2528,39 @@ export default function ViralContentTool() {
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
     setUsageCount(prev => prev + cost);
+  };
+
+  // Universal history saver — call this from any feature after a successful generation
+  const saveToHistory = async (feature: string, data: { niche?: string; platform?: string; keyword?: string; inputSummary: string; resultData: any }) => {
+    if (!user?.id) return;
+    try {
+      await supabase.from("user_history").insert({
+        user_id: user.id,
+        feature,
+        niche: data.niche || null,
+        platform: data.platform || null,
+        keyword: data.keyword || null,
+        input_summary: data.inputSummary,
+        result_data: data.resultData,
+      });
+    } catch {}
+  };
+
+  // Maps a history feature key to its tab id
+  const FEATURE_TO_TAB: Record<string, string> = {
+    generate: "generate", hookscore: "score", caption: "caption",
+    calendar: "calendar", pack: "pack", scriptlab: "scriptlab", scriptimprove: "scriptlab",
+  };
+
+  const restoreFromHistory = (item: any) => {
+    if (item.niche) setNiche(item.niche);
+    if (item.platform) setPlatform(item.platform);
+    if (item.keyword) setKeyword(item.keyword);
+    setActiveTab(FEATURE_TO_TAB[item.feature] || "generate");
+    if (item.feature === "generate") {
+      setResults(item.result_data);
+    }
+    setShowHistory(false);
   };
 
   const handleGenerate = async () => {
@@ -2519,6 +2699,7 @@ Respond ONLY in JSON:
       const detectedStyles = safeResults.viralHooks.map((h: string) => detectHookStyle(h));
       await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: safeResults.viralHooks, titles: safeResults.titles, captions: safeResults.captions, trending_topics: safeResults.trendingTopics, hook_styles: detectedStyles });
       await supabase.from("users").update({ generations_used_today: (userData?.generations_used_today || 0) + 1, credits_remaining: (userData?.credits_remaining || 0) - 1 }).eq("id", user.id);
+      saveToHistory("generate", { niche, platform, keyword, inputSummary: keyword, resultData: safeResults });
     } catch { setError("Something went wrong. Please try again."); }
     setLoading(false);
   };
@@ -2680,6 +2861,7 @@ Respond ONLY in JSON:
           <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
           <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "29rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
           <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
+          <button onClick={() => setShowHistory(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "39rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🕘 History</button>
 
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
@@ -2688,6 +2870,7 @@ Respond ONLY in JSON:
             )}
             <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
             <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
+            <button onClick={() => setShowHistory(true)} style={{ background:"rgba(109,40,217,0.08)",border:"1px solid rgba(109,40,217,0.25)",color:"#8b5cf6",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🕘 History</button>
             <button onClick={() => setShowContact(true)} style={{ background:"rgba(6,182,212,0.1)",border:"1px solid rgba(6,182,212,0.3)",color:"#06b6d4",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Support</button>
             <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
           </div>
@@ -2980,7 +3163,7 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} />
           )}
 
           {/* TAB: CALENDAR */}
@@ -2993,7 +3176,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} />
+              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} onSaveHistory={saveToHistory} />
             )
           )}
 
@@ -3027,13 +3210,13 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade to Starter</button>
               </div>
             ) : (
-              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} />
+              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} />
             )
           )}
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} />
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} onSaveHistory={saveToHistory} />
           )}
 
           {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
@@ -3051,7 +3234,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
               </div>
             ) : (
-              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} />
+              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} onSaveHistory={saveToHistory} />
             )
           )}
         </div>
@@ -3228,6 +3411,10 @@ Respond ONLY in JSON:
             </div>
           </div>
         </div>
+      )}
+
+      {showHistory && (
+        <HistoryPanel userId={user?.id} onClose={() => setShowHistory(false)} onRestore={restoreFromHistory} />
       )}
 
       {showFaq && (
