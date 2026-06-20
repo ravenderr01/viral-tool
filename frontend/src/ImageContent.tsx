@@ -280,7 +280,17 @@ Respond ONLY in this exact JSON (no markdown):
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
       const clean = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
-      setResult(parsed);
+
+      // Normalize: ensure every array field is always an array, even if the AI omitted it
+      const safeResult: ResultData = {
+        imageDescription: parsed.imageDescription || "",
+        hooks: Array.isArray(parsed.hooks) ? parsed.hooks : [],
+        titles: Array.isArray(parsed.titles) ? parsed.titles : [],
+        captions: Array.isArray(parsed.captions) ? parsed.captions : [],
+        hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],
+        keywordSuggestions: Array.isArray(parsed.keywordSuggestions) ? parsed.keywordSuggestions : [],
+      };
+      setResult(safeResult);
       onCreditUsed();
 
     } catch (err) {
@@ -549,7 +559,7 @@ Respond ONLY in this exact JSON (no markdown):
             </div>
           )}
 
-          {result.keywordSuggestions && result.keywordSuggestions.length > 0 && (
+          {Array.isArray(result.keywordSuggestions) && result.keywordSuggestions.length > 0 && (
             <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                 <h3 style={{ margin: 0, fontFamily: "'Syne',sans-serif", color: "#06b6d4", fontSize: "0.88rem" }}>🔑 Keyword Research</h3>

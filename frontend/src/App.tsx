@@ -2145,7 +2145,7 @@ function TrendingNowCard({ niche, platform }: any) {
 // Keyword research table for Ads platforms — AI-estimated volume/competition, clearly labeled
 function KeywordResearchCard({ keywords }: { keywords: any[] }) {
   const [copied, setCopied] = useState(false);
-  if (!keywords || keywords.length === 0) return null;
+  if (!Array.isArray(keywords) || keywords.length === 0) return null;
 
   const levelColor = (lvl: string) => lvl === "High" ? "#ef4444" : lvl === "Medium" ? "#f59e0b" : "#22c55e";
   const intentColor: Record<string, string> = { Commercial: "#8b5cf6", Informational: "#06b6d4", Navigational: "#71717a", Transactional: "#22c55e" };
@@ -2189,17 +2189,19 @@ function KeywordResearchCard({ keywords }: { keywords: any[] }) {
 
 function ResultCard({ title, items, emoji, color }: any) {
   const [copied, setCopied] = useState(false);
+  const safeItems: string[] = Array.isArray(items) ? items : [];
+  if (safeItems.length === 0) return null;
 
   return (
     <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
         <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
-        <button onClick={() => { navigator.clipboard.writeText(items.join("\n")); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
+        <button onClick={() => { navigator.clipboard.writeText(safeItems.join("\n")); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
           {copied ? "✓ Copied!" : "Copy all"}
         </button>
       </div>
       <ul style={{ margin: 0, padding: "0 0 0 1rem" }}>
-        {items.map((item: string, i: number) => (
+        {safeItems.map((item: string, i: number) => (
           <li key={i} style={{ color: "#ccc", fontSize: "0.83rem", marginBottom: "0.35rem", lineHeight: 1.6 }}>{item}</li>
         ))}
       </ul>
@@ -2465,10 +2467,18 @@ Respond ONLY in JSON:
         if (match) parsed = JSON.parse(match[0]);
         else throw new Error("Parse failed");
       }
-      setResults(parsed);
+      // Normalize: ensure every array field is always an array, even if the AI omitted it
+      const safeResults = {
+        trendingTopics: Array.isArray(parsed.trendingTopics) ? parsed.trendingTopics : [],
+        viralHooks: Array.isArray(parsed.viralHooks) ? parsed.viralHooks : [],
+        titles: Array.isArray(parsed.titles) ? parsed.titles : [],
+        captions: Array.isArray(parsed.captions) ? parsed.captions : [],
+        keywordSuggestions: Array.isArray(parsed.keywordSuggestions) ? parsed.keywordSuggestions : [],
+      };
+      setResults(safeResults);
       incrementUsage();
-      const detectedStyles = (parsed.viralHooks || []).map((h: string) => detectHookStyle(h));
-      await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: parsed.viralHooks || [], titles: parsed.titles || [], captions: parsed.captions || [], trending_topics: parsed.trendingTopics || [], hook_styles: detectedStyles });
+      const detectedStyles = safeResults.viralHooks.map((h: string) => detectHookStyle(h));
+      await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: safeResults.viralHooks, titles: safeResults.titles, captions: safeResults.captions, trending_topics: safeResults.trendingTopics, hook_styles: detectedStyles });
       await supabase.from("users").update({ generations_used_today: (userData?.generations_used_today || 0) + 1, credits_remaining: (userData?.credits_remaining || 0) - 1 }).eq("id", user.id);
     } catch { setError("Something went wrong. Please try again."); }
     setLoading(false);
