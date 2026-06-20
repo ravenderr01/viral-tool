@@ -20,7 +20,7 @@ const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
 const SUPPORT_PHONE = "+91 9315133390";
 
 const PLANS = {
-  free:        { label: "Free",        limit: 5,    priceINR: 0,    priceUSD: 0  },
+  free:        { label: "Free",        limit: 100,  priceINR: 0,    priceUSD: 0  },
   starter:     { label: "Starter",     limit: 100,  priceINR: 299,  priceUSD: 4,  badge: "🔥 Popular" },
   pro_creator: { label: "Pro Creator", limit: 400,  priceINR: 999,  priceUSD: 12, badge: "⚡ Best Value" },
   growth:      { label: "Growth",      limit: 150,  priceINR: 799,  priceUSD: 10, badge: "📈 Business" },
@@ -2196,7 +2196,7 @@ export default function ViralContentTool() {
         if (session?.user?.email === ADMIN_EMAIL) { setPlan("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
         if (data?.credits_remaining !== undefined) {
-          setUsageCount((data.credits_total || 10) - data.credits_remaining);
+          setUsageCount((data.credits_total || 100) - data.credits_remaining);
         }
       }
       setProfileLoading(false);
@@ -2211,7 +2211,7 @@ export default function ViralContentTool() {
         if (session.user.email === ADMIN_EMAIL) { setPlan("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
         if (data?.credits_remaining !== undefined) {
-          setUsageCount((data.credits_total || 10) - data.credits_remaining);
+          setUsageCount((data.credits_total || 100) - data.credits_remaining);
         }
         if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(data.user_type); }
         setProfileLoading(false);
@@ -2223,7 +2223,7 @@ export default function ViralContentTool() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const limit = PLANS[plan as keyof typeof PLANS]?.limit || 10;
+  const limit = PLANS[plan as keyof typeof PLANS]?.limit || 100;
   const remaining = Math.max(0, limit - usageCount);
   const usedPct = Math.min(100, (usageCount / limit) * 100);
   const langLabel = getLangLabel(selectedLang);
