@@ -147,7 +147,7 @@ export default function ImageContent({
   const [keyword, setKeyword] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const isLocked = !["pro", "agency", "Agency"].includes(plan);
+  const isLocked = false; // Unlocked for all plans during testing phase
 
   const handleFile = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
