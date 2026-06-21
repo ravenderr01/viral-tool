@@ -2855,33 +2855,17 @@ Respond ONLY in JSON:
             <button onClick={() => setShowAdmin(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "34rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🔧 Admin</button>
           )}
 
-          {/* Top Buttons */}
-          <button onClick={() => supabase.auth.signOut()} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Logout →</button>
-          <button onClick={() => setShowPlans(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "23rem", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>💎 Plans</button>
-          <button onClick={() => setShowContact(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "7rem", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>Support</button>
-          <button onClick={() => setShowFaq(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "29rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>❓ FAQ</button>
-          <button onClick={() => setShowReview(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "13rem", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#f59e0b", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>⭐ Review</button>
-          <button onClick={() => setShowHistory(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "39rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🕘 History</button>
-
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
-            {user?.email === "ravenderr01@gmail.com" && (
-              <button onClick={() => setShowAdmin(true)} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.5rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🔧</button>
-            )}
-            <button onClick={() => setShowPlans(true)} style={{ background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",color:"#6d28d9",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>💎 Plans</button>
-            <button onClick={() => setShowFaq(true)} style={{ background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>❓ FAQ</button>
-            <button onClick={() => setShowHistory(true)} style={{ background:"rgba(109,40,217,0.08)",border:"1px solid rgba(109,40,217,0.25)",color:"#8b5cf6",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>🕘 History</button>
-            <button onClick={() => setShowContact(true)} style={{ background:"rgba(6,182,212,0.1)",border:"1px solid rgba(6,182,212,0.3)",color:"#06b6d4",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Support</button>
-            <button onClick={() => supabase.auth.signOut()} style={{ background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",padding:"0.3rem 0.55rem",borderRadius:"8px",fontSize:"0.65rem",fontWeight:700,cursor:"pointer" }}>Logout</button>
           </div>
 
           {/* Profile */}
-          <div className="desktop-btn" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
+          <div className="desktop-btn mobile-profile-show" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
             {showProfile && (
-              <div style={{ position: "absolute", top: "48px", left: 0, background: "#0f0f0f", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "16px", padding: "1.25rem", minWidth: "240px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 100, animation: "slideUp 0.2s ease" }}>
+              <div style={{ position: "absolute", top: "48px", left: 0, background: "#0f0f0f", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "16px", padding: "1.25rem", minWidth: "260px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 100, animation: "slideUp 0.2s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
                   <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.3rem", color: "#fff", flexShrink: 0 }}>
                     {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
@@ -2898,8 +2882,38 @@ Respond ONLY in JSON:
                 {profile?.phone && <div style={{ color: "#555", fontSize: "0.75rem", marginBottom: "0.75rem" }}>📞 {profile.phone}</div>}
                 <div style={{ color: "#333", fontSize: "0.72rem", marginBottom: "1rem" }}>📅 Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                 {profile?.plan === "free" && (
-                  <button onClick={() => { setShowPaywall(true); setShowProfile(false); }} style={{ width: "100%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.5rem" }}>🚀 Upgrade Plan</button>
+                  <button onClick={() => { setShowPaywall(true); setShowProfile(false); }} style={{ width: "100%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.75rem" }}>🚀 Upgrade Plan</button>
                 )}
+
+                <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "0.6rem", marginBottom: "0.6rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                  <button onClick={() => { setShowHistory(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#a1a1aa", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    🕘 History
+                  </button>
+                  <button onClick={() => { setShowPlans(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#a1a1aa", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    💎 Plans
+                  </button>
+                  <button onClick={() => { setShowFaq(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#a1a1aa", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    ❓ FAQ
+                  </button>
+                  <button onClick={() => { setShowReview(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#a1a1aa", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    ⭐ Review
+                  </button>
+                  <button onClick={() => { setShowContact(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#a1a1aa", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    💬 Support
+                  </button>
+                  {user?.email === "ravenderr01@gmail.com" && (
+                    <button onClick={() => { setShowAdmin(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#ef4444", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                      🔧 Admin
+                    </button>
+                  )}
+                </div>
+
                 <button onClick={() => supabase.auth.signOut()} style={{ width: "100%", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem" }}>Logout</button>
               </div>
             )}
