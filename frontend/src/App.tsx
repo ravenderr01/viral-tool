@@ -2850,17 +2850,12 @@ Respond ONLY in JSON:
 
           
 
-          {/* Admin Button */}
-          {user?.email === "ravenderr01@gmail.com" && (
-            <button onClick={() => setShowAdmin(true)} className="desktop-btn" style={{ position: "absolute", top: "1rem", right: "34rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "0.4rem 1rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>🔧 Admin</button>
-          )}
-
           {/* Mobile Top Bar */}
           <div style={{ display: "none" }} className="mobile-top-bar">
           </div>
 
           {/* Profile */}
-          <div className="desktop-btn mobile-profile-show" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
+          <div className="desktop-btn" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
