@@ -2787,7 +2787,6 @@ Respond ONLY in JSON:
           .desktop-btn { display: none !important; }
           .mobile-header { padding: 3.5rem 0.75rem 0.5rem !important; max-width: 100vw; overflow-x: hidden; }
           .mobile-top-bar { display: flex !important; }
-          .mobile-profile-show { display: block !important; }
           .tab-scroll-row > button { min-width: 68px; font-size: 0.62rem !important; padding: 0.5rem 0.15rem !important; }
           .platform-btn-row { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
           .platform-btn-row::-webkit-scrollbar { display: none; }
@@ -2799,7 +2798,10 @@ Respond ONLY in JSON:
         .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999; align-items: center; padding: 0.5rem 0.75rem; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 0.4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .mobile-top-bar::-webkit-scrollbar { display: none; }
         .mobile-top-bar > button { flex-shrink: 0; }
-        .mobile-profile-show { display: none; }
+        .profile-trigger { display: block; }
+        @media (max-width: 768px) {
+          .profile-trigger { top: 0.75rem !important; left: 0.75rem !important; }
+        }
         input,textarea { box-sizing:border-box; max-width: 100%; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
@@ -2855,7 +2857,7 @@ Respond ONLY in JSON:
           </div>
 
           {/* Profile */}
-          <div className="desktop-btn" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
+          <div className="profile-trigger" style={{ position: "absolute", top: "0.75rem", left: "1rem" }} onClick={() => setShowProfile(!showProfile)}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 800, fontSize: "1rem", color: "#fff", boxShadow: "0 4px 15px rgba(109,40,217,0.25)" }}>
               {profile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
