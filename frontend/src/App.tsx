@@ -259,6 +259,11 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHisto
   const [generateResult, setGenerateResult] = useState<any>(null);
   const [generateLoading, setGenerateLoading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [voiceLang, setVoiceLang] = useState("Hindi");
+  const [voiceGender, setVoiceGender] = useState<"Female" | "Male">("Female");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
 
   const [platform, setPlatform] = useState("Instagram");
   const [error, setError] = useState("");
@@ -335,6 +340,40 @@ Respond ONLY in JSON:
     setImproveLoading(false);
   };
 
+
+  const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string }> = {
+    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN" },
+    "Tamil":    { Female: "ta-IN-PallaviNeural",  Male: "ta-IN-ValluvarNeural",  code: "ta-IN" },
+    "Telugu":   { Female: "te-IN-ShrutiNeural",   Male: "te-IN-MohanNeural",     code: "te-IN" },
+    "Marathi":  { Female: "mr-IN-AarohiNeural",   Male: "mr-IN-ManoharNeural",   code: "mr-IN" },
+    "Gujarati": { Female: "gu-IN-DhwaniNeural",   Male: "gu-IN-NiranjanNeural",  code: "gu-IN" },
+    "Bengali":  { Female: "bn-IN-TanishaaNeural", Male: "bn-IN-BashkarNeural",   code: "bn-IN" },
+    "English":  { Female: "en-US-JennyNeural",    Male: "en-US-GuyNeural",       code: "en-US" },
+  };
+
+  const convertToVoice = async (text: string) => {
+    if (!text || !text.trim()) { setVoiceError("No script text to convert."); return; }
+    setVoiceLoading(true); setVoiceError(""); setAudioUrl(null);
+    try {
+      const voiceInfo = AZURE_VOICES[voiceLang];
+      const res = await fetch("https://viral-tool-1.onrender.com/api/text-to-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: text.replace(/\[.*?\]/g, ""), // strip [PAUSE], [SHOW X] stage directions before speaking
+          voiceName: voiceInfo[voiceGender],
+          languageCode: voiceInfo.code,
+        }),
+      });
+      if (!res.ok) throw new Error("TTS failed");
+      const audioBlob = await res.blob();
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+    } catch {
+      setVoiceError("Voice generation failed. Try again.");
+    }
+    setVoiceLoading(false);
+  };
 
   const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
     const canvas = document.createElement("canvas");
@@ -855,6 +894,49 @@ Respond ONLY in JSON:
               )}
             </div>
           )}
+
+          {/* AI Voice — Convert script to spoken audio */}
+          <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.7rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT TO AI VOICE</p>
+
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.6rem", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "120px" }}>
+                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>LANGUAGE</label>
+                <select value={voiceLang} onChange={e => setVoiceLang(e.target.value)}
+                  style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.5rem 0.6rem", color: "#fff", fontSize: "0.8rem", outline: "none" }}>
+                  {Object.keys(AZURE_VOICES).map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: "120px" }}>
+                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>VOICE</label>
+                <div style={{ display: "flex", gap: "0.3rem" }}>
+                  {(["Female", "Male"] as const).map(g => (
+                    <button key={g} onClick={() => setVoiceGender(g)}
+                      style={{ flex: 1, background: voiceGender === g ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceGender === g ? "#06b6d4" : "#1f1f1f"}`, color: voiceGender === g ? "#06b6d4" : "#52525b", padding: "0.5rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
+
+            <button onClick={() => convertToVoice(generateResult.script)} disabled={voiceLoading}
+              style={{ width: "100%", padding: "0.7rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.82rem", cursor: voiceLoading ? "not-allowed" : "pointer" }}>
+              {voiceLoading ? "🎙️ Generating voice..." : "🎙️ Generate Voiceover"}
+            </button>
+
+            {audioUrl && (
+              <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <audio controls src={audioUrl} style={{ width: "100%" }} />
+                <a href={audioUrl} download={`vci-voiceover-${voiceLang}-${voiceGender}.mp3`}
+                  style={{ textAlign: "center", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none" }}>
+                  ⬇ Download MP3
+                </a>
+              </div>
+            )}
+          </div>
 
           {/* Audio */}
           {generateResult.audio_suggestion && (
