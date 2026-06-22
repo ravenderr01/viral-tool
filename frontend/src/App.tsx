@@ -325,19 +325,37 @@ Respond ONLY in JSON:
   "platform_tips": ["tip 1", "tip 2", "tip 3"]
 }`;
 
-    try {
+    // Retry with backoff if the backend is rate-limited (Groq free tier: 30 requests/minute)
+    const attemptRequest = async (retriesLeft: number): Promise<any> => {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
+
+      if (!text && retriesLeft > 0) {
+        await new Promise(r => setTimeout(r, 2500));
+        return attemptRequest(retriesLeft - 1);
+      }
+      if (!text) throw new Error("RATE_LIMITED");
+      return text;
+    };
+
+    try {
+      const text = await attemptRequest(2);
       let parsed;
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setImproveResult(parsed);
       if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
-    } catch { setError("Analysis failed. Try again."); }
+    } catch (err: any) {
+      if (err?.message === "RATE_LIMITED") {
+        setError("Server thoda busy hai (bahut requests aa rahi hain). 10-15 second wait karo aur phir try karo.");
+      } else {
+        setError("Analysis failed. Try again.");
+      }
+    }
     setImproveLoading(false);
   };
 
@@ -678,13 +696,23 @@ Respond ONLY in JSON:
     // HOOK/PROBLEM/SOLUTION/CTA structure, which made narrative styles like Story feel flat.
     const styleGuide: Record<string, { instruction: string; sectionLabels: string[] }> = {
       "Story": {
-        instruction: `Write this as a genuine NARRATIVE STORY, not a tips list. Rules:
-- Open mid-action or with a vivid sensory detail (sound, smell, feeling) — never "Let me tell you about..."
-- Build with concrete, specific sensory details (what was heard/seen/felt) — vague horror ("it was scary") is forbidden, show physical reactions instead (racing heart, cold sweat, frozen feet)
-- Include at least one moment of rising tension BEFORE the twist/climax — don't reveal everything immediately
-- End on a punchy final line or unresolved chill, not a generic wrap-up
-- Use short, punchy sentences during tense moments and slightly longer ones during build-up, to control pacing
-- This must read like a real campfire/late-night story a person would actually tell, with personality and dread building naturally — not a generic AI summary of "a scary thing happened in a jungle"`,
+        instruction: `Write this as a genuine NARRATIVE STORY, not a sequence of events. These craft rules apply REGARDLESS of what language you write in — translate the techniques, not just the words:
+
+BANNED — never write lines that simply LABEL an emotion instead of showing it. These exact patterns (in any language) are forbidden:
+- "It was very scary" / "यह बहुत डरावना था" / any direct statement that something IS scary, weird, or strange
+- A character saying "this is scary/strange" out loud as commentary
+- "Suddenly a strange sound was heard" with no specific description of WHAT the sound actually was
+Instead, SHOW the fear through: specific physical sensations (heart pounding against ribs, throat going dry, legs refusing to move), a precisely described sound/sight (not "a strange noise" but "a low dragging sound, like something heavy being pulled across stone"), and the character's involuntary reaction (stepping back, grabbing the other person's arm, going silent mid-sentence).
+
+STRUCTURE — this must escalate, not just list events one after another:
+- SETUP: establish the normal situation and ONE small wrong detail that the character almost ignores
+- RISING TENSION: that small detail grows — describe specific sensory escalation (sound gets closer, shadow moves, temperature drops) while the characters try to rationalize it away — this is where most of the suspense should live, don't rush through it
+- TWIST/CLIMAX: the moment understanding breaks — be specific and visual, not just "and then something scary happened"
+- AFTERMATH: end on ONE precise, chilling final image or line — not a summary, not "and that's how X happened." The last line should leave a specific unsettling image in the viewer's mind.
+
+EXAMPLE OF THE QUALITY BAR (structure, not content, to copy): "The torch flickered. Not from wind — there was no wind down here. Rahul's hand found mine in the dark, gripping too hard. 'Did you hear that?' I hadn't. Not yet. Then I did — a slow scrape, stone against stone, coming from behind the wall we'd just walked past." — Notice: no character says "this is scary," the fear is built through specific physical detail and held tension.
+
+Write with this exact level of specificity and escalation, in whatever language is specified below — Hindi, English, or any other language must follow this SAME craft standard, not a simplified version of it.`,
         sectionLabels: ["HOOK", "SETUP", "RISING TENSION", "TWIST/CLIMAX", "AFTERMATH"],
       },
       "POV": {
@@ -728,12 +756,41 @@ Respond ONLY in JSON:
     const currentStyleGuide = styleGuide[style] || styleGuide["Tutorial"];
 
     const platformGuide: Record<string, string> = {
-      "Instagram": "Instagram Reels — vertical 9:16, hook in first 3 seconds, trending audio suggestion, end with save/share CTA",
-      "YouTube": "YouTube Shorts or Long form — strong hook, value delivery, subscribe CTA",
-      "TikTok": "TikTok — fast paced, trending sounds, pattern interrupt hook, duet/stitch friendly",
-      "LinkedIn": "LinkedIn — professional story format, insight-driven, no trending audio needed",
-      "Twitter / X": "Twitter/X — punchy thread format or video script, controversial hook",
-      "Facebook": "Facebook Reels — emotional hook, community focused, share CTA",
+      "Instagram": `Write this for an Instagram Reel specifically:
+- Vertical 9:16 framing implied in every [SHOW X] direction (close-up, face-to-camera energy)
+- Hook MUST work with sound OFF too — visual text overlay cues matter as much as spoken words
+- Pacing is fast: short sentences, quick cuts implied every 2-3 seconds via [CUT TO]
+- End with a save/share-worthy moment, not just "follow me" — Instagram rewards saves and shares over comments
+- Tone: aesthetic, aspirational, or relatable — never corporate`,
+      "YouTube": `Write this for a YouTube Short or long-form video specifically:
+- Hook must promise a clear payoff ("by the end of this video you'll know X") — YouTube viewers expect to know what they're getting
+- Slightly more explanatory and narrated than Instagram — YouTube audiences tolerate more setup/context
+- Include a natural moment for a subscribe/notification-bell CTA mid-script, not just at the end
+- Pacing can breathe more than Instagram — YouTube rewards watch time over raw speed
+- Tone: informative, narrative, or entertaining depending on style — built for sustained attention, not a 1-second scroll-stop`,
+      "TikTok": `Write this for TikTok specifically:
+- Hook must be a pattern-interrupt within the first 1-2 seconds — TikTok's algorithm punishes slow starts harder than any other platform
+- Built for trending sounds — leave a clear beat/pause moment where a trending audio drop or transition would hit
+- Casual, raw, unpolished tone — overly scripted or "produced" language feels out of place on TikTok
+- Should work as a duet or stitch — leave room for a reaction-style ending or open question
+- Tone: playful, fast, Gen-Z-native phrasing where appropriate`,
+      "LinkedIn": `Write this for LinkedIn specifically:
+- Open with a professional insight or contrarian take, NOT an entertainment hook — LinkedIn audiences scroll for value, not entertainment
+- No trending audio or fast cuts — this is talking-head or text-overlay style, slower and more deliberate pacing
+- Include a clear professional/career/business takeaway, not just personal entertainment
+- CTA should invite comments/discussion ("What's your experience with this?") rather than follows
+- Tone: credible, insight-driven, first-person professional — never gimmicky`,
+      "Twitter / X": `Write this for Twitter/X specifically:
+- Hook must be a strong, quotable opening line — Twitter/X rewards shareable, screenshot-worthy statements
+- Punchy, short sentences throughout — this is a platform of brevity, avoid long explanatory sentences
+- Can include a controversial or strong opinion angle — X rewards engagement-bait more than other platforms
+- Works as either a short video script OR could be read as a thread — keep each beat self-contained enough to stand alone
+- Tone: direct, opinionated, conversational`,
+      "Facebook": `Write this for Facebook Reels/video specifically:
+- Hook should be emotionally warm or nostalgic — Facebook's audience skews older and responds to relatable, community-oriented content over trend-chasing
+- Slightly slower pacing than Instagram/TikTok — less reliant on rapid cuts
+- CTA should encourage sharing within groups/family, not just personal follows
+- Tone: warm, community-focused, accessible to a broad age range — avoid niche internet slang`,
     };
 
     const prompt = `You are a viral ${platform} content creator and an experienced ${style.toLowerCase()} scriptwriter.
@@ -744,11 +801,15 @@ Platform: ${platform}
 Style: ${style}
 Duration: ${duration}
 Format Guide: ${durationGuide[duration]}
-Platform Guide: ${platformGuide[platform]}
 Language: ${langStrict}
+
+PLATFORM-SPECIFIC RULES FOR "${platform}" (the script must feel native to this platform, not generic):
+${platformGuide[platform] || platformGuide["Instagram"]}
 
 STYLE-SPECIFIC WRITING RULES FOR "${style}" (follow these closely — this is what makes the script feel professional rather than generic):
 ${currentStyleGuide.instruction}
+
+CRITICAL: The craft quality above (specificity, escalation, sensory detail, avoiding generic/labeled emotion) applies with FULL FORCE regardless of the output language. Writing in Hindi, Tamil, or any other language is NOT an excuse to simplify the storytelling craft — translate the technique fully, not just produce a simpler version because it's in another language. A native speaker reading this should feel genuine craft, not a watered-down translation.
 
 Create a script that will go VIRAL. Be specific, emotional, and platform-perfect. Avoid vague, generic filler sentences — every line should earn its place.
 
@@ -1186,6 +1247,86 @@ Respond ONLY in JSON:
             <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{improveResult.after?.script}</p>
           </div>
 
+          {/* AI Voice — Convert the IMPROVED script to spoken audio */}
+          <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT IMPROVED SCRIPT TO AI VOICE</p>
+              <span style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Neural TTS</span>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.6rem", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "120px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                  LANGUAGE
+                  {voiceLangAutoSet && AZURE_VOICES[langLabel] && <span style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", padding: "0.05rem 0.4rem", borderRadius: "8px", fontSize: "0.58rem", fontWeight: 700 }}>auto-matched</span>}
+                </label>
+                <select value={voiceLang} onChange={e => { setVoiceLang(e.target.value); setVoiceStyle("Default"); setVoiceLangAutoSet(false); }}
+                  style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.5rem 0.6rem", color: "#fff", fontSize: "0.8rem", outline: "none" }}>
+                  {Object.keys(AZURE_VOICES).map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: "120px" }}>
+                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>VOICE</label>
+                <div style={{ display: "flex", gap: "0.3rem" }}>
+                  {(["Female", "Male"] as const).map(g => (
+                    <button key={g} onClick={() => setVoiceGender(g)}
+                      style={{ flex: 1, background: voiceGender === g ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceGender === g ? "#06b6d4" : "#1f1f1f"}`, color: voiceGender === g ? "#06b6d4" : "#52525b", padding: "0.5rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {AZURE_VOICES[voiceLang]?.styles && (
+              <div style={{ marginBottom: "0.6rem" }}>
+                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>TONE</label>
+                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                  {AZURE_VOICES[voiceLang]!.styles!.map(s => (
+                    <button key={s} onClick={() => setVoiceStyle(s)}
+                      style={{ background: voiceStyle === s ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceStyle === s ? "#06b6d4" : "#1f1f1f"}`, color: voiceStyle === s ? "#06b6d4" : "#52525b", padding: "0.3rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginBottom: "0.7rem" }}>
+              <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>SPEED</label>
+              <div style={{ display: "flex", gap: "0.3rem" }}>
+                {VOICE_SPEEDS.map(s => (
+                  <button key={s.value} onClick={() => setVoiceSpeed(s.value)}
+                    style={{ flex: 1, background: voiceSpeed === s.value ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceSpeed === s.value ? "#06b6d4" : "#1f1f1f"}`, color: voiceSpeed === s.value ? "#06b6d4" : "#52525b", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: 600 }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
+
+            <button onClick={() => convertToVoice(improveResult.after?.script || "")} disabled={voiceLoading}
+              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.84rem", cursor: voiceLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              {voiceLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating voice...</> : "🎙️ Generate Voiceover for Improved Script"}
+            </button>
+
+            {audioUrl && (
+              <div style={{ marginTop: "0.85rem", display: "flex", flexDirection: "column", gap: "0.5rem", animation: "slideUp 0.3s ease" }}>
+                <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem" }}>
+                  <audio controls src={audioUrl} style={{ width: "100%" }} />
+                </div>
+                <span style={{ textAlign: "center", background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)", color: "#52525b", padding: "0.4rem", borderRadius: "8px", fontSize: "0.68rem" }}>
+                  {voiceLang} · {voiceGender}{voiceStyle !== "Default" ? ` · ${voiceStyle}` : ""}
+                </span>
+                <a href={audioUrl} download={`vci-voiceover-improved-${voiceLang}-${voiceGender}.mp3`}
+                  style={{ textAlign: "center", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, textDecoration: "none" }}>
+                  ⬇ Download MP3
+                </a>
+              </div>
+            )}
+          </div>
+
           {/* Improvements + Tips */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
@@ -1233,12 +1374,23 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const SCORE_PLATFORM_GUIDE: Record<string, string> = {
+    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
+    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
+    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing.",
+    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
+    "Facebook": "Warm, community/family-oriented tone for a slightly older audience.",
+    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
+    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits (headlines max 30 chars), no fluff.",
+    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
+  };
+
   const analyze = async () => {
     if (!contentInput.trim()) { setError("Apna content ya hook paste karo."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are an expert viral content analyst and coach. Analyze this content for ${platform}:
+    const prompt = `You are an expert viral content analyst and coach who deeply understands how content actually performs on ${platform} specifically. Analyze this content for ${platform}:
 
 CONTENT TO ANALYZE:
 """
@@ -1247,13 +1399,16 @@ ${contentInput}
 
 PLATFORM: ${platform}
 
+PLATFORM-SPECIFIC TONE FOR "${platform}" (your 3 improved versions must genuinely sound native to this platform, not generic):
+${SCORE_PLATFORM_GUIDE[platform] || SCORE_PLATFORM_GUIDE["Instagram"]}
+
 LANGUAGE RULE: Detect the language of the content and respond in the SAME language. Hindi content = Hindi response. English = English.
 
 ANALYSIS RULES:
 - Score out of 100 (not 10). Be strict — average content scores 40-60.
 - Analyze the FULL content, not just first line
 - Give LINE-BY-LINE feedback on weak parts
-- Give 3 platform-specific improved versions
+- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites
 - Identify exactly what's strong and what's weak
 
 Respond ONLY in this exact JSON (no markdown, no extra text):
@@ -1491,19 +1646,32 @@ function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     { id: "Pinterest", emoji: "📌", color: "#e60023" },
   ];
 
+  const CAL_PLATFORM_GUIDE: Record<string, string> = {
+    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
+    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
+    "Facebook": "Warm, community/family-oriented tone for a slightly older audience. Less trend-chasing slang.",
+    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
+    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing — credible takeaways only.",
+    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
+    "Pinterest": "Keyword-rich, benefit-stated clearly upfront — functions like search, not entertainment.",
+  };
+
   const generate = async () => {
     if (!calKeyword.trim()) { setError("Enter a keyword first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setCalendar([]);
 
-    const prompt = `You are a ${calPlatform} content strategist. Create a 30-day content calendar.
+    const prompt = `You are an experienced ${calPlatform} content strategist who deeply understands how content is actually written and consumed on this specific platform. Create a 30-day content calendar.
 Platform: ${calPlatform}
 Keyword: "${calKeyword}"
 Niche: ${niche}
 OUTPUT LANGUAGE: ${langStrict} — Write ALL hooks and notes in this language/script only. No English mixing.
 
+PLATFORM-SPECIFIC TONE FOR "${calPlatform}" (every hook must genuinely sound native to this platform, not generic):
+${CAL_PLATFORM_GUIDE[calPlatform] || CAL_PLATFORM_GUIDE["Instagram"]}
+
 STRICT RULES:
-- Every hook must be platform-specific for ${calPlatform}
+- Every hook must be platform-specific for ${calPlatform}, following the tone above
 - Use varied content types: ${CONTENT_TYPES.join(", ")}
 - All hooks must be in the specified language
 
@@ -1629,23 +1797,30 @@ function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platf
     setLoading(true); setError(""); setPack(null);
 
     const packPrompts: Record<string, string> = {
-      instagram: `You are an Instagram & TikTok viral content expert. Generate:
-- hooks: 10 viral opening lines
+      instagram: `You are an experienced Instagram & TikTok content strategist who understands these are two DIFFERENT platforms with different tones, even though you're creating one combined pack.
+- For Instagram-style items: aesthetic, visual-first, aspirational/relatable tone — hooks must work as text overlay even with sound off.
+- For TikTok-style items: raw, casual, pattern-interrupt energy in the first 1-2 seconds — unpolished, trend-aware phrasing.
+Generate (clearly favor Instagram tone for hooks/captions and TikTok tone for scripts, since scripts are typically TikTok/Reel-style fast content):
+- hooks: 10 viral opening lines (Instagram-style aesthetic/aspirational tone)
 - titles: 8 post/reel title ideas
-- captions: 5 full captions with emojis and CTA
-- scripts: 5 Reel/TikTok scripts
+- captions: 5 full captions with emojis and CTA (Instagram tone — emojis used naturally not decoratively)
+- scripts: 5 Reel/TikTok scripts (TikTok pacing — fast, pattern-interrupt hook, casual phrasing)
 - hashtags: 15 relevant hashtags`,
-      youtube: `You are a YouTube content strategist. Generate:
-- hooks: 8 video hook lines
-- titles: 10 SEO-optimized video titles
-- captions: 5 video descriptions
-- scripts: 5 full intro scripts
-- hashtags: 10 YouTube tags`,
-      ads: `You are a Google Ads & Meta Ads expert. Generate:
-- hooks: 10 Google Ad headlines (MAX 30 chars each)
-- titles: 8 Meta Ad headlines (MAX 40 chars each)
-- captions: 5 ad descriptions (MAX 90 chars each)
-- scripts: 5 Meta ad primary texts
+      youtube: `You are an experienced YouTube content strategist. Write with YouTube's specific audience expectations in mind: viewers expect a clear payoff promised early, slightly more explanatory/narrative pacing than short-form platforms, and SEO-aware phrasing since YouTube is a search engine as much as a social platform.
+Generate:
+- hooks: 8 video hook lines (each promising a clear payoff, e.g. "by the end of this you'll know...")
+- titles: 10 SEO-optimized video titles (curiosity-driven but also keyword-rich for search)
+- captions: 5 video descriptions (slightly longer, narrative, search-friendly)
+- scripts: 5 full intro scripts (paced for sustained watch time, not a 1-second scroll-stop)
+- hashtags: 10 YouTube tags (treated as searchable keywords, not decoration)`,
+      ads: `You are a senior paid-ads copywriter with deep experience writing for both Google Search Ads and Meta (Facebook/Instagram) Ads — and you know these are NOT interchangeable formats.
+- Google Ads style: search-intent driven, benefit + urgency in tight character limits, no fluff.
+- Meta Ads style: scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.
+Generate:
+- hooks: 10 Google Ad headlines (STRICTLY MAX 30 characters each, search-intent driven, each a genuinely different angle — not repetitive)
+- titles: 8 Meta Ad headlines (STRICTLY MAX 40 characters each, scroll-stopping benefit statements)
+- captions: 5 ad descriptions (STRICTLY MAX 90 characters each, benefit + soft CTA)
+- scripts: 5 Meta ad primary texts (pain point → agitate → solution → CTA structure, 150-200 characters each)
 - hashtags: []`,
     };
 
@@ -1799,21 +1974,35 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
 
   useEffect(() => { setKw(keyword || ""); }, [keyword]);
 
+  const CAPTION_PLATFORM_GUIDE: Record<string, string> = {
+    "Instagram": "Aesthetic, visual-first tone. Emojis used naturally, not decoratively. Hashtags: mix of broad reach tags and niche-specific tags.",
+    "YouTube": "Slightly longer, SEO-aware descriptions — written to also help search/discovery, not just engagement. Hashtags: fewer, more keyword-precise (YouTube treats hashtags as searchable tags, not decoration).",
+    "TikTok": "Short, punchy, casual, trend-aware phrasing. Hashtags: mix of broad trending tags and niche tags, written the way TikTok captions actually look (lowercase, casual).",
+    "LinkedIn": "Professional, insight-led tone — no slang, no emoji overload (1 max). Hashtags: industry/professional terms only, never entertainment-style tags.",
+    "Twitter / X": "Punchy, opinionated, quotable one-liners — written like a real tweet, not a caption. Hashtags: very few (1-2 max), X culture treats heavy hashtag use as spammy.",
+    "Facebook": "Warm, conversational, slightly longer-form storytelling tone suited to an older, community-oriented audience. Hashtags: minimal, Facebook doesn't reward heavy hashtag use.",
+    "Pinterest": "Keyword-rich, benefit-stated clearly upfront — Pinterest captions function like search snippets, not entertainment hooks. Hashtags: descriptive, search-intent driven.",
+    "WhatsApp": "Personal, direct, one-to-one message tone — written like something a friend would send, not a public post. Hashtags: not used at all on WhatsApp, generate empty array.",
+  };
+
   const generate = async () => {
     if (!kw.trim()) { setError("Please enter a keyword first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are a ${platform} content expert.
+    const prompt = `You are an experienced ${platform} content writer who deeply understands how content is actually written and consumed on this specific platform.
 Keyword: "${kw}"
 Platform: ${platform}
 OUTPUT LANGUAGE: ${langStrict}
 
+PLATFORM-SPECIFIC TONE FOR "${platform}" (the captions must feel native to this platform, not generic):
+${CAPTION_PLATFORM_GUIDE[platform] || CAPTION_PLATFORM_GUIDE["Instagram"]}
+
 IMPORTANT: Generate content ONLY about the keyword "${kw}". Ignore any other context.
 
 Generate ONLY:
-1. 5 ready-to-post captions (with emojis, CTA, engaging tone) — all about "${kw}"
-2. 20 relevant hashtags specific to "${kw}"
+1. 5 ready-to-post captions (with emojis where platform-appropriate, CTA, engaging tone) — all about "${kw}", written in the platform tone described above
+2. 20 relevant hashtags specific to "${kw}" (or an empty array if the platform tone above says hashtags aren't used)
 
 Respond ONLY in JSON:
 {"captions":["caption 1","caption 2","caption 3","caption 4","caption 5"],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8","#tag9","#tag10","#tag11","#tag12","#tag13","#tag14","#tag15","#tag16","#tag17","#tag18","#tag19","#tag20"]}`;
@@ -2812,17 +3001,30 @@ export default function ViralContentTool() {
 - captions: 3 advertorial intros (120-160 characters), informational tone, no hard selling language.`,
       };
 
+      const socialPlatformStyle: Record<string, string> = {
+        "Instagram": "Visual, aesthetic, fast-paced. Hooks must work as text-overlay even with sound off. Tone: aspirational/relatable, never corporate. Captions should be scroll-stopping with emoji used naturally, not decoratively.",
+        "YouTube": "Slightly more explanatory than other platforms — hooks should promise a clear payoff ('by the end you'll know X'). Titles should be SEO-aware and curiosity-driven. Descriptions can be longer and more narrative.",
+        "TikTok": "Raw, fast, pattern-interrupt energy. Hooks must work in under 2 seconds. Casual, unpolished, Gen-Z-native phrasing where appropriate — overly polished language feels out of place here.",
+        "Facebook": "Warm, community/family-oriented, slightly older-skewing audience. Less trend-chasing slang than Instagram/TikTok. Hooks should feel emotionally relatable rather than aesthetic.",
+        "Reddit": "Conversational, no marketing language at all — Reddit punishes anything that reads like an ad. Post titles should sound like a genuine question or confession, not a headline.",
+        "LinkedIn": "Professional insight or contrarian-take energy, not entertainment. No slang, no trend-chasing. Should read like a credible person sharing a real lesson, with a clear professional takeaway.",
+        "Twitter / X": "Punchy, quotable, opinionated. Every hook should be screenshot-worthy on its own. Short sentences, direct tone, can lean into a strong opinion or controversial angle.",
+        "Pinterest": "Keyword-rich and benefit-led since Pinterest functions like visual search — titles must describe the outcome/result clearly, not just tease curiosity.",
+        "WhatsApp": "Personal, direct, one-to-one conversational tone — written like a message from a friend, not a broadcast ad.",
+        "Snapchat": "Fun, casual, FOMO-driven, very short. Written for a younger, fast-scrolling audience — no long sentences.",
+      };
+
       const platformGuide: Record<string, string> = {
-        "Instagram": "5 Reel opening lines, 5 post titles, 3 captions with hashtags, 5 trending topics",
-        "YouTube": "5 video hooks, 5 SEO titles, 3 descriptions, 5 trending formats",
-        "TikTok": "5 first-3-second hooks, 5 caption ideas, 3 video scripts, 5 trending sounds",
-        "Facebook": "5 post hooks, 5 shareable headlines, 3 posts, 5 content formats",
-        "Reddit": "5 post titles, 5 subreddit ideas, 3 post bodies, 5 trending topics",
-        "LinkedIn": "5 post openers, 5 article titles, 3 posts, 5 trending topics",
-        "Twitter / X": "5 tweet hooks, 5 thread titles, 3 tweet threads, 5 trending topics",
-        "Pinterest": "5 pin titles, 5 board names, 3 pin descriptions, 5 trending searches",
-        "WhatsApp": "5 broadcast openers, 5 status ideas, 3 messages, 5 content ideas",
-        "Snapchat": "5 story hooks, 5 story ideas, 3 snap texts, 5 trending formats",
+        "Instagram": `5 Reel opening lines, 5 post titles, 3 captions with hashtags, 5 trending topics.\nPLATFORM TONE: ${socialPlatformStyle["Instagram"]}`,
+        "YouTube": `5 video hooks, 5 SEO titles, 3 descriptions, 5 trending formats.\nPLATFORM TONE: ${socialPlatformStyle["YouTube"]}`,
+        "TikTok": `5 first-3-second hooks, 5 caption ideas, 3 video scripts, 5 trending sounds.\nPLATFORM TONE: ${socialPlatformStyle["TikTok"]}`,
+        "Facebook": `5 post hooks, 5 shareable headlines, 3 posts, 5 content formats.\nPLATFORM TONE: ${socialPlatformStyle["Facebook"]}`,
+        "Reddit": `5 post titles, 5 subreddit ideas, 3 post bodies, 5 trending topics.\nPLATFORM TONE: ${socialPlatformStyle["Reddit"]}`,
+        "LinkedIn": `5 post openers, 5 article titles, 3 posts, 5 trending topics.\nPLATFORM TONE: ${socialPlatformStyle["LinkedIn"]}`,
+        "Twitter / X": `5 tweet hooks, 5 thread titles, 3 tweet threads, 5 trending topics.\nPLATFORM TONE: ${socialPlatformStyle["Twitter / X"]}`,
+        "Pinterest": `5 pin titles, 5 board names, 3 pin descriptions, 5 trending searches.\nPLATFORM TONE: ${socialPlatformStyle["Pinterest"]}`,
+        "WhatsApp": `5 broadcast openers, 5 status ideas, 3 messages, 5 content ideas.\nPLATFORM TONE: ${socialPlatformStyle["WhatsApp"]}`,
+        "Snapchat": `5 story hooks, 5 story ideas, 3 snap texts, 5 trending formats.\nPLATFORM TONE: ${socialPlatformStyle["Snapchat"]}`,
         "Google Ads": adsCopyGuide["Google Ads"],
         "Meta Ads": adsCopyGuide["Meta Ads"],
         "YouTube Ads": adsCopyGuide["YouTube Ads"],
