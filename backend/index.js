@@ -345,13 +345,24 @@ app.post("/api/referral/apply", async (req, res) => {
 // Text-to-Speech endpoint (Azure TTS)
 app.post("/api/text-to-speech", async (req, res) => {
   try {
-    const { text, voiceName, languageCode } = req.body;
+    const { text, voiceName, languageCode, style, rate } = req.body;
 
     if (!text || !voiceName || !languageCode) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const ssml = `<speak version='1.0' xml:lang='${languageCode}'><voice xml:lang='${languageCode}' name='${voiceName}'>${text}</voice></speak>`;
+    const speakingRate = rate || "1.0";
+    const escapedText = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    // Only wrap in express-as if a non-default style is requested and supported by the voice
+    const innerContent = (style && style !== "Default")
+      ? `<mstts:express-as style="${style.toLowerCase()}"><prosody rate="${speakingRate}">${escapedText}</prosody></mstts:express-as>`
+      : `<prosody rate="${speakingRate}">${escapedText}</prosody>`;
+
+    const ssml = `<speak version='1.0' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='${languageCode}'><voice xml:lang='${languageCode}' name='${voiceName}'>${innerContent}</voice></speak>`;
 
     const response = await fetch(
       `https://${process.env.AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
