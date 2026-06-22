@@ -244,7 +244,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -260,6 +260,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHisto
   const [generateLoading, setGenerateLoading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [voiceLang, setVoiceLang] = useState("Hindi");
+  const [voiceLangAutoSet, setVoiceLangAutoSet] = useState(true);
   const [voiceGender, setVoiceGender] = useState<"Female" | "Male">("Female");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [voiceLoading, setVoiceLoading] = useState(false);
@@ -341,15 +342,32 @@ Respond ONLY in JSON:
   };
 
 
-  const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string }> = {
-    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN" },
+  const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
+    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN", styles: ["Default", "Cheerful", "Newscast", "Empathetic"] },
     "Tamil":    { Female: "ta-IN-PallaviNeural",  Male: "ta-IN-ValluvarNeural",  code: "ta-IN" },
     "Telugu":   { Female: "te-IN-ShrutiNeural",   Male: "te-IN-MohanNeural",     code: "te-IN" },
     "Marathi":  { Female: "mr-IN-AarohiNeural",   Male: "mr-IN-ManoharNeural",   code: "mr-IN" },
     "Gujarati": { Female: "gu-IN-DhwaniNeural",   Male: "gu-IN-NiranjanNeural",  code: "gu-IN" },
     "Bengali":  { Female: "bn-IN-TanishaaNeural", Male: "bn-IN-BashkarNeural",   code: "bn-IN" },
-    "English":  { Female: "en-US-JennyNeural",    Male: "en-US-GuyNeural",       code: "en-US" },
+    "English":  { Female: "en-US-AvaNeural",      Male: "en-US-AndrewNeural",    code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
   };
+
+  // Auto-select the voice language to match whatever language the script was generated in,
+  // as long as the user hasn't manually picked a different voice language themselves.
+  useEffect(() => {
+    if (!voiceLangAutoSet) return;
+    const matched = AZURE_VOICES[langLabel] ? langLabel : "English"; // fallback if app supports a language Azure doesn't
+    setVoiceLang(matched);
+  }, [langLabel, voiceLangAutoSet]);
+
+  const VOICE_SPEEDS = [
+    { label: "Slow", value: "0.85" },
+    { label: "Normal", value: "1.0" },
+    { label: "Fast", value: "1.15" },
+  ];
+
+  const [voiceStyle, setVoiceStyle] = useState("Default");
+  const [voiceSpeed, setVoiceSpeed] = useState("1.0");
 
   const convertToVoice = async (text: string) => {
     if (!text || !text.trim()) { setVoiceError("No script text to convert."); return; }
@@ -363,6 +381,8 @@ Respond ONLY in JSON:
           text: text.replace(/\[.*?\]/g, ""), // strip [PAUSE], [SHOW X] stage directions before speaking
           voiceName: voiceInfo[voiceGender],
           languageCode: voiceInfo.code,
+          style: voiceInfo.styles ? voiceStyle : "Default",
+          rate: voiceSpeed,
         }),
       });
       if (!res.ok) throw new Error("TTS failed");
@@ -653,6 +673,60 @@ Respond ONLY in JSON:
       "3 min": "Full tutorial: Hook (0-10s) + Problem (10-30s) + Step-by-step solution (30-150s, 5-7 detailed steps) + Results/Proof (150-165s) + CTA (165-180s). Total: ~400-450 words.",
     };
 
+    // Style-specific writing approach AND section labels — this is what was missing before.
+    // Without this, every style (Story, Tutorial, Comedy...) used the same generic
+    // HOOK/PROBLEM/SOLUTION/CTA structure, which made narrative styles like Story feel flat.
+    const styleGuide: Record<string, { instruction: string; sectionLabels: string[] }> = {
+      "Story": {
+        instruction: `Write this as a genuine NARRATIVE STORY, not a tips list. Rules:
+- Open mid-action or with a vivid sensory detail (sound, smell, feeling) — never "Let me tell you about..."
+- Build with concrete, specific sensory details (what was heard/seen/felt) — vague horror ("it was scary") is forbidden, show physical reactions instead (racing heart, cold sweat, frozen feet)
+- Include at least one moment of rising tension BEFORE the twist/climax — don't reveal everything immediately
+- End on a punchy final line or unresolved chill, not a generic wrap-up
+- Use short, punchy sentences during tense moments and slightly longer ones during build-up, to control pacing
+- This must read like a real campfire/late-night story a person would actually tell, with personality and dread building naturally — not a generic AI summary of "a scary thing happened in a jungle"`,
+        sectionLabels: ["HOOK", "SETUP", "RISING TENSION", "TWIST/CLIMAX", "AFTERMATH"],
+      },
+      "POV": {
+        instruction: `Write entirely in first-person present tense, as if the viewer IS the character living this moment right now. Use "I" statements, real-time reactions, and immediate sensory detail. No narrator distance — the viewer should feel like they ARE there.`,
+        sectionLabels: ["HOOK", "SITUATION", "ESCALATION", "RESOLUTION"],
+      },
+      "Tutorial": {
+        instruction: `Write as a clear, confident teacher. Each step must be a concrete, actionable instruction — not vague advice. Use specific numbers, tools, or exact phrasing the viewer can copy directly.`,
+        sectionLabels: ["HOOK", "PROBLEM", "SOLUTION", "CTA"],
+      },
+      "Challenge": {
+        instruction: `Write with high energy and stakes — frame this as a genuine challenge/dare with a clear rule, a visible struggle, and a payoff moment. Use exclamatory, energetic phrasing throughout.`,
+        sectionLabels: ["HOOK", "THE CHALLENGE", "THE STRUGGLE", "THE RESULT"],
+      },
+      "Before/After": {
+        instruction: `Structure around a clear contrast — paint the "before" state vividly (specific pain points), then the "after" state vividly (specific wins). Make the transformation feel earned and concrete, with real specifics, not vague improvement claims.`,
+        sectionLabels: ["HOOK", "BEFORE", "THE SHIFT", "AFTER"],
+      },
+      "Motivation": {
+        instruction: `Write with rhythm and emotional build — short punchy lines, repetition for emphasis, and a clear emotional arc from struggle to empowerment. This should feel like it could be read aloud over dramatic music.`,
+        sectionLabels: ["HOOK", "THE STRUGGLE", "THE TURNING POINT", "THE CALL TO ACTION"],
+      },
+      "Tips": {
+        instruction: `Each tip must be specific and immediately useful — include a concrete example or number for every tip, never generic advice like "stay consistent." Rank tips from good to best for a satisfying build.`,
+        sectionLabels: ["HOOK", "TIP BREAKDOWN", "BONUS TIP", "CTA"],
+      },
+      "Review": {
+        instruction: `Write as an honest, opinionated reviewer — include at least one specific pro AND one specific con with real detail, not generic praise. End with a clear, confident verdict.`,
+        sectionLabels: ["HOOK", "FIRST IMPRESSIONS", "PROS & CONS", "VERDICT"],
+      },
+      "Day in Life": {
+        instruction: `Write as a chronological, lived-in narration of real moments — anchor each beat to a specific time of day and a concrete, relatable detail. Avoid generic "then I did X" listing; make each moment feel observed, not summarized.`,
+        sectionLabels: ["HOOK", "MORNING/START", "MIDPOINT MOMENT", "WRAP-UP"],
+      },
+      "Comedy": {
+        instruction: `Build toward a clear punchline or comedic twist — use specific, relatable absurdity rather than generic jokes. Timing matters: set up the premise quickly, then land the punch.`,
+        sectionLabels: ["HOOK", "SETUP", "ESCALATION", "PUNCHLINE"],
+      },
+    };
+
+    const currentStyleGuide = styleGuide[style] || styleGuide["Tutorial"];
+
     const platformGuide: Record<string, string> = {
       "Instagram": "Instagram Reels — vertical 9:16, hook in first 3 seconds, trending audio suggestion, end with save/share CTA",
       "YouTube": "YouTube Shorts or Long form — strong hook, value delivery, subscribe CTA",
@@ -662,7 +736,7 @@ Respond ONLY in JSON:
       "Facebook": "Facebook Reels — emotional hook, community focused, share CTA",
     };
 
-    const prompt = `You are a viral ${platform} content creator and script writer.
+    const prompt = `You are a viral ${platform} content creator and an experienced ${style.toLowerCase()} scriptwriter.
 
 Create a complete ${duration} ${style} script for ${platform} about: "${keyword}"
 
@@ -673,18 +747,21 @@ Format Guide: ${durationGuide[duration]}
 Platform Guide: ${platformGuide[platform]}
 Language: ${langStrict}
 
-Create a script that will go VIRAL. Be specific, emotional, and platform-perfect.
+STYLE-SPECIFIC WRITING RULES FOR "${style}" (follow these closely — this is what makes the script feel professional rather than generic):
+${currentStyleGuide.instruction}
+
+Create a script that will go VIRAL. Be specific, emotional, and platform-perfect. Avoid vague, generic filler sentences — every line should earn its place.
 
 Respond ONLY in JSON:
 {
   "title": "Catchy title for this script",
   "hook": "First 3 seconds — attention grabbing opener",
-  "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions",
+  "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions, written fully in the ${style} style described above",
   "sections": [
-    {"time": "0-3s", "label": "HOOK", "content": "exact words to say", "direction": "what to show/do"},
-    {"time": "3-10s", "label": "PROBLEM", "content": "exact words", "direction": "visual direction"},
-    {"time": "10-25s", "label": "SOLUTION", "content": "exact words", "direction": "visual direction"},
-    {"time": "25-30s", "label": "CTA", "content": "exact words", "direction": "visual direction"}
+    {"time": "0-3s", "label": "${currentStyleGuide.sectionLabels[0]}", "content": "exact words to say", "direction": "what to show/do"},
+    {"time": "appropriate timing", "label": "${currentStyleGuide.sectionLabels[1]}", "content": "exact words", "direction": "visual direction"},
+    {"time": "appropriate timing", "label": "${currentStyleGuide.sectionLabels[2]}", "content": "exact words", "direction": "visual direction"},
+    {"time": "final timing", "label": "${currentStyleGuide.sectionLabels[3] || currentStyleGuide.sectionLabels[2]}", "content": "exact words", "direction": "visual direction"}
   ],
   "caption": "Ready-to-post caption with emojis",
   "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
@@ -897,12 +974,18 @@ Respond ONLY in JSON:
 
           {/* AI Voice — Convert script to spoken audio */}
           <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.7rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT TO AI VOICE</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT TO AI VOICE</p>
+              <span style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Neural TTS</span>
+            </div>
 
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.6rem", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: "120px" }}>
-                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>LANGUAGE</label>
-                <select value={voiceLang} onChange={e => setVoiceLang(e.target.value)}
+                <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                  LANGUAGE
+                  {voiceLangAutoSet && AZURE_VOICES[langLabel] && <span style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", padding: "0.05rem 0.4rem", borderRadius: "8px", fontSize: "0.58rem", fontWeight: 700 }}>auto-matched</span>}
+                </label>
+                <select value={voiceLang} onChange={e => { setVoiceLang(e.target.value); setVoiceStyle("Default"); setVoiceLangAutoSet(false); }}
                   style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.5rem 0.6rem", color: "#fff", fontSize: "0.8rem", outline: "none" }}>
                   {Object.keys(AZURE_VOICES).map(lang => <option key={lang} value={lang}>{lang}</option>)}
                 </select>
@@ -920,18 +1003,53 @@ Respond ONLY in JSON:
               </div>
             </div>
 
+            {/* Tone/Style — only shown when the selected voice supports it */}
+            {AZURE_VOICES[voiceLang]?.styles && (
+              <div style={{ marginBottom: "0.6rem" }}>
+                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>TONE</label>
+                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                  {AZURE_VOICES[voiceLang]!.styles!.map(s => (
+                    <button key={s} onClick={() => setVoiceStyle(s)}
+                      style={{ background: voiceStyle === s ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceStyle === s ? "#06b6d4" : "#1f1f1f"}`, color: voiceStyle === s ? "#06b6d4" : "#52525b", padding: "0.3rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Speaking speed */}
+            <div style={{ marginBottom: "0.7rem" }}>
+              <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>SPEED</label>
+              <div style={{ display: "flex", gap: "0.3rem" }}>
+                {VOICE_SPEEDS.map(s => (
+                  <button key={s.value} onClick={() => setVoiceSpeed(s.value)}
+                    style={{ flex: 1, background: voiceSpeed === s.value ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceSpeed === s.value ? "#06b6d4" : "#1f1f1f"}`, color: voiceSpeed === s.value ? "#06b6d4" : "#52525b", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: 600 }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
 
             <button onClick={() => convertToVoice(generateResult.script)} disabled={voiceLoading}
-              style={{ width: "100%", padding: "0.7rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.82rem", cursor: voiceLoading ? "not-allowed" : "pointer" }}>
-              {voiceLoading ? "🎙️ Generating voice..." : "🎙️ Generate Voiceover"}
+              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.84rem", cursor: voiceLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              {voiceLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating voice...</> : "🎙️ Generate Voiceover"}
             </button>
 
             {audioUrl && (
-              <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <audio controls src={audioUrl} style={{ width: "100%" }} />
+              <div style={{ marginTop: "0.85rem", display: "flex", flexDirection: "column", gap: "0.5rem", animation: "slideUp 0.3s ease" }}>
+                <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem" }}>
+                  <audio controls src={audioUrl} style={{ width: "100%" }} />
+                </div>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <span style={{ flex: 1, textAlign: "center", background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)", color: "#52525b", padding: "0.4rem", borderRadius: "8px", fontSize: "0.68rem" }}>
+                    {voiceLang} · {voiceGender}{voiceStyle !== "Default" ? ` · ${voiceStyle}` : ""}
+                  </span>
+                </div>
                 <a href={audioUrl} download={`vci-voiceover-${voiceLang}-${voiceGender}.mp3`}
-                  style={{ textAlign: "center", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.5rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none" }}>
+                  style={{ textAlign: "center", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, textDecoration: "none" }}>
                   ⬇ Download MP3
                 </a>
               </div>
@@ -3303,7 +3421,7 @@ Respond ONLY in JSON:
                 <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade to Starter</button>
               </div>
             ) : (
-              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} />
+              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} />
             )
           )}
 
