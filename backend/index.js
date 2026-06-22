@@ -342,6 +342,46 @@ app.post("/api/referral/apply", async (req, res) => {
   }
 });
 
+// Text-to-Speech endpoint (Azure TTS)
+app.post("/api/text-to-speech", async (req, res) => {
+  try {
+    const { text, voiceName, languageCode } = req.body;
+
+    if (!text || !voiceName || !languageCode) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const ssml = `<speak version='1.0' xml:lang='${languageCode}'><voice xml:lang='${languageCode}' name='${voiceName}'>${text}</voice></speak>`;
+
+    const response = await fetch(
+      `https://${process.env.AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
+      {
+        method: "POST",
+        headers: {
+          "Ocp-Apim-Subscription-Key": process.env.AZURE_SPEECH_KEY,
+          "Content-Type": "application/ssml+xml",
+          "X-Microsoft-OutputFormat": "audio-16khz-128kbitrate-mono-mp3",
+        },
+        body: ssml,
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Azure TTS error:", response.status, errText);
+      return res.status(500).json({ error: "TTS generation failed" });
+    }
+
+    const audioBuffer = await response.buffer();
+    res.set("Content-Type", "audio/mpeg");
+    res.send(audioBuffer);
+
+  } catch (err) {
+    console.error("TTS Error:", err);
+    res.status(500).json({ error: "TTS generation failed" });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 // Keep alive — ping every 14 minutes
 setInterval(() => {
