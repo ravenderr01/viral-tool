@@ -3421,7 +3421,7 @@ Respond ONLY in JSON:
           <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["calendar","pack","trends","image","scriptlab"].includes(t.id) && !["pro_creator","business","agency"].includes(plan)} />
+                isPro={false} />
             ))}
           </div>
         </div>
@@ -3605,16 +3605,7 @@ Respond ONLY in JSON:
 
           {/* TAB: CALENDAR */}
           {activeTab === "calendar" && (
-            (plan === "free" || plan === "starter" || plan === "growth") ? (
-              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>30-Day Content Calendar uses 5 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
-              </div>
-            ) : (
-              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} onSaveHistory={saveToHistory} />
-            )
+            <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} onSaveHistory={saveToHistory} />
           )}
 
           {/* TAB: IMAGE AI */}
@@ -3624,31 +3615,12 @@ Respond ONLY in JSON:
 
           {/* TAB: TRENDS */}
           {activeTab === "trends" && (
-            (plan === "free" || plan === "starter") ? (
-              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Growth Plan Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>AI Trend Intelligence is available from Growth plan onwards.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
-              </div>
-            ) : (
-              <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
-            )
+            <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
           )}
 
           {/* TAB: SCRIPT LAB */}
           {activeTab === "scriptlab" && (
-            plan === "free" ? (
-              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Starter Plan Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Script Lab unlocks from Starter ₹299 onwards.</p>
-                <p style={{ color: "#444", fontSize: "0.78rem", marginBottom: "1.5rem" }}>Generate viral reel scripts + Before/After improvement</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade to Starter</button>
-              </div>
-            ) : (
-              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} />
-            )
+            <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} />
           )}
 
           {/* TAB: CAPTION & HASHTAGS */}
@@ -3663,16 +3635,7 @@ Respond ONLY in JSON:
 
           {/* TAB: PACK */}
           {activeTab === "pack" && (
-            (plan === "free" || plan === "starter" || plan === "growth") ? (
-              <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
-                <h3 style={{ fontFamily: "'Inter',sans-serif", color: "#fff", marginBottom: "0.5rem" }}>Pro Creator / Business Feature</h3>
-                <p style={{ color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>Content Pack uses 3 credits per generation.</p>
-                <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer" }}>🚀 Upgrade Now</button>
-              </div>
-            ) : (
-              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} onSaveHistory={saveToHistory} />
-            )
+            <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} onSaveHistory={saveToHistory} />
           )}
         </div>
       </div>
