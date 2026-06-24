@@ -2910,6 +2910,18 @@ export default function ViralContentTool() {
 
   const limit = PLANS[plan as keyof typeof PLANS]?.limit || 100;
 
+  // Safety: if the saved platform (from localStorage) doesn't match the user's type
+  // (e.g. a Creator had "Google Ads" selected from before), snap to a sensible default.
+  const SOCIAL_PLATFORMS = ["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit"];
+  const ADS_PLATFORMS = ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"];
+  useEffect(() => {
+    if (!userType) return;
+    const isSocial = SOCIAL_PLATFORMS.includes(platform);
+    const isAds = ADS_PLATFORMS.includes(platform);
+    if (userType === "creator" && isAds) setPlatform("Instagram");
+    if (userType === "business" && isSocial) setPlatform("Google Ads");
+  }, [userType]);
+
   // Persist key state to localStorage so a refresh doesn't lose progress
   useEffect(() => { try { localStorage.setItem("vci_keyword", keyword); } catch {} }, [keyword]);
   useEffect(() => { try { localStorage.setItem("vci_platform", platform); } catch {} }, [platform]);
@@ -3492,9 +3504,9 @@ Respond ONLY in JSON:
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
                 {[
-                  { group: "📱 SOCIAL MEDIA", platforms: ["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit"] },
-                  { group: "📢 ADVERTISING", platforms: ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"] }
-                ].map(({ group, platforms }) => (
+                  { group: "📱 SOCIAL MEDIA", platforms: ["Instagram", "YouTube", "TikTok", "LinkedIn", "Twitter / X", "Facebook", "Pinterest", "WhatsApp", "Snapchat", "Reddit"], audience: ["creator", "agency"] },
+                  { group: "📢 ADVERTISING", platforms: ["Meta Ads", "Google Ads", "YouTube Ads", "Native Ads"], audience: ["business", "agency"] }
+                ].filter(({ audience }) => audience.includes(userType || "creator")).map(({ group, platforms }) => (
                   <div key={group} style={{ marginBottom: "0.75rem" }}>
                     <p style={{ color: "#444", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 0.35rem" }}>{group}</p>
                     <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
