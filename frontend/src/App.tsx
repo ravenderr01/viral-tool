@@ -117,7 +117,7 @@ const CROSS_SELL_NICHES: Record<string, { niche: string; reason: string; keyword
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 const LANGUAGE_GROUPS = [
-  { country: "🇮🇳 India", code: "IN", languages: [
+  { country: "🇮🇳 India", code: "IN", category: "indian", languages: [
     { code: "hi", label: "Hindi" }, { code: "bn", label: "Bengali" },
     { code: "ta", label: "Tamil" }, { code: "te", label: "Telugu" },
     { code: "mr", label: "Marathi" }, { code: "gu", label: "Gujarati" },
@@ -125,29 +125,32 @@ const LANGUAGE_GROUPS = [
     { code: "pa", label: "Punjabi" }, { code: "or", label: "Odia" },
     { code: "as", label: "Assamese" }, { code: "ur", label: "Urdu" },
   ]},
-  { country: "🇬🇧 English", code: "EN", languages: [{ code: "en", label: "English" }]},
-  { country: "🇺🇸 USA", code: "US", languages: [
+  { country: "🇬🇧 English", code: "EN", category: "global", languages: [{ code: "en", label: "English" }]},
+  { country: "🇺🇸 USA", code: "US", category: "global", languages: [
     { code: "en-us", label: "American English" }, { code: "es-us", label: "Spanish (US)" },
   ]},
-  { country: "🇩🇪 Germany", code: "DE", languages: [{ code: "de", label: "German" }]},
-  { country: "🇫🇷 France", code: "FR", languages: [{ code: "fr", label: "French" }]},
-  { country: "🇪🇸 Spain", code: "ES", languages: [{ code: "es", label: "Spanish" }]},
-  { country: "🇮🇹 Italy", code: "IT", languages: [{ code: "it", label: "Italian" }]},
-  { country: "🇷🇺 Russia", code: "RU", languages: [{ code: "ru", label: "Russian" }]},
-  { country: "🇨🇳 China", code: "CN", languages: [
+  { country: "🇩🇪 Germany", code: "DE", category: "global", languages: [{ code: "de", label: "German" }]},
+  { country: "🇫🇷 France", code: "FR", category: "global", languages: [{ code: "fr", label: "French" }]},
+  { country: "🇪🇸 Spain", code: "ES", category: "global", languages: [{ code: "es", label: "Spanish" }]},
+  { country: "🇮🇹 Italy", code: "IT", category: "global", languages: [{ code: "it", label: "Italian" }]},
+  { country: "🇷🇺 Russia", code: "RU", category: "global", languages: [{ code: "ru", label: "Russian" }]},
+  { country: "🇨🇳 China", code: "CN", category: "global", languages: [
     { code: "zh", label: "Chinese (Mandarin)" }, { code: "zh-yue", label: "Cantonese" },
   ]},
-  { country: "🇯🇵 Japan", code: "JP", languages: [{ code: "ja", label: "Japanese" }]},
-  { country: "🇰🇷 Korea", code: "KR", languages: [{ code: "ko", label: "Korean" }]},
-  { country: "🇸🇦 Arabic", code: "AR", languages: [
+  { country: "🇯🇵 Japan", code: "JP", category: "global", languages: [{ code: "ja", label: "Japanese" }]},
+  { country: "🇰🇷 Korea", code: "KR", category: "global", languages: [{ code: "ko", label: "Korean" }]},
+  { country: "🇸🇦 Arabic", code: "AR", category: "global", languages: [
     { code: "ar", label: "Arabic" }, { code: "ar-eg", label: "Egyptian Arabic" },
   ]},
-  { country: "🇵🇰 Pakistan", code: "PK", languages: [{ code: "ur-pk", label: "Urdu (Pakistan)" }]},
-  { country: "🇹🇭 Thailand", code: "TH", languages: [{ code: "th", label: "Thai" }]},
-  { country: "🇧🇷 Brazil", code: "BR", languages: [{ code: "pt", label: "Portuguese" }]},
-  { country: "🇮🇩 Indonesia", code: "ID", languages: [{ code: "id", label: "Indonesian" }]},
-  { country: "🇹🇷 Turkey", code: "TR", languages: [{ code: "tr", label: "Turkish" }]},
+  { country: "🇵🇰 Pakistan", code: "PK", category: "indian", languages: [{ code: "ur-pk", label: "Urdu (Pakistan)" }]},
+  { country: "🇹🇭 Thailand", code: "TH", category: "global", languages: [{ code: "th", label: "Thai" }]},
+  { country: "🇧🇷 Brazil", code: "BR", category: "global", languages: [{ code: "pt", label: "Portuguese" }]},
+  { country: "🇮🇩 Indonesia", code: "ID", category: "global", languages: [{ code: "id", label: "Indonesian" }]},
+  { country: "🇹🇷 Turkey", code: "TR", category: "global", languages: [{ code: "tr", label: "Turkish" }]},
 ];
+
+// Languages where Azure TTS voiceover is available (used to show a hint in the dropdown)
+const VOICE_SUPPORTED_LANGS = new Set(["hi", "bn", "ta", "te", "mr", "gu", "en", "en-us"]);
 
 const LANG_LABELS: Record<string, string> = {
   en: "English", "en-us": "American English", "es-us": "Spanish (US)",
@@ -2827,6 +2830,7 @@ export default function ViralContentTool() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en");
   const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [langCategoryTab, setLangCategoryTab] = useState<"indian" | "global">("indian");
   const [activeTab, setActiveTab] = useState(() => {
     try { return localStorage.getItem("vci_activeTab") || "generate"; } catch { return "generate"; }
   });
@@ -3352,29 +3356,50 @@ Respond ONLY in JSON:
                 {LANGUAGE_GROUPS.find(g => g.languages.some(l => l.code === selectedLang))?.country} — {getLangLabel(selectedLang)} ▾
               </button>
               {showLangDropdown && (
-                <div style={{ position: "absolute", top: "110%", left: "50%", transform: "translateX(-50%)", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "0.75rem", zIndex: 200, width: "300px", boxShadow: "0 8px 40px rgba(0,0,0,0.7)", maxHeight: "400px", overflowY: "auto" }}>
+                <div style={{ position: "absolute", top: "110%", left: "50%", transform: "translateX(-50%)", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "0.75rem", zIndex: 200, width: "310px", boxShadow: "0 8px 40px rgba(0,0,0,0.7)", maxHeight: "420px", display: "flex", flexDirection: "column" }}>
                   <p style={{ color: "#333", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.5rem", letterSpacing: "0.06em" }}>SELECT LANGUAGE</p>
-                  {LANGUAGE_GROUPS.map(group => (
-                    <div key={group.code} style={{ marginBottom: "0.5rem" }}>
-                      <p style={{ color: "#555", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.25rem" }}>{group.country}</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                        {group.languages.map(lang => {
-                          const isLocked = false; // All plans get all languages
-                          return (
-                            <button key={lang.code}
-                              onClick={() => {
-                                if (isLocked) { setShowPaywall(true); return; }
-                                setSelectedLang(lang.code);
-                                setShowLangDropdown(false);
-                              }}
-                              style={{ background: selectedLang === lang.code ? "rgba(124,58,237,0.12)" : "#111", border: `1px solid ${selectedLang === lang.code ? "#6d28d9" : "#1e1e1e"}`, color: selectedLang === lang.code ? "#6d28d9" : isLocked ? "#2a2a2a" : "#888", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}>
-                              {isLocked ? "🔒 " : ""}{lang.label}
-                            </button>
-                          );
-                        })}
+
+                  {/* Indian vs Global tabs */}
+                  <div style={{ display: "flex", gap: "0.3rem", marginBottom: "0.65rem", background: "#080808", borderRadius: "10px", padding: "0.25rem" }}>
+                    {(["indian", "global"] as const).map(cat => (
+                      <button key={cat} onClick={() => setLangCategoryTab(cat)}
+                        style={{ flex: 1, padding: "0.4rem 0.5rem", borderRadius: "8px", border: "none", background: langCategoryTab === cat ? "rgba(109,40,217,0.18)" : "transparent", color: langCategoryTab === cat ? "#8b5cf6" : "#52525b", fontWeight: 700, fontSize: "0.7rem", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}>
+                        {cat === "indian" ? "🇮🇳 Indian Languages" : "🌍 Global Languages"}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ overflowY: "auto", flex: 1 }}>
+                    {LANGUAGE_GROUPS.filter(g => g.category === langCategoryTab).map(group => (
+                      <div key={group.code} style={{ marginBottom: "0.5rem" }}>
+                        <p style={{ color: "#555", fontSize: "0.6rem", fontWeight: 700, margin: "0 0 0.25rem" }}>{group.country}</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                          {group.languages.map(lang => {
+                            const isLocked = false; // All plans get all languages
+                            const hasVoice = VOICE_SUPPORTED_LANGS.has(lang.code);
+                            return (
+                              <button key={lang.code}
+                                onClick={() => {
+                                  if (isLocked) { setShowPaywall(true); return; }
+                                  setSelectedLang(lang.code);
+                                  setShowLangDropdown(false);
+                                }}
+                                style={{ background: selectedLang === lang.code ? "rgba(124,58,237,0.12)" : "#111", border: `1px solid ${selectedLang === lang.code ? "#6d28d9" : "#1e1e1e"}`, color: selectedLang === lang.code ? "#6d28d9" : isLocked ? "#2a2a2a" : "#888", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                                {isLocked ? "🔒 " : ""}{lang.label}
+                                {hasVoice && <span title="AI Voiceover available" style={{ fontSize: "0.62rem" }}>🔊</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid #1a1a1a", marginTop: "0.5rem", paddingTop: "0.5rem" }}>
+                    <p style={{ margin: 0, color: "#3f3f46", fontSize: "0.6rem", lineHeight: 1.5 }}>
+                      🔊 = AI Voiceover available for this language in Script Lab
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
