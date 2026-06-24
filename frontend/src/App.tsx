@@ -2973,7 +2973,7 @@ export default function ViralContentTool() {
       content_text: text.slice(0, 2000), // cap length defensively
       niche: extra?.niche || null,
       platform: extra?.platform || null,
-    }).then(() => {}).catch(() => {});
+    }).then(() => {}, () => {});
   };
 
   // Expose globally so deeply-nested components (ResultCard, ContentCalendar, etc.)
