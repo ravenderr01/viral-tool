@@ -29,6 +29,11 @@ const PLANS = {
   agency:      { label: "Agency",      limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
 };
 
+// Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
+const fireCopySignal = (feature: string, contentType: string, text: string, extra?: { niche?: string; platform?: string }) => {
+  try { (window as any).__vciTrackCopy?.(feature, contentType, text, extra); } catch {}
+};
+
 const detectNiche = (keyword: string, currentNiche: string): string => {
   const kw = keyword.toLowerCase();
   if (kw.match(/weight|gym|fitness|workout|diet|protein|fat|muscle|exercise|yoga/)) return "Fitness";
@@ -288,6 +293,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("scriptlab", key, text, { platform });
   };
 
   const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
@@ -1374,6 +1380,7 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("hookscore", key, text, { platform });
   };
 
   const SCORE_PLATFORM_GUIDE: Record<string, string> = {
@@ -1741,7 +1748,7 @@ Generate exactly 30 days.`;
         <div style={{ animation: "slideUp 0.4s ease" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
             <span style={{ color: "#555", fontSize: "0.75rem" }}>30 days of content ready</span>
-            <button onClick={() => navigator.clipboard.writeText(calendar.map(d => `Day ${d.day} (${d.type}): ${d.hook}`).join("\n"))} style={{ background: "#ffffff0a", border: "1px solid #2a2a2a", color: "#666", padding: "0.25rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>Copy All</button>
+            <button onClick={() => { const allText = calendar.map(d => `Day ${d.day} (${d.type}): ${d.hook}`).join("\n"); navigator.clipboard.writeText(allText); fireCopySignal("calendar", "all", allText, { niche, platform: calPlatform }); }} style={{ background: "#ffffff0a", border: "1px solid #2a2a2a", color: "#666", padding: "0.25rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>Copy All</button>
           </div>
           {weeks.map(week => (
             <div key={week} style={{ marginBottom: "1rem" }}>
@@ -1753,7 +1760,7 @@ Generate exactly 30 days.`;
                     <div key={day.day} style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = color + "40")}
                       onMouseLeave={e => (e.currentTarget.style.borderColor = "#1a1a1a")}
-                      onClick={() => { navigator.clipboard.writeText(day.hook); setCopiedDay(day.day); setTimeout(() => setCopiedDay(null), 1500); }}>
+                      onClick={() => { navigator.clipboard.writeText(day.hook); setCopiedDay(day.day); setTimeout(() => setCopiedDay(null), 1500); fireCopySignal("calendar", "day_hook", day.hook, { niche, platform: calPlatform }); }}>
                       <div style={{ flexShrink: 0, textAlign: "center", minWidth: "36px" }}>
                         <div style={{ fontSize: "0.6rem", color: "#333", fontWeight: 700 }}>{DAYS[(day.day - 1) % 7]}</div>
                         <div style={{ fontSize: "1rem", fontWeight: 800, color: "#fff", fontFamily: "'Inter',sans-serif" }}>{day.day}</div>
@@ -1876,9 +1883,11 @@ Respond ONLY in JSON:
   };
 
   const copySection = (key: string, items: string[]) => {
-    navigator.clipboard.writeText(items.join("\n"));
+    const text = items.join("\n");
+    navigator.clipboard.writeText(text);
     setCopiedSection(key);
     setTimeout(() => setCopiedSection(null), 2000);
+    fireCopySignal("pack", key, text, { niche, platform });
   };
 
   return (
@@ -1972,6 +1981,7 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("caption", key, text, { niche, platform });
   };
 
   useEffect(() => { setKw(keyword || ""); }, [keyword]);
@@ -2554,6 +2564,7 @@ function KeywordResearchCard({ keywords }: { keywords: any[] }) {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    fireCopySignal("generate", "keyword_research", text);
   };
 
   return (
@@ -2595,7 +2606,7 @@ function ResultCard({ title, items, emoji, color, charLimit }: any) {
     <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
         <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
-        <button onClick={() => { navigator.clipboard.writeText(safeItems.join("\n")); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
+        <button onClick={() => { const text = safeItems.join("\n"); navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); fireCopySignal("generate", title, text); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
           {copied ? "✓ Copied!" : "Copy all"}
         </button>
       </div>
@@ -2937,6 +2948,28 @@ export default function ViralContentTool() {
       });
     } catch {}
   };
+
+  // Silent background signal — fires whenever a user copies generated content.
+  // No UI, no confirmation beyond the existing "Copied!" feedback. Used only
+  // as a proxy "this was useful" signal for future fine-tuning data collection.
+  const trackCopySignal = (feature: string, contentType: string, text: string, extra?: { niche?: string; platform?: string }) => {
+    if (!user?.id || !text) return;
+    supabase.from("copy_signals").insert({
+      user_id: user.id,
+      feature,
+      content_type: contentType,
+      content_text: text.slice(0, 2000), // cap length defensively
+      niche: extra?.niche || null,
+      platform: extra?.platform || null,
+    }).then(() => {}).catch(() => {});
+  };
+
+  // Expose globally so deeply-nested components (ResultCard, ContentCalendar, etc.)
+  // can fire this signal without prop-drilling through every level.
+  useEffect(() => {
+    (window as any).__vciTrackCopy = trackCopySignal;
+    return () => { delete (window as any).__vciTrackCopy; };
+  }, [user?.id]);
 
   // Maps a history feature key to its tab id
   const FEATURE_TO_TAB: Record<string, string> = {
