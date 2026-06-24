@@ -142,7 +142,7 @@ const LANGUAGE_GROUPS = [
   { country: "🇸🇦 Arabic", code: "AR", category: "global", languages: [
     { code: "ar", label: "Arabic" }, { code: "ar-eg", label: "Egyptian Arabic" },
   ]},
-  { country: "🇵🇰 Pakistan", code: "PK", category: "indian", languages: [{ code: "ur-pk", label: "Urdu (Pakistan)" }]},
+  { country: "in india", code: "in", category: "indian", languages: [{ code: "ur-in", label: "Urdu (In)" }]},
   { country: "🇹🇭 Thailand", code: "TH", category: "global", languages: [{ code: "th", label: "Thai" }]},
   { country: "🇧🇷 Brazil", code: "BR", category: "global", languages: [{ code: "pt", label: "Portuguese" }]},
   { country: "🇮🇩 Indonesia", code: "ID", category: "global", languages: [{ code: "id", label: "Indonesian" }]},
