@@ -10,40 +10,40 @@ const CREATOR_PLANS = [
     period: "",
     badge: "",
     color: "#6b7280",
-    credits: 10,
+    credits: 25,
     type: "creator",
     features: {
-      niches: "2 Niches (Fitness, Business)",
-      platforms: "Instagram + YouTube only",
-      languages: "English only",
-      hookScore: false,
+      niches: "All Niches",
+      platforms: "All Social Media Platforms",
+      languages: "All 30+ Languages",
+      hookScore: true,
       scriptLab: false,
-      trends: false,
+      trends: true,
       calendar: false,
       contentPack: false,
       imageAI: false,
-      captionHashtags: false,
+      captionHashtags: true,
       adsPlatforms: false,
       support: "Community Support",
     },
   },
   {
-    key: "starter",
-    name: "Starter",
-    price: "₹299",
-    priceNum: 299,
+    key: "creator_starter",
+    name: "Creator Starter",
+    price: "₹299.99",
+    priceNum: 299.99,
     period: "/month",
     badge: "🔥 Popular",
     color: "#22c55e",
-    credits: 100,
+    credits: 150,
     type: "creator",
     features: {
-      niches: "All Niches (including Ads & Marketing)",
-      platforms: "All 15+ Platforms",
+      niches: "All Niches",
+      platforms: "All Social Media Platforms",
       languages: "All 30+ Languages",
       hookScore: true,
-      scriptLab: true,
-      trends: false,
+      scriptLab: false,
+      trends: true,
       calendar: false,
       contentPack: false,
       imageAI: false,
@@ -53,19 +53,19 @@ const CREATOR_PLANS = [
     },
   },
   {
-    key: "pro_creator",
-    name: "Pro Creator",
-    price: "₹999",
-    priceNum: 999,
+    key: "creator_pro",
+    name: "Creator Pro",
+    price: "₹999.99",
+    priceNum: 999.99,
     period: "/month",
     badge: "⚡ Best Value",
     color: "#a855f7",
-    credits: 400,
+    credits: 600,
     type: "creator",
     features: {
-      niches: "All Niches (except Ads & Marketing)",
+      niches: "All Niches",
       platforms: "All Social Media Platforms",
-      languages: "Hindi + English",
+      languages: "All 30+ Languages",
       hookScore: true,
       trends: true,
       calendar: true,
@@ -81,69 +81,47 @@ const CREATOR_PLANS = [
 
 const BUSINESS_PLANS = [
   {
-    key: "growth",
-    name: "Growth",
-    price: "₹799",
-    priceNum: 799,
+    key: "advertiser",
+    name: "Advertiser",
+    price: "₹1,999.99",
+    priceNum: 1999.99,
     period: "/month",
-    badge: "📈 Business",
-    color: "#06b6d4",
-    credits: 150,
+    badge: "📢 For Ads",
+    color: "#f97316",
+    credits: 700,
     type: "business",
     features: {
-      niches: "All Niches including Ads & Marketing",
-      platforms: "All Platforms + Google/Meta Ads",
-      languages: "Hindi + English",
+      niches: "All Niches",
+      platforms: "Google Ads, Meta Ads, YouTube Ads, Native Ads",
+      languages: "All 30+ Languages",
       hookScore: true,
       trends: true,
       calendar: false,
       contentPack: false,
       imageAI: false,
       scriptLab: false,
-      captionHashtags: true,
+      captionHashtags: false,
       adsPlatforms: true,
       support: "Priority Email Support",
     },
   },
-  {
-    key: "business",
-    name: "Business",
-    price: "₹1,999",
-    priceNum: 1999,
-    period: "/month",
-    badge: "💎 Pro",
-    color: "#f59e0b",
-    credits: 400,
-    type: "business",
-    features: {
-      niches: "All Niches including Ads & Marketing",
-      platforms: "All Platforms + All Ad Platforms",
-      languages: "All 15 Languages",
-      hookScore: true,
-      trends: true,
-      calendar: true,
-      contentPack: true,
-      imageAI: true,
-      scriptLab: true,
-      captionHashtags: true,
-      adsPlatforms: true,
-      support: "Priority Support (2hr response)",
-    },
-  },
+];
+
+const AGENCY_PLANS = [
   {
     key: "agency",
     name: "Agency",
-    price: "₹4,999",
-    priceNum: 4999,
+    price: "₹4,999.99",
+    priceNum: 4999.99,
     period: "/month",
-    badge: "👑 Premium",
-    color: "#ef4444",
-    credits: 1000,
-    type: "business",
+    badge: "👑 All Access",
+    color: "#f59e0b",
+    credits: 2000,
+    type: "agency",
     features: {
-      niches: "All Niches including Ads & Marketing",
-      platforms: "All Platforms + Native Ads",
-      languages: "All 15 Languages",
+      niches: "All Niches",
+      platforms: "All Social Platforms + All Ad Platforms",
+      languages: "All 30+ Languages",
       hookScore: true,
       trends: true,
       calendar: true,
@@ -159,12 +137,14 @@ const BUSINESS_PLANS = [
 
 const CREDIT_WEIGHTS = [
   { feature: "⚡ Generate Content", credits: 1 },
-  { feature: "📊 Hook Score Analyzer", credits: 1 },
+  { feature: "📊 Hook Score Analyzer", credits: 2 },
   { feature: "📋 Caption & Hashtags", credits: 2 },
-  { feature: "🎬 Script Generate", credits: 2 },
-  { feature: "🖼️ Image AI", credits: 2 },
-  { feature: "📦 Content Pack", credits: 3 },
-  { feature: "📅 30-Day Calendar", credits: 5 },
+  { feature: "🔊 AI Voiceover", credits: 3 },
+  { feature: "📦 Content Pack", credits: 5 },
+  { feature: "✨ Script Lab — Improve", credits: 5 },
+  { feature: "📅 30-Day Calendar", credits: 6 },
+  { feature: "🖼️ Image AI", credits: 6 },
+  { feature: "🎬 Script Lab — Generate", credits: 8 },
 ];
 
 const FEATURE_ROWS = [
@@ -173,13 +153,13 @@ const FEATURE_ROWS = [
   { key: "languages", label: "🌐 Languages" },
   { key: "credits", label: "⚡ Credits/Month", isCredits: true },
   { key: "hookScore", label: "📊 Hook Score", isBool: true },
-  { key: "trends", label: "📈 AI Trends", isBool: true },
+  { key: "trends", label: "📈 AI Trends & Intelligence", isBool: true },
   { key: "calendar", label: "📅 Content Calendar", isBool: true },
   { key: "contentPack", label: "📦 Content Pack", isBool: true },
   { key: "imageAI", label: "🖼️ Image AI", isBool: true },
   { key: "captionHashtags", label: "📋 Caption & Hashtags", isBool: true },
   { key: "scriptLab", label: "🎬 Script Lab", isBool: true },
-  { key: "adsPlatforms", label: "📢 Google/Meta Ads", isBool: true },
+  { key: "adsPlatforms", label: "📢 Ad Platforms", isBool: true },
   { key: "support", label: "💬 Support" },
 ];
 
@@ -191,7 +171,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
   const [credits, setCredits] = useState<number | null>(null);
   const [creditsTotal, setCreditsTotal] = useState<number | null>(null);
   const [view, setView] = useState<"cards" | "compare">("cards");
-  const [category, setCategory] = useState<"creator" | "business">("creator");
+  const [category, setCategory] = useState<"creator" | "business" | "agency">("creator");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -208,10 +188,13 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
     });
   }, []);
 
-  const allPlans = [...CREATOR_PLANS, ...BUSINESS_PLANS];
+  const allPlans = [...CREATOR_PLANS, ...BUSINESS_PLANS, ...AGENCY_PLANS];
   const currentPlanData = allPlans.find(p => p.key === currentPlan) || CREATOR_PLANS[0];
   const creditsPercent = creditsTotal && credits !== null ? Math.round((credits / creditsTotal) * 100) : 100;
-  const displayPlans = category === "creator" ? CREATOR_PLANS : BUSINESS_PLANS;
+  const displayPlans = category === "creator" ? CREATOR_PLANS : category === "business" ? BUSINESS_PLANS : AGENCY_PLANS;
+
+  const typeLabel = (type: string) => type === "creator" ? "🎨 Creator" : type === "business" ? "📢 Business" : "👑 Agency";
+  const typeColor = (type: string) => type === "creator" ? "#a855f7" : type === "business" ? "#f97316" : "#f59e0b";
 
   return (
     <>
@@ -254,7 +237,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
                 <span style={{ color: currentPlanData.color, fontWeight: 800, fontSize: "0.85rem", fontFamily: "'Outfit',sans-serif" }}>{currentPlanData.name} Plan</span>
               </div>
               <span style={{ color: "#555", fontSize: "0.78rem" }}>
-                Type: <strong style={{ color: currentPlanData.type === "creator" ? "#a855f7" : "#06b6d4" }}>{currentPlanData.type === "creator" ? "🎨 Creator" : "📢 Business"}</strong>
+                Type: <strong style={{ color: typeColor(currentPlanData.type) }}>{typeLabel(currentPlanData.type)}</strong>
               </span>
             </div>
             {credits !== null && creditsTotal !== null && (
@@ -285,13 +268,16 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
               Credits reset every month. No hidden charges. Cancel anytime.
             </p>
 
-            {/* Category Toggle */}
-            <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "12px", padding: "0.3rem", marginBottom: "1rem" }}>
-              <button onClick={() => setCategory("creator")} style={{ padding: "0.5rem 1.5rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: category === "creator" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "transparent", color: category === "creator" ? "#fff" : "#6b7280", transition: "all 0.2s" }}>
+            {/* Category Toggle — 3 tabs */}
+            <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "12px", padding: "0.3rem", marginBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+              <button onClick={() => setCategory("creator")} style={{ padding: "0.5rem 1.25rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: category === "creator" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "transparent", color: category === "creator" ? "#fff" : "#6b7280", transition: "all 0.2s" }}>
                 🎨 Creator
               </button>
-              <button onClick={() => setCategory("business")} style={{ padding: "0.5rem 1.5rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: category === "business" ? "linear-gradient(135deg,#06b6d4,#0891b2)" : "transparent", color: category === "business" ? "#fff" : "#6b7280", transition: "all 0.2s" }}>
+              <button onClick={() => setCategory("business")} style={{ padding: "0.5rem 1.25rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: category === "business" ? "linear-gradient(135deg,#f97316,#ea580c)" : "transparent", color: category === "business" ? "#fff" : "#6b7280", transition: "all 0.2s" }}>
                 📢 Business
+              </button>
+              <button onClick={() => setCategory("agency")} style={{ padding: "0.5rem 1.25rem", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", background: category === "agency" ? "linear-gradient(135deg,#f59e0b,#d97706)" : "transparent", color: category === "agency" ? "#fff" : "#6b7280", transition: "all 0.2s" }}>
+                👑 Agency
               </button>
             </div>
 
@@ -310,14 +296,19 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
 
           {/* Category Label */}
           <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-            <span style={{ background: category === "creator" ? "rgba(168,85,247,0.1)" : "rgba(6,182,212,0.1)", border: `1px solid ${category === "creator" ? "rgba(168,85,247,0.3)" : "rgba(6,182,212,0.3)"}`, color: category === "creator" ? "#a855f7" : "#06b6d4", borderRadius: "20px", padding: "0.3rem 1rem", fontSize: "0.78rem", fontWeight: 700 }}>
-              {category === "creator" ? "🎨 For Instagram, YouTube, TikTok Creators" : "📢 For Agencies, Marketers & Businesses"}
+            <span style={{
+              background: category === "creator" ? "rgba(168,85,247,0.1)" : category === "business" ? "rgba(249,115,22,0.1)" : "rgba(245,158,11,0.1)",
+              border: `1px solid ${category === "creator" ? "rgba(168,85,247,0.3)" : category === "business" ? "rgba(249,115,22,0.3)" : "rgba(245,158,11,0.3)"}`,
+              color: category === "creator" ? "#a855f7" : category === "business" ? "#f97316" : "#f59e0b",
+              borderRadius: "20px", padding: "0.3rem 1rem", fontSize: "0.78rem", fontWeight: 700
+            }}>
+              {category === "creator" ? "🎨 For Instagram, YouTube, TikTok Creators" : category === "business" ? "📢 For Google & Meta Advertisers" : "👑 For Agencies Managing Multiple Clients"}
             </span>
           </div>
 
           {/* CARDS VIEW */}
           {view === "cards" && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "3rem", animation: "slideUp 0.5s ease" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "3rem", animation: "slideUp 0.5s ease", maxWidth: displayPlans.length === 1 ? 360 : "none", marginLeft: displayPlans.length === 1 ? "auto" : 0, marginRight: displayPlans.length === 1 ? "auto" : 0 }}>
               {displayPlans.map((plan, i) => (
                 <div key={plan.key} className="plan-card" style={{
                   background: currentPlan === plan.key ? `${plan.color}08` : "#0c0c0c",
@@ -354,13 +345,13 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
                       plan.features.platforms,
                       plan.features.languages,
                       plan.features.hookScore ? "✓ Hook Score Analyzer" : null,
-                      plan.features.trends ? "✓ AI Trends" : null,
-                      plan.features.calendar ? "✓ Content Calendar (5 credits)" : null,
-                      plan.features.contentPack ? "✓ Content Pack (3 credits)" : null,
-                      plan.features.imageAI ? "✓ Image AI (2 credits)" : null,
-                      plan.features.captionHashtags ? "✓ Caption & Hashtags (2 credits)" : null,
+                      plan.features.trends ? "✓ AI Trends & Intelligence" : null,
+                      plan.features.calendar ? "✓ 30-Day Content Calendar" : null,
+                      plan.features.contentPack ? "✓ Content Pack" : null,
+                      plan.features.imageAI ? "✓ Image AI" : null,
+                      plan.features.captionHashtags ? "✓ Caption & Hashtags" : null,
                       plan.features.scriptLab ? "✓ Script Lab — Generate & Improve" : null,
-                      plan.features.adsPlatforms ? "✓ Google/Meta Ads" : null,
+                      plan.features.adsPlatforms ? "✓ Google/Meta/YouTube/Native Ads" : null,
                       plan.features.support,
                     ].filter(Boolean).map((f, j) => (
                       <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
@@ -465,12 +456,12 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
             <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "1.2rem", margin: "0 0 1.25rem", color: "#fff", textAlign: "center" }}>❓ Frequently Asked Questions</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               {[
-                ["What are credits?", "1 credit = 1 basic generation. Advanced features use more: Content Pack = 3 credits, Calendar = 5 credits, Image AI = 2 credits. Credits reset on 1st of every month."],
-                ["Creator vs Business plans?", "Creator plans are for social media content creators (Instagram, YouTube, TikTok). Business plans include advertising platforms (Google Ads, Meta Ads) for agencies and marketers."],
-                ["How do I upgrade?", "Click 'Get [Plan]', complete payment, and your plan activates. Contact support on WhatsApp for instant activation."],
-                ["Can I switch plans?", "Yes! Upgrade or downgrade anytime. Contact support on WhatsApp for plan changes."],
-                ["What payment methods?", "UPI (GPay, PhonePe, Paytm), Credit/Debit Card, Net Banking — all via Razorpay."],
-                ["Is there a refund?", "Yes! 24-hour money-back guarantee. No questions asked. Contact support immediately after purchase."],
+                ["What are credits?", "Each feature consumes a different number of credits based on the computational work involved — Generate uses 1 credit, while Script Lab Generate (which includes a thumbnail and optional voiceover) uses 8. Credits reset automatically at the start of each billing cycle."],
+                ["What's the difference between Creator, Business, and Agency plans?", "Creator plans are built for social media content — Instagram, YouTube, TikTok, and similar platforms. The Advertiser (Business) plan is purpose-built for Google, Meta, YouTube, and Native Ads with policy-compliant copy and keyword research. Agency includes full access to both, ideal for managing multiple clients."],
+                ["How do I upgrade?", "Select 'Get [Plan]', complete payment, and send your confirmation on WhatsApp. Plans are activated within 2 hours of verification."],
+                ["Can I switch plans later?", "Yes. You can upgrade or downgrade at any time by contacting support on WhatsApp — we'll handle the transition and prorate your credits accordingly."],
+                ["What payment methods are accepted?", "UPI (GPay, PhonePe, Paytm) and PayPal for international payments."],
+                ["What's your refund policy?", "If you cancel within 24 hours of subscribing, we'll refund your payment minus the value of credits already used during that period. Requests made after the 24-hour window are not eligible for a refund."],
               ].map(([q, a], i) => (
                 <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(139,92,246,0.1)", borderRadius: "12px", padding: "1rem 1.25rem" }}>
                   <p style={{ margin: "0 0 0.35rem", fontWeight: 700, color: "#fff", fontSize: "0.85rem" }}>Q: {q}</p>
@@ -484,7 +475,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
         {/* Footer */}
         <div style={{ textAlign: "center", padding: "1.5rem", borderTop: "1px solid rgba(139,92,246,0.1)", marginTop: "2rem" }}>
           <p style={{ color: "#333", fontSize: "0.72rem", margin: 0 }}>
-            © {new Date().getFullYear()} Global Web Info Vision — VCI. All Rights Reserved. · Payments secured by Razorpay
+            © {new Date().getFullYear()} Global Web Info Vision — VCI. All Rights Reserved.
           </p>
         </div>
       </div>
