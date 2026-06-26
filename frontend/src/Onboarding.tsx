@@ -23,6 +23,7 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
       color: "#a855f7",
       glow: "rgba(168,85,247,0.2)",
       bg: "rgba(168,85,247,0.1)",
+      note: null as string | null,
     },
     {
       id: "business" as const,
@@ -33,6 +34,7 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
       color: "#06b6d4",
       glow: "rgba(6,182,212,0.2)",
       bg: "rgba(6,182,212,0.1)",
+      note: null as string | null,
     },
     {
       id: "agency" as const,
@@ -43,6 +45,7 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
       color: "#f59e0b",
       glow: "rgba(245,158,11,0.2)",
       bg: "rgba(245,158,11,0.1)",
+      note: "Available on a paid plan only — full access starts from ₹4,999.99/month" as string | null,
     },
   ];
 
@@ -100,6 +103,12 @@ export default function Onboarding({ userId, onComplete }: { userId: string; onC
                     <span key={i} style={{ color: selected === card.id ? card.color : "#444", fontSize: "0.72rem" }}>{f}</span>
                   ))}
                 </div>
+                {card.note && (
+                  <div style={{ marginTop: "0.85rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "8px", padding: "0.45rem 0.6rem", display: "flex", alignItems: "flex-start", gap: "0.35rem", textAlign: "left" }}>
+                    <span style={{ fontSize: "0.7rem", flexShrink: 0 }}>ℹ️</span>
+                    <span style={{ color: "#d97706", fontSize: "0.66rem", lineHeight: 1.4, fontWeight: 600 }}>{card.note}</span>
+                  </div>
+                )}
                 {selected === card.id && <div style={{ marginTop: "0.75rem", background: card.bg, border: `1px solid ${card.color}66`, borderRadius: "8px", padding: "0.3rem", color: card.color, fontSize: "0.72rem", fontWeight: 700 }}>✓ Selected</div>}
               </div>
             ))}
