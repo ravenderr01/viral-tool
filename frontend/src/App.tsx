@@ -2966,10 +2966,11 @@ export default function ViralContentTool() {
       if (session?.user) {
         const { data } = await supabase.from("users").select("*").eq("id", session.user.id).single();
         setProfile(data ?? null);
-        if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(data?.user_type || "creator"); }
-        if (data?.referral_code) { localStorage.setItem("viral_profile", JSON.stringify(data)); }
         const ADMIN_EMAIL = "ravenderr01@gmail.com";
-        if (session?.user?.email === ADMIN_EMAIL) { setPlan("agency"); }
+        const isAdmin = session?.user?.email === ADMIN_EMAIL;
+        if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(isAdmin ? "agency" : (data?.user_type || "creator")); }
+        if (data?.referral_code) { localStorage.setItem("viral_profile", JSON.stringify(data)); }
+        if (isAdmin) { setPlan("agency"); setUserType("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
         if (data?.credits_remaining !== undefined) {
           setUsageCount((data.credits_total || 100) - data.credits_remaining);
@@ -2984,12 +2985,14 @@ export default function ViralContentTool() {
         setUser(session.user);
         setProfile(data ?? null);
         const ADMIN_EMAIL = "ravenderr01@gmail.com";
-        if (session.user.email === ADMIN_EMAIL) { setPlan("agency"); }
+        const isAdmin = session.user.email === ADMIN_EMAIL;
+        if (isAdmin) { setPlan("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
         if (data?.credits_remaining !== undefined) {
           setUsageCount((data.credits_total || 100) - data.credits_remaining);
         }
-        if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(data.user_type); }
+        if (isAdmin) { setUserType("agency"); }
+        else if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(data.user_type); }
         setProfileLoading(false);
       } else {
         setUser(null); setProfile(null); setPlan("free"); setProfileLoading(false);
