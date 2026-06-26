@@ -250,7 +250,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice, userType }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -276,7 +276,11 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const PLATFORMS = [
+  useEffect(() => {
+    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
+  }, [userType]);
+
+  const ALL_SOCIAL_PLATFORMS = [
     { id: "Instagram", emoji: "📸", color: "#e1306c" },
     { id: "YouTube", emoji: "▶️", color: "#ef4444" },
     { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
@@ -284,6 +288,13 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
     { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
     { id: "Facebook", emoji: "📘", color: "#1877f2" },
   ];
+  const ALL_ADS_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢", color: "#4285f4" },
+    { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
+    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" },
+    { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
+  ];
+  const PLATFORMS = userType === "business" ? ALL_ADS_PLATFORMS : ALL_SOCIAL_PLATFORMS;
 
   const STYLES = ["Tutorial", "Story", "POV", "Challenge", "Before/After", "Motivation", "Tips", "Review", "Day in Life", "Comedy"];
   const DURATIONS = ["15 sec", "30 sec", "60 sec", "90 sec"];
@@ -1363,7 +1374,7 @@ Respond ONLY in JSON:
     </div>
   );
 }
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed }: any) {
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1371,12 +1382,20 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const SCORE_PLATFORMS = [
+  const ALL_SCORE_PLATFORMS = [
     { id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" },
     { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" },
     { id: "Facebook", emoji: "📘" }, { id: "TikTok", emoji: "🎵" },
-    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
   ];
+  const ADS_SCORE_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
+    { id: "YouTube Ads", emoji: "▶️" }, { id: "Native Ads", emoji: "📰" },
+  ];
+  const SCORE_PLATFORMS = userType === "business" ? ADS_SCORE_PLATFORMS : ALL_SCORE_PLATFORMS;
+
+  useEffect(() => {
+    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
+  }, [userType]);
 
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -1643,7 +1662,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   );
 }
 
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory, onCreditUsed }: any) {
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<any[]>([]);
   const [calKeyword, setCalKeyword] = useState(keyword || "");
@@ -1651,12 +1670,21 @@ function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, l
   const [copiedDay, setCopiedDay] = useState<number | null>(null);
   const [calPlatform, setCalPlatform] = useState("Instagram");
 
-  const CAL_PLATFORMS = [
+  const ALL_CAL_PLATFORMS = [
     { id: "Instagram", emoji: "📸", color: "#e1306c" }, { id: "YouTube", emoji: "▶️", color: "#ef4444" },
     { id: "Facebook", emoji: "📘", color: "#1877f2" }, { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
     { id: "LinkedIn", emoji: "💼", color: "#0077b5" }, { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
     { id: "Pinterest", emoji: "📌", color: "#e60023" },
   ];
+  const ADS_CAL_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢", color: "#4285f4" }, { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
+    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" }, { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
+  ];
+  const CAL_PLATFORMS = userType === "business" ? ADS_CAL_PLATFORMS : ALL_CAL_PLATFORMS;
+
+  useEffect(() => {
+    if (userType === "business" && calPlatform === "Instagram") setCalPlatform("Google Ads");
+  }, [userType]);
 
   const CAL_PLATFORM_GUIDE: Record<string, string> = {
     "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
@@ -1666,6 +1694,10 @@ function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing — credible takeaways only.",
     "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
     "Pinterest": "Keyword-rich, benefit-stated clearly upfront — functions like search, not entertainment.",
+    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits, no fluff.",
+    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
+    "YouTube Ads": "First-5-second hook that stops a skip, then a clear value statement.",
+    "Native Ads": "Editorial-style, blends with content, curiosity-driven rather than promotional.",
   };
 
   const generate = async () => {
@@ -1789,20 +1821,21 @@ Generate exactly 30 days.`;
   );
 }
 
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory, onCreditUsed }: any) {
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
   const [loading, setLoading] = useState(false);
   const [pack, setPack] = useState<any>(null);
   const [packKeyword, setPackKeyword] = useState(keyword || "");
   const [error, setError] = useState("");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [packType, setPackType] = useState<"ads" | "youtube" | "instagram">("instagram");
+  const [packType, setPackType] = useState<"ads" | "youtube" | "instagram">(userType === "business" ? "ads" : "instagram");
   const [openSection, setOpenSection] = useState<string | null>(null);
 
-  const PACK_TYPES = [
+  const ALL_PACK_TYPES = [
     { id: "instagram", label: "📸 Instagram & TikTok", desc: "Hooks, Reels, Captions, Hashtags" },
     { id: "youtube", label: "▶️ YouTube", desc: "Titles, Scripts, Descriptions, Tags" },
     { id: "ads", label: "📢 Google & Meta Ads", desc: "Headlines, Ad Copy, CTAs" },
   ];
+  const PACK_TYPES = userType === "business" ? ALL_PACK_TYPES.filter(p => p.id === "ads") : ALL_PACK_TYPES;
 
   const generate = async () => {
     if (!packKeyword.trim()) { setError("Enter a keyword first."); return; }
@@ -1963,7 +1996,7 @@ Respond ONLY in JSON:
 }
 
 
-function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, onSaveHistory }: any) {
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, onSaveHistory, userType }: any) {
   const [kw, setKw] = useState(keyword || "");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1971,7 +2004,7 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const PLATFORMS = [
+  const ALL_CAPTION_PLATFORMS = [
     { id: "Instagram", emoji: "📸", color: "#e1306c" },
     { id: "YouTube", emoji: "▶️", color: "#ef4444" },
     { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
@@ -1981,6 +2014,17 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     { id: "Pinterest", emoji: "📌", color: "#e60023" },
     { id: "WhatsApp", emoji: "💬", color: "#25d366" },
   ];
+  const ADS_CAPTION_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢", color: "#4285f4" },
+    { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
+    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" },
+    { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
+  ];
+  const PLATFORMS = userType === "business" ? ADS_CAPTION_PLATFORMS : ALL_CAPTION_PLATFORMS;
+
+  useEffect(() => {
+    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
+  }, [userType]);
 
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -2000,6 +2044,10 @@ function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, l
     "Facebook": "Warm, conversational, slightly longer-form storytelling tone suited to an older, community-oriented audience. Hashtags: minimal, Facebook doesn't reward heavy hashtag use.",
     "Pinterest": "Keyword-rich, benefit-stated clearly upfront — Pinterest captions function like search snippets, not entertainment hooks. Hashtags: descriptive, search-intent driven.",
     "WhatsApp": "Personal, direct, one-to-one message tone — written like something a friend would send, not a public post. Hashtags: not used at all on WhatsApp, generate empty array.",
+    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits, no fluff. Hashtags: not applicable, generate empty array.",
+    "Meta Ads": "Scroll-stopping, pain-point-led ad copy for a passive feed audience. Hashtags: not applicable, generate empty array.",
+    "YouTube Ads": "First-5-second hook that stops a skip, natural spoken tone. Hashtags: not applicable, generate empty array.",
+    "Native Ads": "Editorial-style, blends with content, curiosity-driven. Hashtags: not applicable, generate empty array.",
   };
 
   const generate = async () => {
@@ -3688,7 +3736,7 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("score")} />
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("score")} userType={userType} />
           )}
 
           {/* TAB: CALENDAR */}
@@ -3699,7 +3747,7 @@ Respond ONLY in JSON:
                 previewItems={["Day 1 (Tips): The one mistake everyone makes when...", "Day 2 (Story): I tried this for 30 days and...", "Day 3 (Mistakes): Stop doing this if you want..."]}
                 onUpgrade={() => setShowPaywall(true)} />
             ) : (
-              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("calendar")} />
+              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("calendar")} userType={userType} />
             )
           )}
 
@@ -3728,13 +3776,13 @@ Respond ONLY in JSON:
                 previewItems={["🎬 Full script with timing cues", "🖼️ Auto-generated thumbnail", "🔊 AI voiceover — Hindi, Tamil, Telugu & more"]}
                 onUpgrade={() => setShowPaywall(true)} />
             ) : (
-              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} onCreditUsedGenerate={() => incrementUsage("scriptgenerate")} onCreditUsedImprove={() => incrementUsage("scriptimprove")} onCreditUsedVoice={() => incrementUsage("voiceover")} />
+              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} onCreditUsedGenerate={() => incrementUsage("scriptgenerate")} onCreditUsedImprove={() => incrementUsage("scriptimprove")} onCreditUsedVoice={() => incrementUsage("voiceover")} userType={userType} />
             )
           )}
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} onSaveHistory={saveToHistory} />
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} onSaveHistory={saveToHistory} userType={userType} />
           )}
 
           {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
@@ -3750,7 +3798,7 @@ Respond ONLY in JSON:
                 previewItems={["🎣 10 viral hooks", "📝 8 post/reel titles", "🎬 5 ready-to-shoot scripts"]}
                 onUpgrade={() => setShowPaywall(true)} />
             ) : (
-              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("pack")} />
+              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("pack")} userType={userType} />
             )
           )}
         </div>
