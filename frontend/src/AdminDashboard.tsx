@@ -27,7 +27,7 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({
-    total: 0, free: 0, starter: 0, growth: 0, pro: 0, agency: 0,
+    total: 0, free: 0, creator_starter: 0, creator_pro: 0, advertiser: 0, agency: 0,
     totalCreditsUsed: 0, todaySignups: 0, totalReferrals: 0, revenue: 0
   });
 
