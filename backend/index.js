@@ -1,6 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch");
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
@@ -168,7 +174,24 @@ app.post("/api/generate", async (req, res) => {
 app.post("/api/trends/platform", async (req, res) => {
   try {
     const { platform, niche, keyword, country } = req.body;
+
+    // Supabase se real crowd data fetch karo
+    const { data: trendingData } = await supabase
+      .from('trending_styles')
+      .select('*')
+      .eq('niche', niche)
+      .eq('platform', platform)
+      .order('generation_count', { ascending: false })
+      .limit(3);
+
+    const trendingContext = trendingData?.length
+      ? `\nREAL CROWD INTELLIGENCE (actual user behavior on this tool):
+${trendingData.map(t => `- "${t.style}" content: used ${t.generation_count} times (${t.pct_share}% of ${niche} creators on ${platform})`).join('\n')}
+Prioritize these proven styles in your response.\n`
+      : '';
+
     const prompt = `You are a viral content trend analyst. Generate CURRENT trending content ideas for ${platform} in the ${niche} niche for ${country}.
+${trendingContext}
 Return ONLY a valid JSON object like this:
 {
   "platform": "${platform}",
@@ -289,12 +312,6 @@ app.post("/api/referral/apply", async (req, res) => {
   console.log("Referral apply called:", referral_code, new_user_id);
 
   try {
-    const { createClient } = require('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-
     const { data: referrer, error: refErr } = await supabase
       .from("users")
       .select("id, credits_remaining, referral_count")
@@ -357,7 +374,6 @@ app.post("/api/text-to-speech", async (req, res) => {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    // Only wrap in express-as if a non-default style is requested and supported by the voice
     const innerContent = (style && style !== "Default")
       ? `<mstts:express-as style="${style.toLowerCase()}"><prosody rate="${speakingRate}">${escapedText}</prosody></mstts:express-as>`
       : `<prosody rate="${speakingRate}">${escapedText}</prosody>`;
@@ -394,6 +410,7 @@ app.post("/api/text-to-speech", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+
 // Keep alive — ping every 14 minutes
 setInterval(() => {
   fetch(`https://viral-tool-1.onrender.com/health`)
