@@ -21,12 +21,11 @@ const YOUR_PAYPAL_ME = "https://paypal.me/yourname";
 const SUPPORT_PHONE = "+91 9315133390";
 
 const PLANS = {
-  free:        { label: "Free",        limit: 100,  priceINR: 0,    priceUSD: 0  },
-  starter:     { label: "Starter",     limit: 100,  priceINR: 299,  priceUSD: 4,  badge: "🔥 Popular" },
-  pro_creator: { label: "Pro Creator", limit: 400,  priceINR: 999,  priceUSD: 12, badge: "⚡ Best Value" },
-  growth:      { label: "Growth",      limit: 150,  priceINR: 799,  priceUSD: 10, badge: "📈 Business" },
-  business:    { label: "Business",    limit: 400,  priceINR: 1999, priceUSD: 24, badge: "💎 Pro" },
-  agency:      { label: "Agency",      limit: 1000, priceINR: 4999, priceUSD: 59, badge: "👑 Premium" },
+  free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0  },
+  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 299.99,  priceUSD: 4,  badge: "🔥 Popular", segment: "creator" },
+  creator_pro:      { label: "Creator Pro",      limit: 600,   priceINR: 999.99,  priceUSD: 12, badge: "⚡ Best Value", segment: "creator" },
+  advertiser:       { label: "Advertiser",       limit: 700,   priceINR: 1999.99, priceUSD: 24, badge: "📢 For Ads", segment: "business" },
+  agency:           { label: "Agency",           limit: 2000,  priceINR: 4999.99, priceUSD: 59, badge: "👑 All Access", segment: "agency" },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -251,7 +250,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory }: any) {
+function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
   // Improve mode states
@@ -356,6 +355,7 @@ Respond ONLY in JSON:
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setImproveResult(parsed);
+      if (onCreditUsedImprove) onCreditUsedImprove();
       if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
     } catch (err: any) {
       if (err?.message === "RATE_LIMITED") {
@@ -415,6 +415,7 @@ Respond ONLY in JSON:
       const audioBlob = await res.blob();
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
+      if (onCreditUsedVoice) onCreditUsedVoice();
     } catch {
       setVoiceError("Voice generation failed. Try again.");
     }
@@ -852,6 +853,7 @@ Respond ONLY in JSON:
       setGenerateResult(parsed);
       const thumb = generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
       setThumbnailUrl(thumb);
+      if (onCreditUsedGenerate) onCreditUsedGenerate();
       if (onSaveHistory) onSaveHistory("scriptlab", { platform, keyword, inputSummary: `${keyword} (${style}, ${duration})`, resultData: parsed });
     } catch { setError("Generation failed. Try again."); }
     setGenerateLoading(false);
@@ -1361,7 +1363,7 @@ Respond ONLY in JSON:
     </div>
   );
 }
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory }: any) {
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
   const [loading, setLoading] = useState(false);
@@ -1455,6 +1457,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
       if (onSaveHistory) onSaveHistory("hookscore", { platform, inputSummary: contentInput.slice(0, 80), resultData: parsed });
     } catch { setError("Analysis failed. Try again."); }
     setLoading(false);
@@ -1640,7 +1643,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
   );
 }
 
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory }: any) {
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory, onCreditUsed }: any) {
   const [loading, setLoading] = useState(false);
   const [calendar, setCalendar] = useState<any[]>([]);
   const [calKeyword, setCalKeyword] = useState(keyword || "");
@@ -1698,6 +1701,7 @@ Generate exactly 30 days.`;
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
       const days = parsed.days || [];
       setCalendar(days);
+      if (onCreditUsed) onCreditUsed();
       if (onSaveHistory) onSaveHistory("calendar", { niche, platform: calPlatform, keyword: calKeyword, inputSummary: calKeyword, resultData: { days } });
     } catch { setError("Calendar generation failed. Try again."); }
     setLoading(false);
@@ -1785,7 +1789,7 @@ Generate exactly 30 days.`;
   );
 }
 
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory }: any) {
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory, onCreditUsed }: any) {
   const [loading, setLoading] = useState(false);
   const [pack, setPack] = useState<any>(null);
   const [packKeyword, setPackKeyword] = useState(keyword || "");
@@ -1851,6 +1855,7 @@ Respond ONLY in JSON:
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
       const packData = JSON.parse(text.replace(/```json|```/g, "").trim());
       setPack(packData);
+      if (onCreditUsed) onCreditUsed();
       if (onSaveHistory) onSaveHistory("pack", { niche, platform, keyword: packKeyword, inputSummary: `${packKeyword} (${packType})`, resultData: packData });
     } catch { setError("Pack generation failed. Try again."); }
     setLoading(false);
@@ -2374,7 +2379,7 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
 }
 
 function PaywallModal({ onClose, onSelectPlan }: any) {
-  const [selected, setSelected] = useState("starter");
+  const [selected, setSelected] = useState("creator_starter");
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
       <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
@@ -2626,6 +2631,44 @@ function ResultCard({ title, items, emoji, color, charLimit }: any) {
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+// Shows a compelling preview of a locked feature to drive curiosity/upgrades,
+// instead of a flat "this is locked" wall.
+function LockedFeaturePreview({ emoji, title, tagline, previewItems, onUpgrade }: any) {
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem", position: "relative", overflow: "hidden" }}>
+
+        {/* Blurred preview content behind a lock overlay */}
+        <div style={{ filter: "blur(3px)", opacity: 0.4, pointerEvents: "none", userSelect: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+            <span style={{ fontSize: "1.4rem" }}>{emoji}</span>
+            <div>
+              <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>{title}</h3>
+              <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>{tagline}</p>
+            </div>
+          </div>
+          {previewItems.map((item: string, i: number) => (
+            <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.5rem", color: "#888", fontSize: "0.85rem" }}>
+              {item}
+            </div>
+          ))}
+        </div>
+
+        {/* Lock overlay */}
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, rgba(13,13,13,0.4) 0%, rgba(13,13,13,0.92) 60%)", padding: "1.5rem" }}>
+          <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🔒</div>
+          <h3 style={{ margin: "0 0 0.4rem", fontFamily: "'Inter',sans-serif", fontSize: "1.1rem", color: "#fff", fontWeight: 800, textAlign: "center" }}>{title} is a Premium Feature</h3>
+          <p style={{ margin: "0 0 1.1rem", color: "#a1a1aa", fontSize: "0.8rem", textAlign: "center", maxWidth: "320px", lineHeight: 1.6 }}>{tagline}</p>
+          <button onClick={onUpgrade} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.75rem 1.75rem", borderRadius: "12px", fontWeight: 800, fontSize: "0.88rem", cursor: "pointer", boxShadow: "0 8px 24px rgba(109,40,217,0.4)" }}>
+            🚀 Unlock with Creator Starter — ₹299.99
+          </button>
+          <p style={{ margin: "0.75rem 0 0", color: "#444", fontSize: "0.68rem" }}>Or upgrade to any paid plan to access this</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2938,7 +2981,7 @@ export default function ViralContentTool() {
   const langLabel = getLangLabel(selectedLang);
   const langStrict = getLangStrict(selectedLang);
 
-  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 1, image: 2, pack: 3, calendar: 5, scriptgenerate: 6, scriptimprove: 2 };
+  const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 2, caption: 2, image: 6, pack: 5, calendar: 6, scriptgenerate: 8, scriptimprove: 5, voiceover: 3 };
 
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
@@ -3466,7 +3509,7 @@ Respond ONLY in JSON:
           <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
             {tabs.map(t => (
               <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                isPro={false} />
+                isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
             ))}
           </div>
         </div>
@@ -3636,7 +3679,7 @@ Respond ONLY in JSON:
               {plan === "free" && (
                 <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
                   <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>🔥 Unlock Hook Score, Calendar & Content Packs</div>
-                  <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>Starter ₹299 · Pro Creator ₹999 · Business ₹1,999 · Agency ₹4,999</div>
+                  <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>Creator Starter ₹299.99 · Creator Pro ₹999.99 · Advertiser ₹1,999.99 · Agency ₹4,999.99</div>
                   <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
                 </div>
               )}
@@ -3645,17 +3688,31 @@ Respond ONLY in JSON:
 
           {/* TAB: HOOK SCORE */}
           {activeTab === "score" && (
-            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} />
+            <HookScoreAnalyzer plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("score")} />
           )}
 
           {/* TAB: CALENDAR */}
           {activeTab === "calendar" && (
-            <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} creditCost={5} onSaveHistory={saveToHistory} />
+            plan === "free" ? (
+              <LockedFeaturePreview emoji="📅" title="30-Day Content Calendar"
+                tagline="Get a full month of platform-perfect hooks planned out in one click — never run out of ideas again."
+                previewItems={["Day 1 (Tips): The one mistake everyone makes when...", "Day 2 (Story): I tried this for 30 days and...", "Day 3 (Mistakes): Stop doing this if you want..."]}
+                onUpgrade={() => setShowPaywall(true)} />
+            ) : (
+              <ContentCalendar plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("calendar")} />
+            )
           )}
 
           {/* TAB: IMAGE AI */}
           {activeTab === "image" && (
-            <ImageContent plan={plan} onUpgrade={() => setShowPaywall(true)} credits={remaining} onCreditUsed={() => incrementUsage("image")} langLabel={langStrict} />
+            plan === "free" ? (
+              <LockedFeaturePreview emoji="🖼️" title="Image AI"
+                tagline="Upload any photo and get hooks, captions, and keyword research written specifically around what's in the image."
+                previewItems={["📸 Upload your product/lifestyle photo", "✨ AI reads the image automatically", "📝 Get hooks + captions matched to it"]}
+                onUpgrade={() => setShowPaywall(true)} />
+            ) : (
+              <ImageContent plan={plan} onUpgrade={() => setShowPaywall(true)} credits={remaining} onCreditUsed={() => incrementUsage("image")} langLabel={langStrict} />
+            )
           )}
 
           {/* TAB: TRENDS */}
@@ -3665,7 +3722,14 @@ Respond ONLY in JSON:
 
           {/* TAB: SCRIPT LAB */}
           {activeTab === "scriptlab" && (
-            <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} />
+            plan === "free" ? (
+              <LockedFeaturePreview emoji="🎬" title="Script Lab"
+                tagline="Generate complete word-for-word reel scripts (15-90 sec) with a matching thumbnail and AI voiceover in 7 languages."
+                previewItems={["🎬 Full script with timing cues", "🖼️ Auto-generated thumbnail", "🔊 AI voiceover — Hindi, Tamil, Telugu & more"]}
+                onUpgrade={() => setShowPaywall(true)} />
+            ) : (
+              <ScriptLab plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} langStrict={langStrict} langLabel={langLabel} onSaveHistory={saveToHistory} onCreditUsedGenerate={() => incrementUsage("scriptgenerate")} onCreditUsedImprove={() => incrementUsage("scriptimprove")} onCreditUsedVoice={() => incrementUsage("voiceover")} />
+            )
           )}
 
           {/* TAB: CAPTION & HASHTAGS */}
@@ -3680,7 +3744,14 @@ Respond ONLY in JSON:
 
           {/* TAB: PACK */}
           {activeTab === "pack" && (
-            <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} creditCost={3} onSaveHistory={saveToHistory} />
+            plan === "free" ? (
+              <LockedFeaturePreview emoji="📦" title="Content Pack"
+                tagline="One click for a complete platform bundle — hooks, titles, captions, scripts, and hashtags, all matched to each other."
+                previewItems={["🎣 10 viral hooks", "📝 8 post/reel titles", "🎬 5 ready-to-shoot scripts"]}
+                onUpgrade={() => setShowPaywall(true)} />
+            ) : (
+              <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("pack")} />
+            )
           )}
         </div>
       </div>
@@ -3873,16 +3944,17 @@ Respond ONLY in JSON:
               <button onClick={() => setShowFaq(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #1f1f1f", color: "#666", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
             {[
-              { q: "What is VCI?", a: "VCI (Viral Content Intelligence) is an AI-powered tool that generates viral content for creators and businesses — hooks, captions, hashtags, scripts, calendars, all in one place!" },
-              { q: "What do I get in the free trial?", a: "You get 5 free credits. You can use Generate, Hook Score, and Caption & Hashtags features. All niches, platforms, and 30+ languages are open in the trial!" },
-              { q: "What does 1 credit equal?", a: "Generate = 1 credit, Hook Score = 1 credit, Caption & Hashtags = 2 credits, Script Lab = 2 credits, Content Pack = 3 credits, 30-Day Calendar = 5 credits." },
-              { q: "How soon will my plan be activated after payment?", a: "Send your payment screenshot on WhatsApp and your plan will be manually activated within 2 hours. UPI: 9315133390@ptyes" },
-              { q: "Which plan should I choose?", a: "Just starting out? Starter ₹299 (100 credits + Script Lab). Serious creator? Pro Creator ₹999 (400 credits + Calendar + Pack + Trends). Running ads/business? Growth ₹799 or Business ₹1,999." },
-              { q: "Do credits renew every month?", a: "Yes! Credits renew every month according to your plan. Unused credits do not carry forward to the next month." },
+              { q: "What is VCI?", a: "VCI (Viral Content Intelligence) is an AI-powered platform that generates platform-accurate content for creators and businesses — hooks, captions, hashtags, scripts, 30-day calendars, and ad copy, all in one place." },
+              { q: "What's included in the free plan?", a: "The free plan gives you 25 credits every month, with full access to Generate, Hook Score, and Caption & Hashtags. All niches, platforms, and 30+ languages are open — no restrictions on what you can try." },
+              { q: "How much does each feature cost?", a: "Generate = 1 credit, Hook Score = 2 credits, Captions = 2 credits, Content Pack = 5 credits, 30-Day Calendar = 6 credits, Image AI = 6 credits, Script Lab Improve = 5 credits, Script Lab Generate = 8 credits, AI Voiceover = 3 credits." },
+              { q: "How soon is my plan activated after payment?", a: "Send your payment screenshot on WhatsApp and your plan is manually activated within 2 hours. UPI: 9315133390@ptyes" },
+              { q: "Which plan should I choose?", a: "Content creator just starting out? Creator Starter (₹299.99, 150 credits). Posting daily across multiple formats? Creator Pro (₹999.99, 600 credits) adds Calendar, Pack, Script Lab and Image AI. Running Google/Meta ad campaigns? Advertiser (₹1,999.99, 700 credits). Managing multiple clients across content and ads? Agency (₹4,999.99, 2,000 credits) — full access to everything." },
+              { q: "What's the difference between Creator and Advertiser plans?", a: "Creator plans show only social media platforms (Instagram, YouTube, TikTok, etc.) and unlock Calendar, Pack, Script Lab, and Image AI. The Advertiser plan is built for Google/Meta/YouTube/Native Ads — headlines, descriptions, and AI-estimated keyword research, all within strict platform character limits. Agency gets both." },
+              { q: "Do credits renew every month?", a: "Yes. Credits renew automatically each month based on your plan. Unused credits do not carry forward to the next month." },
               { q: "Is there a refund policy?", a: "Yes, you can request a refund within 7 days if the tool doesn't work as expected. Contact support on WhatsApp: +91 9315133390" },
-              { q: "How do I use VCI on mobile?", a: "Open getvci.com in your mobile browser. On Chrome, tap 'Add to Home Screen' to install it like an app. On iPhone, use Safari and tap 'Add to Home Screen'!" },
-              { q: "Is Hindi and regional language content supported?", a: "Absolutely! 30+ languages are supported — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam and many more." },
-              { q: "What is Script Lab?", a: "Script Lab lets you generate complete word-for-word reel scripts for 15/30/60/90 seconds. You can also improve existing scripts with a Before/After comparison. Available from the Starter plan onwards." },
+              { q: "How do I use VCI on mobile?", a: "Open getvci.com in your mobile browser. On Chrome, tap 'Add to Home Screen' to install it like an app. On iPhone, use Safari and tap 'Add to Home Screen'." },
+              { q: "Is Hindi and regional language content supported?", a: "Yes. 30+ languages are supported — Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, and many more, each with native script output." },
+              { q: "What is Script Lab?", a: "Script Lab generates complete word-for-word reel scripts (15-90 seconds) with a matching thumbnail and AI voiceover in 7 languages. You can also paste an existing script for a Before/After improvement comparison. Available from Creator Pro onwards." },
             ].map((faq, i) => (
               <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}

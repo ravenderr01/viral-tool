@@ -4,14 +4,13 @@ import { supabase } from "./supabaseClient";
 const ADMIN_EMAIL = "ravenderro1@gmail.com";
 
 const PLAN_COLORS: Record<string, string> = {
-  free: "#6b7280", starter: "#22c55e", growth: "#a855f7",
-  pro: "#06b6d4", pro_creator: "#06b6d4", business: "#f97316",
-  agency: "#f59e0b", Agency: "#f59e0b",
+  free: "#6b7280", creator_starter: "#22c55e", creator_pro: "#06b6d4",
+  advertiser: "#f97316", agency: "#f59e0b",
 };
 
 const PLAN_CREDITS: Record<string, number> = {
-  free: 10, starter: 100, growth: 150,
-  pro: 400, pro_creator: 400, business: 400, agency: 1000, Agency: 1000,
+  free: 25, creator_starter: 150, creator_pro: 600,
+  advertiser: 700, agency: 2000,
 };
 
 export default function AdminDashboard({ onBack }: { onBack: () => void }) {
@@ -42,14 +41,14 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
     if (usersData) {
       setUsers(usersData);
       const today = new Date().toISOString().split("T")[0];
-      const planRevenue: Record<string, number> = { starter: 299, growth: 799, pro: 1999, pro_creator: 999, business: 1999, agency: 4999 };
+      const planRevenue: Record<string, number> = { creator_starter: 299.99, creator_pro: 999.99, advertiser: 1999.99, agency: 4999.99 };
       setStats({
         total: usersData.length,
         free: usersData.filter(u => !u.plan || u.plan === "free").length,
-        starter: usersData.filter(u => u.plan === "starter").length,
-        growth: usersData.filter(u => u.plan === "growth").length,
-        pro: usersData.filter(u => u.plan === "pro" || u.plan === "pro_creator" || u.plan === "business").length,
-        agency: usersData.filter(u => u.plan === "agency" || u.plan === "Agency").length,
+        creator_starter: usersData.filter(u => u.plan === "creator_starter").length,
+        creator_pro: usersData.filter(u => u.plan === "creator_pro").length,
+        advertiser: usersData.filter(u => u.plan === "advertiser").length,
+        agency: usersData.filter(u => u.plan === "agency").length,
         totalCreditsUsed: usersData.reduce((a, u) => a + (u.generations_used_today || 0), 0),
         todaySignups: usersData.filter(u => u.created_at?.startsWith(today)).length,
         totalReferrals: usersData.reduce((a, u) => a + (u.referral_count || 0), 0),
@@ -176,10 +175,10 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
                     <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: "#555", fontWeight: 700, letterSpacing: "0.08em" }}>📊 PLAN BREAKDOWN</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                       {[
-                        { plan: "Agency", count: stats.agency, price: 4999, color: "#f59e0b" },
-                        { plan: "Pro / Business", count: stats.pro, price: 1499, color: "#06b6d4" },
-                        { plan: "Growth", count: stats.growth, price: 799, color: "#a855f7" },
-                        { plan: "Starter", count: stats.starter, price: 299, color: "#22c55e" },
+                        { plan: "Agency", count: stats.agency, price: 4999.99, color: "#f59e0b" },
+                        { plan: "Advertiser", count: stats.advertiser, price: 1999.99, color: "#f97316" },
+                        { plan: "Creator Pro", count: stats.creator_pro, price: 999.99, color: "#06b6d4" },
+                        { plan: "Creator Starter", count: stats.creator_starter, price: 299.99, color: "#22c55e" },
                         { plan: "Free", count: stats.free, price: 0, color: "#6b7280" },
                       ].map((p, i) => (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -299,10 +298,10 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ color: "#555", fontSize: "0.68rem", fontWeight: 700, display: "block", marginBottom: "0.4rem" }}>PLAN</label>
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                {["free", "starter", "pro_creator", "growth", "business", "agency"].map(p => (
+                {["free", "creator_starter", "creator_pro", "advertiser", "agency"].map(p => (
                   <button key={p} onClick={() => { setEditPlan(p); setEditCredits(PLAN_CREDITS[p].toString()); }}
-                    style={{ background: editPlan === p ? `${PLAN_COLORS[p]}20` : "#0d0d0d", border: `1px solid ${editPlan === p ? PLAN_COLORS[p] : "#1a1a1a"}`, color: editPlan === p ? PLAN_COLORS[p] : "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, textTransform: "capitalize" }}>
-                    {p}
+                    style={{ background: editPlan === p ? `${PLAN_COLORS[p]}20` : "#0d0d0d", border: `1px solid ${editPlan === p ? PLAN_COLORS[p] : "#1a1a1a"}`, color: editPlan === p ? PLAN_COLORS[p] : "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>
+                    {p.replace("_", " ")}
                   </button>
                 ))}
               </div>
