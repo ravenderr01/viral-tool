@@ -3467,6 +3467,14 @@ Respond ONLY in JSON:
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(109,40,217,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
                     💬 Support
                   </button>
+                  <a href="https://whatsapp.com/channel/0029Vb7h3KUHrDZbLAI5Of38" target="_blank" rel="noopener noreferrer" onClick={() => setShowProfile(false)} style={{ width: "100%", background: "none", border: "none", color: "#25d366", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(37,211,102,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    📢 WhatsApp Channel
+                  </a>
+                  <a href="https://t.me/getvci" target="_blank" rel="noopener noreferrer" onClick={() => setShowProfile(false)} style={{ width: "100%", background: "none", border: "none", color: "#0088cc", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(0,136,204,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    💭 Telegram Community
+                  </a>
                   {user?.email === "ravenderr01@gmail.com" && (
                     <button onClick={() => { setShowAdmin(true); setShowProfile(false); }} style={{ width: "100%", background: "none", border: "none", color: "#ef4444", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem" }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
