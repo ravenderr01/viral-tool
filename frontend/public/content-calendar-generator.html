@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30-Day Content Calendar Generator — AI Planning Tool | VCI</title>
+<meta name="description" content="Generate a full 30-day content calendar with platform-specific hooks in one click. Plan a month of posts in under a minute. Free to try.">
+<link rel="canonical" href="https://www.getvci.com/content-calendar-generator">
+<meta property="og:title" content="30-Day Content Calendar Generator — AI Planning Tool | VCI">
+<meta property="og:description" content="Generate a full 30-day content calendar with platform-specific hooks in one click. Plan a month of posts in under a minute. Free to try.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.getvci.com/content-calendar-generator">
+<meta name="twitter:card" content="summary_large_image">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"VCI Content Calendar Generator","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"AI-powered 30-day content calendar generator with platform-specific hooks and content types.","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"120"}}
+</script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: #000; color: #f1f5f9; line-height: 1.6; overflow-x: hidden; }
+a { text-decoration: none; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 1.5rem; }
+.grad-text { background: linear-gradient(135deg,#fff 0%,#c084fc 50%,#a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+header { padding: 1.25rem 0; border-bottom: 1px solid rgba(139,92,246,0.12); position: sticky; top: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 50; }
+header .wrap { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.05rem; }
+.logo-icon { background: linear-gradient(135deg,#7c3aed,#a855f7); border-radius: 10px; padding: 0.4rem 0.6rem; font-size: 1rem; }
+.nav-cta { background: linear-gradient(135deg,#6d28d9,#7c3aed); color: #fff; padding: 0.55rem 1.3rem; border-radius: 10px; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 20px rgba(109,40,217,0.3); }
+.hero { padding: 4.5rem 0 3.5rem; text-align: center; position: relative; }
+.hero::before { content: ''; position: absolute; top: -10%; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%); filter: blur(60px); z-index: -1; }
+.eyebrow { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.7rem; font-weight: 700; color: #a855f7; letter-spacing: 0.08em; margin-bottom: 1.5rem; }
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.1rem; }
+.hero p.sub { color: #9ca3af; font-size: 1.05rem; max-width: 600px; margin: 0 auto 2rem; }
+.cta-row { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem; }
+.btn-primary { background: linear-gradient(135deg,#6d28d9,#7c3aed); color: #fff; padding: 0.95rem 2.1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 8px 28px rgba(109,40,217,0.4); display: inline-block; transition: transform 0.2s; }
+.btn-primary:hover { transform: translateY(-2px); }
+.btn-ghost { border: 1px solid rgba(255,255,255,0.15); color: #d4d4d8; padding: 0.95rem 1.8rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; }
+.micro { color: #555; font-size: 0.78rem; }
+.demo { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 18px; padding: 1.75rem; margin: 3rem auto 0; max-width: 620px; text-align: left; }
+.demo-label { color: #555; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+.demo-input { background: #050505; border: 1px solid #1a1a1a; border-radius: 10px; padding: 0.85rem 1rem; color: #888; font-size: 0.88rem; margin-bottom: 1.1rem; }
+.demo-output { background: #0f0f0f; border: 1px solid #6d28d930; border-left: 3px solid #8b5cf6; border-radius: 10px; padding: 0.8rem 1.1rem; margin-bottom: 0.55rem; }
+.demo-output p { color: #e4e4e7; font-size: 0.86rem; }
+section { padding: 4rem 0; }
+.section-head { text-align: center; max-width: 600px; margin: 0 auto 3rem; }
+.section-head .eyebrow { margin-bottom: 1rem; }
+h2 { font-size: clamp(1.6rem, 3.5vw, 2.3rem); font-weight: 800; margin-bottom: 0.85rem; }
+.section-head p { color: #9ca3af; font-size: 0.95rem; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+.compare-card { border-radius: 16px; padding: 1.5rem; }
+.compare-card.bad { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); }
+.compare-card.good { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.18); }
+.compare-card h3 { font-size: 0.95rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.compare-card.bad h3 { color: #ef4444; } .compare-card.good h3 { color: #22c55e; }
+.compare-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+.compare-card li { color: #a1a1aa; font-size: 0.85rem; display: flex; gap: 0.55rem; align-items: flex-start; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+@media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+.step { background: #0c0c0c; border: 1px solid #1a1a1a; border-radius: 16px; padding: 1.75rem 1.5rem; }
+.step-num { color: #8b5cf6; font-weight: 900; font-size: 0.78rem; margin-bottom: 0.85rem; }
+.step h3 { font-size: 1.02rem; font-weight: 800; margin-bottom: 0.5rem; }
+.step p { color: #9ca3af; font-size: 0.85rem; }
+.pill-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+.pill { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 30px; padding: 0.65rem 1.2rem; font-size: 0.82rem; color: #d4d4d8; display: flex; align-items: center; gap: 0.5rem; }
+.faq-item { border-bottom: 1px solid #161616; padding: 1.1rem 0; }
+.faq-item h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: #f1f5f9; }
+.faq-item p { color: #9ca3af; font-size: 0.85rem; }
+.final-cta { text-align: center; background: linear-gradient(135deg,rgba(109,40,217,0.1),rgba(6,182,212,0.05)); border: 1px solid rgba(109,40,217,0.2); border-radius: 24px; padding: 3rem 2rem; }
+.final-cta h2 { margin-bottom: 0.75rem; } .final-cta p { color: #9ca3af; margin-bottom: 1.75rem; }
+footer { padding: 2.5rem 0; border-top: 1px solid rgba(139,92,246,0.1); text-align: center; }
+footer p { color: #3f3f46; font-size: 0.75rem; } footer a { color: #555; }
+
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><div class="logo"><span class="logo-icon">⚡</span><span class="grad-text">VCI</span></div><a href="https://www.getvci.com/" class="nav-cta">Try Free →</a></div></header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">📅 CONTENT CALENDAR GENERATOR</span>
+    <h1>Plan a month of content in <span class="grad-text">one click</span></h1>
+    <p class="sub">Stop staring at a blank planner every Sunday. Enter one keyword and your platform, and get 30 days of hooks, organized by week, each tagged with a content type — Tips, Story, Tutorial, and more.</p>
+    <div class="cta-row">
+      <a href="https://www.getvci.com/" class="btn-primary">Generate My Calendar →</a>
+      <a href="#how-it-works" class="btn-ghost">See how it works</a>
+    </div>
+    <p class="micro">No credit card required · 25 free credits every month</p>
+
+    <div class="demo">
+      <p class="demo-label">WEEK 1</p>
+      <div class="demo-output"><p><strong>Day 1 (Tips):</strong> The one mistake everyone makes when starting out</p></div>
+      <div class="demo-output"><p><strong>Day 2 (Story):</strong> I tried this for 30 days and here's what actually happened</p></div>
+      <div class="demo-output"><p><strong>Day 3 (Mistakes):</strong> Stop doing this if you want to see real results</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">THE PROBLEM</span><h2>Planning a month of content eats your whole Sunday</h2><p>Most creators either post randomly or burn hours mapping out a calendar by hand, repeating the same content types without realizing it.</p></div>
+    <div class="compare-grid">
+      <div class="compare-card bad"><h3>❌ Manual Planning</h3><ul>
+        <li>→ Hours spent brainstorming 30 different angles</li>
+        <li>→ Content types repeat without you noticing</li>
+        <li>→ No platform-specific tone built in</li>
+        <li>→ Easy to lose momentum halfway through the month</li>
+      </ul></div>
+      <div class="compare-card good"><h3>✅ VCI Calendar</h3><ul>
+        <li>→ 30 days generated in under a minute, organized by week</li>
+        <li>→ Varied content types — Tips, Story, Mistakes, Tutorial, and more</li>
+        <li>→ Hooks written in your chosen platform's native tone</li>
+        <li>→ Click any day to copy its hook instantly when you're ready to post</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">HOW IT WORKS</span><h2>From keyword to a full month, instantly</h2></div>
+    <div class="steps">
+      <div class="step"><div class="step-num">STEP 1</div><h3>Enter your topic</h3><p>One keyword is enough — VCI plans variety across the entire month for you.</p></div>
+      <div class="step"><div class="step-num">STEP 2</div><h3>Pick your platform</h3><p>Instagram, YouTube, LinkedIn, Pinterest, and more — each with native tone and pacing.</p></div>
+      <div class="step"><div class="step-num">STEP 3</div><h3>Get 30 days, organized</h3><p>Hooks grouped by week, each tagged with its content type and a platform tip.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">BUILT IN</span><h2>Everything else you get along the way</h2></div>
+    <div class="pill-grid">
+      <div class="pill">🎣 Viral Hook Generator</div>
+      <div class="pill">📊 Hook Score Analyzer</div>
+      <div class="pill">📦 Content Pack Generator</div>
+      <div class="pill">🎬 Script Lab with AI voiceover</div>
+      <div class="pill">🌐 30+ languages, native script</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2>Common questions</h2></div>
+    <div style="max-width: 640px; margin: 0 auto;">
+      <div class="faq-item"><h3>Does the calendar repeat content types too often?</h3><p>No — VCI deliberately varies the content type (Tips, Story, Mistakes, Tutorial, and more) across the 30 days to keep your feed from feeling repetitive.</p></div>
+      <div class="faq-item"><h3>Can I regenerate it for a different platform?</h3><p>Yes, switch the platform and generate again — hooks and tone adjust to match.</p></div>
+      <div class="faq-item"><h3>How much does this cost?</h3><p>6 credits per calendar generation. Every account starts with 25 free credits monthly.</p></div>
+      <div class="faq-item"><h3>Can I get the calendar in Hindi or another language?</h3><p>Yes, all 30+ supported languages work for calendar generation, written natively in each script.</p></div>
+    </div>
+  </div>
+</section>
+
+<section><div class="wrap"><div class="final-cta"><h2>Your next 30 days of content, planned now</h2><p>Generate your full calendar in under a minute.</p><a href="https://www.getvci.com/" class="btn-primary">Try VCI Free →</a></div></div></section>
+
+<footer><div class="wrap"><p>© 2026 VCI — Viral Content Intelligence · <a href="https://www.getvci.com/">getvci.com</a></p></div></footer>
+
+</body>
+</html>

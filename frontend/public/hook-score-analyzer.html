@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hook Score Analyzer — Grade Your Content with AI | VCI</title>
+<meta name="description" content="Paste any hook, caption, or script and get an instant A-F grade with line-by-line fixes and 3 improved versions. Free to try on Instagram, YouTube, LinkedIn and more.">
+<link rel="canonical" href="https://www.getvci.com/hook-score-analyzer">
+<meta property="og:title" content="Hook Score Analyzer — Grade Your Content with AI">
+<meta property="og:description" content="Paste any hook or caption and get an instant grade with line-by-line fixes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.getvci.com/hook-score-analyzer">
+<meta name="twitter:card" content="summary_large_image">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"VCI Hook Score Analyzer","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"AI-powered content grading tool that scores hooks and captions with line-by-line improvement suggestions.","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"120"}}
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: #000; color: #f1f5f9; line-height: 1.6; overflow-x: hidden; }
+  a { text-decoration: none; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 1.5rem; }
+  .grad-text { background: linear-gradient(135deg,#fff 0%,#c084fc 50%,#a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  header { padding: 1.25rem 0; border-bottom: 1px solid rgba(139,92,246,0.12); position: sticky; top: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 50; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.05rem; }
+  .logo-icon { background: linear-gradient(135deg,#7c3aed,#a855f7); border-radius: 10px; padding: 0.4rem 0.6rem; font-size: 1rem; }
+  .nav-cta { background: linear-gradient(135deg,#6d28d9,#7c3aed); color: #fff; padding: 0.55rem 1.3rem; border-radius: 10px; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 20px rgba(109,40,217,0.3); }
+  .hero { padding: 4.5rem 0 3.5rem; text-align: center; position: relative; }
+  .hero::before { content: ''; position: absolute; top: -10%; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%); filter: blur(60px); z-index: -1; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.7rem; font-weight: 700; color: #a855f7; letter-spacing: 0.08em; margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.1rem; }
+  .hero p.sub { color: #9ca3af; font-size: 1.05rem; max-width: 600px; margin: 0 auto 2rem; }
+  .cta-row { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .btn-primary { background: linear-gradient(135deg,#6d28d9,#7c3aed); color: #fff; padding: 0.95rem 2.1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 8px 28px rgba(109,40,217,0.4); display: inline-block; transition: transform 0.2s; }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-ghost { border: 1px solid rgba(255,255,255,0.15); color: #d4d4d8; padding: 0.95rem 1.8rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; }
+  .micro { color: #555; font-size: 0.78rem; }
+  .demo { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 18px; padding: 1.75rem; margin: 3rem auto 0; max-width: 620px; text-align: left; }
+  .score-row { display: flex; align-items: center; justify-content: space-between; background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.1rem; }
+  .score-num { font-size: 2rem; font-weight: 900; color: #22c55e; }
+  .demo-label { color: #555; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+  .demo-line { background: #0f0f0f; border-left: 3px solid #ef4444; border-radius: 8px; padding: 0.7rem 0.95rem; margin-bottom: 0.5rem; }
+  .demo-line p { color: #e4e4e7; font-size: 0.82rem; }
+  .demo-line span { color: #ef4444; font-size: 0.7rem; display: block; margin-top: 0.25rem; }
+  section { padding: 4rem 0; }
+  .section-head { text-align: center; max-width: 600px; margin: 0 auto 3rem; }
+  .section-head .eyebrow { margin-bottom: 1rem; }
+  h2 { font-size: clamp(1.6rem, 3.5vw, 2.3rem); font-weight: 800; margin-bottom: 0.85rem; }
+  .section-head p { color: #9ca3af; font-size: 0.95rem; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card { border-radius: 16px; padding: 1.5rem; }
+  .compare-card.bad { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); }
+  .compare-card.good { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.18); }
+  .compare-card h3 { font-size: 0.95rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .compare-card.bad h3 { color: #ef4444; } .compare-card.good h3 { color: #22c55e; }
+  .compare-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+  .compare-card li { color: #a1a1aa; font-size: 0.85rem; display: flex; gap: 0.55rem; align-items: flex-start; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: #0c0c0c; border: 1px solid #1a1a1a; border-radius: 16px; padding: 1.75rem 1.5rem; }
+  .step-num { color: #8b5cf6; font-weight: 900; font-size: 0.78rem; margin-bottom: 0.85rem; }
+  .step h3 { font-size: 1.02rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .step p { color: #9ca3af; font-size: 0.85rem; }
+  .pill-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+  .pill { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 30px; padding: 0.65rem 1.2rem; font-size: 0.82rem; color: #d4d4d8; display: flex; align-items: center; gap: 0.5rem; }
+  .faq-item { border-bottom: 1px solid #161616; padding: 1.1rem 0; }
+  .faq-item h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: #f1f5f9; }
+  .faq-item p { color: #9ca3af; font-size: 0.85rem; }
+  .final-cta { text-align: center; background: linear-gradient(135deg,rgba(109,40,217,0.1),rgba(6,182,212,0.05)); border: 1px solid rgba(109,40,217,0.2); border-radius: 24px; padding: 3rem 2rem; }
+  .final-cta h2 { margin-bottom: 0.75rem; } .final-cta p { color: #9ca3af; margin-bottom: 1.75rem; }
+  footer { padding: 2.5rem 0; border-top: 1px solid rgba(139,92,246,0.1); text-align: center; }
+  footer p { color: #3f3f46; font-size: 0.75rem; } footer a { color: #555; }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><div class="logo"><span class="logo-icon">⚡</span><span class="grad-text">VCI</span></div><a href="https://www.getvci.com/" class="nav-cta">Try Free →</a></div></header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">📊 HOOK SCORE ANALYZER</span>
+    <h1>Find out why your content <span class="grad-text">isn't landing</span></h1>
+    <p class="sub">Paste any hook, caption, or script and get an honest A-F grade, line-by-line feedback on exactly what's weak, and three rewritten versions — built for the platform you're posting on.</p>
+    <div class="cta-row">
+      <a href="https://www.getvci.com/" class="btn-primary">Score My Content Free →</a>
+      <a href="#how-it-works" class="btn-ghost">See how it works</a>
+    </div>
+    <p class="micro">No credit card required · 25 free credits every month</p>
+
+    <div class="demo">
+      <div class="score-row">
+        <div><p class="demo-label" style="margin-bottom:0.2rem">GRADE</p><span style="font-size:1.3rem;font-weight:800;color:#f59e0b">C · 58/100</span></div>
+        <div style="text-align:right"><p class="demo-label" style="margin-bottom:0.2rem">VERDICT</p><span style="font-size:0.78rem;color:#9ca3af">Decent idea, weak delivery</span></div>
+      </div>
+      <p class="demo-label">LINE-BY-LINE FIX</p>
+      <div class="demo-line">
+        <p>"5 tips for better sleep"</p>
+        <span>⚠️ Too generic — thousands of posts use this exact framing</span>
+      </div>
+      <div class="demo-line" style="border-left-color:#22c55e">
+        <p>"I slept 4 hours for a year before I found out it was one habit"</p>
+        <span style="color:#22c55e">✓ Fixed — specific, curiosity-driven, personal stakes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">THE PROBLEM</span><h2>You can feel something's off, but not what</h2><p>Most creators know a caption isn't quite working but can't pinpoint why — or how to fix it without starting over.</p></div>
+    <div class="compare-grid">
+      <div class="compare-card bad"><h3>❌ Guessing Blind</h3><ul>
+        <li>→ "This feels weak" with no specific reason why</li>
+        <li>→ Rewriting from scratch instead of fixing what's there</li>
+        <li>→ No comparison to see if the new version is actually better</li>
+        <li>→ Same mistakes repeated across every post</li>
+      </ul></div>
+      <div class="compare-card good"><h3>✅ VCI Hook Score</h3><ul>
+        <li>→ A strict 0-100 score — average content scores 40-60, so you know where you stand</li>
+        <li>→ Exact lines flagged with the specific problem, not vague feedback</li>
+        <li>→ Three rewritten versions in different angles: curiosity, emotion, power</li>
+        <li>→ Platform-specific tips so the same mistake doesn't repeat</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">HOW IT WORKS</span><h2>A full breakdown in under a minute</h2></div>
+    <div class="steps">
+      <div class="step"><div class="step-num">STEP 1</div><h3>Paste your content</h3><p>A hook, full caption, script, or ad copy — anything you've already written.</p></div>
+      <div class="step"><div class="step-num">STEP 2</div><h3>Pick the platform</h3><p>Instagram, YouTube, LinkedIn, Google Ads, and more — scoring adjusts to fit.</p></div>
+      <div class="step"><div class="step-num">STEP 3</div><h3>Get your grade + fixes</h3><p>An honest score, line-level feedback, and three improved rewrites.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">BUILT IN</span><h2>Everything else you get along the way</h2></div>
+    <div class="pill-grid">
+      <div class="pill">📋 Caption & Hashtag Generator</div>
+      <div class="pill">🎣 Viral Hook Generator</div>
+      <div class="pill">📅 30-Day Content Calendar</div>
+      <div class="pill">🎬 Script Lab with AI voiceover</div>
+      <div class="pill">🌐 30+ languages, native script</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2>Common questions</h2></div>
+    <div style="max-width: 640px; margin: 0 auto;">
+      <div class="faq-item"><h3>How strict is the scoring?</h3><p>Deliberately strict. Average content scores 40-60 out of 100 — the goal is an honest read, not a flattering one.</p></div>
+      <div class="faq-item"><h3>Can it score ad copy too?</h3><p>Yes. Select Google Ads or Meta Ads as the platform and it scores against ad-specific criteria like character limits and search intent.</p></div>
+      <div class="faq-item"><h3>Will it work on content in Hindi or other languages?</h3><p>Yes — it detects the language automatically and responds in the same one.</p></div>
+      <div class="faq-item"><h3>How much does it cost?</h3><p>2 credits per analysis. Every account starts with 25 free credits monthly.</p></div>
+    </div>
+  </div>
+</section>
+
+<section><div class="wrap"><div class="final-cta"><h2>Get an honest grade on your last post</h2><p>Paste it in and see exactly what to fix.</p><a href="https://www.getvci.com/" class="btn-primary">Try VCI Free →</a></div></div></section>
+
+<footer><div class="wrap"><p>© 2026 VCI — Viral Content Intelligence · <a href="https://www.getvci.com/">getvci.com</a></p></div></footer>
+
+</body>
+</html>
