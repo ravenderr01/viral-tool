@@ -7,6 +7,7 @@ const CREATOR_PLANS = [
     name: "Free",
     price: "₹0",
     priceNum: 0,
+    priceUSD: 0,
     period: "",
     badge: "",
     color: "#6b7280",
@@ -32,6 +33,7 @@ const CREATOR_PLANS = [
     name: "Creator Starter",
     price: "₹299.99",
     priceNum: 299.99,
+    priceUSD: 9,
     period: "/month",
     badge: "🔥 Popular",
     color: "#22c55e",
@@ -57,6 +59,7 @@ const CREATOR_PLANS = [
     name: "Creator Pro",
     price: "₹999.99",
     priceNum: 999.99,
+    priceUSD: 29,
     period: "/month",
     badge: "⚡ Best Value",
     color: "#a855f7",
@@ -85,6 +88,7 @@ const BUSINESS_PLANS = [
     name: "Advertiser",
     price: "₹1,999.99",
     priceNum: 1999.99,
+    priceUSD: 49,
     period: "/month",
     badge: "📢 For Ads",
     color: "#f97316",
@@ -113,6 +117,7 @@ const AGENCY_PLANS = [
     name: "Agency",
     price: "₹4,999.99",
     priceNum: 4999.99,
+    priceUSD: 99,
     period: "/month",
     badge: "👑 All Access",
     color: "#f59e0b",
@@ -163,11 +168,14 @@ const FEATURE_ROWS = [
   { key: "support", label: "💬 Support" },
 ];
 
-export default function Plans({ onBack, onUpgrade, currentPlan }: {
+export default function Plans({ onBack, onUpgrade, currentPlan, currency }: {
   onBack: () => void;
   onUpgrade: (plan: string) => void;
   currentPlan: string;
+  currency?: "INR" | "USD";
 }) {
+  const isUSD = currency === "USD";
+  const fmt = (plan: any) => isUSD ? `$${plan.priceUSD}` : plan.price;
   const [credits, setCredits] = useState<number | null>(null);
   const [creditsTotal, setCreditsTotal] = useState<number | null>(null);
   const [view, setView] = useState<"cards" | "compare">("cards");
@@ -329,7 +337,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
 
                   <h3 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "1.2rem", fontWeight: 800, color: "#fff", margin: "0 0 0.4rem" }}>{plan.name}</h3>
                   <div style={{ marginBottom: "0.75rem" }}>
-                    <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: "2.2rem", fontWeight: 900, color: plan.color }}>{plan.price}</span>
+                    <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: "2.2rem", fontWeight: 900, color: plan.color }}>{fmt(plan)}</span>
                     <span style={{ color: "#555", fontSize: "0.8rem" }}>{plan.period}</span>
                   </div>
 
@@ -389,7 +397,7 @@ export default function Plans({ onBack, onUpgrade, currentPlan }: {
                     {displayPlans.map(plan => (
                       <th key={plan.key} style={{ padding: "1rem 0.75rem", textAlign: "center", borderBottom: `2px solid ${currentPlan === plan.key ? plan.color : "#1a1a1a"}` }}>
                         <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: "0.95rem", color: plan.color }}>{plan.name}</div>
-                        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{plan.price}<span style={{ color: "#555", fontSize: "0.7rem", fontWeight: 400 }}>{plan.period}</span></div>
+                        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{fmt(plan)}<span style={{ color: "#555", fontSize: "0.7rem", fontWeight: 400 }}>{plan.period}</span></div>
                         {currentPlan === plan.key && <div style={{ fontSize: "0.6rem", color: "#22c55e", fontWeight: 800 }}>✓ ACTIVE</div>}
                       </th>
                     ))}

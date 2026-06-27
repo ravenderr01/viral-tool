@@ -22,10 +22,10 @@ const SUPPORT_PHONE = "+91 9315133390";
 
 const PLANS = {
   free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0  },
-  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 299.99,  priceUSD: 4,  badge: "🔥 Popular", segment: "creator" },
-  creator_pro:      { label: "Creator Pro",      limit: 600,   priceINR: 999.99,  priceUSD: 12, badge: "⚡ Best Value", segment: "creator" },
-  advertiser:       { label: "Advertiser",       limit: 700,   priceINR: 1999.99, priceUSD: 24, badge: "📢 For Ads", segment: "business" },
-  agency:           { label: "Agency",           limit: 2000,  priceINR: 4999.99, priceUSD: 59, badge: "👑 All Access", segment: "agency" },
+  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 299.99,  priceUSD: 9,  badge: "🔥 Popular", segment: "creator" },
+  creator_pro:      { label: "Creator Pro",      limit: 600,   priceINR: 999.99,  priceUSD: 29, badge: "⚡ Best Value", segment: "creator" },
+  advertiser:       { label: "Advertiser",       limit: 700,   priceINR: 1999.99, priceUSD: 49, badge: "📢 For Ads", segment: "business" },
+  agency:           { label: "Agency",           limit: 2000,  priceINR: 4999.99, priceUSD: 99, badge: "👑 All Access", segment: "agency" },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -2365,8 +2365,8 @@ CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a n
   );
 }
 
-function PaymentModal({ plan, onClose, onPaid }: any) {
-  const [currency, setCurrency] = useState("INR");
+function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
+  const [currency, setCurrency] = useState(detectedCurrency === "USD" ? "USD" : "INR");
   const [copied, setCopied] = useState(false);
   const [paid, setPaid] = useState(false);
   const planData = PLANS[plan as keyof typeof PLANS];
@@ -2426,8 +2426,10 @@ function PaymentModal({ plan, onClose, onPaid }: any) {
   );
 }
 
-function PaywallModal({ onClose, onSelectPlan }: any) {
+function PaywallModal({ onClose, onSelectPlan, currency }: any) {
   const [selected, setSelected] = useState("creator_starter");
+  const isUSD = currency === "USD";
+  const selectedPlan = PLANS[selected as keyof typeof PLANS];
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
       <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
@@ -2444,14 +2446,14 @@ function PaywallModal({ onClose, onSelectPlan }: any) {
                 <div style={{ color: "#444", fontSize: "0.76rem" }}>{plan.limit} credits/mo</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#6d28d9" }}>₹{plan.priceINR}</div>
-                <div style={{ color: "#333", fontSize: "0.72rem" }}>${plan.priceUSD} / mo</div>
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#6d28d9" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                <div style={{ color: "#333", fontSize: "0.72rem" }}>{isUSD ? `₹${plan.priceINR}` : `$${plan.priceUSD}`} / mo</div>
               </div>
             </div>
           ))}
         </div>
         <button onClick={() => onSelectPlan(selected)} style={{ width: "100%", padding: "0.9rem", borderRadius: "10px", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", marginBottom: "0.5rem" }}>
-          Get {PLANS[selected as keyof typeof PLANS]?.label} — ₹{PLANS[selected as keyof typeof PLANS]?.priceINR} →
+          Get {selectedPlan?.label} — {isUSD ? `$${selectedPlan?.priceUSD}` : `₹${selectedPlan?.priceINR}`} →
         </button>
         <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem" }}>Maybe later</button>
       </div>
@@ -2930,6 +2932,7 @@ export default function ViralContentTool() {
   const [payingPlan, setPayingPlan] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en");
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR"); // default INR, auto-detected on mount
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [langCategoryTab, setLangCategoryTab] = useState<"indian" | "global">("indian");
   const [activeTab, setActiveTab] = useState(() => {
@@ -2958,6 +2961,23 @@ export default function ViralContentTool() {
   const [showFaq, setShowFaq] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Geo-based currency detection: USA/Canada see USD pricing, everyone else sees INR.
+  // Uses a free IP-geolocation API; falls back silently to INR on any failure.
+  useEffect(() => {
+    let cached: string | null = null;
+    try { cached = localStorage.getItem("vci_currency"); } catch {}
+    if (cached === "USD" || cached === "INR") { setCurrency(cached); return; }
+
+    fetch("https://ipapi.co/json/")
+      .then(res => res.json())
+      .then(data => {
+        const detected = (data?.country_code === "US" || data?.country_code === "CA") ? "USD" : "INR";
+        setCurrency(detected);
+        try { localStorage.setItem("vci_currency", detected); } catch {}
+      })
+      .catch(() => { /* silent fallback — stays INR */ });
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -3281,7 +3301,7 @@ Respond ONLY in JSON:
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
   if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={(type: string) => { setUserType(type); setShowOnboarding(false); }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
-  if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} />;
+  if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} currency={currency} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
 
   const freeLangs = ["en"];
@@ -3730,7 +3750,11 @@ Respond ONLY in JSON:
               {plan === "free" && (
                 <div style={{ background: "#6d28d908", border: "1px solid #6d28d918", borderRadius: "14px", padding: "1.1rem", marginTop: "1rem", textAlign: "center" }}>
                   <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, marginBottom: "0.4rem", fontSize: "0.95rem" }}>🔥 Unlock Hook Score, Calendar & Content Packs</div>
-                  <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>Creator Starter ₹299.99 · Creator Pro ₹999.99 · Advertiser ₹1,999.99 · Agency ₹4,999.99</div>
+                  <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>
+                    {currency === "USD"
+                      ? "Creator Starter $9 · Creator Pro $29 · Advertiser $49 · Agency $99"
+                      : "Creator Starter ₹299.99 · Creator Pro ₹999.99 · Advertiser ₹1,999.99 · Agency ₹4,999.99"}
+                  </div>
                   <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
                 </div>
               )}
@@ -3856,8 +3880,8 @@ Respond ONLY in JSON:
         </div>
       )}
 
-      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} onSelectPlan={handleSelectPlan} />}
-      {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} />}
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} onSelectPlan={handleSelectPlan} currency={currency} />}
+      {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} detectedCurrency={currency} />}
 
       <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
 
