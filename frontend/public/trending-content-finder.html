@@ -63,7 +63,8 @@ h2 { font-size: clamp(1.6rem, 3.5vw, 2.3rem); font-weight: 800; margin-bottom: 0
 .step h3 { font-size: 1.02rem; font-weight: 800; margin-bottom: 0.5rem; }
 .step p { color: #9ca3af; font-size: 0.85rem; }
 .pill-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
-.pill { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 30px; padding: 0.65rem 1.2rem; font-size: 0.82rem; color: #d4d4d8; display: flex; align-items: center; gap: 0.5rem; }
+.pill { background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 30px; padding: 0.65rem 1.2rem; font-size: 0.82rem; color: #d4d4d8; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+  .pill:hover { border-color: #6d28d9; color: #a855f7; transform: translateY(-2px); }
 .faq-item { border-bottom: 1px solid #161616; padding: 1.1rem 0; }
 .faq-item h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: #f1f5f9; }
 .faq-item p { color: #9ca3af; font-size: 0.85rem; }
@@ -130,16 +131,55 @@ footer p { color: #3f3f46; font-size: 0.75rem; } footer a { color: #555; }
 
 <section>
   <div class="wrap">
-    <div class="section-head"><span class="eyebrow">BUILT IN</span><h2>Everything else you get along the way</h2></div>
+    <div class="section-head"><span class="eyebrow">BUILT IN</span><h2>Everything else you get along the way</h2><p>Each one is its own dedicated tool — click to see how it works.</p>
+    </div>
     <div class="pill-grid">
-      <div class="pill">🔍 Niche Intelligence</div>
-      <div class="pill">🎣 Viral Hook Generator</div>
-      <div class="pill">📊 Hook Score Analyzer</div>
-      <div class="pill">📅 30-Day Content Calendar</div>
-      <div class="pill">🌐 30+ languages, native script</div>
+      <a href="/instagram-caption-generator.html" class="pill">📋 Caption & Hashtag Generator</a>
+      <a href="/viral-hook-generator.html" class="pill">🎣 Viral Hook Generator</a>
+      <a href="/hook-score-analyzer.html" class="pill">📊 Hook Score Analyzer</a>
+      <a href="/content-calendar-generator.html" class="pill">📅 30-Day Content Calendar</a>
+      <a href="/content-pack-generator.html" class="pill">📦 Content Pack Generator</a>
+      <a href="/ai-script-writer.html" class="pill">🎬 Script Lab with AI voiceover</a>
     </div>
   </div>
 </section>
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">USE CASES</span>
+      <h2>Who actually uses a trending content finder</h2>
+      <p>A few real scenarios where this saves the most time.</p>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-card good" style="border-color: rgba(139,92,246,0.18); background: rgba(139,92,246,0.04);">
+        <h3 style="color:#a855f7">🎨 Creators wanting to stay current</h3>
+        <ul>
+          <li>→ Checking which hook styles are gaining traction in their niche before planning this week's content</li>
+          <li>→ Avoiding an angle that's already becoming oversaturated within their specific audience</li>
+          <li>→ Getting a head start on a rising style before it peaks</li>
+        </ul>
+      </div>
+      <div class="compare-card good">
+        <h3 style="color:#22c55e">📈 Marketers tracking format fatigue</h3>
+        <ul>
+          <li>→ Watching for early signs that a content style is losing traction across real creators</li>
+          <li>→ Validating a new campaign angle against current, not historical, trend behavior</li>
+          <li>→ Adjusting strategy mid-month based on what's genuinely shifting, not a quarterly report</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:1.25rem" class="compare-card good">
+      <h3 style="color:#06b6d4">🏢 Agencies briefing content teams</h3>
+      <ul>
+        <li>→ Giving writers a live reference point for what's working right now in a specific niche</li>
+        <li>→ Avoiding reliance on a general AI model's outdated sense of what's trending</li>
+        <li>→ Pairing trend data with the Viral Hook Generator to act on it the same day</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
 
 <section>
   <div class="wrap">
