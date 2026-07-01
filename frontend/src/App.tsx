@@ -3145,7 +3145,7 @@ export default function ViralContentTool() {
     try {
       const adsCopyGuide: Record<string, string> = {
         "Google Ads": `Generate professional Google RSA (Responsive Search Ad) copy following these STRICT rules:
-- viralHooks: EXACTLY 15 unique Search Ad headlines. Each MUST be ≤30 characters including spaces and punctuation — count every character carefully. Use DIFFERENT angles across the 15: benefit-led, urgency, number/stat, question, CTA, social proof, pain point, guarantee, comparison, outcome, curiosity, price, speed, quality, and local. NEVER repeat an angle. Each headline must make sense STANDALONE since Google shows them in any random combination.
+- viralHooks: EXACTLY 15 unique, professional Google RSA Search Ad headlines. Each MUST be between 25-30 characters (aim for 28-30 chars — USE the full character limit, do not write short headlines). Count every character including spaces. Example of GOOD length: "Expert Weight Loss Coach" (24) is too short — write "Expert Weight Loss Coach Now" (28) or "Certified Weight Loss Experts" (29). Each headline uses a DIFFERENT angle: 3 benefit-led, 2 urgency, 2 number/stat, 2 question, 2 CTA, 2 social proof, 2 unique differentiator. Each must make sense STANDALONE. Write like a senior Google Ads professional — specific, compelling, not generic.
 - titles: 5 secondary headlines, EACH ≤30 characters, each highlighting a distinct USP (price, quality, speed, guarantee, variety).
 - captions: 4 ad descriptions, EACH ≤90 characters, structure: specific benefit + supporting detail + soft CTA. Sound like a real paid ads professional, not a template.
 - trendingTopics: 8 keyword suggestions with match type labels: [exact match], "phrase match", broad match. Max 5 words per keyword.
@@ -3262,21 +3262,19 @@ Respond ONLY in JSON:
 
       // Light Loop: Google Ads character limit auto-fix (no extra API call, zero cost)
       if (platform === "Google Ads") {
-        safeResults.viralHooks = safeResults.viralHooks.map((h: string) =>
-          typeof h === "string" && h.length > 30
-            ? h.slice(0, 30).replace(/\s\S*$/, "").trim()
-            : h
-        );
-        safeResults.titles = safeResults.titles.map((t: string) =>
-          typeof t === "string" && t.length > 30
-            ? t.slice(0, 30).replace(/\s\S*$/, "").trim()
-            : t
-        );
-        safeResults.captions = safeResults.captions.map((c: string) =>
-          typeof c === "string" && c.length > 90
-            ? c.slice(0, 90).replace(/\s\S*$/, "").trim()
-            : c
-        );
+        // Smart truncate — only fix genuinely over-limit, preserve 25-30 char headlines
+        const smartTruncate = (str: string, limit: number) => {
+          if (typeof str !== "string") return str;
+          if (str.length <= limit) return str; // already within limit, don't touch
+          // Try to cut at word boundary
+          const trimmed = str.slice(0, limit);
+          const lastSpace = trimmed.lastIndexOf(" ");
+          // Only cut at word boundary if result is still ≥20 chars (avoid over-shortening)
+          return lastSpace >= 20 ? trimmed.slice(0, lastSpace).trim() : trimmed.trim();
+        };
+        safeResults.viralHooks = safeResults.viralHooks.map((h: string) => smartTruncate(h, 30));
+        safeResults.titles = safeResults.titles.map((t: string) => smartTruncate(t, 30));
+        safeResults.captions = safeResults.captions.map((c: string) => smartTruncate(c, 90));
       }
 
       setResults(safeResults);
