@@ -283,35 +283,23 @@ app.post("/api/generate", async (req, res) => {
         const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
         let needsFix = false;
 
-        // Auto-truncate any hook/title exceeding 30 chars
+        // Smart truncate — only fix genuinely over-limit, preserve 25-30 char headlines
+        const smartTruncate = (str, limit) => {
+          if (typeof str !== "string" || str.length <= limit) return str;
+          needsFix = true;
+          const trimmed = str.slice(0, limit);
+          const lastSpace = trimmed.lastIndexOf(" ");
+          return lastSpace >= 20 ? trimmed.slice(0, lastSpace).trim() : trimmed.trim();
+        };
+
         if (parsed.hooks) {
-          parsed.hooks = parsed.hooks.map(h => {
-            if (typeof h === "string" && h.length > 30) {
-              needsFix = true;
-              // Smart truncate: cut at last word boundary before 30 chars
-              return h.slice(0, 30).replace(/\s\S*$/, "").trim();
-            }
-            return h;
-          });
+          parsed.hooks = parsed.hooks.map(h => smartTruncate(h, 30));
         }
         if (parsed.titles) {
-          parsed.titles = parsed.titles.map(t => {
-            if (typeof t === "string" && t.length > 30) {
-              needsFix = true;
-              return t.slice(0, 30).replace(/\s\S*$/, "").trim();
-            }
-            return t;
-          });
+          parsed.titles = parsed.titles.map(t => smartTruncate(t, 30));
         }
-        // Auto-truncate descriptions exceeding 90 chars
         if (parsed.descriptions) {
-          parsed.descriptions = parsed.descriptions.map(d => {
-            if (typeof d === "string" && d.length > 90) {
-              needsFix = true;
-              return d.slice(0, 90).replace(/\s\S*$/, "").trim();
-            }
-            return d;
-          });
+          parsed.descriptions = parsed.descriptions.map(d => smartTruncate(d, 90));
         }
 
         if (needsFix) {
