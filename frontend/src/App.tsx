@@ -310,8 +310,8 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
 
   const analyzeScript = async () => {
-    if (!script.trim()) { setError("Apna script paste karo."); return; }
-    if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye."); return; }
+    if (!script.trim()) { setError("Please paste your script."); return; }
+    if (script.trim().split(" ").length < 5) { setError("Script should be a bit longer."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setImproveLoading(true); setError(""); setImproveResult(null);
 
@@ -370,7 +370,7 @@ Respond ONLY in JSON:
       if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
     } catch (err: any) {
       if (err?.message === "RATE_LIMITED") {
-        setError("Server thoda busy hai (bahut requests aa rahi hain). 10-15 second wait karo aur phir try karo.");
+        setError("Server is a bit busy right now. Please wait 10-15 seconds and try again.");
       } else {
         setError("Analysis failed. Try again.");
       }
@@ -876,8 +876,8 @@ Respond ONLY in JSON:
       {/* Mode Toggle */}
       <div style={{ display: "flex", background: "#0f0f0f", borderRadius: "14px", padding: "0.35rem", marginBottom: "1rem", border: "1px solid #1f1f1f" }}>
         {[
-          { id: "generate", label: "🎬 Generate Script", desc: "Fresh reel script banao" },
-          { id: "improve", label: "✨ Improve Script", desc: "Existing script better banao" },
+          { id: "generate", label: "🎬 Generate Script", desc: "Create a fresh reel script" },
+          { id: "improve", label: "✨ Improve Script", desc: "Make your existing script better" },
         ].map(m => (
           <button key={m.id} onClick={() => { setMode(m.id as any); setError(""); }}
             style={{ flex: 1, padding: "0.65rem 1rem", borderRadius: "10px", border: "none", cursor: "pointer", transition: "all 0.2s", background: mode === m.id ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: mode === m.id ? "#fff" : "#52525b", fontWeight: mode === m.id ? 800 : 500, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", textAlign: "center" as const }}>
@@ -907,7 +907,7 @@ Respond ONLY in JSON:
             <span style={{ fontSize: "1.3rem" }}>🎬</span>
             <div>
               <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
-              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Keyword daalo → complete word-for-word script ready</p>
+              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Enter a keyword → get a complete word-for-word script</p>
             </div>
           </div>
 
@@ -1416,7 +1416,7 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
   };
 
   const analyze = async () => {
-    if (!contentInput.trim()) { setError("Apna content ya hook paste karo."); return; }
+    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
@@ -1495,7 +1495,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Poora content paste karo → detailed analysis + fixes + 3 improved versions</p>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Paste any content → detailed analysis + fixes + 3 improved versions</p>
           </div>
         </div>
 
@@ -1527,7 +1527,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             onFocus={e => e.target.style.borderColor = "#6d28d9"}
             onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
-            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — sab analyze hoga</span>
+            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — everything gets analyzed</span>
             <span style={{ color: "#52525b", fontSize: "0.68rem" }}>{contentInput.length} chars</span>
           </div>
         </div>
@@ -1612,7 +1612,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                     {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
                   </div>
                   <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>
-                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Content mein yeh improvements karo"}
+                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Apply these improvements to your content"}
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
                     <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
@@ -2096,7 +2096,7 @@ Respond ONLY in JSON:
           <div style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "10px", padding: "0.4rem 0.6rem", fontSize: "1.2rem" }}>📋</div>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Caption & Hashtags</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Platform select karo → keyword daalo → ready-to-post! (2 credits)</p>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Select platform → enter keyword → ready to post! (2 credits)</p>
           </div>
         </div>
         <div style={{ marginBottom: "0.85rem" }}>
@@ -2919,8 +2919,8 @@ function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langS
   const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
 
   const repurpose = async () => {
-    if (!content.trim()) { setError("Koi content paste karo pehle."); return; }
-    if (content.trim().split(" ").length < 5) { setError("Content thoda lambi honi chahiye."); return; }
+    if (!content.trim()) { setError("Please paste some content first."); return; }
+    if (content.trim().split(" ").length < 5) { setError("Content should be a bit longer."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResults(null);
 
@@ -2969,11 +2969,11 @@ Respond ONLY in JSON:
           <span style={{ fontSize: "1.3rem" }}>🔄</span>
           <div>
             <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Auto-Repurpose Engine</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Ek content → sab 8 platforms ke liye automatically adapt</p>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>One piece of content → automatically adapted for all 8 platforms</p>
           </div>
         </div>
         <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: 0, color: "#8b5cf6", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Koi bhi content paste karo — blog, script, caption, email — VCI automatically 8 platforms ke liye native format mein rewrite karega.</p>
+          <p style={{ margin: 0, color: "#8b5cf6", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any content — a blog post, YouTube script, Instagram caption, or email — and VCI will natively rewrite it for Instagram, Twitter, LinkedIn, Pinterest, WhatsApp, Facebook, YouTube, and TikTok.</p>
         </div>
         <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>APNA CONTENT PASTE KARO</label>
         <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste your content here:\n• A YouTube script\n• An Instagram caption\n• A blog post intro\n• Any content you've already written\n\nVCI will repurpose it for all 8 platforms automatically."} rows={7}
@@ -3049,7 +3049,7 @@ function CompetitorHookAnalyzer({ usageCount, limit, onUpgrade, onCreditUsed, pl
   const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
 
   const analyze = async () => {
-    if (!content.trim()) { setError("Competitor ka content paste karo."); return; }
+    if (!content.trim()) { setError("Please paste the competitor's content first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
@@ -3080,11 +3080,11 @@ Respond ONLY in JSON:
           <span style={{ fontSize: "1.3rem" }}>🔍</span>
           <div>
             <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Competitor Hook Analyzer</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Viral content paste karo → exactly kyun viral hua → apna version banao</p>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste viral content → find out exactly why it worked → create your own version</p>
           </div>
         </div>
         <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: 0, color: "#f87171", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Competitor ka viral hook, caption ya reel script paste karo. VCI reverse-engineer karega — techniques, psychological triggers, aur apna original version kaise banao.</p>
+          <p style={{ margin: 0, color: "#f87171", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any competitor's viral hook, caption, or reel script. VCI will reverse-engineer the exact techniques, psychological triggers, and show you how to create your own original version without copying.</p>
         </div>
         <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
         <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
@@ -3937,7 +3937,7 @@ Respond ONLY in JSON:
                         {brandVoice ? "Brand Voice Active ✓" : "Set Your Brand Voice"}
                       </span>
                       <p style={{ margin: 0, color: "#3f3f46", fontSize: "0.65rem" }}>
-                        {brandVoice ? brandVoice.slice(0, 60) + (brandVoice.length > 60 ? "..." : "") : "Apni writing style set karo — har generation mein apply hogi"}
+                        {brandVoice ? brandVoice.slice(0, 60) + (brandVoice.length > 60 ? "..." : "") : "Set your writing style — applied to every generation automatically"}
                       </p>
                     </div>
                   </div>
@@ -3945,7 +3945,7 @@ Respond ONLY in JSON:
                 </div>
                 {showBrandVoice && (
                   <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "0 0 12px 12px", padding: "0.85rem 1rem", animation: "slideUp 0.2s ease" }}>
-                    <p style={{ margin: "0 0 0.5rem", color: "#555", fontSize: "0.7rem" }}>Apna tone, style, audience describe karo:</p>
+                    <p style={{ margin: "0 0 0.5rem", color: "#555", fontSize: "0.7rem" }}>Describe your tone, style, and audience:</p>
                     <textarea
                       value={brandVoice}
                       onChange={e => setBrandVoice(e.target.value)}
@@ -4453,7 +4453,7 @@ Respond ONLY in JSON:
             <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
               <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Have more questions? 🙋</p>
               <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
-                💬 WhatsApp karo
+                💬 Chat on WhatsApp
               </a>
             </div>
           </div>
