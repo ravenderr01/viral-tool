@@ -3195,8 +3195,11 @@ BANNED words in headlines: unlock, boost, transform, skyrocket, click here, lear
       };
 
       const isAdsplatform = ["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform);
+      // Keyword research only applies to SEARCH-based platforms (Google + YouTube)
+      // Meta Ads and Native Ads are interest/behavior based — keywords not applicable
+      const isSearchAdsplatform = ["Google Ads", "YouTube Ads"].includes(platform);
 
-      const keywordResearchInstruction = isAdsplatform ? `
+      const keywordResearchInstruction = isSearchAdsplatform ? `
 
 ALSO generate a keyword research list for this campaign. Follow these rules strictly:
 - The keyword "${keyword}" is what the advertiser is actually selling or promoting — treat it as the literal product/service/offer, not as a lifestyle topic.
@@ -3209,7 +3212,7 @@ ALSO generate a keyword research list for this campaign. Follow these rules stri
 - COMPLY WITH GOOGLE ADS POLICY: do not suggest keywords containing superlative/unverifiable health, financial, or miracle claims (e.g. avoid "cure", "guaranteed", "best in the world", "#1"). Keep keywords factual and policy-safe.
 - Do not suggest trademarked brand names unless the user's own keyword already contains one.` : "";
 
-      const keywordJsonField = isAdsplatform
+      const keywordJsonField = isSearchAdsplatform
         ? `,"keywordSuggestions":[{"keyword":"kw1","matchType":"Broad","volume":"Medium","competition":"Low","intent":"Commercial"}]`
         : "";
 
@@ -3707,7 +3710,7 @@ Respond ONLY in JSON:
                       <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} />
                       <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" charLimit={platform === "Google Ads" ? 30 : undefined} />
                       <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" charLimit={platform === "Google Ads" ? 90 : undefined} />
-                      <KeywordResearchCard keywords={results.keywordSuggestions} />
+                      {["Google Ads", "YouTube Ads"].includes(platform) && <KeywordResearchCard keywords={results.keywordSuggestions} />}
                     </>
                   ) : platform === "YouTube" ? (
                     <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
