@@ -3144,11 +3144,12 @@ export default function ViralContentTool() {
 
     try {
       const adsCopyGuide: Record<string, string> = {
-        "Google Ads": `Generate professional Google Search Ads copy following these strict rules:
-- viralHooks: 5 Search Ad headlines, EACH STRICTLY 25-30 characters (count carefully, never exceed 30). Each headline must use a DIFFERENT angle: one with a number/stat, one with urgency, one with a clear benefit, one as a question, one with a direct CTA. Avoid generic filler words like "Today", "Now" stacked together — make each one sound like real Google Ads copy a paid ads professional would write.
-- titles: 5 Display/Responsive headlines, EACH STRICTLY 25-30 characters, each highlighting a distinct unique selling point (price, quality, speed, guarantee, variety) — no two headlines should repeat the same angle.
-- captions: 3 ad descriptions, EACH STRICTLY 80-90 characters, following a clear structure: specific benefit + supporting detail + soft call-to-action. Sound like a real advertiser, not a template.
-- trendingTopics: skip, leave as short relevant search terms instead (max 5 words each)`,
+        "Google Ads": `Generate professional Google RSA (Responsive Search Ad) copy following these STRICT rules:
+- viralHooks: EXACTLY 15 unique Search Ad headlines. Each MUST be ≤30 characters including spaces and punctuation — count every character carefully. Use DIFFERENT angles across the 15: benefit-led, urgency, number/stat, question, CTA, social proof, pain point, guarantee, comparison, outcome, curiosity, price, speed, quality, and local. NEVER repeat an angle. Each headline must make sense STANDALONE since Google shows them in any random combination.
+- titles: 5 secondary headlines, EACH ≤30 characters, each highlighting a distinct USP (price, quality, speed, guarantee, variety).
+- captions: 4 ad descriptions, EACH ≤90 characters, structure: specific benefit + supporting detail + soft CTA. Sound like a real paid ads professional, not a template.
+- trendingTopics: 8 keyword suggestions with match type labels: [exact match], "phrase match", broad match. Max 5 words per keyword.
+BANNED words in headlines: unlock, boost, transform, skyrocket, click here, learn more, amazing.`,
         "Meta Ads": `Generate professional Meta (Facebook/Instagram) Ads copy:
 - viralHooks: 5 primary text openers (80-125 characters each), each opening with a different pain point or desire specific to "${keyword}" — vary the emotional angle (curiosity, fear of missing out, social proof, savings, convenience).
 - titles: 5 ad headlines (30-40 characters each), each a distinct, scroll-stopping benefit statement — no repeated phrasing across the 5.
@@ -3258,6 +3259,26 @@ Respond ONLY in JSON:
         captions: Array.isArray(parsed.captions) ? parsed.captions : [],
         keywordSuggestions: Array.isArray(parsed.keywordSuggestions) ? parsed.keywordSuggestions : [],
       };
+
+      // Light Loop: Google Ads character limit auto-fix (no extra API call, zero cost)
+      if (platform === "Google Ads") {
+        safeResults.viralHooks = safeResults.viralHooks.map((h: string) =>
+          typeof h === "string" && h.length > 30
+            ? h.slice(0, 30).replace(/\s\S*$/, "").trim()
+            : h
+        );
+        safeResults.titles = safeResults.titles.map((t: string) =>
+          typeof t === "string" && t.length > 30
+            ? t.slice(0, 30).replace(/\s\S*$/, "").trim()
+            : t
+        );
+        safeResults.captions = safeResults.captions.map((c: string) =>
+          typeof c === "string" && c.length > 90
+            ? c.slice(0, 90).replace(/\s\S*$/, "").trim()
+            : c
+        );
+      }
+
       setResults(safeResults);
       incrementUsage();
       const detectedStyles = safeResults.viralHooks.map((h: string) => detectHookStyle(h));
