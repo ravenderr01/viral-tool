@@ -605,4 +605,14 @@ app.get("/api/keyword-suggestions", async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// Music proxy — avoids CORS for Mixkit
+app.get('/api/proxy-audio', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'No URL' });
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  res.set('Content-Type', 'audio/mpeg');
+  res.set('Access-Control-Allow-Origin', '*');
+  res.send(Buffer.from(buffer));
+});
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
