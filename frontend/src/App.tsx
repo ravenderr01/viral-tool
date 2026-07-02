@@ -250,18 +250,18 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-// Style → Music mapping with Mixkit CDN URLs (free, royalty-free, no API key)
+// Style → Music mapping (Mixkit free royalty-free tracks)
 const MUSIC_TRACKS: Record<string, { name: string; url: string; mood: string }[]> = {
-  Tutorial:     [ { name: "Lo-fi Study", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Focused" }, { name: "Soft Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Professional" } ],
-  Story:        [ { name: "Emotional Piano", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Emotional" }, { name: "Cinematic Soft", url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3", mood: "Cinematic" } ],
-  Comedy:       [ { name: "Fun Quirky", url: "https://assets.mixkit.co/music/preview/mixkit-fun-and-happy-3.mp3", mood: "Playful" }, { name: "Upbeat Silly", url: "https://assets.mixkit.co/music/preview/mixkit-happy-sunshine-798.mp3", mood: "Light" } ],
-  Motivation:   [ { name: "Dramatic Build", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" }, { name: "Inspirational", url: "https://assets.mixkit.co/music/preview/mixkit-inspiring-ambition-36.mp3", mood: "Inspiring" } ],
-  POV:          [ { name: "Ambient Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Moody" }, { name: "Chill Vibes", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Chill" } ],
-  Challenge:    [ { name: "Energetic Beat", url: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3", mood: "Hype" }, { name: "Hype Music", url: "https://assets.mixkit.co/music/preview/mixkit-fast-and-furious-315.mp3", mood: "Intense" } ],
-  "Before/After": [ { name: "Transformation Build", url: "https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3", mood: "Rising" }, { name: "Epic Rise", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" } ],
-  Tips:         [ { name: "Upbeat Pop", url: "https://assets.mixkit.co/music/preview/mixkit-pop-and-sunshine-534.mp3", mood: "Bright" }, { name: "Light Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Clean" } ],
-  Review:       [ { name: "Neutral Ambient", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Neutral" }, { name: "Soft Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Modern" } ],
-  "Day in Life": [ { name: "Chill Lo-fi", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Relaxed" }, { name: "Acoustic Warm", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Warm" } ],
+  Tutorial:      [{ name: "Lo-fi Study", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Focused" }, { name: "Soft Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Professional" }],
+  Story:         [{ name: "Emotional Piano", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Emotional" }, { name: "Cinematic Soft", url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3", mood: "Cinematic" }],
+  Comedy:        [{ name: "Fun Quirky", url: "https://assets.mixkit.co/music/preview/mixkit-fun-and-happy-3.mp3", mood: "Playful" }, { name: "Upbeat Silly", url: "https://assets.mixkit.co/music/preview/mixkit-happy-sunshine-798.mp3", mood: "Light" }],
+  Motivation:    [{ name: "Dramatic Build", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" }, { name: "Inspirational", url: "https://assets.mixkit.co/music/preview/mixkit-inspiring-ambition-36.mp3", mood: "Inspiring" }],
+  POV:           [{ name: "Ambient Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Moody" }, { name: "Chill Vibes", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Chill" }],
+  Challenge:     [{ name: "Energetic Beat", url: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3", mood: "Hype" }, { name: "Hype Music", url: "https://assets.mixkit.co/music/preview/mixkit-fast-and-furious-315.mp3", mood: "Intense" }],
+  "Before/After":[{ name: "Transformation", url: "https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3", mood: "Rising" }, { name: "Epic Rise", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" }],
+  Tips:          [{ name: "Upbeat Pop", url: "https://assets.mixkit.co/music/preview/mixkit-pop-and-sunshine-534.mp3", mood: "Bright" }, { name: "Light Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Clean" }],
+  Review:        [{ name: "Neutral Ambient", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Neutral" }, { name: "Soft Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Modern" }],
+  "Day in Life": [{ name: "Chill Lo-fi", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Relaxed" }, { name: "Acoustic Warm", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Warm" }],
 };
 
 function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice, userType }: any) {
@@ -324,7 +324,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
 
   const analyzeScript = async () => {
-    if (!script.trim()) { setError("Please paste your script."); return; }
+    if (!script.trim()) { setError("Apna script paste karo."); return; }
     if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setImproveLoading(true); setError(""); setImproveResult(null);
@@ -384,7 +384,7 @@ Respond ONLY in JSON:
       if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
     } catch (err: any) {
       if (err?.message === "RATE_LIMITED") {
-        setError("Server is a bit busy right now. Please wait 10-15 seconds and try again.");
+        setError("Server thoda busy hai (bahut requests aa rahi hain). 10-15 second wait karo aur phir try karo.");
       } else {
         setError("Analysis failed. Try again.");
       }
@@ -420,12 +420,13 @@ Respond ONLY in JSON:
   const [voiceStyle, setVoiceStyle] = useState("Default");
   const [voiceSpeed, setVoiceSpeed] = useState("1.0");
 
-  // Background Music states
+  // Background Music
   const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
   const [musicVolume, setMusicVolume] = useState(30);
   const [previewingMusic, setPreviewingMusic] = useState<string | null>(null);
   const [mixedAudioUrl, setMixedAudioUrl] = useState<string | null>(null);
   const [mixLoading, setMixLoading] = useState(false);
+  const [mixError, setMixError] = useState("");
   const musicPreviewRef = useRef<HTMLAudioElement | null>(null);
 
   const convertToVoice = async (text: string) => {
@@ -898,8 +899,8 @@ Respond ONLY in JSON:
       {/* Mode Toggle */}
       <div style={{ display: "flex", background: "#0f0f0f", borderRadius: "14px", padding: "0.35rem", marginBottom: "1rem", border: "1px solid #1f1f1f" }}>
         {[
-          { id: "generate", label: "🎬 Generate Script", desc: "Create a fresh reel script" },
-          { id: "improve", label: "✨ Improve Script", desc: "Make your existing script better" },
+          { id: "generate", label: "🎬 Generate Script", desc: "Fresh reel script banao" },
+          { id: "improve", label: "✨ Improve Script", desc: "Existing script better banao" },
         ].map(m => (
           <button key={m.id} onClick={() => { setMode(m.id as any); setError(""); }}
             style={{ flex: 1, padding: "0.65rem 1rem", borderRadius: "10px", border: "none", cursor: "pointer", transition: "all 0.2s", background: mode === m.id ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent", color: mode === m.id ? "#fff" : "#52525b", fontWeight: mode === m.id ? 800 : 500, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", textAlign: "center" as const }}>
@@ -929,7 +930,7 @@ Respond ONLY in JSON:
             <span style={{ fontSize: "1.3rem" }}>🎬</span>
             <div>
               <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
-              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Enter a keyword → get a complete word-for-word script</p>
+              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Keyword daalo → complete word-for-word script ready</p>
             </div>
           </div>
 
@@ -1160,7 +1161,8 @@ Respond ONLY in JSON:
             )}
           </div>
 
-          {/* 🎵 BACKGROUND MUSIC */}
+          {/* Audio */}
+          {/* 🎵 BACKGROUND MUSIC — appears after voiceover is generated */}
           {audioUrl && (() => {
             const tracks = MUSIC_TRACKS[style] || MUSIC_TRACKS["Tutorial"];
             return (
@@ -1168,45 +1170,44 @@ Respond ONLY in JSON:
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
                   <div>
                     <p style={{ margin: 0, fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🎵 ADD BACKGROUND MUSIC</p>
-                    <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.62rem" }}>Style-matched for <strong style={{ color: "#a855f7" }}>{style}</strong> scripts — preview then select</p>
+                    <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.62rem" }}>Style-matched for <strong style={{ color: "#a855f7" }}>{style}</strong> — preview, select, then mix</p>
                   </div>
-                  <span style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", color: "#a855f7", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Mixkit Free</span>
+                  <span style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", color: "#a855f7", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Free</span>
                 </div>
 
                 {/* Track List */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
                   {tracks.map((track, i) => {
-                    const isSelected = selectedMusic === track.url;
-                    const isPreviewing = previewingMusic === track.url;
+                    const isSel = selectedMusic === track.url;
+                    const isPrev = previewingMusic === track.url;
                     return (
-                      <div key={i} style={{ background: isSelected ? "rgba(168,85,247,0.1)" : "#080808", border: `1px solid ${isSelected ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}
-                        onClick={() => setSelectedMusic(isSelected ? null : track.url)}>
+                      <div key={i} onClick={() => { setSelectedMusic(isSel ? null : track.url); setMixedAudioUrl(null); setMixError(""); }}
+                        style={{ background: isSel ? "rgba(168,85,247,0.1)" : "#080808", border: `1px solid ${isSel ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}>
                         <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, color: isSelected ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSelected ? 700 : 500 }}>{track.name}</p>
+                          <p style={{ margin: 0, color: isSel ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSel ? 700 : 500 }}>{track.name}</p>
                           <p style={{ margin: 0, color: "#52525b", fontSize: "0.65rem" }}>{track.mood}</p>
                         </div>
-                        {/* Preview button */}
                         <button onClick={e => {
                           e.stopPropagation();
-                          if (isPreviewing) {
+                          if (isPrev) {
                             musicPreviewRef.current?.pause();
                             if (musicPreviewRef.current) musicPreviewRef.current.currentTime = 0;
                             setPreviewingMusic(null);
                           } else {
                             musicPreviewRef.current?.pause();
-                            const audio = new Audio(track.url);
-                            audio.volume = 0.5;
-                            audio.play().catch(() => {});
-                            musicPreviewRef.current = audio;
+                            const aud = new Audio(track.url);
+                            aud.crossOrigin = "anonymous";
+                            aud.volume = 0.5;
+                            aud.play().catch(() => {});
+                            musicPreviewRef.current = aud;
                             setPreviewingMusic(track.url);
-                            audio.onended = () => setPreviewingMusic(null);
+                            aud.onended = () => setPreviewingMusic(null);
                           }
-                        }} style={{ background: isPreviewing ? "rgba(168,85,247,0.2)" : "#0f0f0f", border: `1px solid ${isPreviewing ? "#a855f7" : "#2a2a2a"}`, color: isPreviewing ? "#a855f7" : "#555", padding: "0.3rem 0.65rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>
-                          {isPreviewing ? "⏹ Stop" : "▶ Preview"}
+                        }} style={{ background: isPrev ? "rgba(168,85,247,0.2)" : "#0f0f0f", border: `1px solid ${isPrev ? "#a855f7" : "#2a2a2a"}`, color: isPrev ? "#a855f7" : "#555", padding: "0.3rem 0.65rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>
+                          {isPrev ? "⏹ Stop" : "▶ Preview"}
                         </button>
-                        {/* Select indicator */}
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSelected ? "#a855f7" : "#333"}`, background: isSelected ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {isSelected && <span style={{ color: "#fff", fontSize: "0.6rem" }}>✓</span>}
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSel ? "#a855f7" : "#333"}`, background: isSel ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {isSel && <span style={{ color: "#fff", fontSize: "0.6rem" }}>✓</span>}
                         </div>
                       </div>
                     );
@@ -1229,93 +1230,78 @@ Respond ONLY in JSON:
                   </div>
                 )}
 
-                {/* Mix Button */}
+                {/* Mix Button — uses backend proxy to avoid CORS */}
                 {selectedMusic && (
                   <button disabled={mixLoading} onClick={async () => {
                     if (!audioUrl || !selectedMusic) return;
-                    setMixLoading(true); setMixedAudioUrl(null);
+                    setMixLoading(true); setMixedAudioUrl(null); setMixError("");
                     try {
-                      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-                      const ctx = new AudioContext();
+                      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+                      const ctx = new AudioCtx();
 
-                      const [voiceRes, musicRes] = await Promise.all([
-                        fetch(audioUrl),
-                        fetch(selectedMusic),
-                      ]);
-                      const [voiceBuf, musicBuf] = await Promise.all([
-                        voiceRes.arrayBuffer(),
-                        musicRes.arrayBuffer(),
-                      ]);
-                      const [voiceDec, musicDec] = await Promise.all([
-                        ctx.decodeAudioData(voiceBuf),
-                        ctx.decodeAudioData(musicBuf),
-                      ]);
+                      // Fetch voiceover blob (same origin — no CORS issue)
+                      const voiceRes = await fetch(audioUrl);
+                      const voiceBuf = await voiceRes.arrayBuffer();
+                      const voiceDec = await ctx.decodeAudioData(voiceBuf);
 
-                      const duration = voiceDec.duration + 1.5; // slight tail
-                      const offline = new OfflineAudioContext(2, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
+                      // Fetch music via backend proxy to avoid CORS
+                      const proxyUrl = `https://viral-tool-1.onrender.com/api/proxy-audio?url=${encodeURIComponent(selectedMusic)}`;
+                      const musicRes = await fetch(proxyUrl);
+                      if (!musicRes.ok) throw new Error("Music fetch failed");
+                      const musicBuf = await musicRes.arrayBuffer();
+                      const musicDec = await ctx.decodeAudioData(musicBuf);
 
-                      // Voice — full volume
-                      const voiceSrc = offline.createBufferSource();
-                      voiceSrc.buffer = voiceDec;
-                      const voiceGain = offline.createGain();
-                      voiceGain.gain.value = 1.0;
-                      voiceSrc.connect(voiceGain); voiceGain.connect(offline.destination);
-                      voiceSrc.start(0);
+                      const dur = voiceDec.duration + 1.5;
+                      const offline = new OfflineAudioContext(2, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
 
-                      // Music — user-selected volume, loops if shorter than voice
-                      const musicSrc = offline.createBufferSource();
-                      musicSrc.buffer = musicDec;
-                      musicSrc.loop = true;
-                      const musicGain = offline.createGain();
-                      musicGain.gain.value = musicVolume / 100;
-                      // Fade out music in last 1.5s
-                      musicGain.gain.setValueAtTime(musicVolume / 100, duration - 1.5);
-                      musicGain.gain.linearRampToValueAtTime(0, duration);
-                      musicSrc.connect(musicGain); musicGain.connect(offline.destination);
-                      musicSrc.start(0);
+                      // Voice track — full volume
+                      const vSrc = offline.createBufferSource(); vSrc.buffer = voiceDec;
+                      const vGain = offline.createGain(); vGain.gain.value = 1.0;
+                      vSrc.connect(vGain); vGain.connect(offline.destination); vSrc.start(0);
+
+                      // Music track — loop, user volume, fade out at end
+                      const mSrc = offline.createBufferSource(); mSrc.buffer = musicDec; mSrc.loop = true;
+                      const mGain = offline.createGain(); mGain.gain.value = musicVolume / 100;
+                      mGain.gain.setValueAtTime(musicVolume / 100, Math.max(0, dur - 1.5));
+                      mGain.gain.linearRampToValueAtTime(0, dur);
+                      mSrc.connect(mGain); mGain.connect(offline.destination); mSrc.start(0);
 
                       const rendered = await offline.startRendering();
 
-                      // Convert to WAV
-                      const numCh = rendered.numberOfChannels;
-                      const numSamples = rendered.length;
-                      const wavBuffer = new ArrayBuffer(44 + numSamples * numCh * 2);
-                      const view = new DataView(wavBuffer);
-                      const writeStr = (off: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
-                      writeStr(0, "RIFF"); view.setUint32(4, 36 + numSamples * numCh * 2, true);
-                      writeStr(8, "WAVE"); writeStr(12, "fmt ");
-                      view.setUint32(16, 16, true); view.setUint16(20, 1, true);
-                      view.setUint16(22, numCh, true); view.setUint32(24, ctx.sampleRate, true);
-                      view.setUint32(28, ctx.sampleRate * numCh * 2, true); view.setUint16(32, numCh * 2, true);
-                      view.setUint16(34, 16, true); writeStr(36, "data");
-                      view.setUint32(40, numSamples * numCh * 2, true);
-                      let offset = 44;
-                      for (let i = 0; i < numSamples; i++) {
-                        for (let ch = 0; ch < numCh; ch++) {
-                          const s = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
-                          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-                          offset += 2;
-                        }
+                      // Encode to WAV
+                      const numCh = rendered.numberOfChannels, numSamples = rendered.length;
+                      const wavBuf = new ArrayBuffer(44 + numSamples * numCh * 2);
+                      const dv = new DataView(wavBuf);
+                      const ws = (off: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); };
+                      ws(0, "RIFF"); dv.setUint32(4, 36 + numSamples * numCh * 2, true);
+                      ws(8, "WAVE"); ws(12, "fmt ");
+                      dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
+                      dv.setUint32(24, ctx.sampleRate, true); dv.setUint32(28, ctx.sampleRate * numCh * 2, true);
+                      dv.setUint16(32, numCh * 2, true); dv.setUint16(34, 16, true);
+                      ws(36, "data"); dv.setUint32(40, numSamples * numCh * 2, true);
+                      let off = 44;
+                      for (let i = 0; i < numSamples; i++) for (let ch = 0; ch < numCh; ch++) {
+                        const s = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
+                        dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2;
                       }
-                      const blob = new Blob([wavBuffer], { type: "audio/wav" });
-                      setMixedAudioUrl(URL.createObjectURL(blob));
-                    } catch (err) {
-                      alert("Mix failed. Please try again.");
+                      setMixedAudioUrl(URL.createObjectURL(new Blob([wavBuf], { type: "audio/wav" })));
+                    } catch (err: any) {
+                      setMixError("Mix failed — backend proxy may need a moment. Please try again.");
                     }
                     setMixLoading(false);
-                  }}
-                    style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: mixLoading ? "#111" : "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: mixLoading ? "#444" : "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: mixLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-                    {mixLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Mixing audio...</> : "🎛️ Mix Voiceover + Music"}
+                  }} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: mixLoading ? "#111" : "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: mixLoading ? "#444" : "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: mixLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                    {mixLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Mixing audio...</> : "🎛️ Mix Voiceover + Music & Download"}
                   </button>
                 )}
 
-                {/* Mixed Audio Result */}
+                {mixError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0.5rem 0 0", textAlign: "center" }}>{mixError}</p>}
+
                 {mixedAudioUrl && (
                   <div style={{ marginTop: "0.85rem", animation: "slideUp 0.3s ease" }}>
                     <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem", marginBottom: "0.5rem" }}>
                       <audio controls src={mixedAudioUrl} style={{ width: "100%" }} />
                     </div>
-                    <a href={mixedAudioUrl} download={`vci-final-${style.toLowerCase()}-with-music.wav`}
+                    <a href={mixedAudioUrl} download={`vci-${style.toLowerCase()}-voiceover-with-music.wav`}
                       style={{ display: "block", textAlign: "center", background: "linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.15))", border: "1px solid rgba(168,85,247,0.4)", color: "#a855f7", padding: "0.7rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}>
                       ⬇ Download Final Mix (Voiceover + Music)
                     </a>
@@ -1325,7 +1311,7 @@ Respond ONLY in JSON:
             );
           })()}
 
-          {/* Audio Suggestion */}
+          {/* Audio Suggestion — shown only before voiceover generated */}
           {generateResult.audio_suggestion && !audioUrl && (
             <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}>
               <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
@@ -1603,7 +1589,7 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
   };
 
   const analyze = async () => {
-    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
+    if (!contentInput.trim()) { setError("Apna content ya hook paste karo."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
@@ -1682,7 +1668,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Paste any content → detailed analysis + fixes + 3 improved versions</p>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Poora content paste karo → detailed analysis + fixes + 3 improved versions</p>
           </div>
         </div>
 
@@ -1702,7 +1688,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         {/* Content textarea */}
         <div style={{ marginBottom: "0.75rem" }}>
           <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>
-            YOUR CONTENT
+            APNA CONTENT PASTE KARO
             <span style={{ color: "#222", fontWeight: 400, marginLeft: "0.5rem" }}>
               (caption, hook, script, ad copy — kuch bhi)
             </span>
@@ -1714,7 +1700,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
             onFocus={e => e.target.style.borderColor = "#6d28d9"}
             onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
-            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — everything gets analyzed</span>
+            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — sab analyze hoga</span>
             <span style={{ color: "#52525b", fontSize: "0.68rem" }}>{contentInput.length} chars</span>
           </div>
         </div>
@@ -1799,7 +1785,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                     {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
                   </div>
                   <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>
-                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Apply these improvements to your content"}
+                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Content mein yeh improvements karo"}
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
                     <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
@@ -3096,6 +3082,176 @@ function TutorialFeature({ icon: Icon, color, name, tagline, steps, credit }: an
   );
 }
 
+function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langStrict }: any) {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
+
+  const repurpose = async () => {
+    if (!content.trim()) { setError("Please paste some content first."); return; }
+    if (content.trim().split(" ").length < 5) { setError("Content should be a bit longer."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResults(null);
+    const prompt = `You are an expert content repurposing strategist. Take this original content and repurpose it professionally for each platform.
+ORIGINAL CONTENT: """${content}"""
+LANGUAGE: ${langStrict}
+Repurpose natively for all 8 platforms:
+1. Instagram Reel Hook (visual-first, aesthetic/relatable)
+2. Twitter/X Thread (punchy, quotable, ≤280 chars per tweet)
+3. LinkedIn Post (professional insight, credible tone)
+4. YouTube Short Hook (skip-proof first 5 seconds)
+5. Pinterest Pin (keyword-rich, benefit-stated upfront)
+6. WhatsApp Broadcast (personal, direct, conversational)
+7. Facebook Post (warm, community-oriented)
+8. TikTok Hook (raw, casual, pattern-interrupt in first 2 words)
+Respond ONLY in JSON:
+{"original_summary":"2-line summary","repurposed":{"instagram":"...","twitter":"Tweet 1: ... | Tweet 2: ...","linkedin":"...","youtube":"...","pinterest":"...","whatsapp":"...","facebook":"...","tiktok":"..."},"best_platform":"which platform and why","tips":["tip 1","tip 2","tip 3"]}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2500, messages: [{ role: "user", content: prompt }] }) });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResults(parsed); if (onCreditUsed) onCreditUsed();
+    } catch { setError("Repurpose failed. Try again."); }
+    setLoading(false);
+  };
+
+  const PLATFORM_META: Record<string, { emoji: string; color: string; label: string }> = {
+    instagram: { emoji: "📸", color: "#e1306c", label: "Instagram Reel" }, twitter: { emoji: "🐦", color: "#1da1f2", label: "Twitter/X Thread" },
+    linkedin: { emoji: "💼", color: "#0077b5", label: "LinkedIn Post" }, youtube: { emoji: "▶️", color: "#ef4444", label: "YouTube Short" },
+    pinterest: { emoji: "📌", color: "#e60023", label: "Pinterest Pin" }, whatsapp: { emoji: "💬", color: "#25d366", label: "WhatsApp Broadcast" },
+    facebook: { emoji: "📘", color: "#1877f2", label: "Facebook Post" }, tiktok: { emoji: "🎵", color: "#69c9d0", label: "TikTok Hook" },
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>🔄</span>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Auto-Repurpose Engine</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>One piece of content → automatically adapted for all 8 platforms</p>
+          </div>
+        </div>
+        <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: 0, color: "#8b5cf6", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any content — a blog post, YouTube script, Instagram caption, or email — and VCI will natively rewrite it for all 8 platforms.</p>
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PASTE YOUR CONTENT</label>
+        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste your content here:\n• A YouTube script\n• An Instagram caption\n• A blog post intro\n• Any content you've already written"} rows={7}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+        <button onClick={repurpose} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "🔄 Repurposing for all platforms..." : "🔄 Repurpose for All 8 Platforms"}
+        </button>
+      </div>
+      {results && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+          {results.original_summary && <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📝 ORIGINAL CONTENT SUMMARY</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.5 }}>{results.original_summary}</p></div>}
+          {results.best_platform && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🏆 BEST PLATFORM FOR THIS CONTENT</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.5 }}>{results.best_platform}</p></div>}
+          <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#52525b", fontWeight: 700, letterSpacing: "0.06em" }}>REPURPOSED FOR ALL 8 PLATFORMS</p>
+          {results.repurposed && Object.entries(results.repurposed).map(([plt, cnt]: any) => { const meta = PLATFORM_META[plt]; if (!meta) return null; return (
+            <div key={plt} style={{ background: "#0f0f0f", border: `1px solid ${meta.color}20`, borderLeft: `3px solid ${meta.color}`, borderRadius: "12px", padding: "0.85rem", marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                <span style={{ color: meta.color, fontSize: "0.72rem", fontWeight: 700 }}>{meta.emoji} {meta.label}</span>
+                <button onClick={() => copyText(cnt, plt)} style={{ background: copiedKey === plt ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === plt ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === plt ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === plt ? "✓ Copied!" : "Copy"}</button>
+              </div>
+              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{cnt}</p>
+            </div>); })}
+          {results.tips && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginTop: "0.5rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💡 REPURPOSING TIPS</p>{results.tips.map((tip: string, i: number) => <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}><span style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{i + 1}.</span><span style={{ color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{tip}</span></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CompetitorHookAnalyzer({ usageCount, limit, onUpgrade, onCreditUsed, platform }: any) {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState(platform || "Instagram");
+  const PLATFORMS = [{ id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" }, { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" }];
+  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
+
+  const analyze = async () => {
+    if (!content.trim()) { setError("Please paste the competitor's content first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+    const prompt = `You are an expert viral content analyst. Analyze this competitor content from ${selectedPlatform} and reverse-engineer exactly why it works.
+COMPETITOR CONTENT: """${content}"""
+PLATFORM: ${selectedPlatform}
+Respond ONLY in JSON:
+{"virality_score":0,"why_it_works":{"primary_technique":"the most powerful thing this content does","psychological_triggers":["trigger 1","trigger 2","trigger 3"],"platform_fit":"why this format works on ${selectedPlatform}"},"breakdown":[{"element":"exact text/phrase","technique":"technique name","explanation":"why it works psychologically"}],"replicate_formula":"step-by-step formula to recreate this style WITHOUT copying","your_versions":["Version 1 — same technique, your own angle","Version 2 — different emotional trigger, same structure","Version 3 — curiosity-gap variation"],"avoid":"what NOT to copy","verdict":"one honest sentence about whether this technique is worth replicating"}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }) });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed); if (onCreditUsed) onCreditUsed();
+    } catch { setError("Analysis failed. Try again."); }
+    setLoading(false);
+  };
+
+  const scoreColor = (s: number) => s >= 80 ? "#22c55e" : s >= 60 ? "#f59e0b" : s >= 40 ? "#f97316" : "#ef4444";
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>🔍</span>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Competitor Hook Analyzer</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste viral content → find out exactly why it worked → create your own version</p>
+          </div>
+        </div>
+        <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: 0, color: "#f87171", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any competitor's viral hook, caption, or reel script. VCI will reverse-engineer the exact techniques, psychological triggers, and show you how to create your own original version without copying.</p>
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
+          {PLATFORMS.map(p => <button key={p.id} onClick={() => setSelectedPlatform(p.id)} style={{ background: selectedPlatform === p.id ? "rgba(109,40,217,0.12)" : "#080808", border: `1px solid ${selectedPlatform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: selectedPlatform === p.id ? "#8b5cf6" : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}>{p.emoji} {p.id}</button>)}
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>COMPETITOR CONTENT</label>
+        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste competitor's viral content here:\n• A viral hook or opening line\n• A complete caption that got thousands of likes\n• A reel script that went viral"} rows={6}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#ef4444"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "🔍 Analyzing viral content..." : "🔍 Reverse Engineer This Content"}
+        </button>
+      </div>
+      {result && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+          <div style={{ background: `${scoreColor(result.virality_score)}10`, border: `2px solid ${scoreColor(result.virality_score)}30`, borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div><p style={{ margin: "0 0 0.2rem", color: "#fff", fontWeight: 800, fontSize: "1rem" }}>Virality Score</p><p style={{ margin: 0, color: "#71717a", fontSize: "0.72rem" }}>{result.verdict}</p></div>
+            <div style={{ textAlign: "center" }}><div style={{ fontWeight: 900, fontSize: "2.5rem", color: scoreColor(result.virality_score), lineHeight: 1 }}>{result.virality_score}</div><div style={{ color: "#555", fontSize: "0.6rem" }}>/100</div></div>
+          </div>
+          {result.why_it_works && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✅ WHY IT WORKS</p>
+            <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.2rem", color: "#22c55e", fontSize: "0.65rem", fontWeight: 700 }}>PRIMARY TECHNIQUE</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", fontWeight: 600 }}>{result.why_it_works.primary_technique}</p></div>
+            {result.why_it_works.psychological_triggers && <div style={{ marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.35rem", color: "#f59e0b", fontSize: "0.65rem", fontWeight: 700 }}>🧠 PSYCHOLOGICAL TRIGGERS</p><div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>{result.why_it_works.psychological_triggers.map((t: string, i: number) => <span key={i} style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600 }}>{t}</span>)}</div></div>}
+            {result.why_it_works.platform_fit && <p style={{ margin: 0, color: "#71717a", fontSize: "0.75rem", lineHeight: 1.5 }}>📱 {result.why_it_works.platform_fit}</p>}
+          </div>}
+          {result.replicate_formula && <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(109,40,217,0.02))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 REPLICATE FORMULA (without copying)</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{result.replicate_formula}</p></div>}
+          {result.your_versions && result.your_versions.length > 0 && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>✨ YOUR ORIGINAL VERSIONS (inspired, not copied)</p>
+            {result.your_versions.map((ver: string, i: number) => <div key={i} style={{ background: "rgba(6,182,212,0.04)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: "8px", padding: "0.65rem 0.85rem", marginBottom: "0.4rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.6, flex: 1 }}>{ver}</p>
+              <button onClick={() => copyText(ver, `ver${i}`)} style={{ background: copiedKey === `ver${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `ver${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `ver${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0 }}>{copiedKey === `ver${i}` ? "✓" : "Copy"}</button>
+            </div>)}
+          </div>}
+          {result.avoid && <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "12px", padding: "0.85rem" }}><p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>⚠️ AVOID DOING THIS</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{result.avoid}</p></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ViralContentTool() {
   // Persisted across refresh: keyword, platform, niche, results, and active tab
   const [keyword, setKeyword] = useState(() => {
@@ -3476,6 +3632,8 @@ Respond ONLY in JSON:
     { id: "trends", label: "Trends", Icon: TrendingUp },
     { id: "image", label: "Image AI", Icon: Image },
     { id: "scriptlab", label: "Script Lab", Icon: Film },
+    { id: "repurpose", label: "Repurpose", Icon: Layers },
+    { id: "competitor", label: "Competitor", Icon: MousePointerClick },
   ];
 
   if (authLoading || profileLoading) return (
@@ -3771,12 +3929,28 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-            {tabs.map(t => (
-              <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
-            ))}
+          {/* Tabs — Row 1: 9 main + Row 2: Repurpose + Competitor */}
+          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div className="tab-scroll-row" style={{ background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+              {tabs.filter(t => !["repurpose","competitor"].includes(t.id)).map(t => (
+                <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
+                  isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "0.35rem", background: "#0a0a0a", borderRadius: "12px", padding: "0.3rem", border: "1px solid #1a1a1a" }}>
+              {tabs.filter(t => ["repurpose","competitor"].includes(t.id)).map(t => {
+                const colors: Record<string, string> = { repurpose: "#6d28d9", competitor: "#ef4444" };
+                const color = colors[t.id] || "#6d28d9";
+                const isActive = activeTab === t.id;
+                return (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)}
+                    style={{ flex: 1, padding: "0.55rem 1rem", borderRadius: "9px", border: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", background: isActive ? `${color}18` : "transparent", color: isActive ? color : "#3f3f46", fontWeight: isActive ? 700 : 500, fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", borderBottom: isActive ? `2px solid ${color}` : "2px solid transparent" }}>
+                    <t.Icon size={14} strokeWidth={isActive ? 2.5 : 1.8} />
+                    <span>{t.id === "repurpose" ? "🔄 Repurpose Engine" : "🔍 Competitor Analyzer"}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -3988,6 +4162,16 @@ Respond ONLY in JSON:
           {/* TAB: TRENDS */}
           {activeTab === "trends" && (
             <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
+          )}
+
+          {/* TAB: REPURPOSE ENGINE */}
+          {activeTab === "repurpose" && (
+            <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
+          )}
+
+          {/* TAB: COMPETITOR ANALYZER */}
+          {activeTab === "competitor" && (
+            <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
           )}
 
           {/* TAB: SCRIPT LAB */}
@@ -4230,8 +4414,8 @@ Respond ONLY in JSON:
             ))}
             <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
               <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Have more questions? 🙋</p>
-              <a href="https://wa.me/919315133390?text=Hi! I have a question about VCI" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
-                💬 Chat on WhatsApp
+              <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
+                💬 WhatsApp karo
               </a>
             </div>
           </div>
