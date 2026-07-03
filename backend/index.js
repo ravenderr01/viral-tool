@@ -91,170 +91,56 @@ app.post("/api/generate", async (req, res) => {
 
     const userMessage = messages[messages.length - 1].content;
 
-    // ─── Platform Detection ───────────────────────────────────────────────────
-    const isGoogleAds    = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
-    const isYouTubeAds   = userMessage.includes("YouTube Ads");
-    const isMetaAds      = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
-    const isNativeAds    = userMessage.includes("Native Ads");
-    const isFacebook     = userMessage.includes("Facebook content expert");
-    const isInstagram    = userMessage.includes("Instagram content expert") || userMessage.includes("Instagram creator");
-    const isTikTok       = userMessage.includes("TikTok content expert") || userMessage.includes("TikTok creator");
-    const isYouTube      = userMessage.includes("YouTube content expert") || userMessage.includes("YouTube creator");
-    const isLinkedIn     = userMessage.includes("LinkedIn content expert") || userMessage.includes("LinkedIn creator");
-    const isTwitter      = userMessage.includes("Twitter") || userMessage.includes("X content expert");
-    const isReddit       = userMessage.includes("Reddit content expert") || userMessage.includes("Reddit creator");
-    const isPinterest    = userMessage.includes("Pinterest SEO expert");
-    const isWhatsApp     = userMessage.includes("WhatsApp marketing expert");
-    const isSnapchat     = userMessage.includes("Snapchat content expert");
+    const isGoogleAds = userMessage.includes("Google Ads") || userMessage.includes("Google Search headlines");
+    const isMetaAds = userMessage.includes("Meta Ads") || userMessage.includes("Facebook/Instagram ad") || userMessage.includes("Meta Ads specialist");
 
-    // ─── Platform-Specific System Prompts ────────────────────────────────────
-    const systemPrompt =
-
-      // ── GOOGLE ADS ──────────────────────────────────────────────────────────
-      isGoogleAds ? `You are a Google Ads RSA (Responsive Search Ad) expert. CRITICAL RULES:
-      1. hooks (RSA Headlines): Generate EXACTLY 15 unique headlines. Each MUST be ≤30 characters INCLUDING spaces and punctuation. Count every character carefully. Example: "Expert Fitness Help" (19 chars ✓). Reject anything over 30.
-      2. titles (Display/Secondary Headlines): MUST be ≤30 characters. Focus on USP. 
-      3. Descriptions: Generate 4 descriptions. Each MUST be ≤90 characters. Format: Benefit + CTA. Example: "Work with certified coach online. Book your free consultation today!" (68 chars ✓).
-      4. scripts: keyword match suggestions — [exact match], "phrase match", broad match. Include at least 8 keyword ideas.
-      5. captions: Ad URL path suggestions (≤15 chars each, 2 suggestions). Example: "free-trial", "get-started".
-      6. hashtags: empty []
-      7. BANNED words in headlines: unlock, boost, transform, skyrocket, click here, learn more.
-      8. EACH headline must make sense STANDALONE (Google shows them in any order/combination).
-      9. Include the primary keyword naturally in at least 3 headlines.
-      10. Always respond in valid JSON only. Never exceed character limits — this is critical for Google Ads approval.` :
-
-      // ── YOUTUBE ADS ─────────────────────────────────────────────────────────
-      isYouTubeAds ? `You are a YouTube Ads expert. CRITICAL RULES:
-      1. hooks: 8 skippable ad hooks (first 5 seconds). MUST stop the skip — start with a question, bold claim, or pattern interrupt. Keep it ≤100 chars. Example: "Wait — if you're spending hours on content, watch this first."
-      2. titles: 8 in-stream ad headlines ≤30 characters. Clear, benefit-led.
-      3. descriptions: 4 companion banner descriptions ≤90 chars. Benefit + CTA.
-      4. scripts: 5 complete YouTube ad scripts (Hook 0-5s / Value 5-20s / CTA 20-30s format). Label each section clearly.
-      5. captions: 5 video description copy snippets for the ad. SEO-aware, include keyword.
-      6. hashtags: 5 relevant YouTube hashtags (no # prefix in the string).
-      7. keywords: 8 YouTube search keyword suggestions for targeting.
-      8. Always respond in valid JSON only.` :
-
-      // ── META ADS ────────────────────────────────────────────────────────────
-      isMetaAds ? `You are a world-class Meta Ads copywriter. STRICT RULES:
-      1. hooks (Primary Text): 8 options. MUST be 80-125 characters. Start with the customer's exact pain point. Use "you/your." Example: "Still losing clients to competitors? Here's the exact strategy that gets 10 new clients weekly."
-      2. titles (Headline): 8 options. MUST be 27-40 characters. Include a specific number or result. Example: "Get 10 Clients in 30 Days."
-      3. descriptions (Link Description): 5 options. MUST be 25-30 characters. CTA-focused. Example: "Book your free call today."
-      4. captions (Ad Body — longer format): 5 options. Format: Pain → Agitate → Solution → Social Proof → CTA. 200-300 characters.
-      5. scripts: 5 Meta video ad scripts (Hook 0-3s / Problem 3-8s / Solution 8-20s / CTA 20-30s).
-      6. BANNED words: unlock, boost, transform, skyrocket, master, guru, pro-level, game-changer.
-      7. Every piece of copy must mention a specific result, number, or timeframe.
-      8. hashtags: 5 relevant hashtags (no # prefix).
-      9. Always respond in valid JSON only.` :
-
-      // ── NATIVE ADS ──────────────────────────────────────────────────────────
-      isNativeAds ? `You are a Native Ads (Taboola/Outbrain) expert copywriter. CRITICAL RULES:
-      1. hooks (Native Headlines): 10 options. Must feel like editorial content — NOT like an ad. Use curiosity gaps, surprising facts, or "reason why" angles. Keep ≤80 characters. Example: "Doctors Are Shocked By This Simple Morning Habit" or "The Real Reason You're Tired Every Afternoon."
-      2. titles (Thumbnail Text): 8 short overlay text ideas ≤20 chars. Punchy and curiosity-driven.
-      3. descriptions (Sponsored Content Teaser): 5 options. 100-150 characters. News-article style opening that teases the content without revealing the answer.
-      4. captions (Content Body Hook): 5 options. First paragraph of the native article (150-200 chars). Journalistic, authoritative tone.
-      5. scripts: 5 native video ad concepts (editorial-style, not promotional).
-      6. BANNED tone: salesy, promotional, "buy now," "click here," overtly commercial language.
-      7. hashtags: empty []
-      8. Always respond in valid JSON only.` :
-
-      // ── INSTAGRAM ───────────────────────────────────────────────────────────
-      isInstagram ? `You are an Instagram content expert. STRICT RULES:
-      1. hooks: 8 reel/post opening lines (80-120 chars). Must work with sound OFF (visual-first). Start mid-story or with a bold claim. No "Hey guys" or generic openers.
-      2. titles: 8 post headline ideas (40-60 chars). Aesthetic, aspirational, or curiosity-driven.
-      3. captions: 5 full Instagram captions (150-220 chars). Format: Hook → Value → Soft CTA. Use line breaks. 1-2 emojis max.
-      4. scripts: 5 Instagram Reel scripts (Hook 0-3s / Build 3-12s / CTA 12-15s).
-      5. hashtags: EXACTLY 20 hashtags. Mix: 5 broad (1M+ posts) + 10 niche (50K-500K) + 5 micro (under 50K). Return as array of strings WITHOUT # symbol.
-      6. Always respond in valid JSON only.` :
-
-      // ── TIKTOK ──────────────────────────────────────────────────────────────
-      isTikTok ? `You are a TikTok content expert. STRICT RULES:
-      1. hooks: 8 TikTok opening lines (40-70 chars). First 2 words MUST create a pattern interrupt. Casual, conversational, trend-aware. Examples: "POV: you", "Wait, this is", "Nobody talks about".
-      2. titles: 8 TikTok video title ideas (30-50 chars). Trend-aware, lowercase natural feel.
-      3. captions: 5 TikTok captions (80-120 chars). Casual, question or challenge at end to drive comments.
-      4. scripts: 5 TikTok video scripts (Hook 0-2s / Build 2-10s / Punchline or CTA 10-15s). Conversational spoken language.
-      5. hashtags: 8 hashtags. Mix trending + niche. Return as array WITHOUT # symbol.
-      6. Always respond in valid JSON only.` :
-
-      // ── YOUTUBE (ORGANIC) ────────────────────────────────────────────────────
-      isYouTube ? `You are a YouTube content expert. STRICT RULES:
-      1. hooks: 8 video opening lines (80-120 chars). Promise the payoff clearly. SEO-aware. Start with the benefit or a bold question.
-      2. titles: 8 YouTube video titles (50-70 chars). Include the primary keyword near the front. Use numbers or brackets where natural. Example: "5 Ways to [Benefit] (That Actually Work in 2026)".
-      3. descriptions: 5 YouTube description intros (200-280 chars). Include keyword, what the video covers, and a CTA to subscribe.
-      4. scripts: 5 YouTube video script intros (Hook + Context + What They'll Learn). 100-150 words each.
-      5. captions: 5 community post ideas related to the topic.
-      6. hashtags: 5 YouTube hashtags (no # prefix).
-      7. Always respond in valid JSON only.` :
-
-      // ── LINKEDIN ────────────────────────────────────────────────────────────
-      isLinkedIn ? `You are a LinkedIn content expert. STRICT RULES:
-      1. hooks: 8 LinkedIn post openers (80-120 chars). Professional insight, contrarian take, or personal story opening. NO slang, NO emoji overload. End with a line break to trigger "see more."
-      2. titles: 8 LinkedIn article/post headline ideas (50-80 chars). Authoritative, data-backed if possible.
-      3. captions: 5 complete LinkedIn posts (200-300 chars). Format: Bold opening → 3-5 short insight lines → Professional CTA. Max 1 emoji.
-      4. scripts: 5 LinkedIn video script concepts (professional, talking-head style, 60-90 sec).
-      5. hashtags: EXACTLY 5 hashtags — industry-specific only. No entertainment or lifestyle tags. Return as array WITHOUT # symbol.
-      6. BANNED: slang, "Hey LinkedIn fam", excessive emojis, casual language, "smashing that like button."
-      7. Always respond in valid JSON only.` :
-
-      // ── TWITTER / X ─────────────────────────────────────────────────────────
-      isTwitter ? `You are a Twitter/X content expert. STRICT RULES:
-      1. hooks: 8 tweet opening lines. Each full tweet MUST be ≤280 characters INCLUDING spaces. Make it quotable, opinionated, or data-driven. No filler.
-      2. titles: 8 thread title tweets (≤280 chars). Must create curiosity to click "show more." Use numbers: "7 things I learned about X (thread 🧵)."
-      3. captions: 5 complete tweets (≤280 chars each). Punchy, standalone, shareable. End with a question or bold statement.
-      4. scripts: 5 Twitter thread outlines (5-7 tweet structure: Hook tweet + 4-5 value tweets + CTA tweet).
-      5. hashtags: MAXIMUM 2 hashtags per tweet (X culture dislikes heavy hashtag use). Return as array WITHOUT # symbol.
-      6. BANNED: "Retweet if", generic motivational quotes, excessive hashtags.
-      7. Count characters carefully — 280 is the hard limit.
-      8. Always respond in valid JSON only.` :
-
-      // ── REDDIT ──────────────────────────────────────────────────────────────
-      isReddit ? `You are a Reddit content expert. STRICT RULES:
-      1. hooks: 8 Reddit post title ideas (80-120 chars). Must sound like a genuine community member — not promotional. Use questions, confessions, or genuine curiosity. Example: "I tested 10 caption tools for 30 days — here's what actually worked."
-      2. titles: 8 alternative post titles for A/B testing. Vary the angle (question vs statement vs story).
-      3. captions: 5 complete Reddit post bodies (200-350 chars). Format: Context → Genuine insight or experience → Question to community. NO promotional language. NO links in body.
-      4. scripts: 5 comment-style responses that could naturally mention the product (value-first, product mention only if directly relevant and helpful).
-      5. hashtags: empty [] — Reddit does not use hashtags.
-      6. BANNED: "Check out my product", "Link in bio", promotional CTAs, sales language, affiliate-sounding copy.
-      7. Always respond in valid JSON only.` :
-
-      // ── FACEBOOK ────────────────────────────────────────────────────────────
-      isFacebook ? `You are a Facebook content expert. STRICT RULES:
-      1. hooks: 8 Facebook post openers (80-120 chars). Warm, community/family tone. Start with a relatable situation or question. Slightly longer form is fine.
-      2. titles: 8 post headline ideas (40-60 chars). Shareable, community-focused.
-      3. captions: 5 complete Facebook posts (200-300 chars). Format: Story or relatable hook → Value → CTA. Use 1-2 emojis naturally.
-      4. scripts: 5 Facebook video scripts (Relatable open / Story / Value reveal / CTA). Warm, conversational tone.
-      5. hashtags: 3-5 hashtags max (Facebook doesn't reward heavy hashtag use). Return WITHOUT # symbol.
-      6. Always respond in valid JSON only.` :
-
-      // ── PINTEREST ───────────────────────────────────────────────────────────
-      isPinterest ? `You are a Pinterest SEO expert. STRICT RULES:
-      1. hooks: 8 pin titles (60-80 chars). Keyword-rich, descriptive, benefit-focused. Pinterest functions like a search engine — optimize for discoverability.
-      2. titles: 8 board name ideas. Specific and searchable. Include the primary keyword.
-      3. captions: 5 pin descriptions (200-300 chars). Include keywords naturally in the first sentence, describe what the content offers, end with a soft CTA.
-      4. scripts: 5 Pinterest strategy tips for growing in this niche.
-      5. hashtags: 5 descriptive Pinterest hashtags (search-intent driven, not trending culture). Return WITHOUT # symbol.
-      6. Always respond in valid JSON only.` :
-
-      // ── WHATSAPP ────────────────────────────────────────────────────────────
-      isWhatsApp ? `You are a WhatsApp marketing expert. STRICT RULES:
-      1. hooks: 8 broadcast message openers (50-80 chars). Personal, direct, feels like a message from a real person. Curiosity-driven first line.
-      2. titles: 8 message subject lines (30-50 chars). Clear and compelling — the first thing they read.
-      3. captions: 5 complete WhatsApp broadcast messages (150-200 chars). Conversational, no corporate tone. End with a clear CTA or question.
-      4. scripts: 5 WhatsApp Status ideas (30-50 chars). Short, punchy, engaging.
-      5. hashtags: empty [] — WhatsApp does not use hashtags.
-      6. Always respond in valid JSON only.` :
-
-      // ── SNAPCHAT ────────────────────────────────────────────────────────────
-      isSnapchat ? `You are a Snapchat content expert. STRICT RULES:
-      1. hooks: 8 snap story hooks (30-50 chars). Fun, casual, FOMO-based. Youth-oriented.
-      2. titles: 8 story title overlay ideas. Trendy, short, emoji optional.
-      3. captions: 5 snap captions (20-40 chars). Very short, fun, emoji-friendly.
-      4. scripts: 5 Snapchat story scripts (5-7 snaps each, with text overlay ideas per snap).
-      5. hashtags: empty [] — Snapchat does not use hashtags.
-      6. Always respond in valid JSON only.` :
-
-      // ── DEFAULT (Generic fallback) ───────────────────────────────────────────
-      `You are a viral content expert. Generate highly specific, platform-aware, professional content. Always respond in valid JSON only.`;
-
+    const systemPrompt = isGoogleAds ?
+      `You are a Google Ads expert. CRITICAL RULES:
+      1. hooks (Google Search Headlines): MUST be 25-30 characters. Use urgency + benefit. Example: "Expert Fitness Coach Today"
+      2. titles (Display Headlines): MUST be 25-30 characters. Focus on USP. Example: "Get Fit in 30 Days - Start"
+      3. Descriptions: MUST be 80-90 characters. Include benefit + CTA. Example: "Work with certified fitness coach online. Book free consultation today and get results!"
+      4. scripts: keyword match suggestions like [exact match], "phrase match", broad match
+      5. NO advertising/marketing words in titles — focus on customer benefit only
+      6. Always respond in valid JSON only.`
+      : isMetaAds ?
+      `You are a world-class Meta Ads copywriter. STRICT RULES:
+      1. hooks: MUST be 80-125 characters. Start with customer pain point. Example: "Still losing clients to competitors? Here's the exact Facebook strategy that gets 10 new clients weekly."
+      2. titles: MUST be 30-40 characters. Include specific number/result. Example: "Get 10 Clients in 30 Days"
+      3. captions: MUST be 200-300 characters. Format: Pain → Agitate → Solution → CTA
+      4. NO generic words: unlock, boost, transform, skyrocket, master, pro
+      5. Every line must mention specific results with numbers
+      6. Always respond in valid JSON only.`
+      : userMessage.includes("Facebook content expert") ?
+      `You are a Facebook content expert. STRICT RULES:
+      1. hooks: 8 emotional story-based post openers (80-120 chars). Start with relatable situation.
+      2. titles: 8 post headlines (40-60 chars). Community-focused, shareable.
+      3. captions: 5 complete Facebook posts (200-300 chars). Format: Story → Value → CTA. Use 1-2 emojis.
+      4. scripts: 5 Facebook video scripts (Hook/Story/CTA format)
+      5. Always respond in valid JSON only.`
+      : userMessage.includes("Pinterest SEO expert") ?
+      `You are a Pinterest SEO expert. STRICT RULES:
+      1. hooks: 8 pin titles (60-80 chars). Keyword-rich, descriptive, benefit-focused.
+      2. titles: 8 board name ideas. Specific and searchable.
+      3. captions: 5 pin descriptions (200-300 chars). Include keywords naturally, end with CTA.
+      4. scripts: 5 Pinterest strategy tips for growth.
+      5. Always respond in valid JSON only.`
+      : userMessage.includes("WhatsApp marketing expert") ?
+      `You are a WhatsApp marketing expert. STRICT RULES:
+      1. hooks: 8 broadcast message openers (50-80 chars). Personal, direct, curiosity-driven.
+      2. titles: 8 message subject lines (30-50 chars). Clear and compelling.
+      3. captions: 5 complete WhatsApp broadcast messages (150-200 chars). Conversational tone, clear CTA.
+      4. scripts: 5 WhatsApp status ideas. Short and engaging.
+      5. hashtags: empty []
+      6. Always respond in valid JSON only.`
+      : userMessage.includes("Snapchat content expert") ?
+      `You are a Snapchat content expert. STRICT RULES:
+      1. hooks: 8 snap story hooks (30-50 chars). Fun, casual, FOMO-based.
+      2. titles: 8 story title ideas. Trendy and youth-focused.
+      3. captions: 5 snap captions (20-40 chars). Short, fun, emoji-heavy.
+      4. scripts: 5 Snapchat story scripts (5-7 snaps each with text overlay ideas).
+      5. Always respond in valid JSON only.`
+      : `You are a viral content expert. Generate highly specific, professional content.
+      Always respond in valid JSON only.`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -275,43 +161,7 @@ app.post("/api/generate", async (req, res) => {
 
     const data = await response.json();
     console.log("Groq response status:", response.status);
-    let text = data.choices?.[0]?.message?.content || "";
-
-    // ── Light Loop: Google Ads Character Limit Auto-Fix (zero extra API cost) ─
-    if (isGoogleAds && text) {
-      try {
-        const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-        let needsFix = false;
-
-        // Smart truncate — only fix genuinely over-limit, preserve 25-30 char headlines
-        const smartTruncate = (str, limit) => {
-          if (typeof str !== "string" || str.length <= limit) return str;
-          needsFix = true;
-          const trimmed = str.slice(0, limit);
-          const lastSpace = trimmed.lastIndexOf(" ");
-          return lastSpace >= 20 ? trimmed.slice(0, lastSpace).trim() : trimmed.trim();
-        };
-
-        if (parsed.hooks) {
-          parsed.hooks = parsed.hooks.map(h => smartTruncate(h, 30));
-        }
-        if (parsed.titles) {
-          parsed.titles = parsed.titles.map(t => smartTruncate(t, 30));
-        }
-        if (parsed.descriptions) {
-          parsed.descriptions = parsed.descriptions.map(d => smartTruncate(d, 90));
-        }
-
-        if (needsFix) {
-          console.log("Light Loop: Fixed Google Ads character limit violations");
-          text = JSON.stringify(parsed);
-        }
-      } catch (e) {
-        // Parse failed — return original, no crash
-        console.log("Light Loop: Parse failed, returning original");
-      }
-    }
-
+    const text = data.choices?.[0]?.message?.content || "";
     res.json({ content: [{ type: "text", text }] });
 
   } catch (err) {
@@ -568,51 +418,41 @@ setInterval(() => {
     .catch(() => {});
 }, 14 * 60 * 1000);
 
-// ── Google Autocomplete — Free Real Keyword Suggestions ─────────────────────
-app.get("/api/keyword-suggestions", async (req, res) => {
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Music proxy — Mixkit CORS bypass
+app.get('/api/proxy-audio', async (req, res) => {
   try {
-    const { keyword, platform } = req.query;
-    if (!keyword) return res.json({ suggestions: [] });
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'No URL provided' });
 
-    // Google Suggest API — no key needed, genuinely free
-    const response = await fetch(
-      `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(keyword)}&hl=en`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
-    );
-    const data = await response.json();
-    let suggestions = data[1] || [];
-
-    // For ad platforms, filter to more commercial/intent-driven suggestions
-    if (platform === "Google Ads" || platform === "YouTube Ads") {
-      // Prioritize suggestions with buying-intent signals
-      const buyingIntentWords = ["best", "buy", "near me", "how to", "price", "cost", "top", "cheap", "free", "review", "service", "hire"];
-      const prioritized = suggestions.filter(s =>
-        buyingIntentWords.some(w => s.toLowerCase().includes(w))
-      );
-      const rest = suggestions.filter(s =>
-        !buyingIntentWords.some(w => s.toLowerCase().includes(w))
-      );
-      suggestions = [...prioritized, ...rest].slice(0, 10);
-    } else {
-      suggestions = suggestions.slice(0, 8);
+    // Security: only allow Mixkit URLs
+    if (!url.includes('mixkit.co')) {
+      return res.status(403).json({ error: 'Only Mixkit URLs allowed' });
     }
 
-    res.json({ suggestions, source: "google_autocomplete" });
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://mixkit.co/',
+        'Accept': 'audio/mpeg,audio/*;q=0.9,*/*;q=0.8',
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Mixkit fetch failed:', response.status, url);
+      return res.status(response.status).json({ error: 'Music fetch failed' });
+    }
+
+    const buffer = await response.buffer();
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(buffer);
   } catch (err) {
-    console.error("Keyword suggestions error:", err);
-    res.json({ suggestions: [], source: "fallback" });
+    console.error('Audio proxy error:', err);
+    res.status(500).json({ error: 'Proxy failed' });
   }
 });
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
-// Music proxy — avoids CORS for Mixkit
-app.get('/api/proxy-audio', async (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'No URL' });
-  const response = await fetch(url);
-  const buffer = await response.arrayBuffer();
-  res.set('Content-Type', 'audio/mpeg');
-  res.set('Access-Control-Allow-Origin', '*');
-  res.send(Buffer.from(buffer));
-});
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
