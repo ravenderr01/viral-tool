@@ -250,6 +250,169 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
+// ── AutoRepurposeEngine ─────────────────────────────────────────────────────
+function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langStrict }: any) {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
+
+  const repurpose = async () => {
+    if (!content.trim()) { setError("Please paste some content first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResults(null);
+    const prompt = `You are an expert content repurposing strategist. Take this original content and repurpose it professionally for each platform.
+ORIGINAL CONTENT: """${content}"""
+LANGUAGE: ${langStrict}
+Repurpose natively for all 8 platforms: Instagram Reel Hook, Twitter/X Thread, LinkedIn Post, YouTube Short Hook, Pinterest Pin, WhatsApp Broadcast, Facebook Post, TikTok Hook.
+Respond ONLY in JSON:
+{"original_summary":"2-line summary","repurposed":{"instagram":"...","twitter":"Tweet 1: ...","linkedin":"...","youtube":"...","pinterest":"...","whatsapp":"...","facebook":"...","tiktok":"..."},"best_platform":"which platform and why","tips":["tip 1","tip 2","tip 3"]}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2500, messages: [{ role: "user", content: prompt }] }) });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResults(parsed); if (onCreditUsed) onCreditUsed();
+    } catch { setError("Repurpose failed. Try again."); }
+    setLoading(false);
+  };
+
+  const PLATFORM_META: Record<string, { emoji: string; color: string; label: string }> = {
+    instagram: { emoji: "📸", color: "#e1306c", label: "Instagram Reel" }, twitter: { emoji: "🐦", color: "#1da1f2", label: "Twitter/X Thread" },
+    linkedin: { emoji: "💼", color: "#0077b5", label: "LinkedIn Post" }, youtube: { emoji: "▶️", color: "#ef4444", label: "YouTube Short" },
+    pinterest: { emoji: "📌", color: "#e60023", label: "Pinterest Pin" }, whatsapp: { emoji: "💬", color: "#25d366", label: "WhatsApp Broadcast" },
+    facebook: { emoji: "📘", color: "#1877f2", label: "Facebook Post" }, tiktok: { emoji: "🎵", color: "#69c9d0", label: "TikTok Hook" },
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>🔄</span>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Auto-Repurpose Engine</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>One piece of content → automatically adapted for all 8 platforms</p>
+          </div>
+        </div>
+        <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: 0, color: "#8b5cf6", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any content — a blog post, YouTube script, Instagram caption, or email — and VCI will natively rewrite it for all 8 platforms.</p>
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PASTE YOUR CONTENT</label>
+        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste your content here:\n• A YouTube script\n• An Instagram caption\n• A blog post intro"} rows={7}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+        <button onClick={repurpose} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "🔄 Repurposing for all platforms..." : "🔄 Repurpose for All 8 Platforms"}
+        </button>
+      </div>
+      {results && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+          {results.original_summary && <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📝 ORIGINAL SUMMARY</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.5 }}>{results.original_summary}</p></div>}
+          {results.best_platform && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🏆 BEST PLATFORM</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.5 }}>{results.best_platform}</p></div>}
+          <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#52525b", fontWeight: 700, letterSpacing: "0.06em" }}>REPURPOSED FOR ALL 8 PLATFORMS</p>
+          {results.repurposed && Object.entries(results.repurposed).map(([plt, cnt]: any) => { const meta = PLATFORM_META[plt]; if (!meta) return null; return (
+            <div key={plt} style={{ background: "#0f0f0f", border: `1px solid ${meta.color}20`, borderLeft: `3px solid ${meta.color}`, borderRadius: "12px", padding: "0.85rem", marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                <span style={{ color: meta.color, fontSize: "0.72rem", fontWeight: 700 }}>{meta.emoji} {meta.label}</span>
+                <button onClick={() => copyText(cnt, plt)} style={{ background: copiedKey === plt ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === plt ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === plt ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === plt ? "✓ Copied!" : "Copy"}</button>
+              </div>
+              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{cnt}</p>
+            </div>); })}
+          {results.tips && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginTop: "0.5rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💡 REPURPOSING TIPS</p>{results.tips.map((tip: string, i: number) => <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}><span style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{i + 1}.</span><span style={{ color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{tip}</span></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CompetitorHookAnalyzer ──────────────────────────────────────────────────
+function CompetitorHookAnalyzer({ usageCount, limit, onUpgrade, onCreditUsed, platform }: any) {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState(platform || "Instagram");
+  const PLATFORMS = [{ id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" }, { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" }];
+  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
+
+  const analyze = async () => {
+    if (!content.trim()) { setError("Please paste the competitor's content first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+    const prompt = `You are an expert viral content analyst. Analyze this competitor content from ${selectedPlatform} and reverse-engineer exactly why it works.
+COMPETITOR CONTENT: """${content}"""
+PLATFORM: ${selectedPlatform}
+Respond ONLY in JSON:
+{"virality_score":0,"why_it_works":{"primary_technique":"the most powerful thing this content does","psychological_triggers":["trigger 1","trigger 2","trigger 3"],"platform_fit":"why this format works on ${selectedPlatform}"},"replicate_formula":"step-by-step formula to recreate this style WITHOUT copying","your_versions":["Version 1 — same technique, your own angle","Version 2 — different emotional trigger, same structure","Version 3 — curiosity-gap variation"],"avoid":"what NOT to copy","verdict":"one honest sentence about whether this technique is worth replicating"}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }) });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed); if (onCreditUsed) onCreditUsed();
+    } catch { setError("Analysis failed. Try again."); }
+    setLoading(false);
+  };
+
+  const scoreColor = (s: number) => s >= 80 ? "#22c55e" : s >= 60 ? "#f59e0b" : s >= 40 ? "#f97316" : "#ef4444";
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>🔍</span>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Competitor Hook Analyzer</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste viral content → find out exactly why it worked → create your own version</p>
+          </div>
+        </div>
+        <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
+          <p style={{ margin: 0, color: "#f87171", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any competitor's viral hook, caption, or reel script. VCI will reverse-engineer the exact techniques and show you how to create your own original version without copying.</p>
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
+          {PLATFORMS.map(p => <button key={p.id} onClick={() => setSelectedPlatform(p.id)} style={{ background: selectedPlatform === p.id ? "rgba(109,40,217,0.12)" : "#080808", border: `1px solid ${selectedPlatform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: selectedPlatform === p.id ? "#8b5cf6" : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}>{p.emoji} {p.id}</button>)}
+        </div>
+        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>COMPETITOR CONTENT</label>
+        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste competitor's viral content here:\n• A viral hook or opening line\n• A complete caption that got thousands of likes\n• A reel script that went viral"} rows={6}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#ef4444"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "🔍 Analyzing viral content..." : "🔍 Reverse Engineer This Content"}
+        </button>
+      </div>
+      {result && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+          <div style={{ background: `${scoreColor(result.virality_score)}10`, border: `2px solid ${scoreColor(result.virality_score)}30`, borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div><p style={{ margin: "0 0 0.2rem", color: "#fff", fontWeight: 800, fontSize: "1rem" }}>Virality Score</p><p style={{ margin: 0, color: "#71717a", fontSize: "0.72rem" }}>{result.verdict}</p></div>
+            <div style={{ textAlign: "center" }}><div style={{ fontWeight: 900, fontSize: "2.5rem", color: scoreColor(result.virality_score), lineHeight: 1 }}>{result.virality_score}</div><div style={{ color: "#555", fontSize: "0.6rem" }}>/100</div></div>
+          </div>
+          {result.why_it_works && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✅ WHY IT WORKS</p>
+            <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.2rem", color: "#22c55e", fontSize: "0.65rem", fontWeight: 700 }}>PRIMARY TECHNIQUE</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", fontWeight: 600 }}>{result.why_it_works.primary_technique}</p></div>
+            {result.why_it_works.psychological_triggers && <div style={{ marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.35rem", color: "#f59e0b", fontSize: "0.65rem", fontWeight: 700 }}>🧠 PSYCHOLOGICAL TRIGGERS</p><div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>{result.why_it_works.psychological_triggers.map((t: string, i: number) => <span key={i} style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600 }}>{t}</span>)}</div></div>}
+            {result.why_it_works.platform_fit && <p style={{ margin: 0, color: "#71717a", fontSize: "0.75rem", lineHeight: 1.5 }}>📱 {result.why_it_works.platform_fit}</p>}
+          </div>}
+          {result.replicate_formula && <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(109,40,217,0.02))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 REPLICATE FORMULA</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{result.replicate_formula}</p></div>}
+          {result.your_versions && result.your_versions.length > 0 && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>✨ YOUR ORIGINAL VERSIONS</p>
+            {result.your_versions.map((ver: string, i: number) => <div key={i} style={{ background: "rgba(6,182,212,0.04)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: "8px", padding: "0.65rem 0.85rem", marginBottom: "0.4rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.6, flex: 1 }}>{ver}</p>
+              <button onClick={() => copyText(ver, `ver${i}`)} style={{ background: copiedKey === `ver${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `ver${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `ver${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0 }}>{copiedKey === `ver${i}` ? "✓" : "Copy"}</button>
+            </div>)}
+          </div>}
+          {result.avoid && <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "12px", padding: "0.85rem" }}><p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>⚠️ AVOID DOING THIS</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{result.avoid}</p></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── BackgroundMusicMixer ────────────────────────────────────────────────────
 const BG_TRACKS = [
   { name: "Lo-fi Chill", mood: "🎧 Relaxed", styles: ["Tutorial","Tips","Review","Day in Life"] },
@@ -3484,6 +3647,8 @@ Respond ONLY in JSON:
     { id: "trends", label: "Trends", Icon: TrendingUp },
     { id: "image", label: "Image AI", Icon: Image },
     { id: "scriptlab", label: "Script Lab", Icon: Film },
+    { id: "repurpose", label: "Repurpose", Icon: Layers },
+    { id: "competitor", label: "Competitor", Icon: MousePointerClick },
   ];
 
   if (authLoading || profileLoading) return (
@@ -3779,12 +3944,26 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-            {tabs.map(t => (
-              <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
-            ))}
+          {/* Tabs — Row 1: main tools, Row 2: Repurpose + Competitor */}
+          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div className="tab-scroll-row" style={{ background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+              {tabs.filter(t => !["repurpose","competitor"].includes(t.id)).map(t => (
+                <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
+                  isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "0.35rem", background: "#0a0a0a", borderRadius: "12px", padding: "0.3rem", border: "1px solid #1a1a1a" }}>
+              {[{ id: "repurpose", label: "🔄 Repurpose Engine", color: "#6d28d9", Icon: Layers }, { id: "competitor", label: "🔍 Competitor Analyzer", color: "#ef4444", Icon: MousePointerClick }].map(t => {
+                const isActive = activeTab === t.id;
+                return (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)}
+                    style={{ flex: 1, padding: "0.55rem 1rem", borderRadius: "9px", border: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", background: isActive ? `${t.color}18` : "transparent", color: isActive ? t.color : "#3f3f46", fontWeight: isActive ? 700 : 500, fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", borderBottom: isActive ? `2px solid ${t.color}` : "2px solid transparent" }}>
+                    <t.Icon size={14} strokeWidth={isActive ? 2.5 : 1.8} />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -3996,6 +4175,16 @@ Respond ONLY in JSON:
           {/* TAB: TRENDS */}
           {activeTab === "trends" && (
             <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
+          )}
+
+          {/* TAB: REPURPOSE ENGINE */}
+          {activeTab === "repurpose" && (
+            <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
+          )}
+
+          {/* TAB: COMPETITOR ANALYZER */}
+          {activeTab === "competitor" && (
+            <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
           )}
 
           {/* TAB: SCRIPT LAB */}
