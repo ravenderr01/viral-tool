@@ -250,19 +250,260 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
-// Style → Music mapping (Mixkit free royalty-free tracks)
-const MUSIC_TRACKS: Record<string, { name: string; url: string; mood: string }[]> = {
-  Tutorial:      [{ name: "Lo-fi Study", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Focused" }, { name: "Soft Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Professional" }],
-  Story:         [{ name: "Emotional Piano", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Emotional" }, { name: "Cinematic Soft", url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3", mood: "Cinematic" }],
-  Comedy:        [{ name: "Fun Quirky", url: "https://assets.mixkit.co/music/preview/mixkit-fun-and-happy-3.mp3", mood: "Playful" }, { name: "Upbeat Silly", url: "https://assets.mixkit.co/music/preview/mixkit-happy-sunshine-798.mp3", mood: "Light" }],
-  Motivation:    [{ name: "Dramatic Build", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" }, { name: "Inspirational", url: "https://assets.mixkit.co/music/preview/mixkit-inspiring-ambition-36.mp3", mood: "Inspiring" }],
-  POV:           [{ name: "Ambient Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Moody" }, { name: "Chill Vibes", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Chill" }],
-  Challenge:     [{ name: "Energetic Beat", url: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3", mood: "Hype" }, { name: "Hype Music", url: "https://assets.mixkit.co/music/preview/mixkit-fast-and-furious-315.mp3", mood: "Intense" }],
-  "Before/After":[{ name: "Transformation", url: "https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3", mood: "Rising" }, { name: "Epic Rise", url: "https://assets.mixkit.co/music/preview/mixkit-epic-orchestral-1001.mp3", mood: "Epic" }],
-  Tips:          [{ name: "Upbeat Pop", url: "https://assets.mixkit.co/music/preview/mixkit-pop-and-sunshine-534.mp3", mood: "Bright" }, { name: "Light Corporate", url: "https://assets.mixkit.co/music/preview/mixkit-corporate-motivation-36.mp3", mood: "Clean" }],
-  Review:        [{ name: "Neutral Ambient", url: "https://assets.mixkit.co/music/preview/mixkit-ambient-piano-685.mp3", mood: "Neutral" }, { name: "Soft Electronic", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", mood: "Modern" }],
-  "Day in Life": [{ name: "Chill Lo-fi", url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3", mood: "Relaxed" }, { name: "Acoustic Warm", url: "https://assets.mixkit.co/music/preview/mixkit-piano-reflections-22.mp3", mood: "Warm" }],
+// ── Background Music Mixer ──────────────────────────────────────────────────
+// Uses Web Audio API to GENERATE background music — no external files, no CORS
+const MUSIC_STYLES: Record<string, { name: string; mood: string; bpm: number; type: "lofi" | "ambient" | "upbeat" | "dramatic" | "corporate" }[]> = {
+  Tutorial:      [{ name: "Lo-fi Study", mood: "Focused", bpm: 75, type: "lofi" }, { name: "Soft Corporate", mood: "Professional", bpm: 90, type: "corporate" }],
+  Story:         [{ name: "Emotional Pad", mood: "Emotional", bpm: 60, type: "ambient" }, { name: "Cinematic Soft", mood: "Cinematic", bpm: 65, type: "dramatic" }],
+  Comedy:        [{ name: "Fun Quirky", mood: "Playful", bpm: 120, type: "upbeat" }, { name: "Upbeat Light", mood: "Light", bpm: 110, type: "upbeat" }],
+  Motivation:    [{ name: "Dramatic Build", mood: "Epic", bpm: 100, type: "dramatic" }, { name: "Inspirational", mood: "Inspiring", bpm: 95, type: "dramatic" }],
+  POV:           [{ name: "Ambient Chill", mood: "Moody", bpm: 70, type: "ambient" }, { name: "Soft Pad", mood: "Chill", bpm: 65, type: "ambient" }],
+  Challenge:     [{ name: "Energy Beat", mood: "Hype", bpm: 130, type: "upbeat" }, { name: "Power Build", mood: "Intense", bpm: 125, type: "dramatic" }],
+  "Before/After":[{ name: "Rising Build", mood: "Rising", bpm: 95, type: "dramatic" }, { name: "Epic Rise", mood: "Epic", bpm: 100, type: "dramatic" }],
+  Tips:          [{ name: "Upbeat Pop", mood: "Bright", bpm: 115, type: "upbeat" }, { name: "Light Corporate", mood: "Clean", bpm: 90, type: "corporate" }],
+  Review:        [{ name: "Neutral Ambient", mood: "Neutral", bpm: 80, type: "ambient" }, { name: "Soft Electronic", mood: "Modern", bpm: 85, type: "lofi" }],
+  "Day in Life": [{ name: "Chill Lo-fi", mood: "Relaxed", bpm: 75, type: "lofi" }, { name: "Warm Acoustic", mood: "Warm", bpm: 70, type: "lofi" }],
 };
+
+// Generate background music using Web Audio API — pure synthesis, no files
+async function generateMusicBuffer(audioCtx: AudioContext | OfflineAudioContext, durationSec: number, style: { bpm: number; type: string }, volume: number): Promise<AudioNode> {
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.value = volume / 100;
+  masterGain.connect(audioCtx.destination);
+
+  const sampleRate = audioCtx.sampleRate;
+  const bufLen = Math.ceil(durationSec * sampleRate);
+  const buffer = audioCtx.createBuffer(2, bufLen, sampleRate);
+
+  const { bpm, type } = style;
+  const beatLen = (60 / bpm) * sampleRate;
+
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+
+    if (type === "lofi" || type === "corporate") {
+      // Soft pad + subtle pulse
+      for (let i = 0; i < bufLen; i++) {
+        const t = i / sampleRate;
+        const beat = (i % beatLen) / beatLen;
+        const pad = Math.sin(2 * Math.PI * 220 * t) * 0.15 +
+                    Math.sin(2 * Math.PI * 330 * t) * 0.1 +
+                    Math.sin(2 * Math.PI * 440 * t) * 0.08;
+        const pulse = beat < 0.1 ? Math.sin(2 * Math.PI * 80 * t) * 0.12 : 0;
+        const env = 0.5 + 0.5 * Math.sin(2 * Math.PI * 0.25 * t); // slow swell
+        data[i] = (pad + pulse) * env * 0.6;
+      }
+    } else if (type === "ambient") {
+      // Pure ambient pads — slow evolving sine waves
+      for (let i = 0; i < bufLen; i++) {
+        const t = i / sampleRate;
+        const swell = 0.5 + 0.5 * Math.sin(2 * Math.PI * 0.1 * t);
+        data[i] = (
+          Math.sin(2 * Math.PI * 174 * t) * 0.2 +
+          Math.sin(2 * Math.PI * 261 * t) * 0.15 +
+          Math.sin(2 * Math.PI * 348 * t) * 0.1 +
+          Math.sin(2 * Math.PI * 522 * t) * 0.05
+        ) * swell * 0.5;
+      }
+    } else if (type === "upbeat") {
+      // Upbeat with hi-hat feel + bass
+      for (let i = 0; i < bufLen; i++) {
+        const t = i / sampleRate;
+        const beat = (i % beatLen) / beatLen;
+        const bass = beat < 0.15 ? Math.sin(2 * Math.PI * 80 * t) * 0.3 : 0;
+        const hihat = beat < 0.05 || Math.abs(beat - 0.5) < 0.05
+          ? (Math.random() * 2 - 1) * 0.08 : 0;
+        const chord = Math.sin(2 * Math.PI * 330 * t) * 0.12 +
+                      Math.sin(2 * Math.PI * 415 * t) * 0.1;
+        data[i] = (bass + hihat + chord) * 0.7;
+      }
+    } else if (type === "dramatic") {
+      // Dramatic build — rising pad with pulse
+      for (let i = 0; i < bufLen; i++) {
+        const t = i / sampleRate;
+        const progress = i / bufLen; // 0→1 over full duration
+        const rise = 0.3 + progress * 0.7; // gets louder over time
+        const beat = (i % beatLen) / beatLen;
+        const pad = Math.sin(2 * Math.PI * 196 * t) * 0.2 +
+                    Math.sin(2 * Math.PI * 294 * t) * 0.15 +
+                    Math.sin(2 * Math.PI * 392 * t) * 0.1;
+        const pulse = beat < 0.12 ? Math.sin(2 * Math.PI * 65 * t) * 0.2 : 0;
+        data[i] = (pad + pulse) * rise * 0.6;
+      }
+    }
+  }
+
+  // Fade in (0.5s) and fade out (1.5s)
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    const fadeIn = Math.min(0.5 * sampleRate, bufLen);
+    const fadeOut = Math.min(1.5 * sampleRate, bufLen);
+    for (let i = 0; i < fadeIn; i++) data[i] *= i / fadeIn;
+    for (let i = 0; i < fadeOut; i++) data[bufLen - 1 - i] *= i / fadeOut;
+  }
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(masterGain);
+  return masterGain;
+}
+
+function BackgroundMusicMixer({ audioUrl, style }: { audioUrl: string; style: string }) {
+  const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
+  const [musicVolume, setMusicVolume] = useState(25);
+  const [previewing, setPreviewing] = useState(false);
+  const [mixLoading, setMixLoading] = useState(false);
+  const [mixedUrl, setMixedUrl] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const previewCtxRef = useRef<AudioContext | null>(null);
+
+  const tracks = MUSIC_STYLES[style] || MUSIC_STYLES["Tutorial"];
+
+  const stopPreview = () => {
+    previewCtxRef.current?.close().catch(() => {});
+    previewCtxRef.current = null;
+    setPreviewing(false);
+  };
+
+  const startPreview = async (idx: number) => {
+    stopPreview();
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    previewCtxRef.current = ctx;
+    setPreviewing(true);
+    const track = tracks[idx];
+    await generateMusicBuffer(ctx, 8, { bpm: track.bpm, type: track.type }, musicVolume);
+    // auto-stop after 8s
+    setTimeout(stopPreview, 8200);
+  };
+
+  const mix = async () => {
+    if (selectedTrack === null) return;
+    setMixLoading(true); setError(""); setMixedUrl(null);
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const tmpCtx = new AudioCtx();
+
+      // Decode voiceover blob
+      const voiceRes = await fetch(audioUrl);
+      const voiceBuf = await voiceRes.arrayBuffer();
+      const voiceDec = await tmpCtx.decodeAudioData(voiceBuf);
+      await tmpCtx.close();
+
+      const dur = voiceDec.duration + 1.5;
+      const sampleRate = voiceDec.sampleRate;
+      const offline = new OfflineAudioContext(2, Math.ceil(sampleRate * dur), sampleRate);
+
+      // Voice — full volume
+      const vSrc = offline.createBufferSource();
+      vSrc.buffer = voiceDec;
+      const vGain = offline.createGain(); vGain.gain.value = 1.0;
+      vSrc.connect(vGain); vGain.connect(offline.destination); vSrc.start(0);
+
+      // Generate music directly into offline context
+      const track = tracks[selectedTrack];
+      await generateMusicBuffer(offline, dur, { bpm: track.bpm, type: track.type }, musicVolume);
+
+      const rendered = await offline.startRendering();
+
+      // Encode WAV
+      const numCh = rendered.numberOfChannels, numSamples = rendered.length;
+      const wav = new ArrayBuffer(44 + numSamples * numCh * 2);
+      const dv = new DataView(wav);
+      const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+      ws(0, "RIFF"); dv.setUint32(4, 36 + numSamples * numCh * 2, true);
+      ws(8, "WAVE"); ws(12, "fmt ");
+      dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
+      dv.setUint32(24, sampleRate, true); dv.setUint32(28, sampleRate * numCh * 2, true);
+      dv.setUint16(32, numCh * 2, true); dv.setUint16(34, 16, true);
+      ws(36, "data"); dv.setUint32(40, numSamples * numCh * 2, true);
+      let off = 44;
+      for (let i = 0; i < numSamples; i++) for (let ch = 0; ch < numCh; ch++) {
+        const s = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
+        dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2;
+      }
+      setMixedUrl(URL.createObjectURL(new Blob([wav], { type: "audio/wav" })));
+    } catch (e: any) {
+      setError("Mix failed. Please try again.");
+    }
+    setMixLoading(false);
+  };
+
+  return (
+    <div style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.02))", border: "1px solid rgba(168,85,247,0.25)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem", animation: "slideUp 0.4s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+        <div>
+          <p style={{ margin: 0, fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🎵 ADD BACKGROUND MUSIC</p>
+          <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.62rem" }}>AI-generated music for <strong style={{ color: "#a855f7" }}>{style}</strong> style — no downloads needed</p>
+        </div>
+        <span style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", color: "#a855f7", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Browser AI</span>
+      </div>
+
+      {/* Track selector */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
+        {tracks.map((track, i) => {
+          const isSel = selectedTrack === i;
+          return (
+            <div key={i} onClick={() => { setSelectedTrack(isSel ? null : i); setMixedUrl(null); stopPreview(); }}
+              style={{ background: isSel ? "rgba(168,85,247,0.1)" : "#080808", border: `1px solid ${isSel ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, color: isSel ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSel ? 700 : 500 }}>{track.name}</p>
+                <p style={{ margin: 0, color: "#52525b", fontSize: "0.65rem" }}>{track.mood} · {track.bpm} BPM</p>
+              </div>
+              <button onClick={e => {
+                e.stopPropagation();
+                if (previewing) { stopPreview(); }
+                else { setSelectedTrack(i); startPreview(i); }
+              }} style={{ background: previewing && selectedTrack === i ? "rgba(168,85,247,0.2)" : "#0f0f0f", border: `1px solid ${previewing && selectedTrack === i ? "#a855f7" : "#2a2a2a"}`, color: previewing && selectedTrack === i ? "#a855f7" : "#555", padding: "0.3rem 0.65rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>
+                {previewing && selectedTrack === i ? "⏹ Stop" : "▶ Preview"}
+              </button>
+              <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSel ? "#a855f7" : "#333"}`, background: isSel ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {isSel && <span style={{ color: "#fff", fontSize: "0.6rem" }}>✓</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Volume */}
+      {selectedTrack !== null && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+            <label style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700 }}>MUSIC VOLUME</label>
+            <span style={{ color: "#a855f7", fontSize: "0.62rem", fontWeight: 700 }}>{musicVolume}%</span>
+          </div>
+          <input type="range" min={5} max={60} value={musicVolume} onChange={e => setMusicVolume(Number(e.target.value))}
+            style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer" }} />
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Subtle (5%)</span>
+            <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Loud (60%)</span>
+          </div>
+        </div>
+      )}
+
+      {/* Mix button */}
+      {selectedTrack !== null && (
+        <button onClick={mix} disabled={mixLoading}
+          style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: mixLoading ? "#111" : "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: mixLoading ? "#444" : "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: mixLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+          {mixLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Mixing audio in browser...</> : "🎛️ Mix Voiceover + Music"}
+        </button>
+      )}
+
+      {error && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0.5rem 0 0", textAlign: "center" }}>{error}</p>}
+
+      {mixedUrl && (
+        <div style={{ marginTop: "0.85rem", animation: "slideUp 0.3s ease" }}>
+          <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem", marginBottom: "0.5rem" }}>
+            <audio controls src={mixedUrl} style={{ width: "100%" }} />
+          </div>
+          <a href={mixedUrl} download={`vci-${style.toLowerCase()}-final-mix.wav`}
+            style={{ display: "block", textAlign: "center", background: "linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.15))", border: "1px solid rgba(168,85,247,0.4)", color: "#a855f7", padding: "0.7rem", borderRadius: "8px", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}>
+            ⬇ Download Final Mix (Voiceover + Music)
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice, userType }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
@@ -419,15 +660,6 @@ Respond ONLY in JSON:
 
   const [voiceStyle, setVoiceStyle] = useState("Default");
   const [voiceSpeed, setVoiceSpeed] = useState("1.0");
-
-  // Background Music
-  const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
-  const [musicVolume, setMusicVolume] = useState(30);
-  const [previewingMusic, setPreviewingMusic] = useState<string | null>(null);
-  const [mixedAudioUrl, setMixedAudioUrl] = useState<string | null>(null);
-  const [mixLoading, setMixLoading] = useState(false);
-  const [mixError, setMixError] = useState("");
-  const musicPreviewRef = useRef<HTMLAudioElement | null>(null);
 
   const convertToVoice = async (text: string) => {
     if (!text || !text.trim()) { setVoiceError("No script text to convert."); return; }
@@ -1161,157 +1393,10 @@ Respond ONLY in JSON:
             )}
           </div>
 
-          {/* Audio */}
-          {/* 🎵 BACKGROUND MUSIC — appears after voiceover is generated */}
-          {audioUrl && (() => {
-            const tracks = MUSIC_TRACKS[style] || MUSIC_TRACKS["Tutorial"];
-            return (
-              <div style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.02))", border: "1px solid rgba(168,85,247,0.25)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem", animation: "slideUp 0.4s ease" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🎵 ADD BACKGROUND MUSIC</p>
-                    <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.62rem" }}>Style-matched for <strong style={{ color: "#a855f7" }}>{style}</strong> — preview, select, then mix</p>
-                  </div>
-                  <span style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", color: "#a855f7", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Free</span>
-                </div>
+          {/* 🎵 BACKGROUND MUSIC MIXER — Web Audio API, no external files */}
+          {audioUrl && <BackgroundMusicMixer audioUrl={audioUrl} style={style} />}
 
-                {/* Track List */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
-                  {tracks.map((track, i) => {
-                    const isSel = selectedMusic === track.url;
-                    const isPrev = previewingMusic === track.url;
-                    return (
-                      <div key={i} onClick={() => { setSelectedMusic(isSel ? null : track.url); setMixedAudioUrl(null); setMixError(""); }}
-                        style={{ background: isSel ? "rgba(168,85,247,0.1)" : "#080808", border: `1px solid ${isSel ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, color: isSel ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSel ? 700 : 500 }}>{track.name}</p>
-                          <p style={{ margin: 0, color: "#52525b", fontSize: "0.65rem" }}>{track.mood}</p>
-                        </div>
-                        <button onClick={e => {
-                          e.stopPropagation();
-                          if (isPrev) {
-                            musicPreviewRef.current?.pause();
-                            if (musicPreviewRef.current) musicPreviewRef.current.currentTime = 0;
-                            setPreviewingMusic(null);
-                          } else {
-                            musicPreviewRef.current?.pause();
-                            const aud = new Audio(track.url);
-                            aud.crossOrigin = "anonymous";
-                            aud.volume = 0.5;
-                            aud.play().catch(() => {});
-                            musicPreviewRef.current = aud;
-                            setPreviewingMusic(track.url);
-                            aud.onended = () => setPreviewingMusic(null);
-                          }
-                        }} style={{ background: isPrev ? "rgba(168,85,247,0.2)" : "#0f0f0f", border: `1px solid ${isPrev ? "#a855f7" : "#2a2a2a"}`, color: isPrev ? "#a855f7" : "#555", padding: "0.3rem 0.65rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>
-                          {isPrev ? "⏹ Stop" : "▶ Preview"}
-                        </button>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSel ? "#a855f7" : "#333"}`, background: isSel ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {isSel && <span style={{ color: "#fff", fontSize: "0.6rem" }}>✓</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Volume Slider */}
-                {selectedMusic && (
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
-                      <label style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700 }}>MUSIC VOLUME</label>
-                      <span style={{ color: "#a855f7", fontSize: "0.62rem", fontWeight: 700 }}>{musicVolume}%</span>
-                    </div>
-                    <input type="range" min={5} max={70} value={musicVolume} onChange={e => setMusicVolume(Number(e.target.value))}
-                      style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Subtle (5%)</span>
-                      <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Loud (70%)</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Mix Button — uses backend proxy to avoid CORS */}
-                {selectedMusic && (
-                  <button disabled={mixLoading} onClick={async () => {
-                    if (!audioUrl || !selectedMusic) return;
-                    setMixLoading(true); setMixedAudioUrl(null); setMixError("");
-                    try {
-                      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-                      const ctx = new AudioCtx();
-
-                      // Fetch voiceover blob (same origin — no CORS issue)
-                      const voiceRes = await fetch(audioUrl);
-                      const voiceBuf = await voiceRes.arrayBuffer();
-                      const voiceDec = await ctx.decodeAudioData(voiceBuf);
-
-                      // Fetch music via backend proxy to avoid CORS
-                      const proxyUrl = `https://viral-tool-1.onrender.com/api/proxy-audio?url=${encodeURIComponent(selectedMusic)}`;
-                      const musicRes = await fetch(proxyUrl);
-                      if (!musicRes.ok) throw new Error("Music fetch failed");
-                      const musicBuf = await musicRes.arrayBuffer();
-                      const musicDec = await ctx.decodeAudioData(musicBuf);
-
-                      const dur = voiceDec.duration + 1.5;
-                      const offline = new OfflineAudioContext(2, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
-
-                      // Voice track — full volume
-                      const vSrc = offline.createBufferSource(); vSrc.buffer = voiceDec;
-                      const vGain = offline.createGain(); vGain.gain.value = 1.0;
-                      vSrc.connect(vGain); vGain.connect(offline.destination); vSrc.start(0);
-
-                      // Music track — loop, user volume, fade out at end
-                      const mSrc = offline.createBufferSource(); mSrc.buffer = musicDec; mSrc.loop = true;
-                      const mGain = offline.createGain(); mGain.gain.value = musicVolume / 100;
-                      mGain.gain.setValueAtTime(musicVolume / 100, Math.max(0, dur - 1.5));
-                      mGain.gain.linearRampToValueAtTime(0, dur);
-                      mSrc.connect(mGain); mGain.connect(offline.destination); mSrc.start(0);
-
-                      const rendered = await offline.startRendering();
-
-                      // Encode to WAV
-                      const numCh = rendered.numberOfChannels, numSamples = rendered.length;
-                      const wavBuf = new ArrayBuffer(44 + numSamples * numCh * 2);
-                      const dv = new DataView(wavBuf);
-                      const ws = (off: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); };
-                      ws(0, "RIFF"); dv.setUint32(4, 36 + numSamples * numCh * 2, true);
-                      ws(8, "WAVE"); ws(12, "fmt ");
-                      dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
-                      dv.setUint32(24, ctx.sampleRate, true); dv.setUint32(28, ctx.sampleRate * numCh * 2, true);
-                      dv.setUint16(32, numCh * 2, true); dv.setUint16(34, 16, true);
-                      ws(36, "data"); dv.setUint32(40, numSamples * numCh * 2, true);
-                      let off = 44;
-                      for (let i = 0; i < numSamples; i++) for (let ch = 0; ch < numCh; ch++) {
-                        const s = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
-                        dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2;
-                      }
-                      setMixedAudioUrl(URL.createObjectURL(new Blob([wavBuf], { type: "audio/wav" })));
-                    } catch (err: any) {
-                      setMixError("Mix failed — backend proxy may need a moment. Please try again.");
-                    }
-                    setMixLoading(false);
-                  }} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: mixLoading ? "#111" : "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: mixLoading ? "#444" : "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: mixLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-                    {mixLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Mixing audio...</> : "🎛️ Mix Voiceover + Music & Download"}
-                  </button>
-                )}
-
-                {mixError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0.5rem 0 0", textAlign: "center" }}>{mixError}</p>}
-
-                {mixedAudioUrl && (
-                  <div style={{ marginTop: "0.85rem", animation: "slideUp 0.3s ease" }}>
-                    <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem", marginBottom: "0.5rem" }}>
-                      <audio controls src={mixedAudioUrl} style={{ width: "100%" }} />
-                    </div>
-                    <a href={mixedAudioUrl} download={`vci-${style.toLowerCase()}-voiceover-with-music.wav`}
-                      style={{ display: "block", textAlign: "center", background: "linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.15))", border: "1px solid rgba(168,85,247,0.4)", color: "#a855f7", padding: "0.7rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", fontWeight: 800, textDecoration: "none" }}>
-                      ⬇ Download Final Mix (Voiceover + Music)
-                    </a>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Audio Suggestion — shown only before voiceover generated */}
+          {/* Audio Suggestion — only before voiceover */}
           {generateResult.audio_suggestion && !audioUrl && (
             <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}>
               <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
@@ -3082,176 +3167,6 @@ function TutorialFeature({ icon: Icon, color, name, tagline, steps, credit }: an
   );
 }
 
-function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langStrict }: any) {
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
-
-  const repurpose = async () => {
-    if (!content.trim()) { setError("Please paste some content first."); return; }
-    if (content.trim().split(" ").length < 5) { setError("Content should be a bit longer."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setResults(null);
-    const prompt = `You are an expert content repurposing strategist. Take this original content and repurpose it professionally for each platform.
-ORIGINAL CONTENT: """${content}"""
-LANGUAGE: ${langStrict}
-Repurpose natively for all 8 platforms:
-1. Instagram Reel Hook (visual-first, aesthetic/relatable)
-2. Twitter/X Thread (punchy, quotable, ≤280 chars per tweet)
-3. LinkedIn Post (professional insight, credible tone)
-4. YouTube Short Hook (skip-proof first 5 seconds)
-5. Pinterest Pin (keyword-rich, benefit-stated upfront)
-6. WhatsApp Broadcast (personal, direct, conversational)
-7. Facebook Post (warm, community-oriented)
-8. TikTok Hook (raw, casual, pattern-interrupt in first 2 words)
-Respond ONLY in JSON:
-{"original_summary":"2-line summary","repurposed":{"instagram":"...","twitter":"Tweet 1: ... | Tweet 2: ...","linkedin":"...","youtube":"...","pinterest":"...","whatsapp":"...","facebook":"...","tiktok":"..."},"best_platform":"which platform and why","tips":["tip 1","tip 2","tip 3"]}`;
-    try {
-      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2500, messages: [{ role: "user", content: prompt }] }) });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
-      setResults(parsed); if (onCreditUsed) onCreditUsed();
-    } catch { setError("Repurpose failed. Try again."); }
-    setLoading(false);
-  };
-
-  const PLATFORM_META: Record<string, { emoji: string; color: string; label: string }> = {
-    instagram: { emoji: "📸", color: "#e1306c", label: "Instagram Reel" }, twitter: { emoji: "🐦", color: "#1da1f2", label: "Twitter/X Thread" },
-    linkedin: { emoji: "💼", color: "#0077b5", label: "LinkedIn Post" }, youtube: { emoji: "▶️", color: "#ef4444", label: "YouTube Short" },
-    pinterest: { emoji: "📌", color: "#e60023", label: "Pinterest Pin" }, whatsapp: { emoji: "💬", color: "#25d366", label: "WhatsApp Broadcast" },
-    facebook: { emoji: "📘", color: "#1877f2", label: "Facebook Post" }, tiktok: { emoji: "🎵", color: "#69c9d0", label: "TikTok Hook" },
-  };
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-          <span style={{ fontSize: "1.3rem" }}>🔄</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Auto-Repurpose Engine</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>One piece of content → automatically adapted for all 8 platforms</p>
-          </div>
-        </div>
-        <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: 0, color: "#8b5cf6", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any content — a blog post, YouTube script, Instagram caption, or email — and VCI will natively rewrite it for all 8 platforms.</p>
-        </div>
-        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PASTE YOUR CONTENT</label>
-        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste your content here:\n• A YouTube script\n• An Instagram caption\n• A blog post intro\n• Any content you've already written"} rows={7}
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
-          onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-        <button onClick={repurpose} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "🔄 Repurposing for all platforms..." : "🔄 Repurpose for All 8 Platforms"}
-        </button>
-      </div>
-      {results && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          {results.original_summary && <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📝 ORIGINAL CONTENT SUMMARY</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.5 }}>{results.original_summary}</p></div>}
-          {results.best_platform && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.25rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🏆 BEST PLATFORM FOR THIS CONTENT</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.5 }}>{results.best_platform}</p></div>}
-          <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#52525b", fontWeight: 700, letterSpacing: "0.06em" }}>REPURPOSED FOR ALL 8 PLATFORMS</p>
-          {results.repurposed && Object.entries(results.repurposed).map(([plt, cnt]: any) => { const meta = PLATFORM_META[plt]; if (!meta) return null; return (
-            <div key={plt} style={{ background: "#0f0f0f", border: `1px solid ${meta.color}20`, borderLeft: `3px solid ${meta.color}`, borderRadius: "12px", padding: "0.85rem", marginBottom: "0.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                <span style={{ color: meta.color, fontSize: "0.72rem", fontWeight: 700 }}>{meta.emoji} {meta.label}</span>
-                <button onClick={() => copyText(cnt, plt)} style={{ background: copiedKey === plt ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === plt ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === plt ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === plt ? "✓ Copied!" : "Copy"}</button>
-              </div>
-              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{cnt}</p>
-            </div>); })}
-          {results.tips && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginTop: "0.5rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💡 REPURPOSING TIPS</p>{results.tips.map((tip: string, i: number) => <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}><span style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{i + 1}.</span><span style={{ color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{tip}</span></div>)}</div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CompetitorHookAnalyzer({ usageCount, limit, onUpgrade, onCreditUsed, platform }: any) {
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState(platform || "Instagram");
-  const PLATFORMS = [{ id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" }, { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" }];
-  const copyText = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 2000); };
-
-  const analyze = async () => {
-    if (!content.trim()) { setError("Please paste the competitor's content first."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setResult(null);
-    const prompt = `You are an expert viral content analyst. Analyze this competitor content from ${selectedPlatform} and reverse-engineer exactly why it works.
-COMPETITOR CONTENT: """${content}"""
-PLATFORM: ${selectedPlatform}
-Respond ONLY in JSON:
-{"virality_score":0,"why_it_works":{"primary_technique":"the most powerful thing this content does","psychological_triggers":["trigger 1","trigger 2","trigger 3"],"platform_fit":"why this format works on ${selectedPlatform}"},"breakdown":[{"element":"exact text/phrase","technique":"technique name","explanation":"why it works psychologically"}],"replicate_formula":"step-by-step formula to recreate this style WITHOUT copying","your_versions":["Version 1 — same technique, your own angle","Version 2 — different emotional trigger, same structure","Version 3 — curiosity-gap variation"],"avoid":"what NOT to copy","verdict":"one honest sentence about whether this technique is worth replicating"}`;
-    try {
-      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }) });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
-      setResult(parsed); if (onCreditUsed) onCreditUsed();
-    } catch { setError("Analysis failed. Try again."); }
-    setLoading(false);
-  };
-
-  const scoreColor = (s: number) => s >= 80 ? "#22c55e" : s >= 60 ? "#f59e0b" : s >= 40 ? "#f97316" : "#ef4444";
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-          <span style={{ fontSize: "1.3rem" }}>🔍</span>
-          <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Competitor Hook Analyzer</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste viral content → find out exactly why it worked → create your own version</p>
-          </div>
-        </div>
-        <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "10px", padding: "0.6rem 0.85rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: 0, color: "#f87171", fontSize: "0.72rem", lineHeight: 1.5 }}>💡 Paste any competitor's viral hook, caption, or reel script. VCI will reverse-engineer the exact techniques, psychological triggers, and show you how to create your own original version without copying.</p>
-        </div>
-        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
-          {PLATFORMS.map(p => <button key={p.id} onClick={() => setSelectedPlatform(p.id)} style={{ background: selectedPlatform === p.id ? "rgba(109,40,217,0.12)" : "#080808", border: `1px solid ${selectedPlatform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: selectedPlatform === p.id ? "#8b5cf6" : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}>{p.emoji} {p.id}</button>)}
-        </div>
-        <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>COMPETITOR CONTENT</label>
-        <textarea value={content} onChange={e => { setContent(e.target.value); setError(""); }} placeholder={"Paste competitor's viral content here:\n• A viral hook or opening line\n• A complete caption that got thousands of likes\n• A reel script that went viral"} rows={6}
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
-          onFocus={e => e.target.style.borderColor = "#ef4444"} onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "🔍 Analyzing viral content..." : "🔍 Reverse Engineer This Content"}
-        </button>
-      </div>
-      {result && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          <div style={{ background: `${scoreColor(result.virality_score)}10`, border: `2px solid ${scoreColor(result.virality_score)}30`, borderRadius: "14px", padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div><p style={{ margin: "0 0 0.2rem", color: "#fff", fontWeight: 800, fontSize: "1rem" }}>Virality Score</p><p style={{ margin: 0, color: "#71717a", fontSize: "0.72rem" }}>{result.verdict}</p></div>
-            <div style={{ textAlign: "center" }}><div style={{ fontWeight: 900, fontSize: "2.5rem", color: scoreColor(result.virality_score), lineHeight: 1 }}>{result.virality_score}</div><div style={{ color: "#555", fontSize: "0.6rem" }}>/100</div></div>
-          </div>
-          {result.why_it_works && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✅ WHY IT WORKS</p>
-            <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.2rem", color: "#22c55e", fontSize: "0.65rem", fontWeight: 700 }}>PRIMARY TECHNIQUE</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", fontWeight: 600 }}>{result.why_it_works.primary_technique}</p></div>
-            {result.why_it_works.psychological_triggers && <div style={{ marginBottom: "0.6rem" }}><p style={{ margin: "0 0 0.35rem", color: "#f59e0b", fontSize: "0.65rem", fontWeight: 700 }}>🧠 PSYCHOLOGICAL TRIGGERS</p><div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>{result.why_it_works.psychological_triggers.map((t: string, i: number) => <span key={i} style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600 }}>{t}</span>)}</div></div>}
-            {result.why_it_works.platform_fit && <p style={{ margin: 0, color: "#71717a", fontSize: "0.75rem", lineHeight: 1.5 }}>📱 {result.why_it_works.platform_fit}</p>}
-          </div>}
-          {result.replicate_formula && <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(109,40,217,0.02))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 REPLICATE FORMULA (without copying)</p><p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{result.replicate_formula}</p></div>}
-          {result.your_versions && result.your_versions.length > 0 && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>✨ YOUR ORIGINAL VERSIONS (inspired, not copied)</p>
-            {result.your_versions.map((ver: string, i: number) => <div key={i} style={{ background: "rgba(6,182,212,0.04)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: "8px", padding: "0.65rem 0.85rem", marginBottom: "0.4rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
-              <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.6, flex: 1 }}>{ver}</p>
-              <button onClick={() => copyText(ver, `ver${i}`)} style={{ background: copiedKey === `ver${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `ver${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `ver${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0 }}>{copiedKey === `ver${i}` ? "✓" : "Copy"}</button>
-            </div>)}
-          </div>}
-          {result.avoid && <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "12px", padding: "0.85rem" }}><p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>⚠️ AVOID DOING THIS</p><p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{result.avoid}</p></div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ViralContentTool() {
   // Persisted across refresh: keyword, platform, niche, results, and active tab
   const [keyword, setKeyword] = useState(() => {
@@ -3632,8 +3547,6 @@ Respond ONLY in JSON:
     { id: "trends", label: "Trends", Icon: TrendingUp },
     { id: "image", label: "Image AI", Icon: Image },
     { id: "scriptlab", label: "Script Lab", Icon: Film },
-    { id: "repurpose", label: "Repurpose", Icon: Layers },
-    { id: "competitor", label: "Competitor", Icon: MousePointerClick },
   ];
 
   if (authLoading || profileLoading) return (
@@ -3929,28 +3842,12 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Tabs — Row 1: 9 main + Row 2: Repurpose + Competitor */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <div className="tab-scroll-row" style={{ background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-              {tabs.filter(t => !["repurpose","competitor"].includes(t.id)).map(t => (
-                <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                  isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: "0.35rem", background: "#0a0a0a", borderRadius: "12px", padding: "0.3rem", border: "1px solid #1a1a1a" }}>
-              {tabs.filter(t => ["repurpose","competitor"].includes(t.id)).map(t => {
-                const colors: Record<string, string> = { repurpose: "#6d28d9", competitor: "#ef4444" };
-                const color = colors[t.id] || "#6d28d9";
-                const isActive = activeTab === t.id;
-                return (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)}
-                    style={{ flex: 1, padding: "0.55rem 1rem", borderRadius: "9px", border: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", background: isActive ? `${color}18` : "transparent", color: isActive ? color : "#3f3f46", fontWeight: isActive ? 700 : 500, fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", borderBottom: isActive ? `2px solid ${color}` : "2px solid transparent" }}>
-                    <t.Icon size={14} strokeWidth={isActive ? 2.5 : 1.8} />
-                    <span>{t.id === "repurpose" ? "🔄 Repurpose Engine" : "🔍 Competitor Analyzer"}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Tabs */}
+          <div className="tab-scroll-row" style={{ maxWidth: "640px", margin: "0 auto", background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+            {tabs.map(t => (
+              <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
+                isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
+            ))}
           </div>
         </div>
 
@@ -4162,16 +4059,6 @@ Respond ONLY in JSON:
           {/* TAB: TRENDS */}
           {activeTab === "trends" && (
             <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
-          )}
-
-          {/* TAB: REPURPOSE ENGINE */}
-          {activeTab === "repurpose" && (
-            <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
-          )}
-
-          {/* TAB: COMPETITOR ANALYZER */}
-          {activeTab === "competitor" && (
-            <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
           )}
 
           {/* TAB: SCRIPT LAB */}
