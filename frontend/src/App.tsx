@@ -638,31 +638,85 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
       await tmpCtx.close();
 
       const sr = voiceDec.sampleRate;
-      const tail = 1.5;
+      const tail = 2.0;
       const totalDur = voiceDec.duration + tail;
       const totalSamples = Math.ceil(sr * totalDur);
 
-      // Generate music at slightly higher volume for a good mix
-      const musicBuf = makeMusicBuffer(sr, totalDur, trackIdx, volume + 5);
+      // Music volume: keep lower so voice is always clear
+      const musicVol = (volume / 100) * 0.75;
+      const musicBuf = makeMusicBuffer(sr, totalDur, trackIdx, Math.round(musicVol * 100));
 
       const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
 
-      for (let ch = 0; ch < 2; ch++) {
-        const out = outBuf.getChannelData(ch);
-        const vCh = Math.min(ch, voiceDec.numberOfChannels - 1);
-        const voice = voiceDec.getChannelData(vCh);
-        const music = musicBuf.getChannelData(ch);
+      // ── Step 1: Build voice envelope (mono RMS per small window) ──────────
+      // This tells us sample-by-sample how loud the voice is
+      const envWindowMs = 8; // 8ms window — fast enough to track syllables
+      const envWindow = Math.ceil((envWindowMs / 1000) * sr);
+      const voiceL = voiceDec.getChannelData(0);
+      const voiceR = voiceDec.numberOfChannels > 1 ? voiceDec.getChannelData(1) : voiceL;
+      const voiceEnv = new Float32Array(totalSamples);
 
-        for (let i = 0; i < totalSamples; i++) {
-          const v = i < voice.length ? voice[i] : 0;
-          const m = i < music.length ? music[i] : 0;
-          // Soft knee limiter — keeps voice clear, music underneath
-          const mixed = v * 0.88 + m;
-          out[i] = Math.tanh(mixed * 0.9); // smooth limiting, no harsh clipping
+      for (let i = 0; i < totalSamples; i++) {
+        let rms = 0;
+        const wStart = Math.max(0, i - Math.floor(envWindow / 2));
+        const wEnd = Math.min(voiceDec.length, i + Math.floor(envWindow / 2));
+        const wLen = wEnd - wStart;
+        if (wLen > 0) {
+          for (let j = wStart; j < wEnd; j++) {
+            const v = j < voiceDec.length ? (Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5 : 0;
+            rms += v * v;
+          }
+          voiceEnv[i] = Math.sqrt(rms / wLen);
         }
       }
 
-      // Encode to WAV 16-bit
+      // ── Step 2: Build ducking gain curve ─────────────────────────────────
+      // When voice is loud → music ducks to ~20%
+      // When voice is quiet/silent → music comes back up to ~85%
+      // Attack: fast (voice starts → music drops quickly)
+      // Release: slow (voice stops → music fades back in gently over ~300ms)
+      const DUCK_FLOOR   = 0.20;  // music level when voice is loudest
+      const DUCK_CEIL    = 0.85;  // music level during silence
+      const VOICE_THRESH = 0.012; // RMS level above which ducking kicks in
+      const ATTACK_TC    = Math.ceil(0.015 * sr);  // 15ms attack (fast drop)
+      const RELEASE_TC   = Math.ceil(0.320 * sr);  // 320ms release (smooth return)
+
+      const duckGain = new Float32Array(totalSamples).fill(DUCK_CEIL);
+      let currentGain = DUCK_CEIL;
+
+      for (let i = 0; i < totalSamples; i++) {
+        const voiceActive = voiceEnv[i] > VOICE_THRESH;
+        const targetGain = voiceActive ? DUCK_FLOOR : DUCK_CEIL;
+
+        if (targetGain < currentGain) {
+          // Attack — fast
+          const tc = ATTACK_TC;
+          currentGain = currentGain + (targetGain - currentGain) * (1 / tc);
+        } else {
+          // Release — slow
+          const tc = RELEASE_TC;
+          currentGain = currentGain + (targetGain - currentGain) * (1 / tc);
+        }
+        duckGain[i] = currentGain;
+      }
+
+      // ── Step 3: Mix voice (full vol) + music (ducked) ────────────────────
+      for (let ch = 0; ch < 2; ch++) {
+        const out = outBuf.getChannelData(ch);
+        const vCh = Math.min(ch, voiceDec.numberOfChannels - 1);
+        const vData = ch === 0 ? voiceL : voiceR;
+        const mData = musicBuf.getChannelData(ch);
+
+        for (let i = 0; i < totalSamples; i++) {
+          const v = i < voiceDec.length ? vData[i] : 0;
+          const m = i < mData.length ? mData[i] * duckGain[i] : 0;
+
+          // Voice at full, music ducked — then gentle tanh master limit
+          out[i] = Math.tanh((v * 0.92 + m) * 0.88);
+        }
+      }
+
+      // ── Step 4: Encode WAV 16-bit ─────────────────────────────────────────
       const numCh = 2, numSamples = totalSamples;
       const wav = new ArrayBuffer(44 + numSamples * numCh * 2);
       const dv = new DataView(wav);
