@@ -422,57 +422,163 @@ const BG_TRACKS = [
   { name: "Corporate Clean", mood: "💼 Pro", styles: ["Tutorial","Review","Tips"] },
 ];
 
+// makeMusicBuffer — generates clearly audible music using harmonic additive synthesis
+// Key fix: amplitude boosted, more harmonics added, no soft swells that make sound inaudible
 function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: number, volPct: number): AudioBuffer {
   const len = Math.ceil(sampleRate * durationSec);
   const buf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: len, sampleRate });
-  const vol = (volPct / 100) * 0.8;
+  const vol = Math.min((volPct / 100) * 1.2, 0.95); // boosted volume, capped to prevent clipping
+
+  // Helper: sawtooth wave (richer than sine, much more audible)
+  const saw = (freq: number, t: number, amp: number) => {
+    let s = 0;
+    for (let h = 1; h <= 6; h++) s += Math.sin(2 * Math.PI * freq * h * t) / h;
+    return s * amp * (2 / Math.PI);
+  };
+
+  // Helper: square wave (very loud, punchy)
+  const sqr = (freq: number, t: number, amp: number) => {
+    let s = 0;
+    for (let h = 1; h <= 7; h += 2) s += Math.sin(2 * Math.PI * freq * h * t) / h;
+    return s * amp * (4 / Math.PI);
+  };
+
+  // Helper: kick drum — loud transient sine sweep
+  const kick = (phase: number, amp: number) =>
+    phase < 0.12 ? Math.sin(2 * Math.PI * (120 - 80 * phase * 8) * phase) * Math.exp(-phase * 25) * amp : 0;
+
+  // Helper: snare — noise burst
+  const snare = (phase: number, amp: number) =>
+    phase < 0.08 ? (Math.random() * 2 - 1) * Math.exp(-phase * 40) * amp : 0;
+
+  // Helper: hi-hat — high freq noise
+  const hihat = (phase: number, amp: number) =>
+    phase < 0.04 ? (Math.random() * 2 - 1) * 0.5 * amp : 0;
+
   for (let ch = 0; ch < 2; ch++) {
     const d = buf.getChannelData(ch);
-    const pan = ch === 0 ? 0.9 : 1.0;
+    const stereoOffset = ch === 0 ? 0 : 0.003 * sampleRate; // tiny stereo spread
+
     for (let i = 0; i < len; i++) {
-      const t = i / sampleRate;
+      const t = (i + stereoOffset) / sampleRate;
       let s = 0;
+
       if (trackIdx === 0) {
-        const chord = Math.sin(2*Math.PI*220*t)*0.4 + Math.sin(2*Math.PI*277*t)*0.3 + Math.sin(2*Math.PI*330*t)*0.25;
-        const bass = Math.sin(2*Math.PI*110*t) * (Math.sin(2*Math.PI*1.5*t) > 0 ? 0.35 : 0.1);
-        s = (chord * 0.5 + bass * 0.5) * (0.6 + 0.4*Math.sin(2*Math.PI*0.2*t));
+        // Lo-fi Chill — warm bass + chord pads, steady beat
+        const bpm = 75, beatLen = 60 / bpm;
+        const beatPhase = (t % beatLen) / beatLen;
+        const bar = (t % (beatLen * 4)) / (beatLen * 4);
+        // Bass line — alternating root notes
+        const bassNote = bar < 0.5 ? 110 : 130.8;
+        const bassAmp = beatPhase < 0.45 ? 0.5 : 0;
+        s += saw(bassNote, t, bassAmp);
+        // Lo-fi chord pad (Cmaj7 feel)
+        s += saw(261.6, t, 0.18) + saw(329.6, t, 0.15) + saw(392, t, 0.12) + saw(493.9, t, 0.08);
+        // Soft kick on beats 1 and 3
+        if (beatPhase < 0.12 || Math.abs(beatPhase - 0.5) < 0.12) s += kick(beatPhase < 0.5 ? beatPhase : beatPhase - 0.5, 0.6);
+        // Hi-hats every 8th note
+        const eighthPhase = (t % (beatLen / 2)) / (beatLen / 2);
+        s += hihat(eighthPhase, 0.25);
+
       } else if (trackIdx === 1) {
-        const beat = (t * 2.0) % 1;
-        const kick = beat < 0.08 ? Math.sin(2*Math.PI*80*t) * Math.exp(-beat*30) * 0.8 : 0;
-        const hihat = (beat < 0.05 || Math.abs(beat-0.5) < 0.04) ? (Math.random()*2-1)*0.15 : 0;
-        const chord = Math.sin(2*Math.PI*330*t)*0.3 + Math.sin(2*Math.PI*415*t)*0.25;
-        s = kick + hihat + (beat < 0.12 ? chord * 0.6 : chord * 0.2);
+        // Upbeat Energy — punchy 4-on-the-floor + bright chords
+        const bpm = 128, beatLen = 60 / bpm;
+        const beatPhase = (t % beatLen) / beatLen;
+        const halfPhase = (t % (beatLen / 2)) / (beatLen / 2);
+        // 4-on-floor kick
+        s += kick(beatPhase, 0.9);
+        // Snare on 2 and 4
+        const bar4 = (t % (beatLen * 4)) / (beatLen * 4);
+        if (Math.abs(bar4 - 0.25) < 0.01 || Math.abs(bar4 - 0.75) < 0.01) s += snare(0.001, 0.7);
+        // Hi-hats
+        s += hihat(halfPhase, 0.3);
+        // Bright synth chords — stab on beat 1
+        const chordAmp = beatPhase < 0.2 ? 0.5 : 0.15;
+        s += sqr(329.6, t, chordAmp * 0.5) + sqr(415.3, t, chordAmp * 0.4) + sqr(523.3, t, chordAmp * 0.3);
+        // Bass
+        s += sqr(82.4, t, beatPhase < 0.4 ? 0.5 : 0.1);
+
       } else if (trackIdx === 2) {
-        const sw1 = 0.5 + 0.5*Math.sin(2*Math.PI*0.08*t);
-        const sw2 = 0.5 + 0.5*Math.sin(2*Math.PI*0.13*t + 1.2);
-        s = (Math.sin(2*Math.PI*174.6*t)*0.35*sw1 + Math.sin(2*Math.PI*220*t)*0.3*sw2 + Math.sin(2*Math.PI*261.6*t)*0.25*sw1) * 0.8;
+        // Ambient Pad — lush, evolving, always audible
+        // Multiple detuned oscillators create thick pad sound
+        const lfo1 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.07 * t);
+        const lfo2 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.11 * t + 1.0);
+        const lfo3 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.05 * t + 2.1);
+        // Root + 5th + octave + major 3rd — all loud
+        s += Math.sin(2 * Math.PI * 130.8 * t) * 0.5 * lfo1;           // C3
+        s += Math.sin(2 * Math.PI * 130.8 * 1.0005 * t) * 0.4 * lfo2;  // detuned C3
+        s += Math.sin(2 * Math.PI * 196.0 * t) * 0.4 * lfo2;            // G3
+        s += Math.sin(2 * Math.PI * 246.9 * t) * 0.35 * lfo3;           // B3
+        s += Math.sin(2 * Math.PI * 261.6 * t) * 0.3 * lfo1;            // C4
+        s += Math.sin(2 * Math.PI * 392.0 * t) * 0.2 * lfo3;            // G4
+        // Sub bass drone
+        s += Math.sin(2 * Math.PI * 65.4 * t) * 0.3;
+
       } else if (trackIdx === 3) {
-        const rise = 0.2 + Math.min(i/len, 1) * 0.8;
-        const beat = (t * 1.5) % 1;
-        const kick = beat < 0.1 ? Math.sin(2*Math.PI*65*t) * Math.exp(-beat*25) * 0.7 : 0;
-        s = (kick * 0.5 + (Math.sin(2*Math.PI*196*t)*0.3 + Math.sin(2*Math.PI*247*t)*0.25) * 0.5) * rise;
+        // Dramatic Rise — builds intensity with each bar
+        const bpm = 90, beatLen = 60 / bpm;
+        const beatPhase = (t % beatLen) / beatLen;
+        const progress = Math.min(t / durationSec, 1);
+        const intensity = 0.3 + progress * 0.7;
+        // Powerful kick + snare
+        s += kick(beatPhase, 0.8 * intensity);
+        const bar4Phase = (t % (beatLen * 4)) / (beatLen * 4);
+        if (Math.abs(bar4Phase - 0.5) < 0.01) s += snare(0.001, 0.7 * intensity);
+        // Rising pad chords — get louder over time
+        s += saw(196.0, t, 0.3 * intensity) + saw(246.9, t, 0.25 * intensity) + saw(293.7, t, 0.2 * intensity);
+        // Epic brass-like stab on beat 1
+        const stabAmp = beatPhase < 0.15 ? 0.4 * intensity : 0.05 * intensity;
+        s += sqr(130.8, t, stabAmp) + sqr(196.0, t, stabAmp * 0.7);
+        // Sub bass
+        s += Math.sin(2 * Math.PI * 65.4 * t) * 0.4 * intensity;
+
       } else {
-        const beat = (t * 2.0) % 1;
-        const pulse = beat < 0.15 ? Math.sin(2*Math.PI*130.8*t) * 0.3 : 0;
-        s = (pulse * 0.4 + (Math.sin(2*Math.PI*261.6*t)*0.25 + Math.sin(2*Math.PI*329.6*t)*0.2)*0.6) * (0.7 + 0.3*Math.sin(2*Math.PI*0.3*t));
+        // Corporate Clean — professional, steady, pleasing
+        const bpm = 100, beatLen = 60 / bpm;
+        const beatPhase = (t % beatLen) / beatLen;
+        // Soft kick every beat
+        s += kick(beatPhase, 0.55);
+        // Soft snare on 2 and 4
+        const bar4Phase = (t % (beatLen * 4)) / (beatLen * 4);
+        if (Math.abs(bar4Phase - 0.25) < 0.008 || Math.abs(bar4Phase - 0.75) < 0.008) s += snare(0.001, 0.4);
+        // Clean piano-like chords
+        s += Math.sin(2 * Math.PI * 261.6 * t) * 0.35 + Math.sin(2 * Math.PI * 329.6 * t) * 0.3 + Math.sin(2 * Math.PI * 392.0 * t) * 0.25;
+        // Walking bass
+        const bassNote = bar4Phase < 0.25 ? 130.8 : bar4Phase < 0.5 ? 146.8 : bar4Phase < 0.75 ? 164.8 : 174.6;
+        s += saw(bassNote, t, beatPhase < 0.45 ? 0.35 : 0.05);
+        // Hi-hat
+        const eighthPhase = (t % (beatLen / 2)) / (beatLen / 2);
+        s += hihat(eighthPhase, 0.2);
       }
-      const fi = Math.min(i / (0.3 * sampleRate), 1);
-      const fo = Math.min((len - i) / (1.0 * sampleRate), 1);
-      d[i] = s * vol * fi * fo * pan;
+
+      // Fade in 0.2s, fade out 0.8s
+      const fi = Math.min(i / (0.2 * sampleRate), 1);
+      const fo = Math.min((len - i) / (0.8 * sampleRate), 1);
+      // Hard clip to prevent distortion
+      d[i] = Math.max(-0.95, Math.min(0.95, s * vol * fi * fo));
     }
   }
   return buf;
 }
 
 function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scriptStyle: string }) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const [volume, setVolume] = useState(30);
+  // Auto-select the best matching track immediately on mount
+  const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
+  const defaultIdx = suggestedIdx >= 0 ? suggestedIdx : 0;
+
+  const [selected, setSelected] = useState<number>(defaultIdx);
+  const [volume, setVolume] = useState(28);
   const [previewing, setPreviewing] = useState(false);
   const [mixing, setMixing] = useState(false);
   const [mixedUrl, setMixedUrl] = useState<string | null>(null);
+  const [mixReady, setMixReady] = useState(false);
   const [error, setError] = useState("");
   const previewCtxRef = useRef<AudioContext | null>(null);
-  const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
+
+  // Auto-mix as soon as component mounts (voiceover just generated)
+  useEffect(() => {
+    autoMix(defaultIdx);
+  }, []);
 
   const stopPreview = () => {
     try { previewCtxRef.current?.close(); } catch {}
@@ -486,118 +592,194 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx() as AudioContext;
       previewCtxRef.current = ctx;
-      setPreviewing(true); setSelected(idx);
-      const buf = makeMusicBuffer(ctx.sampleRate, 8, idx, volume);
+      setPreviewing(true);
+      const buf = makeMusicBuffer(ctx.sampleRate, 8, idx, Math.max(volume, 35));
       const src = ctx.createBufferSource();
-      src.buffer = buf; src.connect(ctx.destination); src.start(0);
+      src.buffer = buf;
+      // Add compressor so preview sounds loud & clear
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18;
+      comp.knee.value = 6;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      src.connect(comp); comp.connect(ctx.destination);
+      src.start(0);
       src.onended = stopPreview;
       setTimeout(stopPreview, 8500);
     } catch { setError("Preview failed."); setPreviewing(false); }
   };
 
-  const mix = async () => {
-    if (selected === null) return;
-    setMixing(true); setError(""); setMixedUrl(null);
+  const doMix = async (trackIdx: number): Promise<string | null> => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const tmpCtx = new AudioCtx() as AudioContext;
       const voiceBlob = await fetch(audioUrl).then(r => r.arrayBuffer());
       const voiceDec = await tmpCtx.decodeAudioData(voiceBlob);
       await tmpCtx.close();
+
       const sr = voiceDec.sampleRate;
-      const totalSamples = Math.ceil(sr * (voiceDec.duration + 1.5));
-      const musicBuf = makeMusicBuffer(sr, voiceDec.duration + 1.5, selected, volume);
+      const tail = 1.5;
+      const totalDur = voiceDec.duration + tail;
+      const totalSamples = Math.ceil(sr * totalDur);
+
+      // Generate music at slightly higher volume for a good mix
+      const musicBuf = makeMusicBuffer(sr, totalDur, trackIdx, volume + 5);
+
       const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
+
       for (let ch = 0; ch < 2; ch++) {
         const out = outBuf.getChannelData(ch);
         const vCh = Math.min(ch, voiceDec.numberOfChannels - 1);
         const voice = voiceDec.getChannelData(vCh);
         const music = musicBuf.getChannelData(ch);
+
         for (let i = 0; i < totalSamples; i++) {
-          out[i] = Math.max(-1, Math.min(1, (i < voice.length ? voice[i] : 0) + (i < music.length ? music[i] : 0)));
+          const v = i < voice.length ? voice[i] : 0;
+          const m = i < music.length ? music[i] : 0;
+          // Soft knee limiter — keeps voice clear, music underneath
+          const mixed = v * 0.88 + m;
+          out[i] = Math.tanh(mixed * 0.9); // smooth limiting, no harsh clipping
         }
       }
-      // WAV encode
+
+      // Encode to WAV 16-bit
       const numCh = 2, numSamples = totalSamples;
       const wav = new ArrayBuffer(44 + numSamples * numCh * 2);
       const dv = new DataView(wav);
-      const ws = (o: number, s: string) => { for (let i=0;i<s.length;i++) dv.setUint8(o+i,s.charCodeAt(i)); };
-      ws(0,"RIFF"); dv.setUint32(4,36+numSamples*numCh*2,true);
-      ws(8,"WAVE"); ws(12,"fmt "); dv.setUint32(16,16,true);
-      dv.setUint16(20,1,true); dv.setUint16(22,numCh,true);
-      dv.setUint32(24,sr,true); dv.setUint32(28,sr*numCh*2,true);
-      dv.setUint16(32,numCh*2,true); dv.setUint16(34,16,true);
-      ws(36,"data"); dv.setUint32(40,numSamples*numCh*2,true);
+      const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+      ws(0, "RIFF"); dv.setUint32(4, 36 + numSamples * numCh * 2, true);
+      ws(8, "WAVE"); ws(12, "fmt "); dv.setUint32(16, 16, true);
+      dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
+      dv.setUint32(24, sr, true); dv.setUint32(28, sr * numCh * 2, true);
+      dv.setUint16(32, numCh * 2, true); dv.setUint16(34, 16, true);
+      ws(36, "data"); dv.setUint32(40, numSamples * numCh * 2, true);
       let off = 44;
-      for (let i=0;i<numSamples;i++) for (let ch=0;ch<numCh;ch++) {
-        const s = Math.max(-1,Math.min(1,outBuf.getChannelData(ch)[i]));
-        dv.setInt16(off, s<0?s*0x8000:s*0x7fff, true); off+=2;
+      for (let i = 0; i < numSamples; i++) {
+        for (let ch = 0; ch < numCh; ch++) {
+          const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
+          dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2;
+        }
       }
-      setMixedUrl(URL.createObjectURL(new Blob([wav],{type:"audio/wav"})));
-    } catch(e) { console.error(e); setError("Mix failed. Please try again."); }
+      return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+    } catch (e) {
+      console.error("Mix error:", e);
+      return null;
+    }
+  };
+
+  const autoMix = async (trackIdx: number) => {
+    setMixing(true); setError(""); setMixedUrl(null); setMixReady(false);
+    const url = await doMix(trackIdx);
+    if (url) { setMixedUrl(url); setMixReady(true); }
+    else setError("Mix failed. Please try again.");
     setMixing(false);
   };
 
+  const handleTrackChange = (idx: number) => {
+    setSelected(idx);
+    stopPreview();
+    setMixedUrl(null);
+    setMixReady(false);
+  };
+
+  const handleRemix = () => autoMix(selected);
+
+  const trackName = BG_TRACKS[selected]?.name || "";
+
   return (
-    <div style={{background:"linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.02))",border:"1px solid rgba(168,85,247,0.25)",borderRadius:"14px",padding:"1rem",marginBottom:"0.75rem",animation:"slideUp 0.4s ease"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"}}>
+    <div style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "16px", padding: "1.1rem", marginBottom: "0.75rem", animation: "slideUp 0.4s ease" }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.85rem" }}>
         <div>
-          <p style={{margin:0,fontSize:"0.68rem",color:"#a855f7",fontWeight:700,letterSpacing:"0.06em"}}>🎵 ADD BACKGROUND MUSIC</p>
-          <p style={{margin:"0.1rem 0 0",color:"#52525b",fontSize:"0.62rem"}}>Generated in browser — preview, select, then mix</p>
+          <p style={{ margin: 0, fontSize: "0.7rem", color: "#a855f7", fontWeight: 800, letterSpacing: "0.06em" }}>🎵 BACKGROUND MUSIC</p>
+          <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.65rem" }}>
+            Auto-matched for <strong style={{ color: "#a855f7" }}>{scriptStyle}</strong> style · Preview any track · Mix & Download
+          </p>
         </div>
-        <span style={{background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.25)",color:"#a855f7",fontSize:"0.6rem",fontWeight:700,padding:"0.1rem 0.45rem",borderRadius:"10px"}}>No CDN</span>
+        {mixReady && (
+          <span style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", fontSize: "0.62rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: "10px" }}>
+            ✓ Ready
+          </span>
+        )}
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:"0.4rem",marginBottom:"0.75rem"}}>
-        {BG_TRACKS.map((track,i)=>{
-          const isSel=selected===i, isSugg=suggestedIdx===i, isPrev=previewing&&selected===i;
+
+      {/* Track List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginBottom: "0.85rem" }}>
+        {BG_TRACKS.map((track, i) => {
+          const isSel = selected === i;
+          const isSugg = suggestedIdx === i;
+          const isPrev = previewing && selected === i;
           return (
-            <div key={i} onClick={()=>{setSelected(i);setMixedUrl(null);setError("");stopPreview();}}
-              style={{background:isSel?"rgba(168,85,247,0.12)":"#080808",border:`1px solid ${isSel?"#a855f7":"#1a1a1a"}`,borderRadius:"10px",padding:"0.6rem 0.85rem",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer",transition:"all 0.2s"}}>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
-                  <p style={{margin:0,color:isSel?"#a855f7":"#e4e4e7",fontSize:"0.82rem",fontWeight:isSel?700:500}}>{track.name}</p>
-                  {isSugg&&<span style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.25)",color:"#22c55e",fontSize:"0.55rem",fontWeight:700,padding:"0.05rem 0.35rem",borderRadius:"8px"}}>Suggested</span>}
+            <div key={i} onClick={() => handleTrackChange(i)}
+              style={{ background: isSel ? "rgba(168,85,247,0.12)" : "#080808", border: `1px solid ${isSel ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.6rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.1rem" }}>
+                  <p style={{ margin: 0, color: isSel ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSel ? 700 : 500 }}>{track.name}</p>
+                  {isSugg && <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.55rem", fontWeight: 700, padding: "0.05rem 0.35rem", borderRadius: "6px" }}>Best match</span>}
                 </div>
-                <p style={{margin:0,color:"#52525b",fontSize:"0.65rem"}}>{track.mood}</p>
+                <p style={{ margin: 0, color: "#52525b", fontSize: "0.63rem" }}>{track.mood}</p>
               </div>
-              <button onClick={e=>{e.stopPropagation();isPrev?stopPreview():preview(i);}}
-                style={{background:isPrev?"rgba(168,85,247,0.2)":"#0f0f0f",border:`1px solid ${isPrev?"#a855f7":"#2a2a2a"}`,color:isPrev?"#a855f7":"#666",padding:"0.28rem 0.65rem",borderRadius:"8px",cursor:"pointer",fontSize:"0.72rem",fontWeight:700,flexShrink:0}}>
-                {isPrev?"⏹ Stop":"▶ Preview"}
+              <button onClick={e => { e.stopPropagation(); isPrev ? stopPreview() : preview(i); }}
+                style={{ background: isPrev ? "rgba(168,85,247,0.2)" : "#111", border: `1px solid ${isPrev ? "#a855f7" : "#222"}`, color: isPrev ? "#a855f7" : "#666", padding: "0.28rem 0.6rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0, transition: "all 0.2s" }}>
+                {isPrev ? "⏹ Stop" : "▶ Preview"}
               </button>
-              <div style={{width:18,height:18,borderRadius:"50%",border:`2px solid ${isSel?"#a855f7":"#333"}`,background:isSel?"#a855f7":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                {isSel&&<span style={{color:"#fff",fontSize:"0.6rem"}}>✓</span>}
+              <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSel ? "#a855f7" : "#2a2a2a"}`, background: isSel ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {isSel && <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 700 }}>✓</span>}
               </div>
             </div>
           );
         })}
       </div>
-      {selected!==null&&(
-        <div style={{marginBottom:"0.75rem"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:"0.3rem"}}>
-            <label style={{color:"#52525b",fontSize:"0.62rem",fontWeight:700}}>MUSIC VOLUME</label>
-            <span style={{color:"#a855f7",fontSize:"0.62rem",fontWeight:700}}>{volume}%</span>
+
+      {/* Volume + Remix row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.85rem" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+            <label style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>MUSIC VOLUME</label>
+            <span style={{ color: "#a855f7", fontSize: "0.6rem", fontWeight: 700 }}>{volume}%</span>
           </div>
-          <input type="range" min={10} max={60} value={volume} onChange={e=>setVolume(Number(e.target.value))} style={{width:"100%",accentColor:"#a855f7",cursor:"pointer"}}/>
-          <div style={{display:"flex",justifyContent:"space-between"}}>
-            <span style={{color:"#3f3f46",fontSize:"0.58rem"}}>Subtle</span>
-            <span style={{color:"#3f3f46",fontSize:"0.58rem"}}>Loud</span>
+          <input type="range" min={10} max={55} value={volume} onChange={e => setVolume(Number(e.target.value))}
+            style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer", height: "3px" }} />
+        </div>
+        <button onClick={handleRemix} disabled={mixing}
+          style={{ background: mixing ? "#111" : "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: mixing ? "#444" : "#a855f7", padding: "0.45rem 0.85rem", borderRadius: "8px", cursor: mixing ? "not-allowed" : "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+          {mixing ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : "🔄"} Remix
+        </button>
+      </div>
+
+      {/* Status / Result */}
+      {mixing && (
+        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem", textAlign: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", color: "#a855f7", fontSize: "0.8rem" }}>
+            <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} />
+            Mixing <strong>{trackName}</strong> with your voiceover...
           </div>
         </div>
       )}
-      <button onClick={mix} disabled={mixing||selected===null}
-        style={{width:"100%",padding:"0.8rem",borderRadius:"10px",background:mixing||selected===null?"#111":"linear-gradient(135deg,#a855f7,#7c3aed)",border:"none",color:mixing||selected===null?"#444":"#fff",fontWeight:700,fontSize:"0.85rem",cursor:mixing||selected===null?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem"}}>
-        {mixing?<><RefreshCw size={14} style={{animation:"spin 1s linear infinite"}}/> Mixing...</>:selected===null?"← Select a track first":"🎛️ Mix Voiceover + Music"}
-      </button>
-      {error&&<p style={{color:"#ef4444",fontSize:"0.72rem",margin:"0.5rem 0 0",textAlign:"center"}}>{error}</p>}
-      {mixedUrl&&(
-        <div style={{marginTop:"0.85rem",animation:"slideUp 0.3s ease"}}>
-          <div style={{background:"#080808",border:"1px solid #1a1a1a",borderRadius:"10px",padding:"0.6rem",marginBottom:"0.5rem"}}>
-            <audio controls src={mixedUrl} style={{width:"100%"}}/>
+
+      {error && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem", textAlign: "center" }}>{error}</p>}
+
+      {mixedUrl && !mixing && (
+        <div style={{ animation: "slideUp 0.3s ease" }}>
+          {/* Player */}
+          <div style={{ background: "#080808", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "12px", padding: "0.75rem", marginBottom: "0.6rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🎧 PREVIEW YOUR MIX</span>
+              <span style={{ fontSize: "0.6rem", color: "#3f3f46" }}>Voiceover + {trackName}</span>
+            </div>
+            <audio controls src={mixedUrl} style={{ width: "100%", height: "36px" }} />
           </div>
-          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-final-mix.wav`}
-            style={{display:"block",textAlign:"center",background:"linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.15))",border:"1px solid rgba(168,85,247,0.4)",color:"#a855f7",padding:"0.7rem",borderRadius:"8px",fontSize:"0.82rem",fontWeight:800,textDecoration:"none"}}>
-            ⬇ Download Final Mix (Voiceover + Music)
+
+          {/* Download button — prominent */}
+          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-voiceover-${trackName.toLowerCase().replace(/\s/g, "-")}.wav`}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", background: "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: "#fff", padding: "0.85rem", borderRadius: "12px", fontSize: "0.88rem", fontWeight: 800, textDecoration: "none", boxShadow: "0 4px 20px rgba(168,85,247,0.35)" }}>
+            ⬇ Download Final Audio (Voiceover + Music)
           </a>
+          <p style={{ margin: "0.5rem 0 0", color: "#3f3f46", fontSize: "0.62rem", textAlign: "center" }}>
+            WAV · 16-bit · Stereo · Ready to use in your video editor
+          </p>
         </div>
       )}
     </div>
@@ -1494,15 +1676,8 @@ Respond ONLY in JSON:
 
           {/* Audio */}
           {/* 🎵 BACKGROUND MUSIC */}
+          {/* 🎵 BACKGROUND MUSIC — auto-mixes on voiceover generation */}
           {audioUrl && <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} />}
-
-          {/* Audio Suggestion — only before voiceover */}
-          {generateResult.audio_suggestion && !audioUrl && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.35rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>🎵 AUDIO SUGGESTION</p>
-              <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{generateResult.audio_suggestion}</p>
-            </div>
-          )}
 
           {/* Pro Tips */}
           {generateResult.pro_tips && (
