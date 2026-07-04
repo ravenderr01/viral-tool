@@ -427,135 +427,154 @@ const BG_TRACKS = [
 function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: number, volPct: number): AudioBuffer {
   const len = Math.ceil(sampleRate * durationSec);
   const buf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: len, sampleRate });
-  const vol = Math.min((volPct / 100) * 1.2, 0.95); // boosted volume, capped to prevent clipping
+  // Volume: higher base so all tracks are clearly audible
+  const vol = Math.min((volPct / 100) * 1.4, 0.92);
 
-  // Helper: sawtooth wave (richer than sine, much more audible)
-  const saw = (freq: number, t: number, amp: number) => {
-    let s = 0;
-    for (let h = 1; h <= 6; h++) s += Math.sin(2 * Math.PI * freq * h * t) / h;
-    return s * amp * (2 / Math.PI);
+  // --- Waveform helpers ---
+  // Sawtooth: rich harmonics, much louder than sine
+  const saw = (f: number, t: number, a: number) => {
+    let s = 0; for (let h = 1; h <= 8; h++) s += Math.sin(2*Math.PI*f*h*t)/h;
+    return s * a * (2/Math.PI);
   };
-
-  // Helper: square wave (very loud, punchy)
-  const sqr = (freq: number, t: number, amp: number) => {
-    let s = 0;
-    for (let h = 1; h <= 7; h += 2) s += Math.sin(2 * Math.PI * freq * h * t) / h;
-    return s * amp * (4 / Math.PI);
+  // Square: very punchy
+  const sqr = (f: number, t: number, a: number) => {
+    let s = 0; for (let h = 1; h <= 9; h += 2) s += Math.sin(2*Math.PI*f*h*t)/h;
+    return s * a * (4/Math.PI);
   };
-
-  // Helper: kick drum — loud transient sine sweep
-  const kick = (phase: number, amp: number) =>
-    phase < 0.12 ? Math.sin(2 * Math.PI * (120 - 80 * phase * 8) * phase) * Math.exp(-phase * 25) * amp : 0;
-
-  // Helper: snare — noise burst
-  const snare = (phase: number, amp: number) =>
-    phase < 0.08 ? (Math.random() * 2 - 1) * Math.exp(-phase * 40) * amp : 0;
-
-  // Helper: hi-hat — high freq noise
-  const hihat = (phase: number, amp: number) =>
-    phase < 0.04 ? (Math.random() * 2 - 1) * 0.5 * amp : 0;
+  // Triangle: softer but audible (good for pads)
+  const tri = (f: number, t: number, a: number) => {
+    let s = 0; for (let h = 1; h <= 7; h += 2) s += (h%4===1?1:-1) * Math.sin(2*Math.PI*f*h*t)/(h*h);
+    return s * a * (8/(Math.PI*Math.PI));
+  };
+  // Kick drum
+  const kick = (ph: number, a: number) =>
+    ph < 0.15 ? Math.sin(2*Math.PI*(100 - 80*ph*6)*ph) * Math.exp(-ph*22) * a : 0;
+  // Snare
+  const snare = (ph: number, a: number) =>
+    ph < 0.09 ? (Math.random()*2-1) * Math.exp(-ph*35) * a : 0;
+  // Hi-hat
+  const hh = (ph: number, a: number) =>
+    ph < 0.045 ? (Math.random()*2-1) * 0.6 * Math.exp(-ph*60) * a : 0;
 
   for (let ch = 0; ch < 2; ch++) {
     const d = buf.getChannelData(ch);
-    const stereoOffset = ch === 0 ? 0 : 0.003 * sampleRate; // tiny stereo spread
+    // Stereo: L slightly different phase from R for width
+    const phOff = ch === 0 ? 0 : Math.PI * 0.03;
 
     for (let i = 0; i < len; i++) {
-      const t = (i + stereoOffset) / sampleRate;
+      const t = i / sampleRate;
       let s = 0;
 
       if (trackIdx === 0) {
-        // Lo-fi Chill — warm bass + chord pads, steady beat
-        const bpm = 75, beatLen = 60 / bpm;
-        const beatPhase = (t % beatLen) / beatLen;
-        const bar = (t % (beatLen * 4)) / (beatLen * 4);
-        // Bass line — alternating root notes
-        const bassNote = bar < 0.5 ? 110 : 130.8;
-        const bassAmp = beatPhase < 0.45 ? 0.5 : 0;
-        s += saw(bassNote, t, bassAmp);
-        // Lo-fi chord pad (Cmaj7 feel)
-        s += saw(261.6, t, 0.18) + saw(329.6, t, 0.15) + saw(392, t, 0.12) + saw(493.9, t, 0.08);
-        // Soft kick on beats 1 and 3
-        if (beatPhase < 0.12 || Math.abs(beatPhase - 0.5) < 0.12) s += kick(beatPhase < 0.5 ? beatPhase : beatPhase - 0.5, 0.6);
-        // Hi-hats every 8th note
-        const eighthPhase = (t % (beatLen / 2)) / (beatLen / 2);
-        s += hihat(eighthPhase, 0.25);
+        // ── Lo-fi Chill (75 BPM) ─────────────────────────────────────
+        // Warm lo-fi hip-hop feel: mellow chords + lazy kick + vinyl hiss
+        const bpm = 75, bl = 60/bpm;
+        const bp = (t % bl) / bl;
+        const bar = (t % (bl*4)) / (bl*4);
+        // Warm pad chord — Cmaj7 using triangle (audible but smooth)
+        s += tri(261.6, t+phOff*0.5, 0.55) + tri(329.6, t+phOff*0.3, 0.45) + tri(392.0, t+phOff*0.2, 0.38) + tri(493.9, t+phOff*0.1, 0.25);
+        // Bass — alternates C2/G2
+        const bn = bar < 0.5 ? 65.4 : 98.0;
+        s += saw(bn, t, bp < 0.5 ? 0.65 : 0.0);
+        // Lazy kick on 1 and 3
+        if (bp < 0.15) s += kick(bp, 0.85);
+        const bp3 = (t % (bl*2) ) / bl; if (bp3 > 1 && bp3 < 1.15) s += kick(bp3-1, 0.7);
+        // Hi-hat 8ths
+        const hhP = (t % (bl/2)) / (bl/2); s += hh(hhP, 0.35);
+        // Subtle vinyl crackle
+        if (Math.random() < 0.002) s += (Math.random()*2-1)*0.08;
 
       } else if (trackIdx === 1) {
-        // Upbeat Energy — punchy 4-on-the-floor + bright chords
-        const bpm = 128, beatLen = 60 / bpm;
-        const beatPhase = (t % beatLen) / beatLen;
-        const halfPhase = (t % (beatLen / 2)) / (beatLen / 2);
-        // 4-on-floor kick
-        s += kick(beatPhase, 0.9);
-        // Snare on 2 and 4
-        const bar4 = (t % (beatLen * 4)) / (beatLen * 4);
-        if (Math.abs(bar4 - 0.25) < 0.01 || Math.abs(bar4 - 0.75) < 0.01) s += snare(0.001, 0.7);
-        // Hi-hats
-        s += hihat(halfPhase, 0.3);
-        // Bright synth chords — stab on beat 1
-        const chordAmp = beatPhase < 0.2 ? 0.5 : 0.15;
-        s += sqr(329.6, t, chordAmp * 0.5) + sqr(415.3, t, chordAmp * 0.4) + sqr(523.3, t, chordAmp * 0.3);
-        // Bass
-        s += sqr(82.4, t, beatPhase < 0.4 ? 0.5 : 0.1);
+        // ── Upbeat Energy (128 BPM) ───────────────────────────────────
+        // Modern pop/EDM: 4-on-floor, bright synth stabs
+        const bpm = 128, bl = 60/bpm;
+        const bp = (t % bl) / bl;
+        const bar4 = (t % (bl*4)) / (bl*4);
+        // 4-on-floor kick — loud
+        s += kick(bp, 1.0);
+        // Snare 2+4
+        if (Math.abs(bar4-0.25)<0.008 || Math.abs(bar4-0.75)<0.008) s += snare(0.001, 0.85);
+        // Open hi-hat 16ths
+        const hh16 = (t % (bl/4)) / (bl/4); s += hh(hh16, 0.28);
+        // Synth chord stab — hits on 1 and 3
+        const stabOn = bp < 0.18 || (bar4 > 0.5 && bp < 0.18);
+        s += sqr(392.0, t+phOff, stabOn ? 0.55 : 0.12) + sqr(493.9, t+phOff, stabOn ? 0.42 : 0.08) + sqr(587.3, t+phOff, stabOn ? 0.32 : 0.06);
+        // Punchy bass
+        s += sqr(82.4, t, bp < 0.35 ? 0.65 : bp < 0.5 ? 0.2 : 0.0);
+        // Riser hi-freq noise for energy
+        s += (Math.random()*2-1) * 0.04;
 
       } else if (trackIdx === 2) {
-        // Ambient Pad — lush, evolving, always audible
-        // Multiple detuned oscillators create thick pad sound
-        const lfo1 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.07 * t);
-        const lfo2 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.11 * t + 1.0);
-        const lfo3 = 0.6 + 0.4 * Math.sin(2 * Math.PI * 0.05 * t + 2.1);
-        // Root + 5th + octave + major 3rd — all loud
-        s += Math.sin(2 * Math.PI * 130.8 * t) * 0.5 * lfo1;           // C3
-        s += Math.sin(2 * Math.PI * 130.8 * 1.0005 * t) * 0.4 * lfo2;  // detuned C3
-        s += Math.sin(2 * Math.PI * 196.0 * t) * 0.4 * lfo2;            // G3
-        s += Math.sin(2 * Math.PI * 246.9 * t) * 0.35 * lfo3;           // B3
-        s += Math.sin(2 * Math.PI * 261.6 * t) * 0.3 * lfo1;            // C4
-        s += Math.sin(2 * Math.PI * 392.0 * t) * 0.2 * lfo3;            // G4
-        // Sub bass drone
-        s += Math.sin(2 * Math.PI * 65.4 * t) * 0.3;
+        // ── Ambient Pad ───────────────────────────────────────────────
+        // FIX: use sawtooth + triangle (not pure sine) so it's actually loud
+        // Slow chord breathing using LFO on amplitude
+        const lfo1 = 0.55 + 0.45 * Math.sin(2*Math.PI*0.08*t + phOff);
+        const lfo2 = 0.55 + 0.45 * Math.sin(2*Math.PI*0.11*t + phOff + 1.2);
+        const lfo3 = 0.55 + 0.45 * Math.sin(2*Math.PI*0.06*t + phOff + 2.4);
+        // Main chord layers — using SAW for guaranteed audibility
+        s += saw(130.8, t+phOff*0.1, 0.50 * lfo1);   // C3 root
+        s += saw(196.0, t+phOff*0.2, 0.42 * lfo2);   // G3 fifth
+        s += saw(246.9, t+phOff*0.15, 0.36 * lfo3);  // B3 major 7th
+        s += saw(261.6, t+phOff*0.1, 0.30 * lfo1);   // C4 octave
+        // Detuned layer for thickness
+        s += saw(130.8 * 1.007, t, 0.28 * lfo2);
+        s += saw(196.0 * 0.994, t, 0.22 * lfo3);
+        // Triangle layer for smoothness on top
+        s += tri(392.0, t+phOff*0.3, 0.25 * lfo1);   // G4
+        s += tri(523.3, t+phOff*0.2, 0.18 * lfo2);   // C5
+        // Sub drone — triangle so it's deep but not muddy
+        s += tri(65.4, t, 0.50);  // C2 sub bass drone — always on
 
       } else if (trackIdx === 3) {
-        // Dramatic Rise — builds intensity with each bar
-        const bpm = 90, beatLen = 60 / bpm;
-        const beatPhase = (t % beatLen) / beatLen;
-        const progress = Math.min(t / durationSec, 1);
-        const intensity = 0.3 + progress * 0.7;
-        // Powerful kick + snare
-        s += kick(beatPhase, 0.8 * intensity);
-        const bar4Phase = (t % (beatLen * 4)) / (beatLen * 4);
-        if (Math.abs(bar4Phase - 0.5) < 0.01) s += snare(0.001, 0.7 * intensity);
-        // Rising pad chords — get louder over time
-        s += saw(196.0, t, 0.3 * intensity) + saw(246.9, t, 0.25 * intensity) + saw(293.7, t, 0.2 * intensity);
-        // Epic brass-like stab on beat 1
-        const stabAmp = beatPhase < 0.15 ? 0.4 * intensity : 0.05 * intensity;
-        s += sqr(130.8, t, stabAmp) + sqr(196.0, t, stabAmp * 0.7);
-        // Sub bass
-        s += Math.sin(2 * Math.PI * 65.4 * t) * 0.4 * intensity;
+        // ── Dramatic Rise (90→120 BPM) ────────────────────────────────
+        // Builds from quiet to full intensity — cinematic
+        const progress = Math.min(t / Math.max(durationSec, 1), 1.0);
+        const bpm = 90 + progress * 30; // tempo builds
+        const bl = 60/bpm;
+        const bp = (t % bl) / bl;
+        const bar4 = (t % (bl*4)) / (bl*4);
+        const intensity = 0.25 + progress * 0.75;
+        // Kick gets louder
+        s += kick(bp, 0.9 * intensity);
+        // Snare appears after halfway
+        if (progress > 0.4 && (Math.abs(bar4-0.25)<0.01 || Math.abs(bar4-0.75)<0.01)) s += snare(0.001, 0.8 * intensity);
+        // Rising sawtooth pad
+        s += saw(196.0, t+phOff, 0.45 * intensity) + saw(246.9, t+phOff*0.5, 0.38 * intensity) + saw(293.7, t, 0.32 * intensity);
+        // Epic brass stab
+        const stabA = bp < 0.2 ? 0.5*intensity : 0.04*intensity;
+        s += sqr(130.8, t+phOff, stabA) + sqr(196.0, t, stabA*0.7);
+        // Sub bass pulse
+        s += saw(65.4, t, bp < 0.4 ? 0.55*intensity : 0.0);
+        // White noise riser after 60%
+        if (progress > 0.6) s += (Math.random()*2-1) * 0.05 * (progress-0.6)/0.4;
 
       } else {
-        // Corporate Clean — professional, steady, pleasing
-        const bpm = 100, beatLen = 60 / bpm;
-        const beatPhase = (t % beatLen) / beatLen;
-        // Soft kick every beat
-        s += kick(beatPhase, 0.55);
-        // Soft snare on 2 and 4
-        const bar4Phase = (t % (beatLen * 4)) / (beatLen * 4);
-        if (Math.abs(bar4Phase - 0.25) < 0.008 || Math.abs(bar4Phase - 0.75) < 0.008) s += snare(0.001, 0.4);
-        // Clean piano-like chords
-        s += Math.sin(2 * Math.PI * 261.6 * t) * 0.35 + Math.sin(2 * Math.PI * 329.6 * t) * 0.3 + Math.sin(2 * Math.PI * 392.0 * t) * 0.25;
-        // Walking bass
-        const bassNote = bar4Phase < 0.25 ? 130.8 : bar4Phase < 0.5 ? 146.8 : bar4Phase < 0.75 ? 164.8 : 174.6;
-        s += saw(bassNote, t, beatPhase < 0.45 ? 0.35 : 0.05);
+        // ── Corporate Clean (100 BPM) ─────────────────────────────────
+        // Professional, bright, motivational
+        const bpm = 100, bl = 60/bpm;
+        const bp = (t % bl) / bl;
+        const bar4 = (t % (bl*4)) / (bl*4);
+        // Kick
+        s += kick(bp, 0.7);
+        // Snare 2+4
+        if (Math.abs(bar4-0.25)<0.009 || Math.abs(bar4-0.75)<0.009) s += snare(0.001, 0.55);
+        // Piano-style chord — triangle for brightness
+        s += tri(261.6, t+phOff*0.2, 0.50) + tri(329.6, t+phOff*0.15, 0.42) + tri(392.0, t, 0.35) + tri(493.9, t, 0.22);
+        // Walking bass pattern C-E-G-B
+        const bassNotes = [130.8, 164.8, 196.0, 246.9];
+        const bassIdx = Math.floor(bar4 * 4);
+        s += saw(bassNotes[bassIdx] || 130.8, t, bp < 0.42 ? 0.50 : 0.0);
         // Hi-hat
-        const eighthPhase = (t % (beatLen / 2)) / (beatLen / 2);
-        s += hihat(eighthPhase, 0.2);
+        const hh8 = (t % (bl/2)) / (bl/2); s += hh(hh8, 0.30);
+        // Ride cymbal feel on quarter notes
+        if (bp < 0.03) s += (Math.random()*2-1) * 0.15;
       }
 
-      // Fade in 0.2s, fade out 0.8s
-      const fi = Math.min(i / (0.2 * sampleRate), 1);
-      const fo = Math.min((len - i) / (0.8 * sampleRate), 1);
-      // Hard clip to prevent distortion
-      d[i] = Math.max(-0.95, Math.min(0.95, s * vol * fi * fo));
+      // Fade in 0.15s, fade out 1.0s
+      const fi = Math.min(i / (0.15 * sampleRate), 1);
+      const fo = Math.min((len - i) / (1.0 * sampleRate), 1);
+      // Soft clip with tanh for clean limiting
+      d[i] = Math.tanh(s * vol * fi * fo * 0.85);
     }
   }
   return buf;
@@ -695,7 +714,7 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
         <div>
           <p style={{ margin: 0, fontSize: "0.7rem", color: "#a855f7", fontWeight: 800, letterSpacing: "0.06em" }}>🎵 BACKGROUND MUSIC</p>
           <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.65rem" }}>
-            Auto-matched for <strong style={{ color: "#a855f7" }}>{scriptStyle}</strong> style · Preview any track · Mix & Download
+            Auto-matched for <strong style={{ color: "#a855f7" }}>{scriptStyle}</strong> · Preview → Select → Download final mix
           </p>
         </div>
         {mixReady && (
@@ -703,6 +722,22 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
             ✓ Ready
           </span>
         )}
+      </div>
+
+      {/* How to use this for reels */}
+      <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.65rem 0.85rem", marginBottom: "0.85rem" }}>
+        <p style={{ margin: "0 0 0.4rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📱 HOW TO USE FOR YOUR REEL</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+          {[
+            "1️⃣  Download the Final Audio below (voiceover + music mixed)",
+            "2️⃣  Download your Thumbnail above",
+            "3️⃣  Open Instagram/YouTube → New Reel → add your video",
+            "4️⃣  Import the downloaded audio as your reel's sound",
+            "5️⃣  Use the thumbnail as your cover photo",
+          ].map((step, i) => (
+            <p key={i} style={{ margin: 0, color: "#a1a1aa", fontSize: "0.68rem", lineHeight: 1.6 }}>{step}</p>
+          ))}
+        </div>
       </div>
 
       {/* Track List */}
