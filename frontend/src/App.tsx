@@ -665,7 +665,7 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
   const previewCtxRef = useRef<AudioContext | null>(null);
   const abortRef      = useRef(false); // cancels in-progress mix when track changes
 
-  useEffect(() => { runMix(defaultIdx); }, []);
+  // Auto-mix removed — user manually clicks "Mix" button
 
   const stopPreview = () => {
     try { previewCtxRef.current?.close(); } catch {}
@@ -794,10 +794,10 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
   };
 
   const handleTrackChange = (idx: number) => {
-    abortRef.current = true; // cancel current mix immediately
+    abortRef.current = true;
     setSelected(idx); stopPreview();
     setMixedUrl(null); setMixReady(false); setError("");
-    setTimeout(() => runMix(idx), 100); // small delay so abort propagates
+    // No auto-mix — user clicks Mix button manually
   };
 
   const handleRemix = () => {
@@ -869,21 +869,35 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
         })}
       </div>
 
-      {/* Volume + Remix row */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.85rem" }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-            <label style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>MUSIC VOLUME</label>
-            <span style={{ color: "#a855f7", fontSize: "0.6rem", fontWeight: 700 }}>{volume}%</span>
-          </div>
-          <input type="range" min={10} max={55} value={volume} onChange={e => setVolume(Number(e.target.value))}
-            style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer", height: "3px" }} />
+      {/* Volume */}
+      <div style={{ marginBottom: "0.85rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+          <label style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>MUSIC VOLUME</label>
+          <span style={{ color: "#a855f7", fontSize: "0.6rem", fontWeight: 700 }}>{volume}%</span>
         </div>
-        <button onClick={handleRemix} disabled={mixing}
-          style={{ background: mixing ? "#111" : "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", color: mixing ? "#444" : "#a855f7", padding: "0.45rem 0.85rem", borderRadius: "8px", cursor: mixing ? "not-allowed" : "pointer", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", gap: "0.35rem" }}>
-          {mixing ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : "🔄"} Remix
-        </button>
+        <input type="range" min={10} max={55} value={volume} onChange={e => setVolume(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer", height: "3px" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.2rem" }}>
+          <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Subtle</span>
+          <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Loud</span>
+        </div>
       </div>
+
+      {/* Main Mix Button — user clicks this to generate */}
+      {!mixedUrl && !mixing && (
+        <button onClick={handleRemix}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", marginBottom: "0.5rem" }}>
+          🎛️ Mix Voiceover + Background Music
+        </button>
+      )}
+
+      {/* Remix button — shown only after mix is done */}
+      {mixedUrl && !mixing && (
+        <button onClick={handleRemix}
+          style={{ width: "100%", padding: "0.6rem", borderRadius: "10px", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
+          🔄 Remix with Different Track / Volume
+        </button>
+      )}
 
       {/* Status / Result */}
       {mixing && (
