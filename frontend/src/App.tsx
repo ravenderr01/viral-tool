@@ -415,12 +415,80 @@ Respond ONLY in JSON:
 
 // ── BackgroundMusicMixer ────────────────────────────────────────────────────
 const BG_TRACKS = [
-  { name: "Lo-fi Chill", mood: "🎧 Relaxed", styles: ["Tutorial","Tips","Review","Day in Life"] },
-  { name: "Upbeat Energy", mood: "⚡ Hype", styles: ["Challenge","Comedy","Before/After"] },
-  { name: "Ambient Pad", mood: "🌊 Calm", styles: ["Story","POV","Day in Life"] },
-  { name: "Dramatic Rise", mood: "🔥 Epic", styles: ["Motivation","Before/After","Challenge"] },
-  { name: "Corporate Clean", mood: "💼 Pro", styles: ["Tutorial","Review","Tips"] },
+  { name: "Lo-fi Chill",     mood: "🎧 Relaxed", genre: "Lo-fi beats",   styles: ["Tutorial","Tips","Review","Day in Life"] },
+  { name: "Upbeat Energy",   mood: "⚡ Hype",     genre: "Pop / EDM",     styles: ["Challenge","Comedy","Before/After"] },
+  { name: "Ambient Pad",     mood: "🌊 Calm",     genre: "Cinematic Pad", styles: ["Story","POV","Day in Life"] },
+  { name: "Dramatic Rise",   mood: "🔥 Epic",     genre: "Cinematic",     styles: ["Motivation","Before/After","Challenge"] },
+  { name: "Corporate Clean", mood: "💼 Pro",      genre: "Corporate",     styles: ["Tutorial","Review","Tips"] },
 ];
+
+// Fetch real music from Pixabay via our backend proxy (handles CORS)
+// Falls back to synthesized if network fails — so it always works
+// Session-level cache — same track not re-fetched on Remix
+const _musicCache = new Map<number, ArrayBuffer>();
+
+async function fetchRealMusicBuffer(
+  audioCtx: AudioContext,
+  trackIdx: number,
+  durationSec: number,
+  volPct: number,
+  onStatus?: (s: string) => void
+): Promise<{ buf: AudioBuffer; source: "real" | "synth" }> {
+
+  // ── Try to get the raw MP3 bytes (with 3 retries) ────────────────────────
+  const getRaw = async (): Promise<ArrayBuffer | null> => {
+    if (_musicCache.has(trackIdx)) return _musicCache.get(trackIdx)!;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        onStatus?.(`Fetching music${attempt > 1 ? ` (retry ${attempt - 1}/2)` : ""}...`);
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 15000);
+        const res = await fetch(`https://viral-tool-1.onrender.com/api/music/${trackIdx}`, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const raw = await res.arrayBuffer();
+        if (raw.byteLength < 8000) throw new Error("Response too small");
+        _musicCache.set(trackIdx, raw);
+        return raw;
+      } catch {
+        if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 1200));
+      }
+    }
+    return null;
+  };
+
+  const raw = await getRaw();
+
+  if (raw) {
+    try {
+      onStatus?.("Decoding music...");
+      const decoded = await audioCtx.decodeAudioData(raw.slice(0)); // slice = detach-safe copy
+      const sr = audioCtx.sampleRate;
+      const targetLen = Math.ceil(sr * durationSec);
+      const srcLen = decoded.length;
+      const numCh = Math.min(decoded.numberOfChannels, 2);
+      const vol = Math.min((volPct / 100) * 0.72, 0.82);
+
+      const out: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: targetLen, sampleRate: sr });
+      for (let ch = 0; ch < 2; ch++) {
+        const src = decoded.getChannelData(Math.min(ch, numCh - 1));
+        const d   = out.getChannelData(ch);
+        for (let i = 0; i < targetLen; i++) {
+          const fi = Math.min(i / (0.6 * sr), 1);
+          const fo = Math.min((targetLen - i) / (2.5 * sr), 1);
+          d[i] = src[i % srcLen] * vol * fi * fo;
+        }
+      }
+      return { buf: out, source: "real" };
+    } catch {
+      _musicCache.delete(trackIdx); // corrupt entry — remove
+    }
+  }
+
+  // ── Synth fallback — zero network dependency, always works ───────────────
+  onStatus?.("Using built-in music (server unavailable)...");
+  return { buf: makeMusicBuffer(audioCtx.sampleRate, durationSec, trackIdx, volPct), source: "synth" };
+}
 
 // makeMusicBuffer — generates clearly audible music using harmonic additive synthesis
 // Key fix: amplitude boosted, more harmonics added, no soft swells that make sound inaudible
@@ -585,19 +653,19 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
   const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
   const defaultIdx = suggestedIdx >= 0 ? suggestedIdx : 0;
 
-  const [selected, setSelected] = useState<number>(defaultIdx);
-  const [volume, setVolume] = useState(28);
+  const [selected,   setSelected]   = useState<number>(defaultIdx);
+  const [volume,     setVolume]     = useState(28);
   const [previewing, setPreviewing] = useState(false);
-  const [mixing, setMixing] = useState(false);
-  const [mixedUrl, setMixedUrl] = useState<string | null>(null);
-  const [mixReady, setMixReady] = useState(false);
-  const [error, setError] = useState("");
+  const [mixing,     setMixing]     = useState(false);
+  const [mixStatus,  setMixStatus]  = useState("");
+  const [mixSource,  setMixSource]  = useState<"real"|"synth"|null>(null);
+  const [mixedUrl,   setMixedUrl]   = useState<string | null>(null);
+  const [mixReady,   setMixReady]   = useState(false);
+  const [error,      setError]      = useState("");
   const previewCtxRef = useRef<AudioContext | null>(null);
+  const abortRef      = useRef(false); // cancels in-progress mix when track changes
 
-  // Auto-mix as soon as component mounts (voiceover just generated)
-  useEffect(() => {
-    autoMix(defaultIdx);
-  }, []);
+  useEffect(() => { runMix(defaultIdx); }, []);
 
   const stopPreview = () => {
     try { previewCtxRef.current?.close(); } catch {}
@@ -605,158 +673,137 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
     setPreviewing(false);
   };
 
+  // ── 10-sec preview ────────────────────────────────────────────────────────
   const preview = async (idx: number) => {
-    stopPreview();
+    stopPreview(); setError("");
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtx() as AudioContext;
+      const ACtx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+      const ctx  = new ACtx() as AudioContext;
       previewCtxRef.current = ctx;
       setPreviewing(true);
-      const buf = makeMusicBuffer(ctx.sampleRate, 8, idx, Math.max(volume, 35));
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      // Add compressor so preview sounds loud & clear
+
+      const { buf } = await fetchRealMusicBuffer(ctx, idx, 10, Math.max(volume, 45));
+      const src  = ctx.createBufferSource();
       const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -18;
-      comp.knee.value = 6;
-      comp.ratio.value = 3;
-      comp.attack.value = 0.003;
-      comp.release.value = 0.25;
+      comp.threshold.value = -12; comp.knee.value = 8;
+      comp.ratio.value = 4; comp.attack.value = 0.002; comp.release.value = 0.2;
+      src.buffer = buf;
       src.connect(comp); comp.connect(ctx.destination);
-      src.start(0);
-      src.onended = stopPreview;
-      setTimeout(stopPreview, 8500);
-    } catch { setError("Preview failed."); setPreviewing(false); }
+      src.start(0); src.onended = stopPreview;
+      setTimeout(stopPreview, 11000);
+    } catch { setError("Preview failed — please try again."); setPreviewing(false); }
   };
 
-  const doMix = async (trackIdx: number): Promise<string | null> => {
+  // ── Full professional mix ─────────────────────────────────────────────────
+  const doMix = async (trackIdx: number): Promise<{ url: string|null; src: "real"|"synth"|null }> => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const tmpCtx = new AudioCtx() as AudioContext;
-      const voiceBlob = await fetch(audioUrl).then(r => r.arrayBuffer());
-      const voiceDec = await tmpCtx.decodeAudioData(voiceBlob);
-      await tmpCtx.close();
+      const ACtx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
 
-      const sr = voiceDec.sampleRate;
-      const tail = 2.0;
-      const totalDur = voiceDec.duration + tail;
+      // 1. Load + decode voiceover
+      setMixStatus("Loading voiceover...");
+      const voiceRaw = await fetch(audioUrl).then(r => r.arrayBuffer()).catch(() => null);
+      if (!voiceRaw) throw new Error("Voiceover could not be loaded. Please generate it again.");
+
+      const vCtx = new ACtx() as AudioContext;
+      let voiceDec: AudioBuffer;
+      try { voiceDec = await vCtx.decodeAudioData(voiceRaw); }
+      catch { await vCtx.close(); throw new Error("Voiceover file is corrupted. Please re-generate it."); }
+      await vCtx.close();
+      if (abortRef.current) return { url: null, src: null };
+
+      const sr          = voiceDec.sampleRate;
+      const totalDur    = voiceDec.duration + 2.5; // 2.5s music tail
       const totalSamples = Math.ceil(sr * totalDur);
 
-      // Music volume: keep lower so voice is always clear
-      const musicVol = (volume / 100) * 0.75;
-      const musicBuf = makeMusicBuffer(sr, totalDur, trackIdx, Math.round(musicVol * 100));
+      // 2. Fetch real music (with retry + cache + synth fallback)
+      const mCtx = new ACtx() as AudioContext;
+      const { buf: musicBuf, source } = await fetchRealMusicBuffer(mCtx, trackIdx, totalDur, volume, setMixStatus);
+      await mCtx.close();
+      if (abortRef.current) return { url: null, src: null };
 
-      const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
-
-      // ── Step 1: Build voice envelope (mono RMS per small window) ──────────
-      // This tells us sample-by-sample how loud the voice is
-      const envWindowMs = 8; // 8ms window — fast enough to track syllables
-      const envWindow = Math.ceil((envWindowMs / 1000) * sr);
+      // 3. RMS voice envelope — 8ms window, tracks every syllable
+      setMixStatus("Applying professional ducking...");
+      const WIN    = Math.max(1, Math.ceil(0.008 * sr));
       const voiceL = voiceDec.getChannelData(0);
       const voiceR = voiceDec.numberOfChannels > 1 ? voiceDec.getChannelData(1) : voiceL;
-      const voiceEnv = new Float32Array(totalSamples);
-
+      const env    = new Float32Array(totalSamples);
       for (let i = 0; i < totalSamples; i++) {
+        const s = Math.max(0, i - (WIN >> 1)), e = Math.min(voiceDec.length, i + (WIN >> 1));
         let rms = 0;
-        const wStart = Math.max(0, i - Math.floor(envWindow / 2));
-        const wEnd = Math.min(voiceDec.length, i + Math.floor(envWindow / 2));
-        const wLen = wEnd - wStart;
-        if (wLen > 0) {
-          for (let j = wStart; j < wEnd; j++) {
-            const v = j < voiceDec.length ? (Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5 : 0;
-            rms += v * v;
-          }
-          voiceEnv[i] = Math.sqrt(rms / wLen);
-        }
+        for (let j = s; j < e; j++) rms += ((Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5) ** 2;
+        env[i] = (e > s) ? Math.sqrt(rms / (e - s)) : 0;
       }
 
-      // ── Step 2: Build ducking gain curve ─────────────────────────────────
-      // When voice is loud → music ducks to ~20%
-      // When voice is quiet/silent → music comes back up to ~85%
-      // Attack: fast (voice starts → music drops quickly)
-      // Release: slow (voice stops → music fades back in gently over ~300ms)
-      const DUCK_FLOOR   = 0.20;  // music level when voice is loudest
-      const DUCK_CEIL    = 0.85;  // music level during silence
-      const VOICE_THRESH = 0.012; // RMS level above which ducking kicks in
-      const ATTACK_TC    = Math.ceil(0.015 * sr);  // 15ms attack (fast drop)
-      const RELEASE_TC   = Math.ceil(0.320 * sr);  // 320ms release (smooth return)
-
-      const duckGain = new Float32Array(totalSamples).fill(DUCK_CEIL);
-      let currentGain = DUCK_CEIL;
-
+      // 4. Duck gain curve — 12ms attack, 340ms release
+      const FLOOR = 0.18, CEIL = 0.82, THR = 0.013;
+      const ATK   = Math.ceil(0.012 * sr), REL = Math.ceil(0.340 * sr);
+      const duck  = new Float32Array(totalSamples);
+      let gain    = CEIL;
       for (let i = 0; i < totalSamples; i++) {
-        const voiceActive = voiceEnv[i] > VOICE_THRESH;
-        const targetGain = voiceActive ? DUCK_FLOOR : DUCK_CEIL;
-
-        if (targetGain < currentGain) {
-          // Attack — fast
-          const tc = ATTACK_TC;
-          currentGain = currentGain + (targetGain - currentGain) * (1 / tc);
-        } else {
-          // Release — slow
-          const tc = RELEASE_TC;
-          currentGain = currentGain + (targetGain - currentGain) * (1 / tc);
-        }
-        duckGain[i] = currentGain;
+        const target = env[i] > THR ? FLOOR : CEIL;
+        gain += (target - gain) / (target < gain ? ATK : REL);
+        duck[i] = gain;
       }
 
-      // ── Step 3: Mix voice (full vol) + music (ducked) ────────────────────
+      // 5. Mix: voice full + music ducked, tanh master limiter
+      const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
       for (let ch = 0; ch < 2; ch++) {
-        const out = outBuf.getChannelData(ch);
-        const vCh = Math.min(ch, voiceDec.numberOfChannels - 1);
+        const out   = outBuf.getChannelData(ch);
         const vData = ch === 0 ? voiceL : voiceR;
-        const mData = musicBuf.getChannelData(ch);
-
+        const mData = musicBuf.getChannelData(Math.min(ch, musicBuf.numberOfChannels - 1));
         for (let i = 0; i < totalSamples; i++) {
           const v = i < voiceDec.length ? vData[i] : 0;
-          const m = i < mData.length ? mData[i] * duckGain[i] : 0;
-
-          // Voice at full, music ducked — then gentle tanh master limit
-          out[i] = Math.tanh((v * 0.92 + m) * 0.88);
+          const m = i < mData.length    ? mData[i] * duck[i] : 0;
+          out[i]  = Math.tanh((v * 0.91 + m) * 0.87);
         }
       }
 
-      // ── Step 4: Encode WAV 16-bit ─────────────────────────────────────────
-      const numCh = 2, numSamples = totalSamples;
-      const wav = new ArrayBuffer(44 + numSamples * numCh * 2);
-      const dv = new DataView(wav);
-      const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
-      ws(0, "RIFF"); dv.setUint32(4, 36 + numSamples * numCh * 2, true);
-      ws(8, "WAVE"); ws(12, "fmt "); dv.setUint32(16, 16, true);
-      dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
-      dv.setUint32(24, sr, true); dv.setUint32(28, sr * numCh * 2, true);
-      dv.setUint16(32, numCh * 2, true); dv.setUint16(34, 16, true);
-      ws(36, "data"); dv.setUint32(40, numSamples * numCh * 2, true);
+      // 6. Encode WAV 16-bit stereo
+      setMixStatus("Encoding WAV...");
+      const nCh = 2, nS = totalSamples;
+      const wav = new ArrayBuffer(44 + nS * nCh * 2);
+      const dv  = new DataView(wav);
+      const ws  = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o+i, s.charCodeAt(i)); };
+      ws(0,"RIFF"); dv.setUint32(4,36+nS*nCh*2,true);
+      ws(8,"WAVE"); ws(12,"fmt "); dv.setUint32(16,16,true);
+      dv.setUint16(20,1,true); dv.setUint16(22,nCh,true);
+      dv.setUint32(24,sr,true); dv.setUint32(28,sr*nCh*2,true);
+      dv.setUint16(32,nCh*2,true); dv.setUint16(34,16,true);
+      ws(36,"data"); dv.setUint32(40,nS*nCh*2,true);
       let off = 44;
-      for (let i = 0; i < numSamples; i++) {
-        for (let ch = 0; ch < numCh; ch++) {
-          const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
-          dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true); off += 2;
-        }
+      for (let i = 0; i < nS; i++) for (let ch = 0; ch < nCh; ch++) {
+        const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
+        dv.setInt16(off, s < 0 ? s*0x8000 : s*0x7fff, true); off += 2;
       }
-      return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
-    } catch (e) {
-      console.error("Mix error:", e);
-      return null;
+      return { url: URL.createObjectURL(new Blob([wav], { type: "audio/wav" })), src: source };
+
+    } catch (err: any) {
+      setError(err?.message || "Mix failed. Please try again.");
+      return { url: null, src: null };
     }
   };
 
-  const autoMix = async (trackIdx: number) => {
-    setMixing(true); setError(""); setMixedUrl(null); setMixReady(false);
-    const url = await doMix(trackIdx);
-    if (url) { setMixedUrl(url); setMixReady(true); }
-    else setError("Mix failed. Please try again.");
-    setMixing(false);
+  // ── Orchestrate a full mix cycle ──────────────────────────────────────────
+  const runMix = async (trackIdx: number) => {
+    stopPreview();
+    abortRef.current = false;
+    setMixing(true); setError(""); setMixedUrl(null); setMixReady(false); setMixSource(null);
+    const { url, src } = await doMix(trackIdx);
+    if (!abortRef.current && url) { setMixedUrl(url); setMixReady(true); setMixSource(src); }
+    setMixing(false); setMixStatus("");
   };
 
   const handleTrackChange = (idx: number) => {
-    setSelected(idx);
-    stopPreview();
-    setMixedUrl(null);
-    setMixReady(false);
+    abortRef.current = true; // cancel current mix immediately
+    setSelected(idx); stopPreview();
+    setMixedUrl(null); setMixReady(false); setError("");
+    setTimeout(() => runMix(idx), 100); // small delay so abort propagates
   };
 
-  const handleRemix = () => autoMix(selected);
+  const handleRemix = () => {
+    abortRef.current = true;
+    setTimeout(() => runMix(selected), 100);
+  };
 
   const trackName = BG_TRACKS[selected]?.name || "";
 
@@ -840,11 +887,17 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
 
       {/* Status / Result */}
       {mixing && (
-        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem", textAlign: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", color: "#a855f7", fontSize: "0.8rem" }}>
-            <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} />
-            Mixing <strong>{trackName}</strong> with your voiceover...
+        <div style={{ background: "#080808", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "10px", padding: "0.85rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#a855f7", fontSize: "0.78rem", marginBottom: "0.5rem" }}>
+            <RefreshCw size={13} style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} />
+            <span style={{ fontWeight: 600 }}>{mixStatus || `Mixing ${trackName}...`}</span>
           </div>
+          <div style={{ background: "#1a1a1a", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
+            <div style={{ height: "100%", background: "linear-gradient(90deg,#7c3aed,#a855f7,#7c3aed)", backgroundSize: "200% 100%", borderRadius: "4px", animation: "progressBar 15s linear forwards" }} />
+          </div>
+          <p style={{ margin: "0.4rem 0 0", color: "#3f3f46", fontSize: "0.62rem" }}>
+            Fetching Pixabay track · Retries up to 3× · Synth fallback if needed
+          </p>
         </div>
       )}
 
@@ -857,6 +910,8 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🎧 PREVIEW YOUR MIX</span>
               <span style={{ fontSize: "0.6rem", color: "#3f3f46" }}>Voiceover + {trackName}</span>
+              {mixSource === "real" && <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.58rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "6px" }}>🎵 Pixabay Track</span>}
+              {mixSource === "synth" && <span style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b", fontSize: "0.58rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "6px" }}>🎹 Built-in Music</span>}
             </div>
             <audio controls src={mixedUrl} style={{ width: "100%", height: "36px" }} />
           </div>
@@ -1060,267 +1115,179 @@ Respond ONLY in JSON:
 
   const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
     const canvas = document.createElement("canvas");
-    // Platform-specific aspect ratio
-    const isVertical = ["Instagram", "TikTok"].includes(plt);
-    canvas.width = isVertical ? 1080 : 1280;
+    const isVertical = ["Instagram","TikTok"].includes(plt);
+    canvas.width  = isVertical ? 1080 : 1280;
     canvas.height = isVertical ? 1920 : 720;
     const W = canvas.width, H = canvas.height;
     const ctx = canvas.getContext("2d")!;
 
-    const wrap = (text: string, x: number, y: number, maxW: number, lh: number, fs: number) => {
-      ctx.font = "bold " + fs + "px Arial";
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Smart text wrap — returns final Y position
+    const wrapText = (text: string, x: number, y: number, maxW: number, lineH: number, fontSize: number, weight = "900") => {
+      ctx.font = `${weight} ${fontSize}px 'Arial Black', Arial`;
       const words = text.split(" "); let line = ""; let cy = y;
       for (const w of words) {
-        const t = line + w + " ";
-        if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line.trim(), x, cy); line = w + " "; cy += lh; }
-        else line = t;
+        const test = line + w + " ";
+        if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line.trim(), x, cy); line = w + " "; cy += lineH; }
+        else line = test;
       }
-      ctx.fillText(line.trim(), x, cy); return cy;
+      if (line.trim()) ctx.fillText(line.trim(), x, cy);
+      return cy;
     };
 
+    // Draw a filled rounded rect (polyfill-safe)
+    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.arcTo(x+w,y, x+w,y+r, r);
+      ctx.lineTo(x + w, y + h - r); ctx.arcTo(x+w,y+h, x+w-r,y+h, r);
+      ctx.lineTo(x + r, y + h); ctx.arcTo(x,y+h, x,y+h-r, r);
+      ctx.lineTo(x, y + r); ctx.arcTo(x,y, x+r,y, r);
+      ctx.closePath(); ctx.fill();
+    };
+
+    // Noise texture for depth
+    const addNoise = (alpha = 0.025) => {
+      for (let i = 0; i < W * H * 0.003; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fillRect(Math.random()*W, Math.random()*H, 1, 1);
+      }
+    };
+
+    // Draw bold stroke text (outline effect for readability)
+    const strokeText = (text: string, x: number, y: number, strokeColor: string, strokeW: number) => {
+      ctx.save();
+      ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeW; ctx.lineJoin = "round";
+      ctx.strokeText(text, x, y); ctx.restore();
+    };
+
+    // Pill badge
+    const badge = (text: string, x: number, y: number, bg: string, fg: string, r = 22) => {
+      ctx.font = `800 ${isVertical ? 26 : 18}px Arial`;
+      const tw = ctx.measureText(text).width;
+      const ph = isVertical ? 56 : 38, pw = tw + ph;
+      ctx.fillStyle = bg; roundRect(x, y, pw, ph, r);
+      ctx.fillStyle = fg; ctx.textAlign = "left";
+      ctx.fillText(text, x + ph/2, y + ph * 0.68);
+      return pw;
+    };
+
+    // Platform configs
+    const CONFIGS: Record<string, { bg: [string,string], accent: string, badge: string, badgeFg: string, label: string }> = {
+      "Instagram":  { bg:["#1a0030","#c2185b"], accent:"#fcb045", badge:"linear", badgeFg:"#fff", label:"📸 Instagram Reel" },
+      "YouTube":    { bg:["#0a0000","#1a0000"], accent:"#ff0000", badge:"#ff0000", badgeFg:"#fff", label:"▶ YouTube" },
+      "TikTok":     { bg:["#000000","#0a0a0a"], accent:"#69c9d0", badge:"#000",    badgeFg:"#69c9d0", label:"♪ TikTok" },
+      "LinkedIn":   { bg:["#012a4a","#001828"], accent:"#0077b5", badge:"#0077b5", badgeFg:"#fff", label:"in LinkedIn" },
+      "Twitter / X":{ bg:["#000000","#050505"], accent:"#1da1f2", badge:"#1da1f2", badgeFg:"#000", label:"𝕏 Twitter" },
+      "Facebook":   { bg:["#001848","#0d2261"], accent:"#1877f2", badge:"#1877f2", badgeFg:"#fff", label:"f Facebook" },
+    };
+    const cfg = CONFIGS[plt] || { bg:["#050010","#1a0a3a"], accent:"#7c3aed", badge:"#6d28d9", badgeFg:"#fff", label:plt };
+
+    // ── BACKGROUND ───────────────────────────────────────────────────────────
+    // Base gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, W * 0.4, H);
+    bgGrad.addColorStop(0, cfg.bg[0]); bgGrad.addColorStop(1, cfg.bg[1]);
+    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+    // Diagonal light streak (top-left to center)
+    const streak = ctx.createLinearGradient(0, 0, W * 0.65, H * 0.55);
+    streak.addColorStop(0, "rgba(255,255,255,0.07)");
+    streak.addColorStop(0.4, "rgba(255,255,255,0.02)");
+    streak.addColorStop(1, "transparent");
+    ctx.fillStyle = streak; ctx.fillRect(0, 0, W, H);
+
+    // Accent color radial glow (bottom-right)
+    const accentR = Math.max(W, H) * 0.8;
+    const glow = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, accentR);
+    glow.addColorStop(0, cfg.accent + "28"); glow.addColorStop(1, "transparent");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+    // Second glow top-left for depth
+    const glow2 = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(W,H) * 0.6);
+    glow2.addColorStop(0, cfg.accent + "15"); glow2.addColorStop(1, "transparent");
+    ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+
+    // Noise texture
+    addNoise(0.018);
+
+    // Geometric accent lines (diagonal)
+    ctx.save(); ctx.globalAlpha = 0.06; ctx.strokeStyle = "#fff"; ctx.lineWidth = isVertical ? 2 : 1.5;
+    for (let i = -H; i < W + H; i += (isVertical ? 120 : 90)) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H * 0.8, H); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Accent accent bar (left edge)
+    ctx.fillStyle = cfg.accent;
+    ctx.fillRect(0, 0, isVertical ? 8 : 6, H);
+
+    // ── PLATFORM BADGE (top) ─────────────────────────────────────────────────
+    const pad = isVertical ? 70 : 48;
+    const badgeY = isVertical ? 80 : 44;
+    const badgeH = isVertical ? 60 : 42;
+    const badgeFS = isVertical ? 26 : 19;
+
     if (plt === "Instagram") {
-      // Instagram Reel — vertical, gradient purple-pink
-      const bg = ctx.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, "#1a0030"); bg.addColorStop(0.5, "#6d1060"); bg.addColorStop(1, "#c2185b");
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      // Diagonal stripe overlay
-      ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 2;
-      for (let i = -H; i < W + H; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke(); }
-      // Glow center
-      const g = ctx.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, 600);
-      g.addColorStop(0, "rgba(255,100,180,0.3)"); g.addColorStop(1, "transparent");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      // Instagram gradient pill badge
-      const badgeGrad = ctx.createLinearGradient(60, 0, 400, 0);
-      badgeGrad.addColorStop(0, "#833ab4"); badgeGrad.addColorStop(0.5, "#fd1d1d"); badgeGrad.addColorStop(1, "#fcb045");
-      ctx.fillStyle = badgeGrad;
-      ctx.beginPath(); (ctx as any).roundRect(60, 80, 360, 54, 27); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left";
-      ctx.fillText("📸 Instagram Reel  ·  " + sty, 85, 114);
-      // Duration
-      ctx.fillStyle = "rgba(255,255,255,0.12)";
-      ctx.beginPath(); (ctx as any).roundRect(60, 152, 130, 40, 20); ctx.fill();
-      ctx.fillStyle = "#fcb045"; ctx.font = "bold 20px Arial"; ctx.fillText(dur, 80, 178);
-      // Title
-      ctx.shadowColor = "rgba(0,0,0,0.95)"; ctx.shadowBlur = 30;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-      const te = wrap(title.toUpperCase(), 60, 520, W - 120, 90, 76);
-      // Hook
-      ctx.shadowBlur = 12; ctx.fillStyle = "rgba(255,220,255,0.75)";
-      ctx.font = "italic 32px Arial"; wrap('"' + hook + '"', 60, te + 60, W - 120, 48, 32);
-      // Bottom gradient + CTA
-      const bot = ctx.createLinearGradient(0, H - 220, 0, H);
-      bot.addColorStop(0, "transparent"); bot.addColorStop(1, "rgba(0,0,0,0.8)");
-      ctx.fillStyle = bot; ctx.fillRect(0, H - 220, W, 220);
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "#fff"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
-      ctx.fillText("Follow for more 🔥", W/2, H - 100);
-      ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com", W/2, H - 60);
-
-    } else if (plt === "YouTube") {
-      // YouTube — 16:9, dark red cinematic
-      ctx.fillStyle = "#0a0000"; ctx.fillRect(0, 0, W, H);
-      // Cinematic bars
-      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, 40); ctx.fillRect(0, H - 40, W, 40);
-      // Red side accent
-      const redL = ctx.createLinearGradient(0, 0, 300, 0);
-      redL.addColorStop(0, "rgba(255,0,0,0.35)"); redL.addColorStop(1, "transparent");
-      ctx.fillStyle = redL; ctx.fillRect(0, 40, 300, H - 80);
-      // Play button bg glow
-      const playGlow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350);
-      playGlow.addColorStop(0, "rgba(255,0,0,0.2)"); playGlow.addColorStop(1, "transparent");
-      ctx.fillStyle = playGlow; ctx.fillRect(0, 0, W, H);
-      // Play button
-      ctx.fillStyle = "rgba(255,0,0,0.9)";
-      ctx.beginPath(); (ctx as any).roundRect(W/2 - 50, H/2 - 35, 100, 70, 14); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 36px Arial"; ctx.textAlign = "center"; ctx.fillText("▶", W/2 + 3, H/2 + 13);
-      // YouTube badge
-      ctx.fillStyle = "#ff0000";
-      ctx.beginPath(); (ctx as any).roundRect(50, 50, 200, 46, 8); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("▶  YouTube", 68, 81);
-      // Style + Duration
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 108, 220, 36, 6); ctx.fill();
-      ctx.fillStyle = "#aaa"; ctx.font = "16px Arial"; ctx.fillText(sty + "  ·  " + dur, 65, 131);
-      // Title — bottom third
-      ctx.shadowColor = "rgba(0,0,0,1)"; ctx.shadowBlur = 20;
-      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
-      const te2 = wrap(title.toUpperCase(), 50, H - 230, W - 100, 70, 58);
-      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(255,180,180,0.7)";
-      ctx.font = "italic 24px Arial"; wrap('"' + hook + '"', 50, te2 + 30, W - 100, 36, 24);
-      // Bottom bar
-      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, H - 42, W, 42);
-      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 30, H - 16);
-
-    } else if (plt === "TikTok") {
-      // TikTok — vertical 9:16, black with cyan+red duotone
-      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-      // Scanline effect
-      for (let y2 = 0; y2 < H; y2 += 4) {
-        ctx.fillStyle = y2 % 8 === 0 ? "rgba(105,201,208,0.03)" : "rgba(238,29,82,0.02)";
-        ctx.fillRect(0, y2, W, 2);
-      }
-      // Cyan left glow, red right glow
-      const cyanG = ctx.createRadialGradient(0, H/2, 0, 0, H/2, 500);
-      cyanG.addColorStop(0, "rgba(105,201,208,0.25)"); cyanG.addColorStop(1, "transparent");
-      ctx.fillStyle = cyanG; ctx.fillRect(0, 0, W, H);
-      const redG2 = ctx.createRadialGradient(W, H/2, 0, W, H/2, 500);
-      redG2.addColorStop(0, "rgba(238,29,82,0.25)"); redG2.addColorStop(1, "transparent");
-      ctx.fillStyle = redG2; ctx.fillRect(0, 0, W, H);
-      // TikTok badge
-      ctx.fillStyle = "#000";
-      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.fill();
-      ctx.strokeStyle = "#69c9d0"; ctx.lineWidth = 2;
-      ctx.beginPath(); (ctx as any).roundRect(60, 80, 280, 54, 10); ctx.stroke();
-      ctx.fillStyle = "#69c9d0"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left"; ctx.fillText("♪ TikTok  ·  " + sty, 80, 115);
-      ctx.fillStyle = "rgba(238,29,82,0.15)";
-      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.fill();
-      ctx.strokeStyle = "#ee1d52"; ctx.lineWidth = 1.5;
-      ctx.beginPath(); (ctx as any).roundRect(60, 152, 120, 38, 19); ctx.stroke();
-      ctx.fillStyle = "#ee1d52"; ctx.font = "bold 19px Arial"; ctx.fillText(dur, 80, 177);
-      // Title
-      ctx.shadowColor = "#69c9d0"; ctx.shadowBlur = 20;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-      const te3 = wrap(title.toUpperCase(), 60, 500, W - 120, 90, 72);
-      ctx.shadowColor = "#ee1d52"; ctx.shadowBlur = 12;
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.font = "italic 30px Arial"; wrap('"' + hook + '"', 60, te3 + 55, W - 120, 46, 30);
-      // Bottom TikTok UI simulation
-      ctx.shadowBlur = 0;
-      const botG2 = ctx.createLinearGradient(0, H - 300, 0, H);
-      botG2.addColorStop(0, "transparent"); botG2.addColorStop(1, "rgba(0,0,0,0.9)");
-      ctx.fillStyle = botG2; ctx.fillRect(0, H - 300, W, 300);
-      ctx.fillStyle = "#fff"; ctx.font = "bold 26px Arial"; ctx.textAlign = "left"; ctx.fillText("@creator", 60, H - 120);
-      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "22px Arial"; ctx.fillText("getvci.com · #viral", 60, H - 82);
-      // Right side icons
-      const icons = ["❤️", "💬", "↪️", "🎵"];
-      icons.forEach((ic, ii) => {
-        ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.fillText(ic, W - 65, H - 420 + ii * 90);
-      });
-
-    } else if (plt === "LinkedIn") {
-      // LinkedIn — professional blue, clean
-      ctx.fillStyle = "#012a4a"; ctx.fillRect(0, 0, W, H);
-      const liGrad = ctx.createLinearGradient(0, 0, W, H);
-      liGrad.addColorStop(0, "#013a5c"); liGrad.addColorStop(1, "#001d3d");
-      ctx.fillStyle = liGrad; ctx.fillRect(0, 0, W, H);
-      // Blue accent bar left
-      ctx.fillStyle = "#0077b5"; ctx.fillRect(0, 0, 8, H);
-      // Grid dots
-      for (let gx = 60; gx < W; gx += 80) {
-        for (let gy = 60; gy < H; gy += 80) {
-          ctx.fillStyle = "rgba(0,119,181,0.12)"; ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI*2); ctx.fill();
-        }
-      }
-      // LinkedIn badge
-      ctx.fillStyle = "#0077b5";
-      ctx.beginPath(); (ctx as any).roundRect(50, 48, 230, 50, 6); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("in  LinkedIn  ·  " + sty, 70, 80);
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 112, 140, 36, 6); ctx.fill();
-      ctx.fillStyle = "#00a0dc"; ctx.font = "16px Arial"; ctx.fillText(dur, 68, 135);
-      // Horizontal divider
-      ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(50, 190); ctx.lineTo(W - 50, 190); ctx.stroke();
-      // Title
-      ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 16;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-      const te4 = wrap(title, 50, 250, W - 100, 72, 62);
-      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(180,220,255,0.8)";
-      ctx.font = "26px Arial"; wrap('"' + hook + '"', 50, te4 + 40, W - 100, 40, 26);
-      // Bottom
-      ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(0,119,181,0.4)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(50, H - 60); ctx.lineTo(W - 50, H - 60); ctx.stroke();
-      ctx.fillStyle = "#0077b5"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("Viral Content Intelligence", 50, H - 28);
-      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 28);
-
-    } else if (plt === "Twitter / X") {
-      // Twitter/X — pure black, bold typography
-      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-      // Subtle noise texture
-      for (let i = 0; i < 3000; i++) {
-        const nx = Math.random() * W, ny = Math.random() * H;
-        ctx.fillStyle = "rgba(255,255,255,0.015)"; ctx.fillRect(nx, ny, 1, 1);
-      }
-      // X logo watermark
-      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.font = "bold 500px Arial"; ctx.textAlign = "center"; ctx.fillText("𝕏", W/2, H/2 + 160);
-      // Blue accent line top
-      ctx.fillStyle = "#1da1f2"; ctx.fillRect(0, 0, W, 5);
-      // Badge
-      ctx.fillStyle = "#1da1f2";
-      ctx.beginPath(); (ctx as any).roundRect(50, 40, 200, 48, 24); ctx.fill();
-      ctx.fillStyle = "#000"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏  Twitter  ·  " + sty, 68, 72);
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 104, 110, 34, 17); ctx.fill();
-      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.fillText(dur, 67, 126);
-      // Title — huge bold
-      ctx.shadowColor = "rgba(29,161,242,0.3)"; ctx.shadowBlur = 30;
-      ctx.fillStyle = "#fff"; ctx.textAlign = "left";
-      const te5 = wrap(title, 50, 230, W - 100, 78, 66);
-      ctx.shadowBlur = 8; ctx.fillStyle = "rgba(150,200,255,0.7)";
-      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te5 + 36, W - 100, 38, 26);
-      // Bottom
-      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(29,161,242,0.12)"; ctx.fillRect(0, H - 52, W, 52);
-      ctx.fillStyle = "#1da1f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("𝕏 getvci.com", 50, H - 20);
-
-    } else if (plt === "Facebook") {
-      // Facebook — blue gradient, community feel
-      const fbBg = ctx.createLinearGradient(0, 0, W, H);
-      fbBg.addColorStop(0, "#001848"); fbBg.addColorStop(0.6, "#1a3a7a"); fbBg.addColorStop(1, "#0d2261");
-      ctx.fillStyle = fbBg; ctx.fillRect(0, 0, W, H);
-      // Circle pattern
-      for (let ci = 0; ci < 8; ci++) {
-        ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(W * 0.8, H * 0.2, 80 + ci * 70, 0, Math.PI * 2); ctx.stroke();
-      }
-      // FB badge
-      const fbGrad = ctx.createLinearGradient(50, 0, 290, 0);
-      fbGrad.addColorStop(0, "#1877f2"); fbGrad.addColorStop(1, "#42a5f5");
-      ctx.fillStyle = fbGrad;
-      ctx.beginPath(); (ctx as any).roundRect(50, 48, 260, 50, 8); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 23px Arial"; ctx.textAlign = "left"; ctx.fillText("f  Facebook  ·  " + sty, 70, 81);
-      ctx.fillStyle = "rgba(255,255,255,0.1)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 112, 130, 36, 6); ctx.fill();
-      ctx.fillStyle = "#90caf9"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 135);
-      // Title
-      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 20;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-      const te6 = wrap(title.toUpperCase(), 50, 250, W - 100, 75, 62);
-      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,230,255,0.75)";
-      ctx.font = "italic 26px Arial"; wrap('"' + hook + '"', 50, te6 + 40, W - 100, 40, 26);
-      // Bottom
-      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
-      ctx.fillStyle = "#1877f2"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("f  VCI — Viral Content Intelligence", 50, H - 20);
-      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
-
+      // Instagram rainbow gradient badge
+      const ig = ctx.createLinearGradient(pad, 0, pad + 420, 0);
+      ig.addColorStop(0,"#833ab4"); ig.addColorStop(0.5,"#fd1d1d"); ig.addColorStop(1,"#fcb045");
+      ctx.fillStyle = ig; roundRect(pad, badgeY, isVertical ? 440 : 300, badgeH, badgeH/2);
+      ctx.font = `800 ${badgeFS}px Arial`; ctx.fillStyle = "#fff"; ctx.textAlign = "left";
+      ctx.fillText(cfg.label + "  ·  " + sty, pad + 20, badgeY + badgeH * 0.68);
     } else {
-      // Default — VCI purple (other platforms)
-      const defBg = ctx.createLinearGradient(0, 0, W, H);
-      defBg.addColorStop(0, "#050010"); defBg.addColorStop(0.6, "#1a0a3a"); defBg.addColorStop(1, "#050010");
-      ctx.fillStyle = defBg; ctx.fillRect(0, 0, W, H);
-      ctx.strokeStyle = "rgba(109,40,217,0.08)"; ctx.lineWidth = 1;
-      for (let x2 = 0; x2 < W; x2 += 80) { ctx.beginPath(); ctx.moveTo(x2,0); ctx.lineTo(x2,H); ctx.stroke(); }
-      for (let y2 = 0; y2 < H; y2 += 80) { ctx.beginPath(); ctx.moveTo(0,y2); ctx.lineTo(W,y2); ctx.stroke(); }
-      const glow2 = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 450);
-      glow2.addColorStop(0, "rgba(109,40,217,0.35)"); glow2.addColorStop(1, "transparent");
-      ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "rgba(109,40,217,0.8)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 48, 280, 48, 24); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "left"; ctx.fillText(plt + "  ·  " + sty, 70, 80);
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.beginPath(); (ctx as any).roundRect(50, 110, 120, 36, 18); ctx.fill();
-      ctx.fillStyle = "#a78bfa"; ctx.font = "bold 17px Arial"; ctx.fillText(dur, 68, 133);
-      ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 24;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
-      const ted = wrap(title.toUpperCase(), 50, 250, W - 100, 78, 66);
-      ctx.shadowBlur = 10; ctx.fillStyle = "rgba(200,180,255,0.7)";
-      ctx.font = "italic 28px Arial"; wrap('"' + hook + '"', 50, ted + 44, W - 100, 42, 28);
-      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, H - 50, W, 50);
-      ctx.fillStyle = "#7c3aed"; ctx.font = "bold 16px Arial"; ctx.textAlign = "left"; ctx.fillText("VCI", 50, H - 20);
-      ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "15px Arial"; ctx.textAlign = "right"; ctx.fillText("getvci.com", W - 50, H - 20);
+      ctx.fillStyle = cfg.badge; roundRect(pad, badgeY, isVertical ? 380 : 260, badgeH, 10);
+      ctx.font = `800 ${badgeFS}px Arial`; ctx.fillStyle = cfg.badgeFg === "#000" ? "#000" : "#fff";
+      ctx.textAlign = "left"; ctx.fillText(cfg.label + "  ·  " + sty, pad + 18, badgeY + badgeH * 0.68);
     }
 
-    return canvas.toDataURL("image/jpeg", 0.92);
+    // Duration pill
+    const durY = badgeY + badgeH + (isVertical ? 24 : 16);
+    const durFS = isVertical ? 22 : 16;
+    ctx.font = `700 ${durFS}px Arial`;
+    const durW = ctx.measureText(dur).width + (isVertical ? 44 : 32);
+    ctx.fillStyle = "rgba(255,255,255,0.1)"; roundRect(pad, durY, durW, isVertical ? 46 : 34, isVertical ? 23 : 17);
+    ctx.fillStyle = cfg.accent; ctx.fillText(dur, pad + (isVertical ? 22 : 16), durY + (isVertical ? 32 : 23));
+
+    // ── TITLE (large, center of canvas) ──────────────────────────────────────
+    const titleFS  = isVertical ? Math.min(96, Math.max(72, Math.floor(1800 / title.length))) : Math.min(80, Math.max(52, Math.floor(1400 / title.length)));
+    const titleY   = isVertical ? H * 0.42 : H * 0.38;
+    const titleMaxW = W - pad * 2;
+    const titleLineH = titleFS * 1.18;
+
+    // Text shadow for depth
+    ctx.shadowColor = "rgba(0,0,0,0.95)"; ctx.shadowBlur = 28; ctx.shadowOffsetY = 4;
+    ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+    strokeText(title.toUpperCase(), pad, titleY, "rgba(0,0,0,0.6)", isVertical ? 6 : 4);
+    const titleEndY = wrapText(title.toUpperCase(), pad, titleY, titleMaxW, titleLineH, titleFS);
+
+    // ── HOOK LINE ────────────────────────────────────────────────────────────
+    const hookFS   = isVertical ? 34 : 24;
+    const hookY    = titleEndY + (isVertical ? 52 : 36);
+    ctx.shadowBlur = 12; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = cfg.accent + "ee";
+    ctx.font = `italic 600 ${hookFS}px Arial`;
+    wrapText(`"${hook}"`, pad, hookY, titleMaxW, hookFS * 1.4, hookFS, "600");
+
+    // ── BOTTOM BAR ───────────────────────────────────────────────────────────
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    // Fade to black at bottom
+    const botFade = ctx.createLinearGradient(0, H - (isVertical ? 280 : 160), 0, H);
+    botFade.addColorStop(0, "transparent"); botFade.addColorStop(1, "rgba(0,0,0,0.88)");
+    ctx.fillStyle = botFade; ctx.fillRect(0, H - (isVertical ? 280 : 160), W, isVertical ? 280 : 160);
+
+    // Accent line above bottom bar
+    ctx.fillStyle = cfg.accent + "80";
+    ctx.fillRect(pad, H - (isVertical ? 96 : 62), W - pad * 2, 1.5);
+
+    // Bottom text
+    const botFS = isVertical ? 26 : 18;
+    ctx.font = `700 ${botFS}px Arial`;
+    ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.textAlign = "left";
+    ctx.fillText(plt === "Instagram" || plt === "TikTok" ? "Follow for more content 🔥" : "Watch now", pad, H - (isVertical ? 54 : 34));
+    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = `500 ${botFS - 4}px Arial`;
+    ctx.textAlign = "right"; ctx.fillText("getvci.com", W - pad, H - (isVertical ? 54 : 34));
+
+    return canvas.toDataURL("image/jpeg", 0.94);
   };
 
   const generateScript = async () => {
@@ -3951,6 +3918,7 @@ Respond ONLY in JSON:
         @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 12px rgba(124,58,237,0.15)} 50%{box-shadow:0 0 24px rgba(124,58,237,0.25)} }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes progressBar { from{width:0%} to{width:100%} }
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
 
