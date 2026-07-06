@@ -648,24 +648,37 @@ function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: numb
   return buf;
 }
 
-function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scriptStyle: string }) {
-  // Auto-select the best matching track immediately on mount
+function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle }: { audioUrl: string; scriptStyle: string }) {
   const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
-  const defaultIdx = suggestedIdx >= 0 ? suggestedIdx : 0;
+  const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
 
+  // Voice source
+  const [voiceMode,     setVoiceMode]     = useState<"ai"|"upload"|"record">("ai");
+  const [userVoiceUrl,  setUserVoiceUrl]  = useState<string|null>(null);
+  const [userVoiceName, setUserVoiceName] = useState("");
+  const [recording,     setRecording]     = useState(false);
+  const [recSeconds,    setRecSeconds]    = useState(0);
+  const mediaRecRef  = useRef<MediaRecorder|null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recTimerRef  = useRef<any>(null);
+
+  // Music source
+  const [musicMode,     setMusicMode]     = useState<"synth"|"upload">("synth");
+  const [userMusicUrl,  setUserMusicUrl]  = useState<string|null>(null);
+  const [userMusicName, setUserMusicName] = useState("");
+
+  // Built-in track
   const [selected,   setSelected]   = useState<number>(defaultIdx);
   const [volume,     setVolume]     = useState(28);
   const [previewing, setPreviewing] = useState(false);
   const [mixing,     setMixing]     = useState(false);
   const [mixStatus,  setMixStatus]  = useState("");
-  const [mixSource,  setMixSource]  = useState<"real"|"synth"|null>(null);
-  const [mixedUrl,   setMixedUrl]   = useState<string | null>(null);
-  const [mixReady,   setMixReady]   = useState(false);
+  const [mixedUrl,   setMixedUrl]   = useState<string|null>(null);
   const [error,      setError]      = useState("");
-  const previewCtxRef = useRef<AudioContext | null>(null);
-  const abortRef      = useRef(false); // cancels in-progress mix when track changes
+  const previewCtxRef = useRef<AudioContext|null>(null);
+  const abortRef      = useRef(false);
 
-  // Auto-mix removed — user manually clicks "Mix" button
+  const activeVoiceUrl = voiceMode === "ai" ? aiAudioUrl : userVoiceUrl;
 
   const stopPreview = () => {
     try { previewCtxRef.current?.close(); } catch {}
@@ -673,56 +686,123 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
     setPreviewing(false);
   };
 
-  // ── 10-sec preview ────────────────────────────────────────────────────────
+  // Preview — uses makeMusicBuffer directly (no network, always works)
   const preview = async (idx: number) => {
     stopPreview(); setError("");
     try {
-      const ACtx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx  = new ACtx() as AudioContext;
       previewCtxRef.current = ctx;
       setPreviewing(true);
-
-      const { buf } = await fetchRealMusicBuffer(ctx, idx, 10, Math.max(volume, 45));
+      const buf  = makeMusicBuffer(ctx.sampleRate, 10, idx, Math.max(volume, 50));
       const src  = ctx.createBufferSource();
+      const gain = ctx.createGain();
       const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -12; comp.knee.value = 8;
-      comp.ratio.value = 4; comp.attack.value = 0.002; comp.release.value = 0.2;
+      comp.threshold.value = -10; comp.knee.value = 6;
+      comp.ratio.value = 4; comp.attack.value = 0.001; comp.release.value = 0.15;
+      gain.gain.value = 1.5;
       src.buffer = buf;
-      src.connect(comp); comp.connect(ctx.destination);
+      src.connect(gain); gain.connect(comp); comp.connect(ctx.destination);
       src.start(0); src.onended = stopPreview;
       setTimeout(stopPreview, 11000);
-    } catch { setError("Preview failed — please try again."); setPreviewing(false); }
+    } catch(e) { console.error(e); setError("Preview failed."); setPreviewing(false); }
   };
 
-  // ── Full professional mix ─────────────────────────────────────────────────
-  const doMix = async (trackIdx: number): Promise<{ url: string|null; src: "real"|"synth"|null }> => {
+  const previewUserMusic = () => {
+    if (!userMusicUrl) return;
+    const audio = new Audio(userMusicUrl);
+    audio.volume = Math.min(volume / 50, 1);
+    audio.play().catch(() => setError("Could not play file."));
+    setTimeout(() => audio.pause(), 10000);
+  };
+
+  // Record voice
+  const startRecording = async () => {
     try {
-      const ACtx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      mediaRecRef.current = rec; recChunksRef.current = [];
+      rec.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      rec.onstop = () => {
+        const blob = new Blob(recChunksRef.current, { type: "audio/webm" });
+        setUserVoiceUrl(URL.createObjectURL(blob));
+        setUserVoiceName("Recorded voice");
+        stream.getTracks().forEach(t => t.stop());
+      };
+      rec.start();
+      setRecording(true); setRecSeconds(0);
+      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
+    } catch { setError("Microphone access denied."); }
+  };
 
-      // 1. Load + decode voiceover
+  const stopRecording = () => {
+    mediaRecRef.current?.stop();
+    clearInterval(recTimerRef.current);
+    setRecording(false);
+  };
+
+  const handleVoiceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
+    setUserVoiceUrl(URL.createObjectURL(file));
+    setUserVoiceName(file.name); setError("");
+  };
+
+  const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
+    setUserMusicUrl(URL.createObjectURL(file));
+    setUserMusicName(file.name); setMusicMode("upload"); setError("");
+  };
+
+  // Mix
+  const doMix = async (): Promise<string|null> => {
+    if (!activeVoiceUrl) { setError("Please add a voiceover first."); return null; }
+    try {
+      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
       setMixStatus("Loading voiceover...");
-      const voiceRaw = await fetch(audioUrl).then(r => r.arrayBuffer()).catch(() => null);
-      if (!voiceRaw) throw new Error("Voiceover could not be loaded. Please generate it again.");
-
+      const voiceRaw = await fetch(activeVoiceUrl).then(r => r.arrayBuffer()).catch(() => null);
+      if (!voiceRaw) throw new Error("Voiceover could not be loaded.");
       const vCtx = new ACtx() as AudioContext;
       let voiceDec: AudioBuffer;
       try { voiceDec = await vCtx.decodeAudioData(voiceRaw); }
-      catch { await vCtx.close(); throw new Error("Voiceover file is corrupted. Please re-generate it."); }
+      catch { await vCtx.close(); throw new Error("Voiceover format not supported. Use MP3 or WAV."); }
       await vCtx.close();
-      if (abortRef.current) return { url: null, src: null };
+      if (abortRef.current) return null;
 
-      const sr          = voiceDec.sampleRate;
-      const totalDur    = voiceDec.duration + 2.5; // 2.5s music tail
+      const sr = voiceDec.sampleRate;
+      const totalDur = voiceDec.duration + 2.5;
       const totalSamples = Math.ceil(sr * totalDur);
 
-      // 2. Fetch real music (with retry + cache + synth fallback)
-      const mCtx = new ACtx() as AudioContext;
-      const { buf: musicBuf, source } = await fetchRealMusicBuffer(mCtx, trackIdx, totalDur, volume, setMixStatus);
-      await mCtx.close();
-      if (abortRef.current) return { url: null, src: null };
+      setMixStatus("Loading music...");
+      let musicBuf: AudioBuffer;
+      if (musicMode === "upload" && userMusicUrl) {
+        const mRaw = await fetch(userMusicUrl).then(r => r.arrayBuffer()).catch(() => null);
+        if (!mRaw) throw new Error("Could not load music file.");
+        const mCtx = new ACtx() as AudioContext;
+        try {
+          const mDec = await mCtx.decodeAudioData(mRaw);
+          const vol  = Math.min((volume / 100) * 0.72, 0.82);
+          const outM: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
+          for (let ch = 0; ch < 2; ch++) {
+            const src = mDec.getChannelData(Math.min(ch, mDec.numberOfChannels - 1));
+            const out = outM.getChannelData(ch);
+            for (let i = 0; i < totalSamples; i++) {
+              const fi = Math.min(i / (0.6 * sr), 1);
+              const fo = Math.min((totalSamples - i) / (2.5 * sr), 1);
+              out[i]   = src[i % mDec.length] * vol * fi * fo;
+            }
+          }
+          musicBuf = outM; await mCtx.close();
+        } catch { await mCtx.close(); throw new Error("Music format not supported. Use MP3 or WAV."); }
+      } else {
+        musicBuf = makeMusicBuffer(sr, totalDur, selected, volume);
+      }
+      if (abortRef.current) return null;
 
-      // 3. RMS voice envelope — 8ms window, tracks every syllable
-      setMixStatus("Applying professional ducking...");
+      setMixStatus("Applying ducking...");
       const WIN    = Math.max(1, Math.ceil(0.008 * sr));
       const voiceL = voiceDec.getChannelData(0);
       const voiceR = voiceDec.numberOfChannels > 1 ? voiceDec.getChannelData(1) : voiceL;
@@ -731,21 +811,19 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
         const s = Math.max(0, i - (WIN >> 1)), e = Math.min(voiceDec.length, i + (WIN >> 1));
         let rms = 0;
         for (let j = s; j < e; j++) rms += ((Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5) ** 2;
-        env[i] = (e > s) ? Math.sqrt(rms / (e - s)) : 0;
+        env[i] = e > s ? Math.sqrt(rms / (e - s)) : 0;
       }
-
-      // 4. Duck gain curve — 12ms attack, 340ms release
       const FLOOR = 0.18, CEIL = 0.82, THR = 0.013;
-      const ATK   = Math.ceil(0.012 * sr), REL = Math.ceil(0.340 * sr);
-      const duck  = new Float32Array(totalSamples);
-      let gain    = CEIL;
+      const ATK = Math.ceil(0.012 * sr), REL = Math.ceil(0.340 * sr);
+      const duck = new Float32Array(totalSamples);
+      let g = CEIL;
       for (let i = 0; i < totalSamples; i++) {
-        const target = env[i] > THR ? FLOOR : CEIL;
-        gain += (target - gain) / (target < gain ? ATK : REL);
-        duck[i] = gain;
+        const t = env[i] > THR ? FLOOR : CEIL;
+        g += (t - g) / (t < g ? ATK : REL);
+        duck[i] = g;
       }
 
-      // 5. Mix: voice full + music ducked, tanh master limiter
+      setMixStatus("Mixing...");
       const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
       for (let ch = 0; ch < 2; ch++) {
         const out   = outBuf.getChannelData(ch);
@@ -758,7 +836,6 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
         }
       }
 
-      // 6. Encode WAV 16-bit stereo
       setMixStatus("Encoding WAV...");
       const nCh = 2, nS = totalSamples;
       const wav = new ArrayBuffer(44 + nS * nCh * 2);
@@ -775,169 +852,170 @@ function BackgroundMusicMixer({ audioUrl, scriptStyle }: { audioUrl: string; scr
         const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
         dv.setInt16(off, s < 0 ? s*0x8000 : s*0x7fff, true); off += 2;
       }
-      return { url: URL.createObjectURL(new Blob([wav], { type: "audio/wav" })), src: source };
-
-    } catch (err: any) {
-      setError(err?.message || "Mix failed. Please try again.");
-      return { url: null, src: null };
-    }
+      return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+    } catch(err: any) { setError(err?.message || "Mix failed."); return null; }
   };
 
-  // ── Orchestrate a full mix cycle ──────────────────────────────────────────
-  const runMix = async (trackIdx: number) => {
-    stopPreview();
+  const runMix = async () => {
     abortRef.current = false;
-    setMixing(true); setError(""); setMixedUrl(null); setMixReady(false); setMixSource(null);
-    const { url, src } = await doMix(trackIdx);
-    if (!abortRef.current && url) { setMixedUrl(url); setMixReady(true); setMixSource(src); }
+    setMixing(true); setError(""); setMixedUrl(null);
+    const url = await doMix();
+    if (!abortRef.current && url) setMixedUrl(url);
     setMixing(false); setMixStatus("");
   };
 
-  const handleTrackChange = (idx: number) => {
-    abortRef.current = true;
-    setSelected(idx); stopPreview();
-    setMixedUrl(null); setMixReady(false); setError("");
-    // No auto-mix — user clicks Mix button manually
-  };
-
-  const handleRemix = () => {
-    abortRef.current = true;
-    setTimeout(() => runMix(selected), 100);
-  };
-
-  const trackName = BG_TRACKS[selected]?.name || "";
+  const sBox  = { background:"#080810", border:"1px solid #1a1a2a", borderRadius:"12px", padding:"1rem", marginBottom:"0.75rem" } as const;
+  const sLbl  = { margin:"0 0 0.6rem", fontSize:"0.65rem", fontWeight:700, letterSpacing:"0.06em" } as const;
+  const mBtn  = (active: boolean, col = "#a855f7") => ({ flex:1, padding:"0.5rem 0.5rem", borderRadius:"8px", border:`1px solid ${active?col:"#1a1a2a"}`, background:active?`${col}15`:"transparent", color:active?col:"#52525b", fontWeight:700, fontSize:"0.7rem", cursor:"pointer", fontFamily:"'Inter',sans-serif" } as const);
 
   return (
-    <div style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "16px", padding: "1.1rem", marginBottom: "0.75rem", animation: "slideUp 0.4s ease" }}>
+    <div style={{ border:"1px solid rgba(168,85,247,0.3)", borderRadius:"16px", padding:"1.1rem", marginBottom:"0.75rem", background:"linear-gradient(135deg,rgba(168,85,247,0.06),rgba(168,85,247,0.02))", animation:"slideUp 0.4s ease" }}>
+      <p style={{ margin:"0 0 1rem", fontSize:"0.7rem", color:"#a855f7", fontWeight:800, letterSpacing:"0.06em" }}>🎛️ MIX STUDIO</p>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.85rem" }}>
-        <div>
-          <p style={{ margin: 0, fontSize: "0.7rem", color: "#a855f7", fontWeight: 800, letterSpacing: "0.06em" }}>🎵 BACKGROUND MUSIC</p>
-          <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.65rem" }}>
-            Auto-matched for <strong style={{ color: "#a855f7" }}>{scriptStyle}</strong> · Preview → Select → Download final mix
-          </p>
+      {/* ── VOICE ── */}
+      <div style={sBox}>
+        <p style={{ ...sLbl, color:"#06b6d4" }}>🎙️ VOICE / VOICEOVER</p>
+        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
+          {([["ai","🤖 AI Voice"],["upload","📁 Upload File"],["record","🎤 Record"]] as const).map(([m,l])=>(
+            <button key={m} onClick={()=>{setVoiceMode(m);setError("");}} style={mBtn(voiceMode===m,"#06b6d4")}>{l}</button>
+          ))}
         </div>
-        {mixReady && (
-          <span style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", fontSize: "0.62rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: "10px" }}>
-            ✓ Ready
-          </span>
+        {voiceMode==="ai" && (
+          <div style={{ background:"#050508", border:"1px solid rgba(6,182,212,0.15)", borderRadius:"8px", padding:"0.6rem" }}>
+            <p style={{ margin:"0 0 0.3rem", color:"#3f3f46", fontSize:"0.62rem" }}>AI-generated voiceover</p>
+            <audio controls src={aiAudioUrl} style={{ width:"100%", height:"32px" }} />
+          </div>
+        )}
+        {voiceMode==="upload" && (
+          <div>
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(6,182,212,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#06b6d4", fontSize:"0.78rem", fontWeight:700 }}>
+              📁 Click to upload (MP3, WAV, M4A)
+              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleVoiceUpload} />
+            </label>
+            {userVoiceUrl && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(6,182,212,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <p style={{ margin:"0 0 0.3rem", color:"#06b6d4", fontSize:"0.65rem", fontWeight:700 }}>✓ {userVoiceName}</p>
+                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
+              </div>
+            )}
+          </div>
+        )}
+        {voiceMode==="record" && (
+          <div>
+            {!recording ? (
+              <button onClick={startRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"linear-gradient(135deg,#06b6d4,#0891b2)", border:"none", color:"#000", fontWeight:800, fontSize:"0.85rem", cursor:"pointer" }}>
+                🔴 Start Recording
+              </button>
+            ) : (
+              <button onClick={stopRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"rgba(239,68,68,0.12)", border:"2px solid #ef4444", color:"#ef4444", fontWeight:800, fontSize:"0.85rem", cursor:"pointer", animation:"pulse 1s infinite" }}>
+                ⏹ Stop · {recSeconds}s recorded
+              </button>
+            )}
+            {userVoiceUrl && !recording && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(34,197,94,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <p style={{ margin:"0 0 0.3rem", color:"#22c55e", fontSize:"0.65rem", fontWeight:700 }}>✓ Recording ready ({recSeconds}s)</p>
+                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      {/* How to use this for reels */}
-      <div style={{ background: "rgba(109,40,217,0.06)", border: "1px solid rgba(109,40,217,0.15)", borderRadius: "10px", padding: "0.65rem 0.85rem", marginBottom: "0.85rem" }}>
-        <p style={{ margin: "0 0 0.4rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700 }}>📱 HOW TO USE FOR YOUR REEL</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-          {[
-            "1️⃣  Download the Final Audio below (voiceover + music mixed)",
-            "2️⃣  Download your Thumbnail above",
-            "3️⃣  Open Instagram/YouTube → New Reel → add your video",
-            "4️⃣  Import the downloaded audio as your reel's sound",
-            "5️⃣  Use the thumbnail as your cover photo",
-          ].map((step, i) => (
-            <p key={i} style={{ margin: 0, color: "#a1a1aa", fontSize: "0.68rem", lineHeight: 1.6 }}>{step}</p>
-          ))}
+      {/* ── MUSIC ── */}
+      <div style={sBox}>
+        <p style={{ ...sLbl, color:"#a855f7" }}>🎵 BACKGROUND MUSIC</p>
+        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
+          <button onClick={()=>{setMusicMode("synth");setError("");}} style={mBtn(musicMode==="synth")}>🎹 Built-in</button>
+          <button onClick={()=>{setMusicMode("upload");setError("");}} style={mBtn(musicMode==="upload")}>📁 Upload My Music</button>
         </div>
-      </div>
-
-      {/* Track List */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginBottom: "0.85rem" }}>
-        {BG_TRACKS.map((track, i) => {
-          const isSel = selected === i;
-          const isSugg = suggestedIdx === i;
-          const isPrev = previewing && selected === i;
-          return (
-            <div key={i} onClick={() => handleTrackChange(i)}
-              style={{ background: isSel ? "rgba(168,85,247,0.12)" : "#080808", border: `1px solid ${isSel ? "#a855f7" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.6rem 0.85rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "all 0.2s" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.1rem" }}>
-                  <p style={{ margin: 0, color: isSel ? "#a855f7" : "#e4e4e7", fontSize: "0.82rem", fontWeight: isSel ? 700 : 500 }}>{track.name}</p>
-                  {isSugg && <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.55rem", fontWeight: 700, padding: "0.05rem 0.35rem", borderRadius: "6px" }}>Best match</span>}
+        {musicMode==="synth" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:"0.3rem", marginBottom:"0.6rem" }}>
+            {BG_TRACKS.map((track,i)=>{
+              const isSel=selected===i, isSugg=suggestedIdx===i, isPrev=previewing&&selected===i;
+              return (
+                <div key={i} onClick={()=>{setSelected(i);setMixedUrl(null);setError("");}}
+                  style={{ background:isSel?"rgba(168,85,247,0.1)":"#050508", border:`1px solid ${isSel?"#a855f7":"#1a1a2a"}`, borderRadius:"10px", padding:"0.5rem 0.75rem", display:"flex", alignItems:"center", gap:"0.6rem", cursor:"pointer", transition:"all 0.2s" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:"0.4rem" }}>
+                      <span style={{ color:isSel?"#a855f7":"#e4e4e7", fontSize:"0.8rem", fontWeight:isSel?700:500 }}>{track.name}</span>
+                      {isSugg&&<span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:"0.55rem", fontWeight:700, padding:"0.05rem 0.3rem", borderRadius:"5px" }}>Best match</span>}
+                    </div>
+                    <span style={{ color:"#52525b", fontSize:"0.62rem" }}>{track.mood} · {track.genre}</span>
+                  </div>
+                  <button onClick={e=>{e.stopPropagation(); isPrev?stopPreview():preview(i);}}
+                    style={{ background:isPrev?"rgba(168,85,247,0.2)":"#111", border:`1px solid ${isPrev?"#a855f7":"#222"}`, color:isPrev?"#a855f7":"#666", padding:"0.25rem 0.55rem", borderRadius:"7px", cursor:"pointer", fontSize:"0.7rem", fontWeight:700, flexShrink:0 }}>
+                    {isPrev?"⏹ Stop":"▶ Preview"}
+                  </button>
+                  <div style={{ width:16, height:16, borderRadius:"50%", border:`2px solid ${isSel?"#a855f7":"#2a2a2a"}`, background:isSel?"#a855f7":"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    {isSel&&<span style={{ color:"#fff", fontSize:"0.55rem" }}>✓</span>}
+                  </div>
                 </div>
-                <p style={{ margin: 0, color: "#52525b", fontSize: "0.63rem" }}>{track.mood}</p>
+              );
+            })}
+          </div>
+        )}
+        {musicMode==="upload" && (
+          <div>
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(168,85,247,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#a855f7", fontSize:"0.78rem", fontWeight:700 }}>
+              📁 Click to upload music (MP3, WAV, M4A)
+              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleMusicUpload} />
+            </label>
+            {userMusicUrl && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <p style={{ margin:0, color:"#a855f7", fontSize:"0.65rem", fontWeight:700 }}>✓ {userMusicName}</p>
+                  <button onClick={previewUserMusic} style={{ background:"none", border:"none", color:"#a855f7", cursor:"pointer", fontSize:"0.7rem", fontWeight:700 }}>▶ Preview</button>
+                </div>
               </div>
-              <button onClick={e => { e.stopPropagation(); isPrev ? stopPreview() : preview(i); }}
-                style={{ background: isPrev ? "rgba(168,85,247,0.2)" : "#111", border: `1px solid ${isPrev ? "#a855f7" : "#222"}`, color: isPrev ? "#a855f7" : "#666", padding: "0.28rem 0.6rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0, transition: "all 0.2s" }}>
-                {isPrev ? "⏹ Stop" : "▶ Preview"}
-              </button>
-              <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSel ? "#a855f7" : "#2a2a2a"}`, background: isSel ? "#a855f7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                {isSel && <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 700 }}>✓</span>}
-              </div>
-            </div>
-          );
-        })}
+            )}
+          </div>
+        )}
+        <div style={{ marginTop:"0.6rem" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"0.2rem" }}>
+            <label style={{ color:"#52525b", fontSize:"0.6rem", fontWeight:700 }}>MUSIC VOLUME</label>
+            <span style={{ color:"#a855f7", fontSize:"0.6rem", fontWeight:700 }}>{volume}%</span>
+          </div>
+          <input type="range" min={10} max={55} value={volume} onChange={e=>setVolume(Number(e.target.value))} style={{ width:"100%", accentColor:"#a855f7", cursor:"pointer" }} />
+        </div>
       </div>
 
-      {/* Volume */}
-      <div style={{ marginBottom: "0.85rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-          <label style={{ color: "#52525b", fontSize: "0.6rem", fontWeight: 700 }}>MUSIC VOLUME</label>
-          <span style={{ color: "#a855f7", fontSize: "0.6rem", fontWeight: 700 }}>{volume}%</span>
-        </div>
-        <input type="range" min={10} max={55} value={volume} onChange={e => setVolume(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#a855f7", cursor: "pointer", height: "3px" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.2rem" }}>
-          <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Subtle</span>
-          <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Loud</span>
-        </div>
-      </div>
+      {/* ── MIX BUTTON ── */}
+      {error&&<p style={{ color:"#ef4444", fontSize:"0.72rem", margin:"0 0 0.6rem", textAlign:"center" }}>{error}</p>}
 
-      {/* Main Mix Button — user clicks this to generate */}
-      {!mixedUrl && !mixing && (
-        <button onClick={handleRemix}
-          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", marginBottom: "0.5rem" }}>
-          🎛️ Mix Voiceover + Background Music
+      {!mixedUrl&&!mixing&&(
+        <button onClick={runMix} disabled={!activeVoiceUrl}
+          style={{ width:"100%", padding:"0.9rem", borderRadius:"12px", background:!activeVoiceUrl?"#111":"linear-gradient(135deg,#a855f7,#7c3aed)", border:"none", color:!activeVoiceUrl?"#444":"#fff", fontWeight:800, fontSize:"0.9rem", cursor:!activeVoiceUrl?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", boxShadow:activeVoiceUrl?"0 4px 20px rgba(168,85,247,0.3)":"none" }}>
+          🎛️ Mix Voice + Music
         </button>
       )}
 
-      {/* Remix button — shown only after mix is done */}
-      {mixedUrl && !mixing && (
-        <button onClick={handleRemix}
-          style={{ width: "100%", padding: "0.6rem", borderRadius: "10px", background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
-          🔄 Remix with Different Track / Volume
-        </button>
-      )}
-
-      {/* Status / Result */}
-      {mixing && (
-        <div style={{ background: "#080808", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "10px", padding: "0.85rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#a855f7", fontSize: "0.78rem", marginBottom: "0.5rem" }}>
-            <RefreshCw size={13} style={{ animation: "spin 1s linear infinite", flexShrink: 0 }} />
-            <span style={{ fontWeight: 600 }}>{mixStatus || `Mixing ${trackName}...`}</span>
+      {mixing&&(
+        <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"10px", padding:"0.85rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", color:"#a855f7", fontSize:"0.78rem", marginBottom:"0.5rem" }}>
+            <RefreshCw size={13} style={{ animation:"spin 1s linear infinite", flexShrink:0 }} />
+            <span style={{ fontWeight:600 }}>{mixStatus||"Mixing..."}</span>
           </div>
-          <div style={{ background: "#1a1a1a", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
-            <div style={{ height: "100%", background: "linear-gradient(90deg,#7c3aed,#a855f7,#7c3aed)", backgroundSize: "200% 100%", borderRadius: "4px", animation: "progressBar 15s linear forwards" }} />
+          <div style={{ background:"#1a1a2a", borderRadius:"4px", height:"3px", overflow:"hidden" }}>
+            <div style={{ height:"100%", background:"linear-gradient(90deg,#7c3aed,#a855f7)", borderRadius:"4px", animation:"progressBar 15s linear forwards" }} />
           </div>
-          <p style={{ margin: "0.4rem 0 0", color: "#3f3f46", fontSize: "0.62rem" }}>
-            Fetching Pixabay track · Retries up to 3× · Synth fallback if needed
-          </p>
         </div>
       )}
 
-      {error && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem", textAlign: "center" }}>{error}</p>}
-
-      {mixedUrl && !mixing && (
-        <div style={{ animation: "slideUp 0.3s ease" }}>
-          {/* Player */}
-          <div style={{ background: "#080808", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "12px", padding: "0.75rem", marginBottom: "0.6rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "0.65rem", color: "#a855f7", fontWeight: 700 }}>🎧 PREVIEW YOUR MIX</span>
-              <span style={{ fontSize: "0.6rem", color: "#3f3f46" }}>Voiceover + {trackName}</span>
-              {mixSource === "real" && <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.58rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "6px" }}>🎵 Pixabay Track</span>}
-              {mixSource === "synth" && <span style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b", fontSize: "0.58rem", fontWeight: 700, padding: "0.08rem 0.4rem", borderRadius: "6px" }}>🎹 Built-in Music</span>}
-            </div>
-            <audio controls src={mixedUrl} style={{ width: "100%", height: "36px" }} />
+      {mixedUrl&&!mixing&&(
+        <div style={{ animation:"slideUp 0.3s ease" }}>
+          <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"12px", padding:"0.75rem", marginBottom:"0.6rem" }}>
+            <p style={{ margin:"0 0 0.4rem", fontSize:"0.65rem", color:"#a855f7", fontWeight:700 }}>🎧 FINAL MIX PREVIEW</p>
+            <audio controls src={mixedUrl} style={{ width:"100%" }} />
           </div>
-
-          {/* Download button — prominent */}
-          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-voiceover-${trackName.toLowerCase().replace(/\s/g, "-")}.wav`}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", background: "linear-gradient(135deg,#a855f7,#7c3aed)", border: "none", color: "#fff", padding: "0.85rem", borderRadius: "12px", fontSize: "0.88rem", fontWeight: 800, textDecoration: "none", boxShadow: "0 4px 20px rgba(168,85,247,0.35)" }}>
-            ⬇ Download Final Audio (Voiceover + Music)
+          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-final-mix.wav`}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"linear-gradient(135deg,#a855f7,#7c3aed)", color:"#fff", padding:"0.85rem", borderRadius:"12px", fontSize:"0.88rem", fontWeight:800, textDecoration:"none", boxShadow:"0 4px 20px rgba(168,85,247,0.3)", marginBottom:"0.5rem" }}>
+            ⬇ Download Final Mix (WAV)
           </a>
-          <p style={{ margin: "0.5rem 0 0", color: "#3f3f46", fontSize: "0.62rem", textAlign: "center" }}>
-            WAV · 16-bit · Stereo · Ready to use in your video editor
-          </p>
+          <button onClick={()=>{abortRef.current=true; setTimeout(runMix,80);}}
+            style={{ width:"100%", padding:"0.6rem", borderRadius:"10px", background:"transparent", border:"1px solid rgba(168,85,247,0.3)", color:"#a855f7", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>
+            🔄 Remix Again
+          </button>
+          <p style={{ margin:"0.4rem 0 0", color:"#3f3f46", fontSize:"0.6rem", textAlign:"center" }}>WAV · 16-bit Stereo · Professional Ducking</p>
         </div>
       )}
     </div>
