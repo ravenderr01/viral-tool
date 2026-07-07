@@ -4531,14 +4531,15 @@ export default function ViralContentTool() {
   const saveToHistory = async (feature: string, data: { niche?: string; platform?: string; keyword?: string; inputSummary: string; resultData: any }) => {
     if (!user?.id) return;
     try {
+      const safeResult = data.resultData ?? {};
       const { error } = await supabase.from("user_history").insert({
-        user_id: user.id,
+        user_id:       user.id,
         feature,
-        niche: data.niche || null,
-        platform: data.platform || null,
-        keyword: data.keyword || null,
-        input_summary: data.inputSummary,
-        result_data: data.resultData,
+        niche:         data.niche    || null,
+        platform:      data.platform || null,
+        keyword:       data.keyword  || null,
+        input_summary: data.inputSummary || "",
+        result_data:   typeof safeResult === "object" ? safeResult : { raw: String(safeResult) },
       });
       if (error) console.error("History save error:", error.message, error.code);
     } catch (e) {
