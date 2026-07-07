@@ -4733,8 +4733,25 @@ Respond ONLY in JSON:
       setResults(safeResults);
       incrementUsage();
       const detectedStyles = safeResults.viralHooks.map((h: string) => detectHookStyle(h));
-      await supabase.from("generated_content").insert({ user_id: user.id, niche, platform, language: langLabel, keyword, hooks: safeResults.viralHooks, titles: safeResults.titles, captions: safeResults.captions, trending_topics: safeResults.trendingTopics, hook_styles: detectedStyles });
-      await supabase.from("users").update({ generations_used_today: (userData?.generations_used_today || 0) + 1, credits_remaining: (userData?.credits_remaining || 0) - 1 }).eq("id", user.id);
+
+      // Fire-and-forget — failures don't block history
+      supabase.from("generated_content").insert({
+        user_id: user.id, niche, platform,
+        language: langLabel, keyword,
+        hooks: safeResults.viralHooks,
+        titles: safeResults.titles,
+        captions: safeResults.captions,
+        trending_topics: safeResults.trendingTopics,
+        hook_styles: detectedStyles,
+      }).then(({ error }) => {
+        if (error) console.warn("generated_content insert:", error.message);
+      });
+
+      supabase.from("users").update({
+        generations_used_today: (userData?.generations_used_today || 0) + 1,
+        credits_remaining: (userData?.credits_remaining || 0) - 1,
+      }).eq("id", user.id);
+
       saveToHistory("generate", { niche, platform, keyword, inputSummary: keyword, resultData: safeResults });
     } catch { setError("Something went wrong. Please try again."); }
     setLoading(false);
