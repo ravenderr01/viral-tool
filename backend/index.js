@@ -8,6 +8,89 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+// ── AI PROVIDER: Groq primary, Gemini fallback ────────────────────────────
+// Groq hits rate limit (429) → automatically switches to Gemini
+// User never sees an error, just seamless generation
+
+async function callGroq({ system, messages, max_tokens = 1500, temperature = 0.7, model = "llama-3.3-70b-versatile" }) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens,
+      temperature,
+      messages: system
+        ? [{ role: "system", content: system }, ...messages]
+        : messages
+    }),
+    signal: AbortSignal.timeout(20000) // 20s timeout
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(err.error?.message || `Groq HTTP ${res.status}`), { status: res.status });
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+async function callGemini({ system, messages, max_tokens = 1500, temperature = 0.7 }) {
+  // Build prompt: system + last user message
+  const userMsg = messages[messages.length - 1]?.content || "";
+  const fullPrompt = system ? `${system}\n\n${userMsg}` : userMsg;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          maxOutputTokens: max_tokens,
+          temperature
+        }
+      }),
+      signal: AbortSignal.timeout(25000)
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+// Main function — tries Groq first, falls back to Gemini on 429 or error
+async function callAI(options) {
+  try {
+    const text = await callGroq(options);
+    console.log("✅ AI: Groq responded");
+    return text;
+  } catch (err) {
+    const isRateLimit = err.status === 429 || err.message?.includes("rate") || err.message?.includes("limit");
+    console.log(`⚠️ Groq failed (${err.message}) → switching to Gemini`);
+
+    try {
+      const text = await callGemini(options);
+      console.log("✅ AI: Gemini responded (fallback)");
+      return text;
+    } catch (geminiErr) {
+      console.error("❌ Both Groq and Gemini failed:", geminiErr.message);
+      throw new Error("AI service temporarily unavailable. Please try again.");
+    }
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json({ limit: "10mb" }));
@@ -26,66 +109,37 @@ app.post("/api/generate", async (req, res) => {
       );
 
       if (hasImage) {
-        // Convert to Groq vision format
+        // Vision: Groq vision model, Gemini fallback handles image via text description
         const groqMessages = req.body.messages.map((m) => {
           if (Array.isArray(m.content)) {
-            const newContent = m.content.map((c) => {
-              if (c.type === "image") {
-                return {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${c.source.media_type};base64,${c.source.data}`
-                  }
-                };
-              }
-              return c;
-            });
-            return { ...m, content: newContent };
+            return {
+              ...m, content: m.content.map((c) =>
+                c.type === "image"
+                  ? { type: "image_url", image_url: { url: `data:${c.source.media_type};base64,${c.source.data}` } }
+                  : c
+              )
+            };
           }
           return m;
         });
 
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "meta-llama/llama-4-scout-17b-16e-instruct",
-            max_tokens: req.body.max_tokens || 1500,
-            temperature: 0.8,
-            messages: [
-              { role: "system", content: req.body.system },
-              ...groqMessages
-            ]
-          })
+        const text = await callAI({
+          system: req.body.system,
+          messages: groqMessages,
+          max_tokens: req.body.max_tokens || 1500,
+          temperature: 0.8,
+          model: "meta-llama/llama-4-scout-17b-16e-instruct"
         });
-        const data = await response.json();
-        console.log("Vision response:", JSON.stringify(data).slice(0, 300));
-        const text = data.choices?.[0]?.message?.content || "";
         return res.json({ content: [{ type: "text", text }] });
       }
 
       // Regular text (Vira Assistant)
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          max_tokens: req.body.max_tokens || 500,
-          temperature: 0.8,
-          messages: [
-            { role: "system", content: req.body.system },
-            ...req.body.messages
-          ]
-        })
+      const text = await callAI({
+        system: req.body.system,
+        messages: req.body.messages,
+        max_tokens: req.body.max_tokens || 500,
+        temperature: 0.8
       });
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || "";
       return res.json({ content: [{ type: "text", text }] });
     }
 
@@ -142,31 +196,17 @@ app.post("/api/generate", async (req, res) => {
       : `You are a viral content expert. Generate highly specific, professional content.
       Always respond in valid JSON only.`;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: max_tokens || 2000,
-        temperature: 0.7,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage }
-        ]
-      })
+    const text = await callAI({
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+      max_tokens: max_tokens || 2000,
+      temperature: 0.7
     });
-
-    const data = await response.json();
-    console.log("Groq response status:", response.status);
-    const text = data.choices?.[0]?.message?.content || "";
     res.json({ content: [{ type: "text", text }] });
 
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Generate error:", err.message);
+    res.status(500).json({ error: err.message || "Server error" });
   }
 });
 
@@ -205,27 +245,16 @@ Return ONLY a valid JSON object like this:
 Keyword context: ${keyword || niche}
 Return only JSON, no extra text.`;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 1500,
-        temperature: 0.8,
-        messages: [{ role: "user", content: prompt }]
-      })
+    const text = await callAI({
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1500,
+      temperature: 0.8
     });
-
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
     res.json(parsed);
   } catch (err) {
-    console.error("Platform trends error:", err);
+    console.error("Platform trends error:", err.message);
     res.status(500).json({ error: "Platform trends fetch failed" });
   }
 });
@@ -419,40 +448,4 @@ setInterval(() => {
 }, 14 * 60 * 1000);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
-
-// Music proxy — Mixkit CORS bypass
-app.get('/api/proxy-audio', async (req, res) => {
-  try {
-    const { url } = req.query;
-    if (!url) return res.status(400).json({ error: 'No URL provided' });
-
-    // Security: only allow Mixkit URLs
-    if (!url.includes('mixkit.co')) {
-      return res.status(403).json({ error: 'Only Mixkit URLs allowed' });
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': 'https://mixkit.co/',
-        'Accept': 'audio/mpeg,audio/*;q=0.9,*/*;q=0.8',
-      }
-    });
-
-    if (!response.ok) {
-      console.error('Mixkit fetch failed:', response.status, url);
-      return res.status(response.status).json({ error: 'Music fetch failed' });
-    }
-
-    const buffer = await response.buffer();
-    res.set('Content-Type', 'audio/mpeg');
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.send(buffer);
-  } catch (err) {
-    console.error('Audio proxy error:', err);
-    res.status(500).json({ error: 'Proxy failed' });
-  }
-});
-
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
