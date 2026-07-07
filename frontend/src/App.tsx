@@ -648,6 +648,45 @@ Return ONLY valid JSON:
               ))}
             </div>
           </div>
+
+          {/* HOW TO USE — next steps for the user */}
+          <div style={{ background:"rgba(124,58,237,.06)", border:"1px solid rgba(124,58,237,.2)", borderRadius:"12px", padding:"1rem 1.1rem", marginTop:".75rem" }}>
+            <p style={{ fontSize:".62rem", fontWeight:800, color:"#a855f7", margin:"0 0 .7rem", letterSpacing:".08em" }}>📋 HOW TO USE THIS COPY</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
+              {[
+                { step:"1", icon:"📋", title:"Copy each section", desc:'Click the "Copy" button next to each section above — Hero Headline, Subheadline, CTA, etc.' },
+                { step:"2", icon:"🌐", title:"Open your website builder", desc:"Paste into Shopify, WordPress, Wix, Webflow, or any HTML page. Each section maps directly to a page section." },
+                { step:"3", icon:"🔗", title:"Match your ad exactly", desc:"Your ad headline should match your Hero Headline word-for-word. Same promise → visitor trusts → higher conversion." },
+                { step:"4", icon:"📊", title:"Check ROI before spending", desc:"Use the ROI Calculator tab to estimate ROAS before launching your ad campaign." },
+              ].map(({ step, icon, title, desc }) => (
+                <div key={step} style={{ display:"flex", gap:".7rem", alignItems:"flex-start" }}>
+                  <div style={{ width:22, height:22, borderRadius:"50%", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", color:"#fff", fontSize:".6rem", fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:".1rem" }}>{step}</div>
+                  <div>
+                    <p style={{ margin:"0 0 .1rem", fontSize:".76rem", fontWeight:700, color:"#e4e4e7" }}>{icon} {title}</p>
+                    <p style={{ margin:0, fontSize:".72rem", color:"#52525b", lineHeight:1.55 }}>{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick platform links */}
+            <div style={{ borderTop:"1px solid rgba(124,58,237,.15)", marginTop:".75rem", paddingTop:".75rem" }}>
+              <p style={{ fontSize:".58rem", fontWeight:800, color:"#52525b", margin:"0 0 .45rem", letterSpacing:".08em" }}>PASTE INTO</p>
+              <div style={{ display:"flex", gap:".4rem", flexWrap:"wrap" }}>
+                {["Shopify","WordPress","Wix","Webflow","HTML Page","Google Sites"].map(platform => (
+                  <span key={platform} style={{ background:"rgba(255,255,255,.04)", border:"1px solid #1a1a2e", color:"#52525b", fontSize:".65rem", fontWeight:600, padding:".15rem .5rem", borderRadius:"6px" }}>{platform}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Pro tip */}
+            <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".6rem .8rem", marginTop:".65rem", display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+              <span style={{ fontSize:".85rem", flexShrink:0 }}>💡</span>
+              <p style={{ margin:0, fontSize:".72rem", color:"#92400e", lineHeight:1.55 }}>
+                <strong style={{ color:"#fbbf24" }}>Pro Tip:</strong> Run your ad using the <strong style={{ color:"#fbbf24" }}>A/B Ad Copy</strong> tab first. Then create a matching landing page for each variant. Test both — the winning combination gives you 2-3× more conversions from the same ad budget.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
