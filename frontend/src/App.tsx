@@ -22,10 +22,10 @@ const SUPPORT_PHONE = "+91 9315133390";
 
 const PLANS = {
   free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0  },
-  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 299.99,  priceUSD: 9,  badge: "🔥 Popular", segment: "creator" },
-  creator_pro:      { label: "Creator Pro",      limit: 600,   priceINR: 999.99,  priceUSD: 29, badge: "⚡ Best Value", segment: "creator" },
-  advertiser:       { label: "Advertiser",       limit: 700,   priceINR: 1999.99, priceUSD: 49, badge: "📢 For Ads", segment: "business" },
-  agency:           { label: "Agency",           limit: 2000,  priceINR: 4999.99, priceUSD: 99, badge: "👑 All Access", segment: "agency" },
+  creator_starter:  { label: "Creator Starter",  limit: 120,   priceINR: 299.99,  priceUSD: 9,  badge: "🔥 Popular",    segment: "creator"  },
+  creator_pro:      { label: "Creator Pro",      limit: 550,   priceINR: 999.99,  priceUSD: 29, badge: "⚡ Best Value",  segment: "creator"  },
+  advertiser:       { label: "Advertiser",       limit: 1100,  priceINR: 1999.99, priceUSD: 49, badge: "📢 For Ads",     segment: "business" },
+  agency:           { label: "Agency",           limit: 2800,  priceINR: 4999.99, priceUSD: 99, badge: "👑 All Access",  segment: "agency"   },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -4343,20 +4343,17 @@ Respond ONLY in JSON:
   const handlePaid = (p: string) => { setPayingPlan(null); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 4000); };
 
   const tabs = [
-    { id: "generate", label: "Generate", Icon: Zap },
-    { id: "score", label: "Hook Score", Icon: BarChart2 },
-    { id: "caption", label: "Captions", Icon: FileText },
+    { id: "generate",     label: "Generate",    Icon: Zap },
+    { id: "score",        label: "Hook Score",  Icon: BarChart2 },
+    { id: "caption",      label: "Captions",    Icon: FileText },
     { id: "intelligence", label: "Intelligence", Icon: Search },
-    { id: "calendar", label: "Calendar", Icon: CalendarDays },
-    { id: "pack", label: "Pack", Icon: Package },
-    { id: "trends", label: "Trends", Icon: TrendingUp },
-    { id: "image", label: "Image AI", Icon: Image },
-    { id: "scriptlab", label: "Script Lab", Icon: Film },
-    { id: "repurpose", label: "Repurpose", Icon: Layers },
-    { id: "competitor", label: "Competitor", Icon: MousePointerClick },
-    { id: "roi", label: "ROI Calc", Icon: BarChart2 },
-    { id: "abtest", label: "A/B Ads", Icon: Zap },
-    { id: "landingpage", label: "Landing Page", Icon: FileText },
+    { id: "calendar",     label: "Calendar",    Icon: CalendarDays },
+    { id: "pack",         label: "Pack",        Icon: Package },
+    { id: "trends",       label: "Trends",      Icon: TrendingUp },
+    { id: "image",        label: "Image AI",    Icon: Image },
+    { id: "scriptlab",    label: "Script Lab",  Icon: Film },
+    { id: "repurpose",    label: "Repurpose",   Icon: Layers },
+    { id: "competitor",   label: "Competitor",  Icon: MousePointerClick },
   ];
 
   if (authLoading || profileLoading) return (
@@ -4653,26 +4650,79 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Tabs — Row 1: main tools, Row 2: Repurpose + Competitor */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-            <div className="tab-scroll-row" style={{ background: "#0a0a0a", borderRadius: "14px", padding: "0.35rem", border: "1px solid #1a1a1a", boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-              {tabs.filter(t => !["repurpose","competitor"].includes(t.id)).map(t => (
-                <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                  isPro={["calendar", "pack", "image", "scriptlab"].includes(t.id) && plan === "free"} />
-              ))}
+          {/* ── TAB NAV — 2 rows, clearly separated ──────────────────── */}
+          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+
+            {/* ROW 1 — Social Media / Creator Tools */}
+            <div style={{ background: "#080808", borderRadius: "14px", padding: "0.3rem", border: "1px solid #141414" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", paddingLeft: "0.2rem", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", color: "#3f3f46", textTransform: "uppercase" }}>📱 Creator</span>
+              </div>
+              <div className="tab-scroll-row">
+                {[
+                  { id: "generate",     label: "Generate",    Icon: Zap          },
+                  { id: "score",        label: "Hook Score",  Icon: BarChart2    },
+                  { id: "caption",      label: "Captions",    Icon: FileText     },
+                  { id: "intelligence", label: "Intelligence", Icon: Search       },
+                  { id: "trends",       label: "Trends",      Icon: TrendingUp   },
+                  { id: "calendar",     label: "Calendar",    Icon: CalendarDays },
+                  { id: "pack",         label: "Pack",        Icon: Package      },
+                  { id: "image",        label: "Image AI",    Icon: Image        },
+                  { id: "scriptlab",    label: "Script Lab",  Icon: Film         },
+                  { id: "repurpose",    label: "Repurpose",   Icon: Layers       },
+                  { id: "competitor",   label: "Competitor",  Icon: MousePointerClick },
+                ].map(t => (
+                  <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
+                    isPro={
+                      (["calendar","pack","image","scriptlab"].includes(t.id) && plan === "free") ||
+                      (["repurpose","competitor"].includes(t.id) && ["free","creator_starter"].includes(plan))
+                    } />
+                ))}
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.35rem", background: "#0a0a0a", borderRadius: "12px", padding: "0.3rem", border: "1px solid #1a1a1a" }}>
-              {[{ id: "repurpose", label: "🔄 Repurpose Engine", color: "#6d28d9", Icon: Layers }, { id: "competitor", label: "🔍 Competitor Analyzer", color: "#ef4444", Icon: MousePointerClick }, { id: "roi", label: "📊 ROI Calculator", color: "#f59e0b", Icon: BarChart2 }, { id: "abtest", label: "🧪 A/B Ad Copy", color: "#06b6d4", Icon: Zap }, { id: "landingpage", label: "🖥️ Landing Page", color: "#22c55e", Icon: FileText }].map(t => {
-                const isActive = activeTab === t.id;
-                return (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)}
-                    style={{ flex: 1, padding: "0.55rem 1rem", borderRadius: "9px", border: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s", background: isActive ? `${t.color}18` : "transparent", color: isActive ? t.color : "#3f3f46", fontWeight: isActive ? 700 : 500, fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", borderBottom: isActive ? `2px solid ${t.color}` : "2px solid transparent" }}>
-                    <t.Icon size={14} strokeWidth={isActive ? 2.5 : 1.8} />
-                    <span>{t.label}</span>
-                  </button>
-                );
-              })}
+
+            {/* ROW 2 — Advertiser Tools */}
+            <div style={{ background: "#07080e", borderRadius: "14px", padding: "0.3rem", border: "1px solid rgba(6,182,212,0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", paddingLeft: "0.2rem", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", color: "rgba(6,182,212,0.6)", textTransform: "uppercase" }}>📢 Advertiser</span>
+                {!["advertiser","agency"].includes(plan) && (
+                  <span style={{ fontSize: "0.5rem", fontWeight: 700, color: "rgba(6,182,212,0.4)", background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: "4px", padding: "0.05rem 0.35rem" }}>
+                    Advertiser Plan
+                  </span>
+                )}
+              </div>
+              <div className="tab-scroll-row">
+                {[
+                  { id: "roi",         label: "ROI Calc",    Icon: BarChart2, color: "#f59e0b" },
+                  { id: "abtest",      label: "A/B Ad Copy", Icon: Zap,       color: "#06b6d4" },
+                  { id: "landingpage", label: "Landing Page", Icon: FileText,  color: "#22c55e" },
+                ].map(t => {
+                  const isActive  = activeTab === t.id;
+                  const isLocked  = !["advertiser","agency"].includes(plan);
+                  return (
+                    <button key={t.id}
+                      onClick={() => isLocked ? setShowPaywall(true) : setActiveTab(t.id)}
+                      style={{
+                        flex: "0 0 auto", padding: "0.45rem 0.9rem", borderRadius: "10px",
+                        border: isActive ? `1px solid ${t.color}50` : "1px solid transparent",
+                        cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s",
+                        background: isActive ? `${t.color}12` : "transparent",
+                        color: isLocked ? "#2a2a2a" : isActive ? t.color : "#52525b",
+                        fontWeight: isActive ? 700 : 500, fontSize: "0.72rem",
+                        display: "flex", alignItems: "center", gap: "0.35rem",
+                        whiteSpace: "nowrap", minWidth: "90px", justifyContent: "center",
+                      }}>
+                      {isLocked
+                        ? <span style={{ fontSize: "0.62rem" }}>🔒</span>
+                        : <t.Icon size={13} strokeWidth={isActive ? 2.5 : 1.8} />
+                      }
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -4886,14 +4936,24 @@ Respond ONLY in JSON:
             <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
           )}
 
-          {/* TAB: REPURPOSE ENGINE */}
+          {/* TAB: REPURPOSE ENGINE — Creator Pro+ only */}
           {activeTab === "repurpose" && (
-            <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
+            ["creator_pro","advertiser","agency"].includes(plan)
+              ? <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
+              : <LockedFeaturePreview emoji="🔄" title="Auto-Repurpose Engine"
+                  tagline="Paste any content — get 8 platform-native rewrites in one click. Instagram, LinkedIn, Twitter, WhatsApp, YouTube and more."
+                  previewItems={["🔄 8 platforms rewritten natively", "📋 Best platform recommendation", "⚡ One click, instant output"]}
+                  planRequired="Creator Pro" planPrice="₹999" onUpgrade={() => setShowPaywall(true)} />
           )}
 
-          {/* TAB: COMPETITOR ANALYZER */}
+          {/* TAB: COMPETITOR ANALYZER — Creator Pro+ only */}
           {activeTab === "competitor" && (
-            <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
+            ["creator_pro","advertiser","agency"].includes(plan)
+              ? <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
+              : <LockedFeaturePreview emoji="🕵️" title="Competitor Hook Analyzer"
+                  tagline="Paste any viral content — understand the psychology, get a virality score, and receive 3 original versions for your niche."
+                  previewItems={["📊 Virality score /100", "🧠 Psychological triggers decoded", "✍️ 3 original inspired versions"]}
+                  planRequired="Creator Pro" planPrice="₹999" onUpgrade={() => setShowPaywall(true)} />
           )}
 
           {/* ADVERTISER EXCLUSIVE TABS */}
