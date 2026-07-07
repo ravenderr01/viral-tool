@@ -351,8 +351,12 @@ Return JSON only:
         <p style={{ fontSize:".78rem", fontWeight:700, color:roasColor, margin:0 }}>{verdict}</p>
       </div>
 
-      <button onClick={generate} disabled={loading} style={{ width:"100%", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:"pointer", marginBottom:"1rem" }}>
-        {loading ? "Analysing..." : "🤖 Get AI Optimisation Tips"}
+      <button onClick={generate} disabled={loading}
+        style={{ width:"100%", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".8rem 1rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:"pointer", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
+        {loading
+          ? <><span style={{ width:"14px", height:"14px", border:"2px solid rgba(255,255,255,.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }} /> Analysing your numbers...</>
+          : <><span>🤖</span><span>Get AI Optimisation Tips</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"6px", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem" }}>Free</span></>
+        }
       </button>
 
       {result && (
@@ -475,8 +479,17 @@ Return ONLY valid JSON:
       </div>
 
       <button onClick={generate} disabled={loading || !product.trim()}
-        style={{ width:"100%", background: !product.trim()?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color: !product.trim()?"#444":"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem" }}>
-        {loading ? "Generating A/B variants..." : "🧪 Generate 2 Ad Variants — 3 Credits"}
+        style={{ width:"100%", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:`1px solid ${!product.trim()?"#1a1a2e":"transparent"}`, color:!product.trim()?"#3f3f46":"#fff", padding:".8rem 1rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", transition:"all .2s" }}>
+        {loading
+          ? <><span style={{ width:"14px", height:"14px", border:"2px solid rgba(255,255,255,.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }} /> Generating your A/B variants...</>
+          : <>
+              <span>🧪</span>
+              <span>Generate 2 Ad Variants</span>
+              <span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"6px", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
+                <span style={{ fontSize:".6rem" }}>⚡</span> 3 cr
+              </span>
+            </>
+        }
       </button>
 
       {result && (
@@ -589,8 +602,17 @@ Return ONLY valid JSON:
       </div>
 
       <button onClick={generate} disabled={loading || !product.trim()}
-        style={{ width:"100%", background:!product.trim()?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#444":"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem" }}>
-        {loading ? "Writing your landing page..." : "🖥️ Generate Landing Page Copy — 4 Credits"}
+        style={{ width:"100%", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:`1px solid ${!product.trim()?"#1a1a2e":"transparent"}`, color:!product.trim()?"#3f3f46":"#fff", padding:".8rem 1rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", transition:"all .2s" }}>
+        {loading
+          ? <><span style={{ width:"14px", height:"14px", border:"2px solid rgba(255,255,255,.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }} /> Writing your landing page copy...</>
+          : <>
+              <span>🖥️</span>
+              <span>Generate Landing Page Copy</span>
+              <span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"6px", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
+                <span style={{ fontSize:".6rem" }}>⚡</span> 4 cr
+              </span>
+            </>
+        }
       </button>
 
       {result && (
@@ -3493,32 +3515,213 @@ function PaywallModal({ onClose, onSelectPlan, currency }: any) {
   const [selected, setSelected] = useState("creator_starter");
   const isUSD = currency === "USD";
   const selectedPlan = PLANS[selected as keyof typeof PLANS];
+
+  const PLAN_FEATURES: Record<string, { features: string[]; highlight?: string; section: "creator" | "advertiser" | "agency" }> = {
+    creator_starter: {
+      section: "creator",
+      highlight: "🔥 Most Popular",
+      features: [
+        "⚡ Viral Content Generator",
+        "📊 Hook Score Analyzer",
+        "📋 Caption & Hashtag Generator",
+        "🎬 Script Lab — Full Reel Pipeline",
+        "🖼️ Auto Thumbnail Generator",
+        "🎙️ AI Voiceover — 7 Indian Languages",
+        "🎛️ Mix Studio — Professional Audio Ducking",
+        "📅 30-Day Content Calendar",
+        "📦 Content Pack (50+ pieces)",
+        "🖼️ Image AI",
+        "🔍 Niche Intelligence — Free",
+        "📈 Trends Feed — Free",
+      ],
+    },
+    creator_pro: {
+      section: "creator",
+      highlight: "⚡ Best Value",
+      features: [
+        "Everything in Creator Starter",
+        "🔄 Auto-Repurpose Engine (8 platforms)",
+        "🕵️ Competitor Hook Analyzer",
+        "550 credits — 4× more than Starter",
+      ],
+    },
+    advertiser: {
+      section: "advertiser",
+      highlight: "📢 Advertiser Exclusive",
+      features: [
+        "Everything in Creator Pro",
+        "📊 Ad ROI Calculator",
+        "🧪 A/B Ad Copy Generator",
+        "🖥️ Landing Page Copy Generator",
+        "Google Ads + Meta Ads platforms",
+        "1,100 credits — 2× Creator Pro",
+      ],
+    },
+    agency: {
+      section: "agency",
+      highlight: "👑 All Access",
+      features: [
+        "All Creator + Advertiser tools",
+        "2,800 credits — unlimited workflow",
+        "Multiple clients, all platforms",
+      ],
+    },
+  };
+
+  const sectionColor = {
+    creator:    { border: "#a855f7", bg: "rgba(168,85,247,0.07)", badge: "rgba(168,85,247,0.12)", badgeText: "#a855f7" },
+    advertiser: { border: "#06b6d4", bg: "rgba(6,182,212,0.07)",  badge: "rgba(6,182,212,0.12)",  badgeText: "#06b6d4" },
+    agency:     { border: "#f59e0b", bg: "rgba(245,158,11,0.07)", badge: "rgba(245,158,11,0.12)", badgeText: "#f59e0b" },
+  };
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-      <div style={{ background: "#080808", border: "1px solid #6d28d9", borderRadius: "20px", padding: "1.75rem", maxWidth: "480px", width: "100%", color: "#fff", animation: "slideUp 0.3s ease" }}>
-        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <div style={{ fontSize: "2rem" }}>🚀</div>
-          <h2 style={{ fontFamily: "'Inter',sans-serif", fontSize: "1.4rem", margin: "0.5rem 0", color: "#6d28d9" }}>Free Limit Reached!</h2>
-          <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Upgrade to unlock Hook Scoring, 30-Day Calendars, Content Packs & more.</p>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", overflowY:"auto" }}>
+      <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"24px", padding:"1.75rem", maxWidth:"520px", width:"100%", color:"#fff", animation:"slideUp 0.3s ease" }}>
+
+        {/* Header */}
+        <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
+          <div style={{ fontSize:"1.75rem", marginBottom:".4rem" }}>⚡</div>
+          <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:"1.3rem", fontWeight:900, margin:"0 0 .35rem", color:"#fff" }}>Unlock VCI</h2>
+          <p style={{ color:"#52525b", fontSize:".8rem", margin:0 }}>Choose the plan that fits your workflow</p>
         </div>
-        <div style={{ display: "grid", gap: "0.65rem", marginBottom: "1.25rem" }}>
-          {Object.entries(PLANS).filter(([k]) => k !== "free").map(([key, plan]: any) => (
-            <div key={key} onClick={() => setSelected(key)} style={{ border: `${selected === key ? "2" : "1"}px solid ${selected === key ? "#6d28d9" : "#1e1e1e"}`, borderRadius: "12px", padding: "0.9rem 1rem", background: selected === key ? "rgba(168,85,247,0.07)" : "#0d0d0d", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{plan.label} {plan.badge}</div>
-                <div style={{ color: "#444", fontSize: "0.76rem" }}>{plan.limit} credits/mo</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#6d28d9" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
-                <div style={{ color: "#333", fontSize: "0.72rem" }}>{isUSD ? `₹${plan.priceINR}` : `$${plan.priceUSD}`} / mo</div>
-              </div>
-            </div>
-          ))}
+
+        {/* SECTION: Creator Plans */}
+        <div style={{ marginBottom:"1rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#a855f7", textTransform:"uppercase" }}>📱 Creator Plans</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(168,85,247,.2)" }} />
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
+            {(["creator_starter","creator_pro"] as const).map(key => {
+              const plan   = PLANS[key] as any;
+              const meta   = PLAN_FEATURES[key];
+              const col    = sectionColor.creator;
+              const isSel  = selected === key;
+              return (
+                <div key={key} onClick={() => setSelected(key)}
+                  style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                        <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                        {meta.highlight && <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>}
+                      </div>
+                      <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                      <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                    </div>
+                  </div>
+                  {isSel && (
+                    <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                      {meta.features.map((f,i) => (
+                        <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                          <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                          <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <button onClick={() => onSelectPlan(selected)} style={{ width: "100%", padding: "0.9rem", borderRadius: "10px", background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", marginBottom: "0.5rem" }}>
-          Get {selectedPlan?.label} — {isUSD ? `$${selectedPlan?.priceUSD}` : `₹${selectedPlan?.priceINR}`} →
+
+        {/* SECTION: Advertiser Plan */}
+        <div style={{ marginBottom:"1rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#06b6d4", textTransform:"uppercase" }}>📢 Advertiser Plan</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(6,182,212,.2)" }} />
+          </div>
+          {(["advertiser"] as const).map(key => {
+            const plan  = PLANS[key] as any;
+            const meta  = PLAN_FEATURES[key];
+            const col   = sectionColor.advertiser;
+            const isSel = selected === key;
+            return (
+              <div key={key} onClick={() => setSelected(key)}
+                style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                      <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                      <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>
+                    </div>
+                    <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                    <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                  </div>
+                </div>
+                {isSel && (
+                  <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                    {meta.features.map((f,i) => (
+                      <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                        <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                        <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* SECTION: Agency Plan */}
+        <div style={{ marginBottom:"1.25rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#f59e0b", textTransform:"uppercase" }}>👑 Agency Plan</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(245,158,11,.2)" }} />
+          </div>
+          {(["agency"] as const).map(key => {
+            const plan  = PLANS[key] as any;
+            const meta  = PLAN_FEATURES[key];
+            const col   = sectionColor.agency;
+            const isSel = selected === key;
+            return (
+              <div key={key} onClick={() => setSelected(key)}
+                style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                      <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                      <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>
+                    </div>
+                    <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                    <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                  </div>
+                </div>
+                {isSel && (
+                  <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                    {meta.features.map((f,i) => (
+                      <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                        <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                        <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <button onClick={() => onSelectPlan(selected)}
+          style={{ width:"100%", padding:"0.95rem", borderRadius:"12px", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", fontWeight:800, fontSize:".95rem", cursor:"pointer", marginBottom:".5rem", boxShadow:"0 8px 24px rgba(109,40,217,.35)" }}>
+          Get {selectedPlan?.label} — {isUSD ? `$${selectedPlan?.priceUSD}` : `₹${selectedPlan?.priceINR}`} /month →
         </button>
-        <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem" }}>Maybe later</button>
+        <button onClick={onClose}
+          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".78rem", padding:".4rem" }}>
+          Maybe later
+        </button>
       </div>
     </div>
   );
@@ -4637,16 +4840,61 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* Credits bar */}
-          <div style={{ maxWidth: "260px", margin: "0 auto 1rem", background: "#0f0f0f", border: "1px solid #161616", borderRadius: "10px", padding: "0.6rem 0.9rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", marginBottom: "0.3rem" }}>
-              <span style={{ color: "#444" }}>Plan: <strong style={{ color: "#8b5cf6" }}>{PLANS[plan as keyof typeof PLANS]?.label}</strong></span>
-              <span style={{ color: remaining === 0 ? "#ef4444" : remaining <= 3 ? "#f59e0b" : "#22c55e", fontWeight: 700 }}>
-                {remaining === 0 ? "⛔ Limit reached" : `${remaining} / ${limit} credits`}
-              </span>
-            </div>
-            <div style={{ background: "#141414", borderRadius: "4px", height: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", borderRadius: "4px", background: remaining === 0 ? "#ef4444" : "linear-gradient(90deg,#6d28d9,#9d71f5)", width: `${usedPct}%`, transition: "width 0.5s" }} />
+          {/* Credits bar — professional */}
+          <div style={{ maxWidth:"640px", margin:"0 auto 0.85rem" }}>
+            <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:"12px", padding:".6rem 1rem", display:"flex", alignItems:"center", gap:".75rem" }}>
+              {/* Plan badge */}
+              <div style={{ display:"flex", alignItems:"center", gap:".35rem", flexShrink:0 }}>
+                <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".08em", color:"#3f3f46", textTransform:"uppercase" }}>Plan</span>
+                <span style={{ background:"rgba(109,40,217,.12)", border:"1px solid rgba(109,40,217,.25)", color:"#a855f7", fontSize:".62rem", fontWeight:800, padding:".1rem .5rem", borderRadius:"6px" }}>
+                  {PLANS[plan as keyof typeof PLANS]?.label}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ flex:1 }}>
+                <div style={{ background:"#0d0d1a", borderRadius:"4px", height:"4px", overflow:"hidden" }}>
+                  <div style={{ height:"100%", borderRadius:"4px", transition:"width 0.5s", width:`${usedPct}%`,
+                    background: remaining === 0 ? "#ef4444" : remaining <= 5 ? "linear-gradient(90deg,#f59e0b,#ef4444)" : "linear-gradient(90deg,#6d28d9,#a855f7)" }} />
+                </div>
+              </div>
+
+              {/* Credit count */}
+              <div style={{ flexShrink:0, textAlign:"right" }}>
+                <span style={{ fontSize:".7rem", fontWeight:800,
+                  color: remaining === 0 ? "#ef4444" : remaining <= 5 ? "#f59e0b" : "#a855f7" }}>
+                  {remaining === 0 ? "⛔ No credits" : `${remaining}`}
+                </span>
+                <span style={{ fontSize:".62rem", color:"#3f3f46" }}> / {limit}</span>
+              </div>
+
+              {/* Active tab cost pill */}
+              {(() => {
+                const TAB_COST: Record<string, { cost: string; color: string }> = {
+                  generate:     { cost: "1 cr", color: "#a855f7" },
+                  score:        { cost: "2 cr", color: "#06b6d4" },
+                  caption:      { cost: "2 cr", color: "#22c55e" },
+                  intelligence: { cost: "Free", color: "#22c55e" },
+                  trends:       { cost: "Free", color: "#22c55e" },
+                  calendar:     { cost: "6 cr", color: "#f59e0b" },
+                  pack:         { cost: "5 cr", color: "#f59e0b" },
+                  image:        { cost: "6 cr", color: "#14b8a6" },
+                  scriptlab:    { cost: "8 cr", color: "#a855f7" },
+                  repurpose:    { cost: "5 cr", color: "#6d28d9" },
+                  competitor:   { cost: "2 cr", color: "#ef4444" },
+                  roi:          { cost: "Free", color: "#22c55e" },
+                  abtest:       { cost: "3 cr", color: "#06b6d4" },
+                  landingpage:  { cost: "4 cr", color: "#22c55e" },
+                };
+                const info = TAB_COST[activeTab];
+                if (!info) return null;
+                return (
+                  <div style={{ flexShrink:0, background:`${info.color}12`, border:`1px solid ${info.color}30`, borderRadius:"6px", padding:".12rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
+                    <span style={{ fontSize:".55rem" }}>⚡</span>
+                    <span style={{ fontSize:".62rem", fontWeight:800, color:info.color }}>{info.cost}</span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
