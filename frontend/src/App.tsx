@@ -250,6 +250,388 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
+// ── AD ROI CALCULATOR (Advertiser Exclusive) ────────────────────────────────
+function AdROICalculator({ plan, onUpgrade }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [budget, setBudget]       = useState(10000);
+  const [cpc, setCpc]             = useState(12);
+  const [cvRate, setCvRate]       = useState(3);
+  const [orderVal, setOrderVal]   = useState(800);
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<any>(null);
+
+  if (!isUnlocked) return (
+    <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"16px", padding:"2rem", textAlign:"center" }}>
+      <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>📊</div>
+      <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>Ad ROI Calculator</p>
+      <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Enter budget → get estimated clicks, leads, revenue and ROAS. Advertiser plan only.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+    </div>
+  );
+
+  const clicks   = Math.round(budget / cpc);
+  const leads    = Math.round(clicks * cvRate / 100);
+  const revenue  = leads * orderVal;
+  const roas     = revenue / budget;
+  const cpl      = leads > 0 ? Math.round(budget / leads) : 0;
+  const profit   = revenue - budget;
+  const roasColor = roas >= 3 ? "#22c55e" : roas >= 1.5 ? "#f59e0b" : "#ef4444";
+  const verdict  = roas >= 3 ? "✅ Profitable — Scale this campaign" : roas >= 1.5 ? "⚠️ Breakeven zone — Optimise first" : "❌ Loss-making — Reduce CPC or improve CVR";
+
+  const generate = async () => {
+    setLoading(true);
+    const prompt = `You are a paid ads expert. Give a realistic analysis for:
+Budget: ₹${budget}/month | Avg CPC: ₹${cpc} | Conversion rate: ${cvRate}% | Avg order value: ₹${orderVal}
+Estimated: ${clicks} clicks, ${leads} conversions, ₹${revenue} revenue, ROAS: ${roas.toFixed(2)}x
+
+Return JSON only:
+{
+  "verdict": "one line verdict",
+  "top_optimisation": "single most impactful thing to improve ROAS",
+  "cpc_benchmark": "typical CPC range for this type of campaign in India",
+  "scale_trigger": "at what ROAS/metrics should they scale budget",
+  "warning": "one risk to watch"
+}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:600 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const clean = text.replace(/```json|```/g,"").trim();
+      setResult(JSON.parse(clean));
+    } catch { setResult(null); }
+    setLoading(false);
+  };
+
+  const row = (label: string, value: string, color?: string) => (
+    <div style={{ display:"flex", justifyContent:"space-between", padding:".55rem 0", borderBottom:"1px solid #0d0d18" }}>
+      <span style={{ fontSize:".78rem", color:"#94a3b8" }}>{label}</span>
+      <span style={{ fontSize:".82rem", fontWeight:800, color: color || "#fff" }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ background:"#080810", border:"1px solid rgba(109,40,217,.25)", borderRadius:"16px", padding:"1.4rem" }}>
+      <p style={{ fontSize:".68rem", fontWeight:800, letterSpacing:".1em", color:"#6d28d9", marginBottom:".85rem" }}>📊 AD ROI CALCULATOR</p>
+
+      {/* Inputs */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".75rem", marginBottom:"1rem" }}>
+        {[
+          { label:"Monthly Budget (₹)", val:budget, set:setBudget, min:1000, max:500000, step:1000 },
+          { label:"Avg CPC — Cost Per Click (₹)", val:cpc, set:setCpc, min:1, max:500, step:1 },
+          { label:"Conversion Rate (%)", val:cvRate, set:setCvRate, min:0.1, max:30, step:0.1 },
+          { label:"Avg Order Value (₹)", val:orderVal, set:setOrderVal, min:100, max:50000, step:100 },
+        ].map(({ label, val, set, min, max, step }) => (
+          <div key={label}>
+            <label style={{ fontSize:".6rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".25rem" }}>{label}</label>
+            <input type="number" value={val} min={min} max={max} step={step}
+              onChange={e => set(Number(e.target.value))}
+              style={{ width:"100%", background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".5rem .7rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Live results */}
+      <div style={{ background:"#050508", border:"1px solid #0d0d18", borderRadius:"12px", padding:"1rem", marginBottom:"1rem" }}>
+        {row("Estimated Clicks", clicks.toLocaleString("en-IN"))}
+        {row("Estimated Leads / Conversions", leads.toLocaleString("en-IN"))}
+        {row("Cost Per Lead (CPL)", `₹${cpl.toLocaleString("en-IN")}`)}
+        {row("Estimated Revenue", `₹${revenue.toLocaleString("en-IN")}`)}
+        {row("Estimated Profit", `₹${profit.toLocaleString("en-IN")}`, profit >= 0 ? "#22c55e" : "#ef4444")}
+        <div style={{ display:"flex", justifyContent:"space-between", padding:".55rem 0" }}>
+          <span style={{ fontSize:".78rem", color:"#94a3b8" }}>ROAS (Return on Ad Spend)</span>
+          <span style={{ fontSize:"1.05rem", fontWeight:900, color:roasColor }}>{roas.toFixed(2)}×</span>
+        </div>
+      </div>
+
+      {/* Verdict bar */}
+      <div style={{ background: roas>=3?"rgba(34,197,94,.08)":roas>=1.5?"rgba(245,158,11,.08)":"rgba(239,68,68,.08)", border:`1px solid ${roas>=3?"rgba(34,197,94,.25)":roas>=1.5?"rgba(245,158,11,.25)":"rgba(239,68,68,.25)"}`, borderRadius:"10px", padding:".7rem 1rem", marginBottom:"1rem" }}>
+        <p style={{ fontSize:".78rem", fontWeight:700, color:roasColor, margin:0 }}>{verdict}</p>
+      </div>
+
+      <button onClick={generate} disabled={loading} style={{ width:"100%", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:"pointer", marginBottom:"1rem" }}>
+        {loading ? "Analysing..." : "🤖 Get AI Optimisation Tips"}
+      </button>
+
+      {result && (
+        <div style={{ background:"#050508", border:"1px solid rgba(109,40,217,.15)", borderRadius:"12px", padding:"1rem" }}>
+          {[
+            { label:"📌 Top Optimisation", value:result.top_optimisation },
+            { label:"💰 CPC Benchmark", value:result.cpc_benchmark },
+            { label:"📈 Scale Trigger", value:result.scale_trigger },
+            { label:"⚠️ Risk to Watch", value:result.warning },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ marginBottom:".65rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .2rem", letterSpacing:".06em" }}>{label}</p>
+              <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0, lineHeight:1.6 }}>{value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── A/B AD COPY GENERATOR (Advertiser Exclusive) ─────────────────────────────
+function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]   = useState("");
+  const [platform, setPlatform] = useState("Meta Ads");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<any>(null);
+  const [copied, setCopied]     = useState("");
+  const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
+
+  if (!isUnlocked) return (
+    <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"16px", padding:"2rem", textAlign:"center" }}>
+      <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>🧪</div>
+      <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>A/B Ad Copy Generator</p>
+      <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Generate 2 completely different ad angles for the same product. Test which psychology wins.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+    </div>
+  );
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are an expert paid-ads copywriter. Generate 2 completely different A/B test ad copies for ${platform}.
+Product/Service: ${product}
+
+The two variants must use DIFFERENT psychological angles (e.g. fear vs aspiration, logic vs emotion, social proof vs urgency).
+
+Return ONLY valid JSON:
+{
+  "variant_a": {
+    "angle": "name of psychological angle used",
+    "headline": "main headline (under 40 chars for Meta, 30 for Google)",
+    "primary_text": "ad body copy (100-150 chars for Meta)",
+    "cta": "Call to action button text",
+    "why_it_works": "1 sentence explanation"
+  },
+  "variant_b": {
+    "angle": "different psychological angle",
+    "headline": "completely different headline",
+    "primary_text": "completely different body copy",
+    "cta": "CTA button text",
+    "why_it_works": "1 sentence explanation"
+  },
+  "test_recommendation": "What to measure to pick the winner (e.g. CTR, CPL, ROAS)"
+}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { }
+    setLoading(false);
+  };
+
+  const VariantCard = ({ variant, label, color }: any) => (
+    <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"12px", padding:"1rem", flex:1 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".75rem" }}>
+        <span style={{ fontSize:".65rem", fontWeight:800, color, letterSpacing:".08em" }}>{label}</span>
+        <span style={{ background:`${color}15`, border:`1px solid ${color}30`, color, fontSize:".6rem", fontWeight:700, padding:".12rem .5rem", borderRadius:"6px" }}>{variant.angle}</span>
+      </div>
+      {[
+        { label:"Headline", value:variant.headline },
+        { label:"Primary Text", value:variant.primary_text },
+        { label:"CTA Button", value:variant.cta },
+        { label:"Why It Works", value:variant.why_it_works },
+      ].map(({ label:l, value }) => (
+        <div key={l} style={{ marginBottom:".6rem" }}>
+          <p style={{ fontSize:".57rem", fontWeight:800, color:"#3f3f46", margin:"0 0 .18rem", letterSpacing:".08em", textTransform:"uppercase" }}>{l}</p>
+          <div style={{ display:"flex", gap:".4rem", alignItems:"flex-start" }}>
+            <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0, flex:1, lineHeight:1.55 }}>{value}</p>
+            <button onClick={() => copy(value, l+label)} style={{ background:"none", border:"1px solid #1a1a2e", color: copied === l+label ? color : "#52525b", borderRadius:"6px", padding:".15rem .4rem", cursor:"pointer", fontSize:".6rem", flexShrink:0 }}>
+              {copied === l+label ? "✓" : "Copy"}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div style={{ background:"#080810", border:"1px solid rgba(109,40,217,.25)", borderRadius:"16px", padding:"1.4rem" }}>
+      <p style={{ fontSize:".68rem", fontWeight:800, letterSpacing:".1em", color:"#6d28d9", marginBottom:".85rem" }}>🧪 A/B AD COPY GENERATOR</p>
+
+      <textarea value={product} onChange={e => setProduct(e.target.value)}
+        placeholder="Describe your product/service... e.g. 'Online yoga classes for busy working women in India, ₹999/month'"
+        style={{ width:"100%", background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:".75rem", color:"#fff", fontSize:".8rem", minHeight:"80px", resize:"vertical", fontFamily:"inherit", marginBottom:".75rem" }} />
+
+      <div style={{ display:"flex", gap:".5rem", marginBottom:".85rem" }}>
+        {["Meta Ads","Google Ads"].map(p => (
+          <button key={p} onClick={() => setPlatform(p)}
+            style={{ flex:1, padding:".5rem", borderRadius:"8px", border:`1px solid ${platform===p?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:platform===p?"rgba(109,40,217,.12)":"transparent", color:platform===p?"#a855f7":"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer" }}>
+            {p === "Meta Ads" ? "📘 Meta Ads" : "📢 Google Ads"}
+          </button>
+        ))}
+      </div>
+
+      <button onClick={generate} disabled={loading || !product.trim()}
+        style={{ width:"100%", background: !product.trim()?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color: !product.trim()?"#444":"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem" }}>
+        {loading ? "Generating A/B variants..." : "🧪 Generate 2 Ad Variants — 3 Credits"}
+      </button>
+
+      {result && (
+        <div>
+          <div style={{ display:"flex", gap:".75rem", marginBottom:".75rem", flexWrap:"wrap" }}>
+            <VariantCard variant={result.variant_a} label="VARIANT A" color="#06b6d4" />
+            <VariantCard variant={result.variant_b} label="VARIANT B" color="#f59e0b" />
+          </div>
+          <div style={{ background:"rgba(109,40,217,.06)", border:"1px solid rgba(109,40,217,.18)", borderRadius:"10px", padding:".75rem 1rem" }}>
+            <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .25rem", letterSpacing:".06em" }}>📈 HOW TO TEST</p>
+            <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0 }}>{result.test_recommendation}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── LANDING PAGE COPY GENERATOR (Advertiser Exclusive) ───────────────────────
+function LandingPageCopy({ plan, onUpgrade, onCreditUsed }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]   = useState("");
+  const [audience, setAudience] = useState("");
+  const [goal, setGoal]         = useState("leads");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<any>(null);
+  const [copied, setCopied]     = useState("");
+  const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
+
+  if (!isUnlocked) return (
+    <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"16px", padding:"2rem", textAlign:"center" }}>
+      <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>🖥️</div>
+      <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>Landing Page Copy</p>
+      <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Generate complete landing page copy that matches your ad — headline, subheadline, benefits, CTA. Reduces bounce, increases conversions.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+    </div>
+  );
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are a conversion copywriter. Write complete landing page copy for:
+Product: ${product}
+Target audience: ${audience || "Indian users"}
+Primary goal: ${goal}
+
+Return ONLY valid JSON:
+{
+  "hero_headline": "Main headline (benefit-driven, under 10 words)",
+  "hero_subheadline": "Supporting line that adds specificity (under 20 words)",
+  "hero_cta": "Primary CTA button text (action-oriented, 3-5 words)",
+  "problem_statement": "1-2 sentences agitating the pain point",
+  "solution_intro": "1-2 sentences introducing the product as the solution",
+  "benefits": [
+    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" },
+    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" },
+    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" }
+  ],
+  "social_proof": "A realistic-sounding testimonial or social proof statement",
+  "urgency_line": "Scarcity or urgency line for bottom CTA",
+  "final_cta": "Final CTA button text",
+  "trust_elements": ["trust badge 1", "trust badge 2", "trust badge 3"]
+}`;
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { }
+    setLoading(false);
+  };
+
+  const CopyRow = ({ label, value, key2 }: any) => (
+    <div style={{ background:"#050508", border:"1px solid #0d0d18", borderRadius:"10px", padding:".8rem 1rem", marginBottom:".6rem" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:".5rem" }}>
+        <div style={{ flex:1 }}>
+          <p style={{ fontSize:".57rem", fontWeight:800, color:"#3f3f46", margin:"0 0 .25rem", letterSpacing:".08em", textTransform:"uppercase" }}>{label}</p>
+          <p style={{ fontSize:".82rem", color:"#fff", margin:0, fontWeight:700, lineHeight:1.5 }}>{value}</p>
+        </div>
+        <button onClick={() => copy(value, key2)} style={{ background:"none", border:"1px solid #1a1a2e", color: copied===key2?"#22c55e":"#52525b", borderRadius:"6px", padding:".2rem .5rem", cursor:"pointer", fontSize:".62rem", flexShrink:0 }}>
+          {copied===key2 ? "✓ Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ background:"#080810", border:"1px solid rgba(109,40,217,.25)", borderRadius:"16px", padding:"1.4rem" }}>
+      <p style={{ fontSize:".68rem", fontWeight:800, letterSpacing:".1em", color:"#6d28d9", marginBottom:".85rem" }}>🖥️ LANDING PAGE COPY</p>
+
+      <textarea value={product} onChange={e => setProduct(e.target.value)}
+        placeholder="Product/service description... e.g. 'Digital marketing course for small business owners, ₹4,999 one-time'"
+        style={{ width:"100%", background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:".75rem", color:"#fff", fontSize:".8rem", minHeight:"75px", resize:"vertical", fontFamily:"inherit", marginBottom:".6rem" }} />
+
+      <input value={audience} onChange={e => setAudience(e.target.value)}
+        placeholder="Target audience... e.g. 'Small business owners 30-50 in Tier 2 cities'"
+        style={{ width:"100%", background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:".6rem .75rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", marginBottom:".6rem" }} />
+
+      <div style={{ display:"flex", gap:".4rem", marginBottom:".85rem" }}>
+        {[["leads","📋 Generate Leads"],["sales","🛒 Drive Sales"],["signups","✍️ App Signups"]].map(([v,l]) => (
+          <button key={v} onClick={() => setGoal(v)}
+            style={{ flex:1, padding:".45rem .4rem", borderRadius:"8px", border:`1px solid ${goal===v?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:goal===v?"rgba(109,40,217,.12)":"transparent", color:goal===v?"#a855f7":"#52525b", fontWeight:700, fontSize:".68rem", cursor:"pointer" }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      <button onClick={generate} disabled={loading || !product.trim()}
+        style={{ width:"100%", background:!product.trim()?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#444":"#fff", padding:".8rem", borderRadius:"10px", fontWeight:800, fontSize:".85rem", cursor:!product.trim()?"not-allowed":"pointer", marginBottom:"1rem" }}>
+        {loading ? "Writing your landing page..." : "🖥️ Generate Landing Page Copy — 4 Credits"}
+      </button>
+
+      {result && (
+        <div>
+          <CopyRow label="Hero Headline" value={result.hero_headline} key2="h1" />
+          <CopyRow label="Subheadline" value={result.hero_subheadline} key2="sub" />
+          <CopyRow label="Primary CTA" value={result.hero_cta} key2="cta1" />
+          <CopyRow label="Problem Statement" value={result.problem_statement} key2="prob" />
+          <CopyRow label="Solution Intro" value={result.solution_intro} key2="sol" />
+
+          <div style={{ background:"#050508", border:"1px solid #0d0d18", borderRadius:"10px", padding:".8rem 1rem", marginBottom:".6rem" }}>
+            <p style={{ fontSize:".57rem", fontWeight:800, color:"#3f3f46", margin:"0 0 .6rem", letterSpacing:".08em", textTransform:"uppercase" }}>Key Benefits</p>
+            {result.benefits?.map((b: any, i: number) => (
+              <div key={i} style={{ display:"flex", gap:".6rem", marginBottom:".5rem" }}>
+                <span style={{ fontSize:"1.1rem" }}>{b.icon}</span>
+                <div>
+                  <p style={{ fontSize:".78rem", fontWeight:700, color:"#fff", margin:"0 0 .1rem" }}>{b.title}</p>
+                  <p style={{ fontSize:".74rem", color:"#94a3b8", margin:0 }}>{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <CopyRow label="Social Proof / Testimonial" value={result.social_proof} key2="sp" />
+          <CopyRow label="Urgency Line" value={result.urgency_line} key2="urg" />
+          <CopyRow label="Final CTA" value={result.final_cta} key2="cta2" />
+
+          <div style={{ background:"rgba(34,197,94,.05)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".75rem 1rem" }}>
+            <p style={{ fontSize:".57rem", fontWeight:800, color:"#22c55e", margin:"0 0 .4rem", letterSpacing:".08em" }}>TRUST ELEMENTS</p>
+            <div style={{ display:"flex", gap:".4rem", flexWrap:"wrap" }}>
+              {result.trust_elements?.map((t: string, i: number) => (
+                <span key={i} style={{ background:"rgba(34,197,94,.08)", border:"1px solid rgba(34,197,94,.2)", color:"#4ade80", fontSize:".68rem", fontWeight:700, padding:".18rem .55rem", borderRadius:"6px" }}>✓ {t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── AutoRepurposeEngine ─────────────────────────────────────────────────────
 function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langStrict }: any) {
   const [content, setContent] = useState("");
@@ -3972,6 +4354,9 @@ Respond ONLY in JSON:
     { id: "scriptlab", label: "Script Lab", Icon: Film },
     { id: "repurpose", label: "Repurpose", Icon: Layers },
     { id: "competitor", label: "Competitor", Icon: MousePointerClick },
+    { id: "roi", label: "ROI Calc", Icon: BarChart2 },
+    { id: "abtest", label: "A/B Ads", Icon: Zap },
+    { id: "landingpage", label: "Landing Page", Icon: FileText },
   ];
 
   if (authLoading || profileLoading) return (
@@ -4277,7 +4662,7 @@ Respond ONLY in JSON:
               ))}
             </div>
             <div style={{ display: "flex", gap: "0.35rem", background: "#0a0a0a", borderRadius: "12px", padding: "0.3rem", border: "1px solid #1a1a1a" }}>
-              {[{ id: "repurpose", label: "🔄 Repurpose Engine", color: "#6d28d9", Icon: Layers }, { id: "competitor", label: "🔍 Competitor Analyzer", color: "#ef4444", Icon: MousePointerClick }].map(t => {
+              {[{ id: "repurpose", label: "🔄 Repurpose Engine", color: "#6d28d9", Icon: Layers }, { id: "competitor", label: "🔍 Competitor Analyzer", color: "#ef4444", Icon: MousePointerClick }, { id: "roi", label: "📊 ROI Calculator", color: "#f59e0b", Icon: BarChart2 }, { id: "abtest", label: "🧪 A/B Ad Copy", color: "#06b6d4", Icon: Zap }, { id: "landingpage", label: "🖥️ Landing Page", color: "#22c55e", Icon: FileText }].map(t => {
                 const isActive = activeTab === t.id;
                 return (
                   <button key={t.id} onClick={() => setActiveTab(t.id)}
@@ -4509,6 +4894,17 @@ Respond ONLY in JSON:
           {/* TAB: COMPETITOR ANALYZER */}
           {activeTab === "competitor" && (
             <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
+          )}
+
+          {/* ADVERTISER EXCLUSIVE TABS */}
+          {activeTab === "roi" && (
+            <AdROICalculator plan={plan} onUpgrade={() => setShowPaywall(true)} />
+          )}
+          {activeTab === "abtest" && (
+            <ABAdCopyGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
+          )}
+          {activeTab === "landingpage" && (
+            <LandingPageCopy plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
           )}
 
           {/* TAB: SCRIPT LAB */}
