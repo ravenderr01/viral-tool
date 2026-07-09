@@ -10,11 +10,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Razorpay instance
-const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Razorpay instance — only init if keys present
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id:     process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  console.log("✅ Razorpay initialized");
+} else {
+  console.warn("⚠️  Razorpay keys missing — payment routes disabled");
+}
 
 // ── AI PROVIDER: Groq primary, Gemini fallback ────────────────────────────
 // Groq hits rate limit (429) → automatically switches to Gemini
@@ -707,6 +713,7 @@ const PLAN_CREDITS = {
 // Create Razorpay order
 app.post("/api/create-order", async (req, res) => {
   try {
+    if (!razorpay) return res.status(503).json({ error: "Payment gateway not configured" });
     const { amount, plan } = req.body;
     if (!amount || !plan) return res.status(400).json({ error: "amount and plan required" });
 
@@ -727,6 +734,7 @@ app.post("/api/create-order", async (req, res) => {
 // Verify payment + activate plan in Supabase
 app.post("/api/verify-payment", async (req, res) => {
   try {
+    if (!razorpay) return res.status(503).json({ success: false, error: "Payment gateway not configured" });
     const {
       razorpay_order_id,
       razorpay_payment_id,
