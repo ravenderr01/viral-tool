@@ -4288,7 +4288,7 @@ function ResultCard({ title, items, emoji, color, charLimit, onSaveToLibrary, ni
   const handleSave = async (item: string, idx: number) => {
     if (onSaveToLibrary) {
       await onSaveToLibrary({ content: item, type: type || "hook", niche, platform });
-      setSavedKeys(prev => new Set([...prev, idx]));
+      setSavedKeys(prev => new Set(Array.from(prev).concat(idx)));
     }
   };
 
