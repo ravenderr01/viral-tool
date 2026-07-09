@@ -5644,16 +5644,30 @@ Respond ONLY in JSON:
                   {["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform) ? (
                     <>
                       <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
-                      <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" charLimit={platform === "Google Ads" ? 30 : undefined} />
-                      <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" charLimit={platform === "Google Ads" ? 90 : undefined} />
+                      <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" charLimit={platform === "Google Ads" ? 30 : undefined} onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="title" />
+                      <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" charLimit={platform === "Google Ads" ? 90 : undefined} onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="caption" />
                       <KeywordResearchCard keywords={results.keywordSuggestions} />
                     </>
                   ) : platform === "YouTube" ? (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" /><ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
+                      <ResultCard title="Video Hooks" items={results.viralHooks} emoji="🎬" color="#6d28d9" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
+                      <ResultCard title="SEO Titles" items={results.titles} emoji="📝" color="#22c55e" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="title" />
+                      <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#f59e0b" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="caption" />
+                    </>
                   ) : platform === "Reddit" ? (
-                    <><ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" /><ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" /><ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#6d28d9" /></>
+                    <>
+                      <ResultCard title="Reddit Post Titles" items={results.viralHooks} emoji="🔴" color="#ff4500" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
+                      <ResultCard title="Subreddit Ideas" items={results.titles} emoji="📌" color="#ff6534" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="title" />
+                      <ResultCard title="Post Bodies" items={results.captions} emoji="💬" color="#6d28d9" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="caption" />
+                    </>
                   ) : (
-                    <><ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" /><ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" /><ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" /><ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" /></>
+                    <>
+                      <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
+                      <ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
+                      <ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="title" />
+                      <ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="caption" />
+                    </>
                   )}
                   <div style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
                     <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "#444", fontWeight: 600 }}>WANT MORE FROM THIS KEYWORD?</p>
