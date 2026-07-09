@@ -5017,48 +5017,196 @@ Respond ONLY in JSON:
         .gbtn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.2) !important; }
         .tbtn:hover { border-color:#6d28d9!important; color:#6d28d9!important; }
 
-        /* Tab bar — scrollable row on all screens, never wraps/squeezes */
-        .tab-scroll-row {
-          display: flex;
-          gap: 0.25rem;
-          overflow-x: auto;
-          overflow-y: hidden;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          scroll-snap-type: x proximity;
-        }
-        .tab-scroll-row::-webkit-scrollbar { display: none; }
-        .tab-scroll-row > button {
-          flex: 0 0 auto !important;
-          scroll-snap-align: start;
-          min-width: 78px;
+        /* ── RESET ── */
+        *{box-sizing:border-box}
+        input,textarea{box-sizing:border-box;max-width:100%}
+        ::-webkit-scrollbar{width:3px;height:3px}
+        ::-webkit-scrollbar-thumb{background:#1e1e2e;border-radius:3px}
+
+        /* ── ANIMATIONS ── */
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes progressBar{from{width:0%}to{width:100%}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes floatDown{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+        /* ── MAIN LAYOUT ── */
+        .app-shell{
+          min-height:100vh;
+          background:#020204;
+          color:#f1f5f9;
+          font-family:'Inter',sans-serif;
+          position:relative;
         }
 
-        @media (max-width: 768px) {
-          .desktop-btn { display: none !important; }
-          .mobile-header { padding: 3.5rem 0.75rem 0.5rem !important; max-width: 100vw; overflow-x: hidden; }
-          .mobile-top-bar { display: flex !important; }
-          .tab-scroll-row > button { min-width: 68px; font-size: 0.62rem !important; padding: 0.5rem 0.15rem !important; }
-          .platform-btn-row { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-          .platform-btn-row::-webkit-scrollbar { display: none; }
-          .platform-btn-row > button { flex: 0 0 auto !important; white-space: nowrap; }
+        /* ── SIDEBARS — desktop only ── */
+        .left-sidebar,.right-sidebar{
+          position:fixed;top:50%;transform:translateY(-50%);
+          display:flex;flex-direction:column;gap:.6rem;
+          z-index:10;width:150px;
         }
-        @media (min-width: 769px) and (max-width: 1024px) {
-          .mobile-header { padding: 1.25rem 1.5rem 1rem !important; }
+        .left-sidebar{left:1rem}
+        .right-sidebar{right:1rem}
+        .sidebar-card{
+          background:#080810;border-radius:10px;
+          padding:.55rem .7rem;opacity:.72;
         }
-        .mobile-top-bar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999; align-items: center; padding: 0.5rem 0.75rem; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 0.4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-        .mobile-top-bar::-webkit-scrollbar { display: none; }
-        .mobile-top-bar > button { flex-shrink: 0; }
-        .profile-trigger { display: block; }
-        @media (max-width: 768px) {
-          .profile-trigger { top: 0.75rem !important; left: 0.75rem !important; }
+
+        /* ── HEADER ── */
+        .app-header{
+          background:#080810;
+          border-bottom:1px solid #141426;
+          padding:1.1rem 1.5rem .9rem;
+          text-align:center;
+          position:relative;
         }
-        input,textarea { box-sizing:border-box; max-width: 100%; }
-        ::-webkit-scrollbar { width:4px; }
-        ::-webkit-scrollbar-thumb { background:#1e1e1e; border-radius:4px; }
+
+        /* ── MAIN CONTENT AREA ── */
+        .app-main{
+          max-width:660px;
+          margin:0 auto;
+          padding:1.25rem 1rem 5rem;
+        }
+
+        /* ── TAB GRID ── */
+        .tab-wrap{
+          max-width:660px;margin:0 auto;
+          display:flex;flex-direction:column;gap:.4rem;
+          margin-bottom:.85rem;
+        }
+        .tab-section-label{
+          display:flex;align-items:center;gap:.5rem;
+          padding:0 .2rem;margin-bottom:.1rem;
+        }
+        .tab-section-label span{
+          font-size:.55rem;font-weight:800;
+          letter-spacing:.12em;text-transform:uppercase;
+        }
+        .tab-section-line{flex:1;height:1px}
+        .tab-box{
+          border-radius:14px;padding:.45rem;
+        }
+        .tab-box-creator{background:#080810;border:1px solid #141426}
+        .tab-box-advertiser{background:#07080e;border:1px solid rgba(6,182,212,.15)}
+        .creator-tab-grid{
+          display:grid;
+          grid-template-columns:repeat(6,1fr);
+          gap:.3rem;
+        }
+        .advertiser-tab-grid{
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:.3rem;
+        }
+        .tab-btn{
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          gap:.22rem;padding:.55rem .2rem;
+          border-radius:10px;border:none;
+          cursor:pointer;font-family:'Inter',sans-serif;
+          transition:all .18s;background:transparent;
+          outline:1px solid transparent;
+          -webkit-tap-highlight-color:transparent;
+        }
+        .tab-btn:active{transform:scale(.95)}
+        .tab-btn.active-creator{
+          background:rgba(124,58,237,.16);
+          outline:1.5px solid rgba(124,58,237,.42);
+        }
+        .tab-btn-icon{font-size:1.1rem;line-height:1}
+        .tab-btn-label{
+          font-size:.58rem;font-weight:500;
+          line-height:1.2;text-align:center;
+          color:#71717a;letter-spacing:-.01em;
+        }
+        .tab-btn-label.active{color:#c4b5fd;font-weight:800}
+        .tab-btn-label.locked{color:#27272a}
+
+        /* ── CREDITS BAR ── */
+        .credits-bar{
+          max-width:660px;margin:0 auto .85rem;
+        }
+
+        /* ── PLATFORM BUTTONS ── */
+        .platform-btn-row{
+          display:flex;flex-wrap:wrap;
+          gap:.4rem;justify-content:center;
+        }
+
+        /* ── BUTTONS ── */
+        .gbtn:hover:not(:disabled){
+          transform:translateY(-1px);
+          box-shadow:0 4px 20px rgba(124,58,237,.2)!important;
+        }
+        .tbtn:hover{
+          border-color:#6d28d9!important;
+          color:#6d28d9!important;
+        }
+
+        /* ── MOBILE ── */
+        @media(max-width:768px){
+          .left-sidebar,.right-sidebar{display:none!important}
+          .app-header{padding:3.6rem .9rem .8rem}
+          .app-main{padding:1rem .9rem 6rem}
+          .tab-wrap{padding:0}
+          .creator-tab-grid{grid-template-columns:repeat(4,1fr)!important;gap:.28rem}
+          .tab-btn{padding:.5rem .15rem}
+          .tab-btn-icon{font-size:1rem}
+          .tab-btn-label{font-size:.56rem}
+          .platform-btn-row{
+            overflow-x:auto;flex-wrap:nowrap;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:none;
+            justify-content:flex-start;
+            padding-bottom:.2rem;
+          }
+          .platform-btn-row::-webkit-scrollbar{display:none}
+          .platform-btn-row>button{flex:0 0 auto!important;white-space:nowrap}
+          .desktop-btn{display:none!important}
+          .mobile-top-bar{display:flex!important}
+        }
+
+        /* ── TABLET ── */
+        @media(min-width:769px) and (max-width:1100px){
+          .left-sidebar,.right-sidebar{display:none!important}
+          .app-header{padding:1.1rem 1.25rem .9rem}
+          .creator-tab-grid{grid-template-columns:repeat(6,1fr)}
+        }
+
+        /* ── LARGE DESKTOP ── */
+        @media(min-width:1101px){
+          .app-main{max-width:680px}
+          .tab-wrap{max-width:680px}
+          .credits-bar{max-width:680px}
+        }
+
+        /* ── MOBILE TOP BAR (fixed) ── */
+        .mobile-top-bar{
+          display:none;position:fixed;
+          top:0;left:0;right:0;z-index:999;
+          align-items:center;padding:.5rem .75rem;
+          background:rgba(8,8,16,.96);
+          backdrop-filter:blur(12px);
+          border-bottom:1px solid #141426;
+          gap:.4rem;
+        }
+        .profile-trigger{display:block}
+        @media(max-width:768px){
+          .profile-trigger{top:.65rem!important;left:.75rem!important}
+        }
+
+        /* ── MISC ── */
+        .tab-scroll-row{
+          display:flex;gap:.25rem;
+          overflow-x:auto;overflow-y:hidden;
+          -webkit-overflow-scrolling:touch;
+          scrollbar-width:none;
+        }
+        .tab-scroll-row::-webkit-scrollbar{display:none}
+        .tab-scroll-row>button{flex:0 0 auto!important;min-width:72px}
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#000000", color: "#f1f5f9", fontFamily: "'Inter',sans-serif", position: "relative" }}>
+      <div className="app-shell">
 
         {/* LEFT SIDEBAR */}
         <div className="left-sidebar" style={{ position: "fixed", left: "1.25rem", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "0.65rem", zIndex: 10, width: "155px" }}>
@@ -5099,7 +5247,7 @@ Respond ONLY in JSON:
         </div>
 
         {/* Header */}
-        <div className="mobile-header" style={{ background: "#080808", borderBottom: "1px solid #1e1e1e", padding: "1.25rem 1.5rem 1rem", textAlign: "center", position: "relative" }}>
+        <div className="app-header">
 
           
 
@@ -5259,7 +5407,7 @@ Respond ONLY in JSON:
           </div>
 
           {/* Credits bar — professional */}
-          <div style={{ maxWidth:"640px", margin:"0 auto 0.85rem" }}>
+          <div className="credits-bar">
             <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:"12px", padding:".6rem 1rem", display:"flex", alignItems:"center", gap:".75rem" }}>
               {/* Plan badge */}
               <div style={{ display:"flex", alignItems:"center", gap:".35rem", flexShrink:0 }}>
@@ -5316,73 +5464,84 @@ Respond ONLY in JSON:
             </div>
           </div>
 
-          {/* ── TAB NAV — 2 rows, clearly separated ──────────────────── */}
-          <div style={{ maxWidth: "640px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          {/* ── TAB NAVIGATION ── */}
+          <div className="tab-wrap">
 
-            {/* ROW 1 — Social Media / Creator Tools */}
-            <div style={{ background: "#080808", borderRadius: "14px", padding: "0.3rem", border: "1px solid #141414" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", paddingLeft: "0.2rem", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", color: "#3f3f46", textTransform: "uppercase" }}>📱 Creator</span>
-              </div>
-              <div className="tab-scroll-row">
+            {/* Creator label */}
+            <div className="tab-section-label">
+              <span style={{ color:"#3f3f46" }}>📱 Creator Tools</span>
+              <div className="tab-section-line" style={{ background:"#141426" }} />
+            </div>
+
+            {/* Creator grid */}
+            <div className="tab-box tab-box-creator">
+              <div className="creator-tab-grid">
                 {[
-                  { id: "generate",     label: "Generate",    Icon: Zap          },
-                  { id: "score",        label: "Hook Score",  Icon: BarChart2    },
-                  { id: "caption",      label: "Captions",    Icon: FileText     },
-                  { id: "intelligence", label: "Intelligence", Icon: Search       },
-                  { id: "trends",       label: "Trends",      Icon: TrendingUp   },
-                  { id: "calendar",     label: "Calendar",    Icon: CalendarDays },
-                  { id: "pack",         label: "Pack",        Icon: Package      },
-                  { id: "image",        label: "Image AI",    Icon: Image        },
-                  { id: "scriptlab",    label: "Script Lab",  Icon: Film         },
-                  { id: "repurpose",    label: "Repurpose",   Icon: Layers       },
-                  { id: "competitor",   label: "Competitor",  Icon: MousePointerClick },
-                ].map(t => (
-                  <TabBtn key={t.id} id={t.id} label={t.label} Icon={t.Icon} active={activeTab === t.id} onClick={setActiveTab}
-                    isPro={
-                      (["calendar","pack","image","scriptlab"].includes(t.id) && plan === "free") ||
-                      (["repurpose","competitor"].includes(t.id) && ["free","creator_starter"].includes(plan))
-                    } />
-                ))}
+                  { id:"generate",     label:"Generate",    icon:"⚡" },
+                  { id:"score",        label:"Hook Score",  icon:"📊" },
+                  { id:"caption",      label:"Captions",    icon:"📋" },
+                  { id:"intelligence", label:"Intelligence", icon:"🔍" },
+                  { id:"trends",       label:"Trends",      icon:"📈" },
+                  { id:"library",      label:"My Library",  icon:"💾" },
+                  { id:"calendar",     label:"Calendar",    icon:"📅", locked: plan === "free" },
+                  { id:"pack",         label:"Pack",        icon:"📦", locked: plan === "free" },
+                  { id:"image",        label:"Image AI",    icon:"🖼️", locked: plan === "free" },
+                  { id:"scriptlab",    label:"Script Lab",  icon:"🎬", locked: plan === "free" },
+                  { id:"repurpose",    label:"Repurpose",   icon:"🔄", locked: ["free","creator_starter"].includes(plan) },
+                  { id:"competitor",   label:"Competitor",  icon:"🕵️", locked: ["free","creator_starter"].includes(plan) },
+                ].map(t => {
+                  const isActive = activeTab === t.id;
+                  return (
+                    <button key={t.id}
+                      className={`tab-btn${isActive?" active-creator":""}`}
+                      onClick={() => t.locked ? setShowPaywall(true) : setActiveTab(t.id)}>
+                      <span className="tab-btn-icon" style={{ filter:t.locked?"grayscale(1) opacity(.3)":"none" }}>
+                        {t.locked ? "🔒" : t.icon}
+                      </span>
+                      <span className={`tab-btn-label${isActive?" active":t.locked?" locked":""}`}>
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* ROW 2 — Advertiser Tools */}
-            <div style={{ background: "#07080e", borderRadius: "14px", padding: "0.3rem", border: "1px solid rgba(6,182,212,0.15)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", paddingLeft: "0.2rem", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", color: "rgba(6,182,212,0.6)", textTransform: "uppercase" }}>📢 Advertiser</span>
-                {!["advertiser","agency"].includes(plan) && (
-                  <span style={{ fontSize: "0.5rem", fontWeight: 700, color: "rgba(6,182,212,0.4)", background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: "4px", padding: "0.05rem 0.35rem" }}>
-                    Advertiser Plan
-                  </span>
-                )}
-              </div>
-              <div className="tab-scroll-row">
+            {/* Advertiser label */}
+            <div className="tab-section-label" style={{ marginTop:".15rem" }}>
+              <span style={{ color:"rgba(6,182,212,.65)" }}>📢 Advertiser</span>
+              <div className="tab-section-line" style={{ background:"rgba(6,182,212,.15)" }} />
+              {!["advertiser","agency"].includes(plan) && (
+                <span style={{ fontSize:".52rem", fontWeight:800, color:"rgba(6,182,212,.4)", background:"rgba(6,182,212,.06)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"4px", padding:".05rem .4rem", whiteSpace:"nowrap" }}>
+                  Advertiser Plan
+                </span>
+              )}
+            </div>
+
+            {/* Advertiser grid */}
+            <div className="tab-box tab-box-advertiser">
+              <div className="advertiser-tab-grid">
                 {[
-                  { id: "roi",         label: "ROI Calc",    Icon: BarChart2, color: "#f59e0b" },
-                  { id: "abtest",      label: "A/B Ad Copy", Icon: Zap,       color: "#06b6d4" },
-                  { id: "landingpage", label: "Landing Page", Icon: FileText,  color: "#22c55e" },
+                  { id:"roi",         label:"ROI Calc",    icon:"📊", color:"#f59e0b" },
+                  { id:"abtest",      label:"A/B Ads",     icon:"🧪", color:"#06b6d4" },
+                  { id:"landingpage", label:"Landing Page", icon:"🖥️", color:"#22c55e" },
                 ].map(t => {
-                  const isActive  = activeTab === t.id;
-                  const isLocked  = !["advertiser","agency"].includes(plan);
+                  const isActive = activeTab === t.id;
+                  const isLocked = !["advertiser","agency"].includes(plan);
                   return (
                     <button key={t.id}
+                      className="tab-btn"
                       onClick={() => isLocked ? setShowPaywall(true) : setActiveTab(t.id)}
                       style={{
-                        flex: "0 0 auto", padding: "0.45rem 0.9rem", borderRadius: "10px",
-                        border: isActive ? `1px solid ${t.color}50` : "1px solid transparent",
-                        cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.2s",
-                        background: isActive ? `${t.color}12` : "transparent",
-                        color: isLocked ? "#2a2a2a" : isActive ? t.color : "#52525b",
-                        fontWeight: isActive ? 700 : 500, fontSize: "0.72rem",
-                        display: "flex", alignItems: "center", gap: "0.35rem",
-                        whiteSpace: "nowrap", minWidth: "90px", justifyContent: "center",
+                        background: isActive ? `${t.color}14` : "transparent",
+                        outline: isActive ? `1.5px solid ${t.color}50` : "1px solid transparent",
                       }}>
-                      {isLocked
-                        ? <span style={{ fontSize: "0.62rem" }}>🔒</span>
-                        : <t.Icon size={13} strokeWidth={isActive ? 2.5 : 1.8} />
-                      }
-                      <span>{t.label}</span>
+                      <span className="tab-btn-icon" style={{ filter:isLocked?"grayscale(1) opacity(.25)":"none" }}>
+                        {isLocked ? "🔒" : t.icon}
+                      </span>
+                      <span className="tab-btn-label" style={{ color: isActive ? t.color : isLocked ? "#1e1e2e" : "#52525b", fontWeight: isActive ? 800 : 500 }}>
+                        {t.label}
+                      </span>
                     </button>
                   );
                 })}
