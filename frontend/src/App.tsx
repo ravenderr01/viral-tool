@@ -706,7 +706,583 @@ Return ONLY valid JSON:
   );
 }
 
-// ── CONTENT LIBRARY ──────────────────────────────────────────────────────────
+// ── WHATSAPP & EMAIL COPY GENERATOR ─────────────────────────────────────────
+function WhatsAppEmailCopy({ onCreditUsed }: any) {
+  const [type, setType]       = useState<"whatsapp"|"email"|"colddm">("whatsapp");
+  const [occasion, setOccasion] = useState("Diwali Sale");
+  const [business, setBusiness] = useState("");
+  const [offer, setOffer]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult]   = useState<any>(null);
+  const [copied, setCopied]   = useState("");
+
+  const OCCASIONS = ["Diwali Sale","New Year Offer","Product Launch","Weekend Sale","Festival Discount","New Arrival","Customer Offer","Flash Sale"];
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  const generate = async () => {
+    if (!business.trim()) return;
+    setLoading(true); setResult(null);
+    const prompts: Record<string, string> = {
+      whatsapp: `You are an expert WhatsApp marketing copywriter for Indian businesses.
+Business: ${business}
+Occasion/Offer: ${occasion} - ${offer || "Special discount"}
+
+Write 3 different WhatsApp broadcast messages. Keep each under 160 characters for best delivery. Use emojis naturally. Make it feel personal, not spammy. Indian tone.
+
+Return ONLY valid JSON:
+{
+  "messages": [
+    { "text": "message 1", "tone": "Urgent" },
+    { "text": "message 2", "tone": "Friendly" },
+    { "text": "message 3", "tone": "Exclusive" }
+  ],
+  "tip": "one tip for better WhatsApp open rates in India"
+}`,
+      email: `You are an expert email marketing copywriter for Indian businesses.
+Business: ${business}
+Occasion/Offer: ${occasion} - ${offer || "Special offer"}
+
+Write an email campaign. Make it personal and conversion-focused for Indian audience.
+
+Return ONLY valid JSON:
+{
+  "subject_lines": ["subject 1", "subject 2", "subject 3"],
+  "preview_text": "preview text under 90 chars",
+  "body": "full email body (2-3 short paragraphs)",
+  "cta": "CTA button text",
+  "tip": "one tip for better email open rates in India"
+}`,
+      colddm: `You are an expert at writing cold DMs for Indian creators and businesses.
+Business/Service: ${business}
+Goal: ${offer || "Get a client/collaboration"}
+
+Write 3 cold DM scripts for Instagram/LinkedIn. Short, personal, no spammy feel.
+
+Return ONLY valid JSON:
+{
+  "dms": [
+    { "text": "DM 1 (under 150 chars)", "approach": "Compliment + Ask" },
+    { "text": "DM 2 (under 150 chars)", "approach": "Value First" },
+    { "text": "DM 3 (under 150 chars)", "approach": "Direct Ask" }
+  ],
+  "tip": "one tip for cold DM response rate"
+}`
+    };
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content: prompts[type] }], max_tokens:900 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { setResult(null); }
+    setLoading(false);
+  };
+
+  const TYPE_CONFIG = {
+    whatsapp: { label:"💬 WhatsApp Broadcast", color:"#25d366" },
+    email:    { label:"📧 Email Campaign",      color:"#6d28d9" },
+    colddm:   { label:"📩 Cold DM",             color:"#06b6d4" },
+  };
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>💬 WhatsApp & Email Copy</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.1rem" }}>Festival messages, email campaigns, cold DMs — India-specific, ready to send.</p>
+
+      {/* Type selector */}
+      <div style={{ display:"flex", gap:".4rem", marginBottom:"1rem", flexWrap:"wrap" }}>
+        {(Object.entries(TYPE_CONFIG) as any).map(([key, val]: any) => (
+          <button key={key} onClick={() => setType(key)}
+            style={{ flex:1, minWidth:100, padding:".5rem .75rem", borderRadius:"9px", border:`1px solid ${type===key?val.color+"50":"#1a1a2e"}`, background:type===key?val.color+"14":"transparent", color:type===key?val.color:"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", whiteSpace:"nowrap" }}>
+            {val.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:".75rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Your Business / Brand</label>
+          <input value={business} onChange={e => setBusiness(e.target.value)}
+            placeholder="e.g. Ramesh Sarees Jaipur, FitZone Gym Mumbai, Digital Marketing Agency..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+        </div>
+
+        {type !== "colddm" && (
+          <div>
+            <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Occasion</label>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem" }}>
+              {OCCASIONS.map(o => (
+                <button key={o} onClick={() => setOccasion(o)}
+                  style={{ padding:".28rem .65rem", borderRadius:"6px", border:`1px solid ${occasion===o?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:occasion===o?"rgba(124,58,237,.12)":"transparent", color:occasion===o?"#a855f7":"#52525b", fontWeight:700, fontSize:".68rem", cursor:"pointer", fontFamily:"inherit" }}>
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>
+            {type === "colddm" ? "Your Goal" : "Offer Details"}
+          </label>
+          <input value={offer} onChange={e => setOffer(e.target.value)}
+            placeholder={type === "colddm" ? "e.g. Get brand collab, find clients for social media management..." : "e.g. 40% off on all sarees, Buy 1 Get 1 free, Extra ₹200 off..."}
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading||!business.trim()}
+        style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!business.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!business.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!business.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
+        {loading
+          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your copy...</>
+          : <><span>{TYPE_CONFIG[type].label}</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 2 cr</span></>
+        }
+      </button>
+
+      {result && type === "whatsapp" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          {result.messages?.map((m: any, i: number) => (
+            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <span style={{ fontSize:".6rem", fontWeight:800, color:"#25d366", textTransform:"uppercase", letterSpacing:".06em" }}>{m.tone}</span>
+                <button onClick={() => copy(m.text, `wa${i}`)} style={{ background: copied===`wa${i}`?"rgba(37,211,102,.1)":"transparent", border:`1px solid ${copied===`wa${i}`?"rgba(37,211,102,.3)":"#1a1a2e"}`, color:copied===`wa${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
+                  {copied===`wa${i}` ? "✓" : "Copy"}
+                </button>
+              </div>
+              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:"0 0 .3rem" }}>{m.text}</p>
+              <span style={{ fontSize:".6rem", color: m.text.length > 160 ? "#ef4444" : "#3f3f46" }}>{m.text.length}/160 chars</span>
+            </div>
+          ))}
+          {result.tip && <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem", fontSize:".75rem", color:"#a16207", lineHeight:1.6 }}><strong style={{ color:"#fbbf24" }}>💡 Tip:</strong> {result.tip}</div>}
+        </div>
+      )}
+
+      {result && type === "email" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+            <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .5rem", textTransform:"uppercase", letterSpacing:".06em" }}>Subject Lines (A/B Test)</p>
+            {result.subject_lines?.map((s: string, i: number) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".35rem" }}>
+                <p style={{ color:"#e2e8f0", fontSize:".82rem", margin:0 }}>{s}</p>
+                <button onClick={() => copy(s, `sub${i}`)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`sub${i}`?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".6rem", fontWeight:700, fontFamily:"inherit", flexShrink:0, marginLeft:".5rem" }}>{copied===`sub${i}`?"✓":"Copy"}</button>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:0, textTransform:"uppercase", letterSpacing:".06em" }}>Email Body</p>
+              <button onClick={() => copy(result.body, "body")} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied==="body"?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied==="body"?"✓":"Copy"}</button>
+            </div>
+            <p style={{ color:"#e2e8f0", fontSize:".8rem", lineHeight:1.75, margin:"0 0 .5rem" }}>{result.body}</p>
+            <span style={{ display:"inline-flex", alignItems:"center", gap:".3rem", background:"rgba(109,40,217,.1)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", fontSize:".7rem", fontWeight:700, padding:".18rem .55rem", borderRadius:"6px" }}>CTA: {result.cta}</span>
+          </div>
+          {result.tip && <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem", fontSize:".75rem", color:"#a16207" }}><strong style={{ color:"#fbbf24" }}>💡 Tip:</strong> {result.tip}</div>}
+        </div>
+      )}
+
+      {result && type === "colddm" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          {result.dms?.map((dm: any, i: number) => (
+            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <span style={{ fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase", letterSpacing:".06em" }}>{dm.approach}</span>
+                <button onClick={() => copy(dm.text, `dm${i}`)} style={{ background: copied===`dm${i}`?"rgba(6,182,212,.1)":"transparent", border:`1px solid ${copied===`dm${i}`?"rgba(6,182,212,.3)":"#1a1a2e"}`, color:copied===`dm${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`dm${i}`?"✓":"Copy"}</button>
+              </div>
+              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{dm.text}</p>
+            </div>
+          ))}
+          {result.tip && <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem", fontSize:".75rem", color:"#a16207" }}><strong style={{ color:"#fbbf24" }}>💡 Tip:</strong> {result.tip}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── BIO WRITER ───────────────────────────────────────────────────────────────
+function BioWriter({ onCreditUsed }: any) {
+  const [platform, setPlatform] = useState("Instagram");
+  const [name, setName]         = useState("");
+  const [profession, setProfession] = useState("");
+  const [usp, setUsp]           = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<any>(null);
+  const [copied, setCopied]     = useState("");
+
+  const PLATFORMS = ["Instagram","LinkedIn","Twitter/X","YouTube","Facebook","WhatsApp Business"];
+  const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
+
+  const generate = async () => {
+    if (!profession.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are an expert at writing social media bios for Indian creators and professionals.
+Platform: ${platform}
+Name: ${name || "Creator"}
+Profession/Role: ${profession}
+Unique selling point: ${usp || "Helping people with " + profession}
+
+Write 3 different ${platform} bios. Follow ${platform}'s character limits and tone exactly.
+Instagram: casual, emoji-friendly, 150 chars max, include CTA
+LinkedIn: professional, keyword-rich, 220 chars max
+Twitter/X: punchy, personality-driven, 160 chars max
+YouTube: SEO-friendly, 100 chars max for channel description opener
+Facebook: friendly, local, 255 chars max
+WhatsApp Business: professional, contact info focused, 139 chars max
+
+Return ONLY valid JSON:
+{
+  "bios": [
+    { "text": "bio option 1", "style": "Professional" },
+    { "text": "bio option 2", "style": "Casual" },
+    { "text": "bio option 3", "style": "Bold" }
+  ],
+  "keywords": ["keyword1", "keyword2", "keyword3"],
+  "tip": "one platform-specific tip for ${platform} bios"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { setResult(null); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>✍️ Bio Writer</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.1rem" }}>Professional bios for every platform — platform rules auto-followed.</p>
+
+      <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem", marginBottom:"1rem" }}>
+        {PLATFORMS.map(p => (
+          <button key={p} onClick={() => setPlatform(p)}
+            style={{ padding:".3rem .75rem", borderRadius:"7px", border:`1px solid ${platform===p?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:platform===p?"rgba(124,58,237,.12)":"transparent", color:platform===p?"#a855f7":"#52525b", fontWeight:700, fontSize:".7rem", cursor:"pointer", fontFamily:"inherit" }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:".65rem", marginBottom:".85rem" }}>
+        {[
+          { label:"Your Name", val:name, set:setName, placeholder:"e.g. Priya Sharma" },
+          { label:"Profession / Role", val:profession, set:setProfession, placeholder:"e.g. Fitness Coach, Digital Marketer, Saree Seller, Travel Blogger..." },
+          { label:"Your USP — What makes you different?", val:usp, set:setUsp, placeholder:"e.g. Helping working women lose weight in 30 days, Organic handloom only..." },
+        ].map(({ label, val, set, placeholder }) => (
+          <div key={label}>
+            <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>{label}</label>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={placeholder}
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+          </div>
+        ))}
+      </div>
+
+      <button onClick={generate} disabled={loading||!profession.trim()}
+        style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!profession.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!profession.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!profession.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
+        {loading
+          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your bios...</>
+          : <><span>✍️ Generate {platform} Bios</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 1 cr</span></>
+        }
+      </button>
+
+      {result && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          {result.bios?.map((b: any, i: number) => (
+            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <span style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase", letterSpacing:".06em" }}>{b.style}</span>
+                <div style={{ display:"flex", gap:".35rem", alignItems:"center" }}>
+                  <span style={{ fontSize:".58rem", color: b.text.length > 150 ? "#f59e0b" : "#3f3f46" }}>{b.text.length} chars</span>
+                  <button onClick={() => copy(b.text, `bio${i}`)} style={{ background: copied===`bio${i}`?"rgba(168,85,247,.1)":"transparent", border:`1px solid ${copied===`bio${i}`?"rgba(168,85,247,.3)":"#1a1a2e"}`, color:copied===`bio${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`bio${i}`?"✓":"Copy"}</button>
+                </div>
+              </div>
+              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{b.text}</p>
+            </div>
+          ))}
+          {result.keywords && (
+            <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.15)", borderRadius:"8px", padding:".65rem .9rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .4rem", textTransform:"uppercase", letterSpacing:".06em" }}>Keywords to use</p>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem" }}>
+                {result.keywords.map((k: string, i: number) => (
+                  <span key={i} style={{ background:"rgba(124,58,237,.1)", border:"1px solid rgba(124,58,237,.2)", color:"#a855f7", fontSize:".68rem", fontWeight:700, padding:".15rem .5rem", borderRadius:"5px" }}>{k}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.tip && <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem", fontSize:".75rem", color:"#a16207" }}><strong style={{ color:"#fbbf24" }}>💡 Tip:</strong> {result.tip}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── PRODUCT DESCRIPTION WRITER ───────────────────────────────────────────────
+function ProductDescWriter({ onCreditUsed }: any) {
+  const [platform, setPlatform] = useState("Instagram Shop");
+  const [productName, setProductName] = useState("");
+  const [features, setFeatures] = useState("");
+  const [price, setPrice]       = useState("");
+  const [language, setLanguage] = useState("English");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<any>(null);
+  const [copied, setCopied]     = useState("");
+
+  const PLATFORMS = ["Instagram Shop","Meesho","Amazon India","Flipkart","WhatsApp Catalogue","Website"];
+  const LANGUAGES = ["English","Hindi","Hinglish"];
+  const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
+
+  const generate = async () => {
+    if (!productName.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are an expert e-commerce copywriter for Indian sellers.
+Platform: ${platform}
+Product: ${productName}
+Features/Details: ${features || "Premium quality, best price"}
+Price: ${price ? "₹" + price : "Not specified"}
+Language: ${language}
+
+Write a complete ${platform} product listing. Follow ${platform}'s specific format:
+- Meesho: Short title + simple bullet points + reseller-friendly
+- Amazon India: SEO title (under 200 chars) + 5 bullet points + description
+- Flipkart: Title + key highlights + description
+- Instagram Shop: Hook + description + hashtags
+- WhatsApp Catalogue: Short name + description (under 500 chars)
+- Website: Full SEO product description
+
+Return ONLY valid JSON:
+{
+  "title": "optimized product title",
+  "description": "main description",
+  "bullet_points": ["point 1", "point 2", "point 3", "point 4", "point 5"],
+  "hashtags": ["#tag1", "#tag2", "#tag3"],
+  "keywords": ["keyword1", "keyword2", "keyword3"],
+  "tip": "one tip for better sales on ${platform}"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { setResult(null); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🛍️ Product Description Writer</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.1rem" }}>Meesho, Amazon, Flipkart, Instagram Shop — SEO-optimized listing in seconds.</p>
+
+      <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem", marginBottom:".75rem" }}>
+        {PLATFORMS.map(p => (
+          <button key={p} onClick={() => setPlatform(p)}
+            style={{ padding:".28rem .7rem", borderRadius:"7px", border:`1px solid ${platform===p?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:platform===p?"rgba(124,58,237,.12)":"transparent", color:platform===p?"#a855f7":"#52525b", fontWeight:700, fontSize:".68rem", cursor:"pointer", fontFamily:"inherit" }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", gap:".4rem", marginBottom:".85rem" }}>
+        {LANGUAGES.map(l => (
+          <button key={l} onClick={() => setLanguage(l)}
+            style={{ flex:1, padding:".35rem", borderRadius:"7px", border:`1px solid ${language===l?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:language===l?"rgba(124,58,237,.12)":"transparent", color:language===l?"#a855f7":"#52525b", fontWeight:700, fontSize:".72rem", cursor:"pointer", fontFamily:"inherit" }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:".65rem", marginBottom:".85rem" }}>
+        {[
+          { label:"Product Name", val:productName, set:setProductName, placeholder:"e.g. Banarasi Silk Saree, Whey Protein 1kg, LED Desk Lamp..." },
+          { label:"Key Features", val:features, set:setFeatures, placeholder:"e.g. Pure silk, hand-woven, 5.5 meters, blouse piece included..." },
+          { label:"Price (₹)", val:price, set:setPrice, placeholder:"e.g. 1299" },
+        ].map(({ label, val, set, placeholder }) => (
+          <div key={label}>
+            <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>{label}</label>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={placeholder}
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+          </div>
+        ))}
+      </div>
+
+      <button onClick={generate} disabled={loading||!productName.trim()}
+        style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!productName.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!productName.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!productName.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
+        {loading
+          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your listing...</>
+          : <><span>🛍️ Generate {platform} Listing</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 2 cr</span></>
+        }
+      </button>
+
+      {result && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          {[
+            { label:"Product Title", value:result.title, key:"title" },
+            { label:"Description", value:result.description, key:"desc" },
+          ].map(({ label, value, key }) => value && (
+            <div key={key} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <p style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", margin:0, textTransform:"uppercase", letterSpacing:".06em" }}>{label}</p>
+                <button onClick={() => copy(value, key)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===key?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied===key?"✓":"Copy"}</button>
+              </div>
+              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{value}</p>
+            </div>
+          ))}
+          {result.bullet_points?.length > 0 && (
+            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <p style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", margin:0, textTransform:"uppercase", letterSpacing:".06em" }}>Key Highlights</p>
+                <button onClick={() => copy(result.bullet_points.join("\n"), "bullets")} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied==="bullets"?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied==="bullets"?"✓":"Copy all"}</button>
+              </div>
+              {result.bullet_points.map((b: string, i: number) => (
+                <div key={i} style={{ display:"flex", gap:".5rem", marginBottom:".3rem" }}>
+                  <span style={{ color:"#22c55e", fontSize:".75rem", flexShrink:0 }}>✓</span>
+                  <p style={{ color:"#e2e8f0", fontSize:".8rem", margin:0, lineHeight:1.55 }}>{b}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.hashtags?.length > 0 && (
+            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".75rem 1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
+                <p style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", margin:0, textTransform:"uppercase", letterSpacing:".06em" }}>Hashtags</p>
+                <button onClick={() => copy(result.hashtags.join(" "), "tags")} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied==="tags"?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied==="tags"?"✓":"Copy"}</button>
+              </div>
+              <p style={{ color:"#7c3aed", fontSize:".75rem", lineHeight:1.8, margin:0 }}>{result.hashtags.join(" ")}</p>
+            </div>
+          )}
+          {result.tip && <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem", fontSize:".75rem", color:"#a16207" }}><strong style={{ color:"#fbbf24" }}>💡 Tip:</strong> {result.tip}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── VIRAL TEMPLATES ──────────────────────────────────────────────────────────
+function ViralTemplates({ niche, platform, onCreditUsed }: any) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [customNiche, setCustomNiche] = useState(niche || "");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<string[]>([]);
+  const [copied, setCopied]     = useState("");
+
+  const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
+
+  const TEMPLATES = [
+    { id:0, icon:"📈", label:"X to Y Journey",    formula:"I went from [X] to [Y] in [Z days]. Here's exactly what I did.",     example:"I went from 0 to 10K followers in 90 days. Here's exactly what I did." },
+    { id:1, icon:"🤫", label:"Nobody Talks About", formula:"Nobody talks about [uncomfortable truth in your niche] — but they should.",  example:"Nobody talks about how much time creators waste on production — but they should." },
+    { id:2, icon:"🔄", label:"Stop/Start",         formula:"Stop doing [wrong thing]. Start doing [right thing] instead.",         example:"Stop writing generic captions. Start writing platform-specific hooks instead." },
+    { id:3, icon:"📋", label:"3 Things I Wish",    formula:"3 things I wish I knew before [starting/doing X]:",                   example:"3 things I wish I knew before starting my Instagram page:" },
+    { id:4, icon:"🎯", label:"Unpopular Opinion",  formula:"Unpopular opinion: [contrarian take on your niche].",                  example:"Unpopular opinion: Posting more frequently is why your reach is declining." },
+    { id:5, icon:"⚡", label:"Before/After",        formula:"Before: [painful situation]. After: [transformation]. Here's what changed:", example:"Before: 3 hours to make one reel. After: 10 minutes. Here's what changed:" },
+    { id:6, icon:"💡", label:"How I [Result]",      formula:"How I [achieved result] with [simple method/tool].",                  example:"How I planned 30 days of content in under 5 minutes." },
+    { id:7, icon:"🔑", label:"Truth Nobody Tells",  formula:"The [niche] truth nobody tells you:",                                 example:"The content creation truth nobody tells you:" },
+    { id:8, icon:"🧵", label:"Thread Starter",      formula:"[Bold claim]. A thread 🧵",                                           example:"I analyzed 500 viral Indian reels. Here's the pattern. A thread 🧵" },
+    { id:9, icon:"❓", label:"Ask Me Anything",      formula:"I've been [doing X] for [Y years]. Ask me anything 👇",               example:"I've been creating content for 3 years. Ask me anything 👇" },
+    { id:10, icon:"😮", label:"Confession",          formula:"Confession: I [did something unexpected/vulnerable] and it [result].", example:"Confession: I didn't post for 30 days and my engagement actually went up." },
+    { id:11, icon:"📊", label:"Data/Stats Hook",    formula:"[Specific number] [surprising stat about your niche]. Here's why:",   example:"80% of Indian creators quit in 6 months. Here's why:" },
+  ];
+
+  const generate = async () => {
+    if (selected === null || !customNiche.trim()) return;
+    setLoading(true); setResult([]);
+    const template = TEMPLATES[selected];
+    const prompt = `Fill this viral content template for ${customNiche} niche on ${platform || "Instagram"}:
+
+Template formula: "${template.formula}"
+
+Generate 5 different variations of this template filled in for ${customNiche} niche. Make them specific, authentic, and viral-worthy for Indian audience.
+
+Return ONLY a JSON array of 5 strings:
+["variation 1", "variation 2", "variation 3", "variation 4", "variation 5"]`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:700 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      onCreditUsed?.();
+    } catch { setResult([]); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🎯 Viral Post Templates</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1rem" }}>12 proven viral formats. Pick one → fill for your niche → post.</p>
+
+      {/* Template grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:".4rem", marginBottom:"1rem" }}>
+        {TEMPLATES.map(t => (
+          <button key={t.id} onClick={() => { setSelected(t.id); setResult([]); }}
+            style={{ padding:".55rem .4rem", borderRadius:"9px", border:`1px solid ${selected===t.id?"rgba(124,58,237,.45)":"#1a1a2e"}`, background:selected===t.id?"rgba(124,58,237,.12)":"#080810", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", textAlign:"center" }}>
+            <div style={{ fontSize:"1.1rem", marginBottom:".2rem" }}>{t.icon}</div>
+            <div style={{ fontSize:".6rem", fontWeight: selected===t.id?800:600, color:selected===t.id?"#c4b5fd":"#52525b", lineHeight:1.3 }}>{t.label}</div>
+          </button>
+        ))}
+      </div>
+
+      {selected !== null && (
+        <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.18)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".85rem" }}>
+          <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Formula</p>
+          <p style={{ color:"#a1a1aa", fontSize:".8rem", margin:"0 0 .4rem", fontStyle:"italic", lineHeight:1.6 }}>"{TEMPLATES[selected].formula}"</p>
+          <p style={{ fontSize:".6rem", fontWeight:700, color:"#3f3f46", margin:"0 0 .2rem" }}>Example:</p>
+          <p style={{ color:"#52525b", fontSize:".76rem", margin:0, lineHeight:1.55 }}>{TEMPLATES[selected].example}</p>
+        </div>
+      )}
+
+      <div style={{ marginBottom:".85rem" }}>
+        <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Your Niche</label>
+        <input value={customNiche} onChange={e => setCustomNiche(e.target.value)}
+          placeholder="e.g. Fitness, Saree Business, Digital Marketing, Travel..."
+          style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+      </div>
+
+      <button onClick={generate} disabled={loading||selected===null||!customNiche.trim()}
+        style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:(selected===null||!customNiche.trim())?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:(selected===null||!customNiche.trim())?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:(selected===null||!customNiche.trim())?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
+        {loading
+          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating variations...</>
+          : <><span>🎯 Generate 5 Variations</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 1 cr</span></>
+        }
+      </button>
+
+      {result.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
+          {result.map((r, i) => (
+            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem", display:"flex", gap:".75rem", alignItems:"flex-start" }}>
+              <div style={{ width:22,height:22,borderRadius:"50%",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontSize:".62rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:".1rem" }}>{i+1}</div>
+              <p style={{ flex:1, color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{r}</p>
+              <button onClick={() => copy(r, `tpl${i}`)}
+                style={{ background: copied===`tpl${i}`?"rgba(168,85,247,.1)":"transparent", border:`1px solid ${copied===`tpl${i}`?"rgba(168,85,247,.3)":"#1a1a2e"}`, color:copied===`tpl${i}`?"#22c55e":"#52525b", padding:".18rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+                {copied===`tpl${i}` ? "✓" : "Copy"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ContentLibrary ──────────────────────────────────────────────────────────
 function ContentLibrary({ userId, supabase }: any) {
   const [items, setItems]       = useState<any[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -4891,15 +5467,25 @@ ALSO generate a keyword research list for this campaign. Follow these rules stri
         : "";
 
       const prompt = `${expertPersona}
-Keyword: "${keyword}"${adNicheNote}
+Keyword: "${keyword}"
+Niche: ${niche}
+Platform: ${platform}${adNicheNote}
 
 Generate: ${platformGuide[platform] || platformGuide["Instagram"]}${keywordResearchInstruction}${charLimitReminder}
 
 OUTPUT LANGUAGE: ${langStrict}
-IMPORTANT: Write EVERYTHING in the specified language/script. No English mixing if non-English selected.
-Keyword suggestions (if any) should stay in English/Latin script regardless of output language, since ad platforms require Latin-script targeting in most markets.
+IMPORTANT: Write EVERYTHING in ${langStrict}. No English mixing if non-English selected.
+Keyword suggestions (if any) stay in English/Latin script regardless of output language.
 
-Respond ONLY in JSON:
+QUALITY REQUIREMENTS — every output must pass these checks:
+1. Each hook must be DIFFERENT — different angle, different structure, different emotion
+2. No hook/title can start with the same word as another in the same array
+3. No banned phrases: "In this video", "Today I will", "Welcome back", "Don't forget to like"
+4. Every hook must include at least ONE of: specific number, specific result, specific timeframe, or specific situation
+5. Hooks must feel written by a human expert — not by an AI following a template
+6. Indian context where relevant: cities, festivals, ₹ pricing, Indian names/scenarios
+
+Respond ONLY in valid JSON:
 {"trendingTopics":["t1","t2","t3","t4","t5"],"viralHooks":["h1","h2","h3","h4","h5"],"titles":["t1","t2","t3","t4","t5"],"captions":["c1","c2","c3"]${keywordJsonField}}`;
 
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
@@ -5489,6 +6075,10 @@ Respond ONLY in JSON:
                   { id:"scriptlab",    label:"Script Lab",  icon:"🎬", locked: plan === "free" },
                   { id:"repurpose",    label:"Repurpose",   icon:"🔄", locked: ["free","creator_starter"].includes(plan) },
                   { id:"competitor",   label:"Competitor",  icon:"🕵️", locked: ["free","creator_starter"].includes(plan) },
+                  { id:"whatsapp",     label:"WA & Email",  icon:"💬" },
+                  { id:"bio",          label:"Bio Writer",  icon:"✍️" },
+                  { id:"product",      label:"Product Desc", icon:"🛍️" },
+                  { id:"templates",    label:"Templates",   icon:"🎯" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
                   return (
@@ -5797,6 +6387,18 @@ Respond ONLY in JSON:
 
           {activeTab === "library" && (
             <ContentLibrary userId={user?.id} supabase={supabase} />
+          )}
+          {activeTab === "whatsapp" && (
+            <WhatsAppEmailCopy onCreditUsed={() => incrementUsage("generate")} />
+          )}
+          {activeTab === "bio" && (
+            <BioWriter onCreditUsed={() => incrementUsage("generate")} />
+          )}
+          {activeTab === "product" && (
+            <ProductDescWriter onCreditUsed={() => incrementUsage("generate")} />
+          )}
+          {activeTab === "templates" && (
+            <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} />
           )}
           {activeTab === "roi" && (
             <AdROICalculator plan={plan} onUpgrade={() => setShowPaywall(true)} />
