@@ -706,6 +706,165 @@ Return ONLY valid JSON:
   );
 }
 
+// ── CONTENT LIBRARY ──────────────────────────────────────────────────────────
+function ContentLibrary({ userId, supabase }: any) {
+  const [items, setItems]       = useState<any[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [filter, setFilter]     = useState("all");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const FILTERS = ["all", "hook", "title", "caption", "script"];
+  const FILTER_LABELS: Record<string, string> = {
+    all: "All", hook: "Hooks", title: "Titles",
+    caption: "Captions", script: "Scripts"
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    loadLibrary();
+  }, [userId, filter]);
+
+  const loadLibrary = async () => {
+    setLoading(true);
+    let query = supabase
+      .from("content_library")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (filter !== "all") query = query.eq("type", filter);
+    const { data } = await query;
+    setItems(data || []);
+    setLoading(false);
+  };
+
+  const copyItem = (item: any) => {
+    navigator.clipboard.writeText(item.content);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const toggleFav = async (item: any) => {
+    await supabase.from("content_library")
+      .update({ is_favourite: !item.is_favourite })
+      .eq("id", item.id);
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_favourite: !i.is_favourite } : i));
+  };
+
+  const deleteItem = async (id: string) => {
+    setDeletingId(id);
+    await supabase.from("content_library").delete().eq("id", id);
+    setItems(prev => prev.filter(i => i.id !== id));
+    setDeletingId(null);
+  };
+
+  const typeColor: Record<string, string> = {
+    hook: "#a855f7", title: "#22c55e",
+    caption: "#06b6d4", script: "#f59e0b"
+  };
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem", flexWrap:"wrap", gap:".75rem" }}>
+        <div>
+          <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.1rem", color:"#fff", margin:"0 0 .2rem" }}>💾 My Content Library</h2>
+          <p style={{ color:"#52525b", fontSize:".75rem", margin:0 }}>{items.length} saved items — your best content, always here</p>
+        </div>
+        <div style={{ display:"flex", gap:".35rem", flexWrap:"wrap" }}>
+          {FILTERS.map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              style={{ padding:".32rem .75rem", borderRadius:"7px", border:`1px solid ${filter===f?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:filter===f?"rgba(124,58,237,.12)":"transparent", color:filter===f?"#a855f7":"#52525b", fontWeight:700, fontSize:".7rem", cursor:"pointer", fontFamily:"inherit" }}>
+              {FILTER_LABELS[f]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Empty state */}
+      {!loading && items.length === 0 && (
+        <div style={{ textAlign:"center", padding:"3rem 1rem", background:"#080810", border:"1px dashed #1a1a2e", borderRadius:"16px" }}>
+          <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>💾</div>
+          <p style={{ fontWeight:700, color:"#fff", fontSize:".9rem", marginBottom:".4rem" }}>No saved content yet</p>
+          <p style={{ color:"#52525b", fontSize:".78rem", lineHeight:1.6 }}>
+            Go to Generate tab → Click <strong style={{ color:"#6d28d9" }}>💾 Save</strong> next to any hook, title or caption.<br />
+            It will appear here instantly.
+          </p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ textAlign:"center", padding:"2rem", color:"#52525b", fontSize:".8rem" }}>
+          Loading your library...
+        </div>
+      )}
+
+      {/* Items */}
+      {!loading && items.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
+          {items.map(item => (
+            <div key={item.id} style={{ background:"#080810", border:`1px solid ${item.is_favourite?"rgba(245,158,11,.25)":"#141426"}`, borderRadius:"12px", padding:".9rem 1rem", display:"flex", gap:".75rem", alignItems:"flex-start", transition:"border-color .15s" }}>
+              {/* Type badge */}
+              <div style={{ flexShrink:0, marginTop:".1rem" }}>
+                <span style={{ background:`${typeColor[item.type]||"#6d28d9"}15`, border:`1px solid ${typeColor[item.type]||"#6d28d9"}30`, color:typeColor[item.type]||"#a855f7", fontSize:".55rem", fontWeight:800, padding:".1rem .4rem", borderRadius:"5px", textTransform:"uppercase", letterSpacing:".06em" }}>
+                  {item.type}
+                </span>
+              </div>
+
+              {/* Content */}
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:"0 0 .4rem", wordBreak:"break-word" }}>{item.content}</p>
+                <div style={{ display:"flex", gap:".5rem", flexWrap:"wrap" }}>
+                  {item.niche && <span style={{ fontSize:".6rem", color:"#3f3f46", background:"#0d0d18", border:"1px solid #1a1a2e", borderRadius:"4px", padding:".05rem .35rem" }}>{item.niche}</span>}
+                  {item.platform && <span style={{ fontSize:".6rem", color:"#3f3f46", background:"#0d0d18", border:"1px solid #1a1a2e", borderRadius:"4px", padding:".05rem .35rem" }}>{item.platform}</span>}
+                  {item.hook_score && <span style={{ fontSize:".6rem", color:"#a855f7", background:"rgba(168,85,247,.08)", border:"1px solid rgba(168,85,247,.2)", borderRadius:"4px", padding:".05rem .35rem" }}>Score: {item.hook_score}</span>}
+                  <span style={{ fontSize:".6rem", color:"#27272a" }}>{new Date(item.created_at).toLocaleDateString("en-IN", { day:"numeric", month:"short" })}</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display:"flex", gap:".35rem", flexShrink:0 }}>
+                <button onClick={() => toggleFav(item)}
+                  style={{ background:"none", border:"none", cursor:"pointer", fontSize:".9rem", opacity:item.is_favourite?1:.3, transition:"opacity .15s" }}
+                  title={item.is_favourite?"Remove from favourites":"Add to favourites"}>
+                  ⭐
+                </button>
+                <button onClick={() => copyItem(item)}
+                  style={{ background: copiedId===item.id?"rgba(34,197,94,.1)":"rgba(255,255,255,.04)", border:`1px solid ${copiedId===item.id?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copiedId===item.id?"#22c55e":"#52525b", padding:".2rem .55rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
+                  {copiedId===item.id ? "✓" : "Copy"}
+                </button>
+                <button onClick={() => deleteItem(item.id)}
+                  style={{ background:"none", border:"1px solid #1a1a2e", color: deletingId===item.id?"#ef4444":"#27272a", padding:".2rem .45rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontFamily:"inherit" }}>
+                  {deletingId===item.id ? "..." : "✕"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats bar */}
+      {!loading && items.length > 0 && (
+        <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.12)", borderRadius:"10px", padding:".65rem 1rem", marginTop:"1rem", display:"flex", gap:"1.5rem", flexWrap:"wrap" }}>
+          {FILTERS.filter(f=>f!=="all").map(f => {
+            const count = items.filter(i => i.type === f).length;
+            if (!count) return null;
+            return (
+              <div key={f} style={{ display:"flex", gap:".4rem", alignItems:"center" }}>
+                <span style={{ width:8, height:8, borderRadius:"50%", background:typeColor[f], display:"inline-block" }} />
+                <span style={{ fontSize:".7rem", color:"#71717a", fontWeight:600 }}>{FILTER_LABELS[f]}: <strong style={{ color:"#a855f7" }}>{count}</strong></span>
+              </div>
+            );
+          })}
+          <span style={{ fontSize:".7rem", color:"#27272a", marginLeft:"auto" }}>⭐ {items.filter(i=>i.is_favourite).length} favourited</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── AutoRepurposeEngine ─────────────────────────────────────────────────────
 function AutoRepurposeEngine({ usageCount, limit, onUpgrade, onCreditUsed, langStrict }: any) {
   const [content, setContent] = useState("");
@@ -4120,31 +4279,49 @@ function KeywordResearchCard({ keywords }: { keywords: any[] }) {
   );
 }
 
-function ResultCard({ title, items, emoji, color, charLimit }: any) {
-  const [copied, setCopied] = useState(false);
-  const safeItems: string[] = Array.isArray(items) ? items : [];
+function ResultCard({ title, items, emoji, color, charLimit, onSaveToLibrary, niche, platform, type }: any) {
+  const [copied, setCopied]       = useState(false);
+  const [savedKeys, setSavedKeys] = useState<Set<number>>(new Set());
+  const safeItems: string[]       = Array.isArray(items) ? items : [];
   if (safeItems.length === 0) return null;
 
+  const handleSave = async (item: string, idx: number) => {
+    if (onSaveToLibrary) {
+      await onSaveToLibrary({ content: item, type: type || "hook", niche, platform });
+      setSavedKeys(prev => new Set([...prev, idx]));
+    }
+  };
+
   return (
-    <div style={{ background: "#0f0f0f", border: `1px solid ${color}22`, borderRadius: "14px", padding: "1.1rem", marginBottom: "0.9rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-        <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", color, fontSize: "0.88rem" }}>{emoji} {title}</h3>
-        <button onClick={() => { const text = safeItems.join("\n"); navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); fireCopySignal("generate", title, text); }} style={{ background: copied ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copied ? "#22c55e" : "#2a2a2a"}`, color: copied ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem" }}>
+    <div style={{ background:"#0f0f0f", border:`1px solid ${color}22`, borderRadius:"14px", padding:"1.1rem", marginBottom:"0.9rem" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"0.6rem" }}>
+        <h3 style={{ margin:0, fontFamily:"'Inter',sans-serif", color, fontSize:"0.88rem" }}>{emoji} {title}</h3>
+        <button onClick={() => { const text = safeItems.join("\n"); navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); fireCopySignal("generate", title, text); }}
+          style={{ background:copied?"#22c55e18":"#ffffff0a", border:`1px solid ${copied?"#22c55e":"#2a2a2a"}`, color:copied?"#22c55e":"#555", padding:"0.2rem 0.6rem", borderRadius:"6px", cursor:"pointer", fontSize:"0.7rem" }}>
           {copied ? "✓ Copied!" : "Copy all"}
         </button>
       </div>
-      <ul style={{ margin: 0, padding: "0 0 0 1rem" }}>
+      <ul style={{ margin:0, padding:"0 0 0 1rem" }}>
         {safeItems.map((item: string, i: number) => {
-          const len = item.length;
+          const len      = item.length;
           const overLimit = charLimit && len > charLimit;
+          const isSaved  = savedKeys.has(i);
           return (
-            <li key={i} style={{ color: "#ccc", fontSize: "0.83rem", marginBottom: "0.35rem", lineHeight: 1.6, display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
-              <span>{item}</span>
-              {charLimit && (
-                <span style={{ flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: overLimit ? "#ef4444" : "#22c55e", whiteSpace: "nowrap" }}>
-                  {len}/{charLimit}{overLimit ? " ⚠" : ""}
-                </span>
-              )}
+            <li key={i} style={{ color:"#ccc", fontSize:"0.83rem", marginBottom:"0.45rem", lineHeight:1.6, display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:"0.5rem" }}>
+              <span style={{ flex:1 }}>{item}</span>
+              <div style={{ display:"flex", gap:"0.35rem", alignItems:"center", flexShrink:0 }}>
+                {charLimit && (
+                  <span style={{ fontSize:"0.65rem", fontWeight:700, color:overLimit?"#ef4444":"#22c55e", whiteSpace:"nowrap" }}>
+                    {len}/{charLimit}{overLimit?" ⚠":""}
+                  </span>
+                )}
+                {onSaveToLibrary && (
+                  <button onClick={() => handleSave(item, i)}
+                    style={{ background: isSaved?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${isSaved?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:isSaved?"#22c55e":"#6d28d9", padding:"0.1rem 0.45rem", borderRadius:"5px", cursor:isSaved?"default":"pointer", fontSize:"0.6rem", fontWeight:800, whiteSpace:"nowrap", transition:"all .15s" }}>
+                    {isSaved ? "✓ Saved" : "💾 Save"}
+                  </button>
+                )}
+              </div>
             </li>
           );
         })}
@@ -4528,6 +4705,23 @@ export default function ViralContentTool() {
   };
 
   // Universal history saver — call this from any feature after a successful generation
+  const saveToLibrary = async ({ content, type, niche: n, platform: p, hookScore }: { content: string; type: string; niche?: string; platform?: string; hookScore?: number }) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase.from("content_library").insert({
+        user_id:    user.id,
+        content,
+        type,
+        niche:      n || niche || null,
+        platform:   p || platform || null,
+        hook_score: hookScore || null,
+      });
+      if (error) console.error("Library save error:", error.message);
+    } catch (e) {
+      console.error("Library save exception:", e);
+    }
+  };
+
   const saveToHistory = async (feature: string, data: { niche?: string; platform?: string; keyword?: string; inputSummary: string; resultData: any }) => {
     if (!user?.id) return;
     try {
@@ -4780,6 +4974,7 @@ Respond ONLY in JSON:
     { id: "scriptlab",    label: "Script Lab",  Icon: Film },
     { id: "repurpose",    label: "Repurpose",   Icon: Layers },
     { id: "competitor",   label: "Competitor",  Icon: MousePointerClick },
+    { id: "library",      label: "My Library",  Icon: Package },
   ];
 
   if (authLoading || profileLoading) return (
@@ -5289,7 +5484,7 @@ Respond ONLY in JSON:
                   </div>
                   {["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform) ? (
                     <>
-                      <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} />
+                      <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
                       <ResultCard title="Ad Titles" items={results.titles} emoji="📝" color="#6d28d9" charLimit={platform === "Google Ads" ? 30 : undefined} />
                       <ResultCard title="Descriptions" items={results.captions} emoji="💬" color="#22c55e" charLimit={platform === "Google Ads" ? 90 : undefined} />
                       <KeywordResearchCard keywords={results.keywordSuggestions} />
@@ -5427,7 +5622,9 @@ Respond ONLY in JSON:
                   planRequired="Creator Pro" planPrice="₹999" onUpgrade={() => setShowPaywall(true)} />
           )}
 
-          {/* ADVERTISER EXCLUSIVE TABS */}
+          {activeTab === "library" && (
+            <ContentLibrary userId={user?.id} supabase={supabase} />
+          )}
           {activeTab === "roi" && (
             <AdROICalculator plan={plan} onUpgrade={() => setShowPaywall(true)} />
           )}
