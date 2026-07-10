@@ -5892,7 +5892,7 @@ Respond ONLY in valid JSON:
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(37,211,102,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
                     📢 WhatsApp Channel
                   </a>
-                  <a href="https://t.me/GetvciOffical" target="_blank" rel="noopener noreferrer" onClick={() => setShowProfile(false)} style={{ width: "100%", background: "none", border: "none", color: "#0088cc", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}
+                  <a href="https://t.me/GetvciOfficial" target="_blank" rel="noopener noreferrer" onClick={() => setShowProfile(false)} style={{ width: "100%", background: "none", border: "none", color: "#0088cc", padding: "0.55rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.82rem", textAlign: "left", display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(0,136,204,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
                     💭 Telegram Community
                   </a>
