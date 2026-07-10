@@ -5571,10 +5571,9 @@ Respond ONLY in valid JSON:
     setUserType(type);
     setShowOnboarding(false);
     setActiveTab("generate");
-    // Refresh user data after onboarding
     const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
     if (data) {
-      setUserData(data);
+      setProfile(data);
       setPlan(data.plan || "free");
       setCreditsRemaining(data.credits_remaining ?? 25);
       setCreditsTotal(data.credits_total ?? 25);
