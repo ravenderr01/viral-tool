@@ -5575,8 +5575,7 @@ Respond ONLY in valid JSON:
     if (data) {
       setProfile(data);
       setPlan(data.plan || "free");
-      setCreditsRemaining(data.credits_remaining ?? 25);
-      setCreditsTotal(data.credits_total ?? 25);
+      setUsageCount((data.credits_total || 25) - (data.credits_remaining ?? 25));
     }
   }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
