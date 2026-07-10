@@ -85,22 +85,32 @@ async function callGemini({ system, messages, max_tokens = 1500, temperature = 0
 
 // Main function — tries Groq first, falls back to Gemini on 429 or error
 async function callAI(options) {
+  // Try Groq
   try {
     const text = await callGroq(options);
-    console.log("✅ AI: Groq responded");
+    console.log("✅ AI: Groq");
     return text;
   } catch (err) {
-    const isRateLimit = err.status === 429 || err.message?.includes("rate") || err.message?.includes("limit");
-    console.log(`⚠️ Groq failed (${err.message}) → switching to Gemini`);
+    console.log(`⚠️ Groq failed (${err.message?.slice(0,50)}) → Gemini`);
+  }
 
-    try {
-      const text = await callGemini(options);
-      console.log("✅ AI: Gemini responded (fallback)");
-      return text;
-    } catch (geminiErr) {
-      console.error("❌ Both Groq and Gemini failed:", geminiErr.message);
-      throw new Error("AI service temporarily unavailable. Please try again.");
-    }
+  // Try Gemini
+  try {
+    const text = await callGemini(options);
+    console.log("✅ AI: Gemini fallback");
+    return text;
+  } catch (err) {
+    console.log(`❌ Gemini also failed: ${err.message?.slice(0,50)}`);
+  }
+
+  // Both failed — try Groq with smaller model as last resort
+  try {
+    console.log("🔄 Trying Groq 8B model...");
+    const text = await callGroq({ ...options, model: "llama-3.1-8b-instant" });
+    console.log("✅ AI: Groq 8B fallback");
+    return text;
+  } catch (err) {
+    throw new Error("AI temporarily busy. Please try again in a few seconds.");
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,11 +175,43 @@ app.post("/api/generate", async (req, res) => {
     const isYouTube    = userMessage.includes("YouTube") && !userMessage.includes("YouTube Ads");
     const isLinkedIn   = userMessage.includes("LinkedIn");
     const isTwitter    = userMessage.includes("Twitter") || userMessage.includes("X (Twitter)");
-    const isTikTok     = userMessage.includes("TikTok");
     const isWhatsApp   = userMessage.includes("WhatsApp") && !userMessage.includes("WhatsApp marketing expert");
     const isFacebook   = userMessage.includes("Facebook content expert");
     const isPinterest  = userMessage.includes("Pinterest SEO expert");
     const isSnapchat   = userMessage.includes("Snapchat content expert");
+
+    // Compact but powerful system prompts — optimized for token efficiency
+    const BASE = `You are VCI, India's #1 AI content tool. Rules: Never use generic openers like "Today I will" or "In this video". Always write for Indian audience. Include specific numbers/results. No banned words: unlock, boost, transform, skyrocket, leverage. Output ONLY valid JSON.`;
+
+    const systemPrompt = isGoogleAds ?
+`${BASE} Google Ads expert. STRICT: Headlines 25-30 chars, Descriptions 80-90 chars. Use numbers, urgency, specific CTAs. No superlatives.`
+    : isMetaAds ?
+`${BASE} Meta Ads expert. STRICT: Hooks 80-125 chars, start with pain point. Headlines 30-40 chars with specific result. Descriptions 200-250 chars using PAS framework. Include Indian context.`
+    : isFacebook ?
+`${BASE} Facebook content expert for India. Use story-based hooks 80-120 chars. Shareable community content. End with question. Max 3-5 hashtags.`
+    : isPinterest ?
+`${BASE} Pinterest SEO expert India. Titles 60-80 chars, keyword-rich. Descriptions 200-300 chars. Include Indian keywords.`
+    : isWhatsApp ?
+`${BASE} WhatsApp marketing expert India. Messages under 160 chars. Personal tone, not promotional. Clear single CTA. Avoid spam triggers.`
+    : isInstagram ?
+`${BASE} Instagram expert India. Hooks must work sound-OFF. Specific over generic: "lost 12kg" beats "lost weight". Captions 150-300 chars best. 5-10 niche hashtags.`
+    : isYouTube ?
+`${BASE} YouTube SEO expert India. Titles 50-60 chars, front-load keyword. CTR-optimized. Descriptions first 150 chars crucial.`
+    : isLinkedIn ?
+`${BASE} LinkedIn expert India. First 3 lines before "see more" decide everything. Personal stories 3x engagement. No corporate buzzwords. Max 3-5 hashtags. End with question.`
+    : isTwitter ?
+`${BASE} Twitter/X expert India. Under 280 chars. Numbers and contrarian opinions go viral. Max 2 hashtags.`
+    : isSnapchat ?
+`${BASE} Snapchat expert. Fun casual hooks 30-50 chars. Short captions 20-40 chars. Youth-focused Indian content.`
+    : `${BASE} Expert in Indian digital marketing and content creation. Platform-specific rules, Indian audience psychology, bilingual Hindi/English capability.`;
+
+    const text = await callAI({
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+      max_tokens: max_tokens || 2000,
+      temperature: 0.7
+    });
+    res.json({ content: [{ type: "text", text }] });
 
     const BASE_RULES = `
 CRITICAL OUTPUT RULES — follow every time:
