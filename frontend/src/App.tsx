@@ -844,7 +844,7 @@ Return ONLY valid JSON:
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!business.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!business.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!business.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
           ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your copy...</>
-          : <><span>{TYPE_CONFIG[type].label}</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 2 cr</span></>
+          : <><span>{TYPE_CONFIG[type].label}</span></>
         }
       </button>
 
@@ -993,7 +993,7 @@ Return ONLY valid JSON:
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!profession.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!profession.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!profession.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
           ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your bios...</>
-          : <><span>✍️ Generate {platform} Bios</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 1 cr</span></>
+          : <><span>✍️ Generate {platform} Bios</span></>
         }
       </button>
 
@@ -1125,7 +1125,7 @@ Return ONLY valid JSON:
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!productName.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!productName.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!productName.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
           ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your listing...</>
-          : <><span>🛍️ Generate {platform} Listing</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 2 cr</span></>
+          : <><span>🛍️ Generate {platform} Listing</span></>
         }
       </button>
 
@@ -1260,7 +1260,7 @@ Return ONLY a JSON array of 5 strings:
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:(selected===null||!customNiche.trim())?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:(selected===null||!customNiche.trim())?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:(selected===null||!customNiche.trim())?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
           ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating variations...</>
-          : <><span>🎯 Generate 5 Variations</span><span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"5px", fontSize:".62rem", fontWeight:700, padding:".08rem .4rem" }}>⚡ 1 cr</span></>
+          : <><span>🎯 Generate 5 Variations</span></>
         }
       </button>
 
@@ -6075,10 +6075,6 @@ Respond ONLY in valid JSON:
                   { id:"scriptlab",    label:"Script Lab",  icon:"🎬", locked: plan === "free" },
                   { id:"repurpose",    label:"Repurpose",   icon:"🔄", locked: ["free","creator_starter"].includes(plan) },
                   { id:"competitor",   label:"Competitor",  icon:"🕵️", locked: ["free","creator_starter"].includes(plan) },
-                  { id:"whatsapp",     label:"WA & Email",  icon:"💬" },
-                  { id:"bio",          label:"Bio Writer",  icon:"✍️" },
-                  { id:"product",      label:"Product Desc", icon:"🛍️" },
-                  { id:"templates",    label:"Templates",   icon:"🎯" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
                   return (
@@ -6108,13 +6104,17 @@ Respond ONLY in valid JSON:
               )}
             </div>
 
-            {/* Advertiser grid */}
+            {/* Advertiser grid — 7 tools in 4 cols */}
             <div className="tab-box tab-box-advertiser">
-              <div className="advertiser-tab-grid">
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:".3rem" }}>
                 {[
-                  { id:"roi",         label:"ROI Calc",    icon:"📊", color:"#f59e0b" },
-                  { id:"abtest",      label:"A/B Ads",     icon:"🧪", color:"#06b6d4" },
-                  { id:"landingpage", label:"Landing Page", icon:"🖥️", color:"#22c55e" },
+                  { id:"roi",         label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
+                  { id:"abtest",      label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
+                  { id:"landingpage", label:"Landing Page",  icon:"🖥️", color:"#22c55e" },
+                  { id:"whatsapp",    label:"WA & Email",    icon:"💬", color:"#25d366" },
+                  { id:"bio",         label:"Bio Writer",    icon:"✍️", color:"#a855f7" },
+                  { id:"product",     label:"Product Desc",  icon:"🛍️", color:"#f97316" },
+                  { id:"templates",   label:"Templates",     icon:"🎯", color:"#06b6d4" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
                   const isLocked = !["advertiser","agency"].includes(plan);
