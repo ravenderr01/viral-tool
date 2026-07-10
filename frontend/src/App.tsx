@@ -19,7 +19,7 @@ import {
 const YOUR_UPI_ID      = "9315133390@ptyes";
 const YOUR_PAYPAL_ME   = "https://paypal.me/yourname";
 const SUPPORT_PHONE    = "+91 9315133390";
-const RAZORPAY_KEY_ID  = "rzp_live_TBjvet1H95Ske8"; 
+const RAZORPAY_KEY_ID  = "rzp_live_OHQHt6nXnBolPG";
 
 // ── Razorpay Checkout loader ─────────────────────────────────────────────────
 function loadRazorpay(): Promise<boolean> {
@@ -5567,7 +5567,19 @@ Respond ONLY in valid JSON:
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
-  if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={(type: string) => { setUserType(type); setShowOnboarding(false); }} />;
+  if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={async (type: string) => {
+    setUserType(type);
+    setShowOnboarding(false);
+    setActiveTab("generate");
+    // Refresh user data after onboarding
+    const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
+    if (data) {
+      setUserData(data);
+      setPlan(data.plan || "free");
+      setCreditsRemaining(data.credits_remaining ?? 25);
+      setCreditsTotal(data.credits_total ?? 25);
+    }
+  }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} currency={currency} />;
   if (!user) return <Auth onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />;
