@@ -2504,36 +2504,19 @@ Respond ONLY in JSON:
     ctx.fillStyle = cfg.accent;
     ctx.fillRect(0, 0, isVertical ? 8 : 6, H);
 
-    // ── PLATFORM BADGE (top) ─────────────────────────────────────────────────
+    // ── PLATFORM BADGE (top) — minimal, no style/duration text ──────────────
     const pad = isVertical ? 70 : 48;
-    const badgeY = isVertical ? 80 : 44;
-    const badgeH = isVertical ? 60 : 42;
-    const badgeFS = isVertical ? 26 : 19;
 
-    if (plt === "Instagram") {
-      // Instagram rainbow gradient badge
-      const ig = ctx.createLinearGradient(pad, 0, pad + 420, 0);
-      ig.addColorStop(0,"#833ab4"); ig.addColorStop(0.5,"#fd1d1d"); ig.addColorStop(1,"#fcb045");
-      ctx.fillStyle = ig; roundRect(pad, badgeY, isVertical ? 440 : 300, badgeH, badgeH/2);
-      ctx.font = `800 ${badgeFS}px Arial`; ctx.fillStyle = "#fff"; ctx.textAlign = "left";
-      ctx.fillText(cfg.label + "  ·  " + sty, pad + 20, badgeY + badgeH * 0.68);
-    } else {
-      ctx.fillStyle = cfg.badge; roundRect(pad, badgeY, isVertical ? 380 : 260, badgeH, 10);
-      ctx.font = `800 ${badgeFS}px Arial`; ctx.fillStyle = cfg.badgeFg === "#000" ? "#000" : "#fff";
-      ctx.textAlign = "left"; ctx.fillText(cfg.label + "  ·  " + sty, pad + 18, badgeY + badgeH * 0.68);
-    }
-
-    // Duration pill
-    const durY = badgeY + badgeH + (isVertical ? 24 : 16);
-    const durFS = isVertical ? 22 : 16;
-    ctx.font = `700 ${durFS}px Arial`;
-    const durW = ctx.measureText(dur).width + (isVertical ? 44 : 32);
-    ctx.fillStyle = "rgba(255,255,255,0.1)"; roundRect(pad, durY, durW, isVertical ? 46 : 34, isVertical ? 23 : 17);
-    ctx.fillStyle = cfg.accent; ctx.fillText(dur, pad + (isVertical ? 22 : 16), durY + (isVertical ? 32 : 23));
+    // Just a small accent corner mark — no text badges that look generic
+    ctx.fillStyle = cfg.accent;
+    ctx.globalAlpha = 0.9;
+    // Small decorative accent pill top-left (no text — clean look)
+    roundRect(pad, isVertical ? 80 : 48, isVertical ? 8 : 6, isVertical ? 80 : 60, 4);
+    ctx.globalAlpha = 1;
 
     // ── TITLE (large, center of canvas) ──────────────────────────────────────
     const titleFS  = isVertical ? Math.min(96, Math.max(72, Math.floor(1800 / title.length))) : Math.min(80, Math.max(52, Math.floor(1400 / title.length)));
-    const titleY   = isVertical ? H * 0.42 : H * 0.38;
+    const titleY   = isVertical ? H * 0.38 : H * 0.35;
     const titleMaxW = W - pad * 2;
     const titleLineH = titleFS * 1.18;
 
@@ -2917,12 +2900,19 @@ Respond ONLY in JSON:
             <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "0.9rem", marginBottom: "0.75rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
                 <p style={{ margin: 0, fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🖼️ THUMBNAIL PREVIEW</p>
-                <a href={thumbnailUrl} download={`vci-thumbnail-${keyword.replace(/\s+/g,"-")}.jpg`}
-                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, textDecoration: "none" }}>
+                <button onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = thumbnailUrl!;
+                  link.download = `vci-thumbnail-${keyword.replace(/\s+/g,"-")}.jpg`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, fontFamily: "inherit" }}>
                   ⬇ Download
-                </a>
+                </button>
               </div>
-              <img src={thumbnailUrl} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
+              <img src={thumbnailUrl!} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
               {generateResult.thumbnail_idea && (
                 <p style={{ margin: "0.5rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight: 1.5 }}>💡 {generateResult.thumbnail_idea}</p>
               )}
