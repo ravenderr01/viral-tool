@@ -34,11 +34,11 @@ function loadRazorpay(): Promise<boolean> {
 }
 
 const PLANS = {
-  free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0  },
-  creator_starter:  { label: "Creator Starter",  limit: 120,   priceINR: 299.99,  priceUSD: 9,  badge: "🔥 Popular",    segment: "creator"  },
-  creator_pro:      { label: "Creator Pro",      limit: 550,   priceINR: 999.99,  priceUSD: 29, badge: "⚡ Best Value",  segment: "creator"  },
-  advertiser:       { label: "Advertiser",       limit: 1100,  priceINR: 1999.99, priceUSD: 49, badge: "📢 For Ads",     segment: "business" },
-  agency:           { label: "Agency",           limit: 2800,  priceINR: 4999.99, priceUSD: 99, badge: "👑 All Access",  segment: "agency"   },
+  free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0,  wasINR: 0,    wasUSD: 0  },
+  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 399,     priceUSD: 9,  wasINR: 499,  wasUSD: 12, badge: "🔥 Popular",    segment: "creator"  },
+  creator_pro:      { label: "Creator Pro",      limit: 500,   priceINR: 1299,    priceUSD: 29, wasINR: 1599, wasUSD: 35, badge: "⚡ Best Value",  segment: "creator"  },
+  advertiser:       { label: "Advertiser",       limit: 950,   priceINR: 2499,    priceUSD: 49, wasINR: 2999, wasUSD: 59, badge: "📢 For Ads",     segment: "business" },
+  agency:           { label: "Agency",           limit: 2400,  priceINR: 5999,    priceUSD: 99, wasINR: 7499, wasUSD: 119, badge: "👑 All Access",  segment: "agency"   },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -278,7 +278,7 @@ function AdROICalculator({ plan, onUpgrade }: any) {
       <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>📊</div>
       <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>Ad ROI Calculator</p>
       <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Enter budget → get estimated clicks, leads, revenue and ROAS. Advertiser plan only.</p>
-      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹2,499</button>
     </div>
   );
 
@@ -406,7 +406,7 @@ function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed }: any) {
       <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>🧪</div>
       <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>A/B Ad Copy Generator</p>
       <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Generate 2 completely different ad angles for the same product. Test which psychology wins.</p>
-      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹2,499</button>
     </div>
   );
 
@@ -537,7 +537,7 @@ function LandingPageCopy({ plan, onUpgrade, onCreditUsed }: any) {
       <div style={{ fontSize:"2rem", marginBottom:".75rem" }}>🖥️</div>
       <p style={{ fontWeight:800, fontSize:".95rem", marginBottom:".4rem" }}>Landing Page Copy</p>
       <p style={{ color:"#52525b", fontSize:".8rem", marginBottom:"1.25rem" }}>Generate complete landing page copy that matches your ad — headline, subheadline, benefits, CTA. Reduces bounce, increases conversions.</p>
-      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹1,999</button>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".7rem 1.5rem", borderRadius:"10px", fontWeight:800, cursor:"pointer" }}>Unlock — Advertiser Plan ₹2,499</button>
     </div>
   );
 
@@ -4542,11 +4542,17 @@ function PaywallModal({ onClose, onSelectPlan, currency }: any) {
                       <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
                         <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
                         {meta.highlight && <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>}
+                        {(plan as any).wasINR > 0 && <span style={{ fontSize:".52rem", fontWeight:800, background:"rgba(34,197,94,.12)", color:"#22c55e", border:"1px solid rgba(34,197,94,.25)", padding:".08rem .4rem", borderRadius:"5px" }}>🎉 Launch Price</span>}
                       </div>
                       <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
                     </div>
                     <div style={{ textAlign:"right" }}>
-                      <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                      {(plan as any).wasINR > 0 && (
+                        <div style={{ fontSize:".7rem", color:"#3f3f46", textDecoration:"line-through", marginBottom:".1rem" }}>
+                          {isUSD ? `$${(plan as any).wasUSD}` : `₹${(plan as any).wasINR}`}
+                        </div>
+                      )}
+                      <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#22c55e" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
                       <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
                     </div>
                   </div>
@@ -4935,7 +4941,7 @@ function LockedFeaturePreview({ emoji, title, tagline, previewItems, onUpgrade }
           <h3 style={{ margin: "0 0 0.4rem", fontFamily: "'Inter',sans-serif", fontSize: "1.1rem", color: "#fff", fontWeight: 800, textAlign: "center" }}>{title} is a Premium Feature</h3>
           <p style={{ margin: "0 0 1.1rem", color: "#a1a1aa", fontSize: "0.8rem", textAlign: "center", maxWidth: "320px", lineHeight: 1.6 }}>{tagline}</p>
           <button onClick={onUpgrade} style={{ background: "linear-gradient(135deg,#6d28d9,#8b5cf6)", border: "none", color: "#fff", padding: "0.75rem 1.75rem", borderRadius: "12px", fontWeight: 800, fontSize: "0.88rem", cursor: "pointer", boxShadow: "0 8px 24px rgba(109,40,217,0.4)" }}>
-            🚀 Unlock with Creator Starter — ₹299.99
+            🚀 Unlock with Creator Starter — ₹399
           </button>
           <p style={{ margin: "0.75rem 0 0", color: "#444", fontSize: "0.68rem" }}>Or upgrade to any paid plan to access this</p>
         </div>
@@ -5139,7 +5145,7 @@ export default function ViralContentTool() {
     try { return localStorage.getItem("vci_platform") || "Instagram"; } catch { return "Instagram"; }
   });
   const [niche, setNiche] = useState(() => {
-    try { return localStorage.getItem("vci_niche") || "Fitness"; } catch { return "Fitness"; }
+    try { return localStorage.getItem("vci_niche") || ""; } catch { return ""; }
   });
   const [showNiche, setShowNiche] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -5819,7 +5825,7 @@ Respond ONLY in valid JSON:
             { icon: "⚡", label: "10 sec", sub: "Generation time", color: "#6d28d9", anim: "floatDown 3.5s ease-in-out infinite" },
             { icon: "▶️", label: "89.4K views", sub: "YouTube Short", color: "#ef4444", anim: "floatUp 4s ease-in-out infinite" },
             { icon: "📅", label: "30-Day Plan", sub: "Content Calendar", color: "#059669", anim: "floatDown 4.5s ease-in-out infinite" },
-            { icon: "💎", label: "₹299/month", sub: "Starter Plan", color: "#22c55e", anim: "floatUp 3.8s ease-in-out infinite" },
+            { icon: "💎", label: "₹399/month", sub: "Starter Plan", color: "#22c55e", anim: "floatUp 3.8s ease-in-out infinite" },
             { icon: "🎯", label: "Platform-Specific", sub: "15+ Platforms", color: "#be185d", anim: "floatDown 5s ease-in-out infinite" },
           ].map((item, i) => (
             <div key={i} className="sidebar-card" style={{ background: "#080808", border: `1px solid ${item.color}18`, borderRadius: "10px", padding: "0.6rem 0.75rem", animation: item.anim, opacity: 0.7 }}>
@@ -5924,7 +5930,7 @@ Respond ONLY in valid JSON:
             <div className="ticker">
               {[...Array(2)].map((_, ri) => (
                 <span key={ri}>
-                  {["⚡ 500+ Creators", "🎣 Viral Hooks", "📅 30-Day Cal", "🌐 30+ Languages", "📦 Content Pack", "🖼️ Image AI", "🔥 20% OFF — First 100 Users"].map((item, i) => (
+                  {["⚡ 500+ Creators", "🎣 Viral Hooks", "📅 30-Day Cal", "🌐 30+ Languages", "📦 Content Pack", "🖼️ Image AI", "🔥 Launch Offer — First 100 Users"].map((item, i) => (
                     <span key={i} style={{ color: i === 6 ? "#8b5cf6" : "#3f3f46", fontSize: "0.68rem", fontWeight: i === 6 ? 800 : 600, padding: "0 1rem" }}>
                       {item} <span style={{ color: "#222" }}>·</span>
                     </span>
@@ -6323,7 +6329,7 @@ Respond ONLY in valid JSON:
                   <div style={{ color: "#444", fontSize: "0.77rem", marginBottom: "0.85rem" }}>
                     {currency === "USD"
                       ? "Creator Starter $9 · Creator Pro $29 · Advertiser $49 · Agency $99"
-                      : "Creator Starter ₹299.99 · Creator Pro ₹999.99 · Advertiser ₹1,999.99 · Agency ₹4,999.99"}
+                      : "Creator Starter ₹399 · Creator Pro ₹1,299 · Advertiser ₹2,499 · Agency ₹5,999"}
                   </div>
                   <button onClick={() => setShowPaywall(true)} style={{ background: "linear-gradient(135deg,#6d28d9,#6d28d9)", border: "none", color: "#fff", fontWeight: 800, padding: "0.55rem 1.5rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem" }}>🚀 Upgrade Now</button>
                 </div>
@@ -6372,7 +6378,7 @@ Respond ONLY in valid JSON:
               : <LockedFeaturePreview emoji="🔄" title="Auto-Repurpose Engine"
                   tagline="Paste any content — get 8 platform-native rewrites in one click. Instagram, LinkedIn, Twitter, WhatsApp, YouTube and more."
                   previewItems={["🔄 8 platforms rewritten natively", "📋 Best platform recommendation", "⚡ One click, instant output"]}
-                  planRequired="Creator Pro" planPrice="₹999" onUpgrade={() => setShowPaywall(true)} />
+                  planRequired="Creator Pro" planPrice="₹1,299" onUpgrade={() => setShowPaywall(true)} />
           )}
 
           {/* TAB: COMPETITOR ANALYZER — Creator Pro+ only */}
@@ -6382,7 +6388,7 @@ Respond ONLY in valid JSON:
               : <LockedFeaturePreview emoji="🕵️" title="Competitor Hook Analyzer"
                   tagline="Paste any viral content — understand the psychology, get a virality score, and receive 3 original versions for your niche."
                   previewItems={["📊 Virality score /100", "🧠 Psychological triggers decoded", "✍️ 3 original inspired versions"]}
-                  planRequired="Creator Pro" planPrice="₹999" onUpgrade={() => setShowPaywall(true)} />
+                  planRequired="Creator Pro" planPrice="₹1,299" onUpgrade={() => setShowPaywall(true)} />
           )}
 
           {activeTab === "library" && (
@@ -6638,7 +6644,7 @@ Respond ONLY in valid JSON:
               { q: "What's included in the free plan?", a: "Every new account starts with 25 free credits each month, with full access to Generate, Hook Score, and Caption & Hashtags. All niches, platforms, and 30+ languages are unlocked from day one — there's no restricted 'demo mode,' just genuine functionality to evaluate before you commit." },
               { q: "How are credits calculated for each feature?", a: "Credit cost reflects how much work each feature actually does: Generate (1 credit), Hook Score (2), Captions (2), Content Pack (5), 30-Day Calendar (6), Image AI (6), Script Lab Improve (5), Script Lab Generate (8), and AI Voiceover (3). Intelligence and Trends remain completely free." },
               { q: "How soon is my plan activated after payment?", a: "Once you've completed payment, send your screenshot to our WhatsApp support line. Plans are verified and activated manually within 2 hours. Payment via UPI: 9315133390@ptyes" },
-              { q: "Which plan is right for me?", a: "If you're a creator just getting started, Creator Starter (₹299.99 — 150 credits) covers the essentials. Posting daily across multiple formats? Creator Pro (₹999.99 — 600 credits) adds the 30-Day Calendar, Content Pack, Script Lab, and Image AI. Running paid campaigns on Google or Meta? Advertiser (₹1,999.99 — 700 credits) is purpose-built for ad copy and keyword research. Managing several clients across both content and advertising? Agency (₹4,999.99 — 2,000 credits) unlocks everything in one account." },
+              { q: "Which plan is right for me?", a: "If you're a creator just getting started, Creator Starter (₹399 — 150 credits) covers all 12 creator tools. Posting daily and need Repurpose + Competitor Analyzer? Creator Pro (₹1,299 — 500 credits). Running paid ads on Google or Meta? Advertiser (₹2,499 — 950 credits) includes ROI Calculator, A/B Ad Copy, Landing Page, WA/Email, Bio, Product Desc, and Templates. Managing multiple clients? Agency (₹5,999 — 2,400 credits) unlocks everything." },
               { q: "What's the difference between the Creator and Advertiser plans?", a: "Creator plans are scoped to social platforms — Instagram, YouTube, TikTok, and similar — and include the Calendar, Pack, Script Lab, and Image AI tools. The Advertiser plan is purpose-built for Google, Meta, YouTube, and Native Ads: headlines, descriptions, and AI-estimated keyword research, each respecting the platform's exact character limits. The Agency plan includes both in full." },
               { q: "Do unused credits carry over to the next month?", a: "Credits refresh automatically at the start of each billing cycle based on your plan. Unused credits from the previous month do not carry forward — we'd recommend planning your usage within each cycle to get full value from your subscription." },
               { q: "What is your refund policy?", a: "If you cancel within 24 hours of subscribing, we'll refund your payment minus the value of any credits you've already used during that period — calculated at standard per-credit rates. This keeps things fair for everyone: you're only charged for what you actually used, and we're not left covering costs for AI generations already delivered. Refund requests must be raised within the 24-hour window via WhatsApp; requests made after this period are not eligible for a refund. Reach out to +91 9315133390 to initiate a request." },

@@ -135,23 +135,23 @@ FREE PLAN — ₹0
 - Access: Generate, Hook Score, Captions, Intelligence, Trends
 - Intelligence + Trends: always free forever
 
-CREATOR STARTER — ₹299/month
+CREATOR STARTER — ₹399/month
 - 120 credits/month
 - Unlocks: Script Lab, Calendar, Content Pack, Image AI
 - All platforms, 30+ languages
 
-CREATOR PRO — ₹999/month
+CREATOR PRO — ₹1,299/month
 - 550 credits/month
 - Everything in Starter +
 - Repurpose Engine + Competitor Analyzer
 
-ADVERTISER — ₹1,999/month
+ADVERTISER — ₹2,499/month
 - 1,100 credits/month
 - Everything in Creator Pro +
 - ROI Calculator + A/B Ad Copy + Landing Page Copy + WA Email + Bio + Product Desc + Templates
 - Google Ads + Meta Ads platforms
 
-AGENCY — ₹4,999/month
+AGENCY — ₹5,999/month
 - 2,800 credits/month
 - Everything unlocked
 - Multiple clients, all platforms
@@ -177,7 +177,7 @@ When asked why VCI is the best, say:
 2. 7 Indian language Neural TTS voiceover (no other tool has this)
 3. Professional audio ducking — same tech as YouTube/radio
 4. Built for Indian audience — India-specific hooks, festivals, context
-5. Price: ₹299 vs competitors ₹1,600+ (ChatGPT), ₹4,000+ (Canva Pro)
+5. Price: ₹399 vs competitors ₹1,600+ (ChatGPT), ₹4,000+ (Canva Pro)
 6. 18 tools in one subscription — not 5 different apps
 7. Hook Score Analyzer tells you BEFORE posting if it will work
 8. Content Library saves your best content — never lose a good hook
@@ -191,10 +191,10 @@ COMMON QUESTIONS — EXACT ANSWERS
 Q: Which plan is best for me?
 A: Ask what they do:
    - New creator just starting → Free (25 credits) to try
-   - Creator posting regularly → Creator Starter ₹299
-   - Creator who needs Repurpose + Competitor → Creator Pro ₹999
-   - Business running ads → Advertiser ₹1,999
-   - Agency with multiple clients → Agency ₹4,999
+   - Creator posting regularly → Creator Starter ₹399
+   - Creator who needs Repurpose + Competitor → Creator Pro ₹1,299
+   - Business running ads → Advertiser ₹2,499
+   - Agency with multiple clients → Agency ₹5,999
 
 Q: Do credits expire?
 A: Credits reset on 1st of every month. Use them within the month.
