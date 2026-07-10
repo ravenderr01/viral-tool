@@ -19,7 +19,7 @@ import {
 const YOUR_UPI_ID      = "9315133390@ptyes";
 const YOUR_PAYPAL_ME   = "https://paypal.me/yourname";
 const SUPPORT_PHONE    = "+91 9315133390";
-const RAZORPAY_KEY_ID  = "rzp_live_XXXXXXXXXXXX"; // ← Apni Razorpay Live Key yahan paste karo
+const RAZORPAY_KEY_ID  = "rzp_live_TBjvet1H95Ske8"; 
 
 // ── Razorpay Checkout loader ─────────────────────────────────────────────────
 function loadRazorpay(): Promise<boolean> {
