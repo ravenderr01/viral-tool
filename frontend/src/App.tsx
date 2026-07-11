@@ -4295,9 +4295,6 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
             const result = await verifyRes.json();
             if (result.success) {
               setSuccess(true);
-              // Update local state immediately — no need to refresh
-              setPlan(result.plan);
-              setUsageCount(0); // fresh credits
               setTimeout(() => onPaid(plan), 2000);
             } else {
               setError("Activation failed. WhatsApp karo: " + SUPPORT_PHONE);
@@ -5551,7 +5548,20 @@ Respond ONLY in valid JSON:
   };
 
   const handleSelectPlan = (p: string) => { setShowPaywall(false); setPayingPlan(p); };
-  const handlePaid = (p: string) => { setPayingPlan(null); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 4000); };
+  const handlePaid = async (p: string) => {
+    setPayingPlan(null);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 5000);
+    // Refresh user data from Supabase so plan + credits update instantly
+    if (user?.id) {
+      const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
+      if (data) {
+        setProfile(data);
+        setPlan(data.plan || "free");
+        setUsageCount((data.credits_total || 25) - (data.credits_remaining ?? 0));
+      }
+    }
+  };
 
   const tabs = [
     { id: "generate",     label: "Generate",    Icon: Zap },
