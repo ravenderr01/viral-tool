@@ -4744,55 +4744,47 @@ CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a n
 }
 
 function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
-  const [currency, setCurrency]   = useState(detectedCurrency === "USD" ? "USD" : "INR");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const [success, setSuccess]     = useState(false);
-  const [copied, setCopied]       = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+  const [success,  setSuccess]  = useState(false);
+  const [step,     setStep]     = useState<"choose"|"upi"|"processing">("choose");
+  const [copied,   setCopied]   = useState(false);
+
   const planData = PLANS[plan as keyof typeof PLANS];
-  const priceINR = Math.round((planData?.priceINR || 0));
+  const priceINR = Math.round(planData?.priceINR || 0);
   const priceUSD = planData?.priceUSD || 0;
 
-  // ── Razorpay Payment ────────────────────────────────────────────────────────
+  // ── Razorpay Checkout ──────────────────────────────────────────────────────
   const payWithRazorpay = async () => {
-    setLoading(true); setError("");
+    setLoading(true); setError(""); setStep("processing");
     try {
-      // Load Razorpay SDK
       const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Razorpay failed to load. Please try UPI below.");
+      if (!loaded) throw new Error("Razorpay load failed — check internet connection.");
 
-      // Create order from backend
       const orderRes = await fetch("https://viral-tool-1.onrender.com/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: priceINR * 100, plan }) // paise mein
+        body: JSON.stringify({ amount: priceINR * 100, plan })
       });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.orderId) {
+        throw new Error(orderData.error || "Order creation failed. Try again.");
+      }
 
-      if (!orderRes.ok) throw new Error("Could not create order. Please try again.");
-      const { orderId } = await orderRes.json();
-
-      // Get user email for prefill
       const { data: { user } } = await (window as any).supabase?.auth?.getUser() || { data: { user: null } };
 
-      // Open Razorpay checkout
       const options = {
         key:         RAZORPAY_KEY_ID,
         amount:      priceINR * 100,
         currency:    "INR",
         name:        "VCI — Viral Content Intelligence",
-        description: `${planData?.label} Plan`,
-        order_id:    orderId,
-        prefill: {
-          email: user?.email || "",
-          contact: "",
-        },
-        notes: {
-          plan: plan,
-          user_id: user?.id || "",
-        },
-        theme: { color: "#7c3aed" },
+        description: `${planData?.label} Plan · ${planData?.limit} credits`,
+        order_id:    orderData.orderId,
+        prefill:     { email: user?.email || "", contact: "" },
+        notes:       { plan, user_id: user?.id || "" },
+        theme:       { color: "#7c3aed", hide_topbar: false },
         modal: {
-          ondismiss: () => { setLoading(false); }
+          ondismiss: () => { setLoading(false); setStep("choose"); }
         },
         handler: async (response: any) => {
           try {
@@ -4803,20 +4795,22 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
                 razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
-                plan:      plan,
-                userId:    user?.id || "",
+                plan,
+                userId:    user?.id    || "",
                 userEmail: user?.email || "",
               })
             });
             const result = await verifyRes.json();
             if (result.success) {
               setSuccess(true);
-              setTimeout(() => onPaid(plan), 2000);
+              setTimeout(() => onPaid(plan), 2500);
             } else {
-              setError("Activation failed. WhatsApp karo: " + SUPPORT_PHONE);
+              setError("Plan activation failed. WhatsApp karo: " + SUPPORT_PHONE);
+              setStep("choose");
             }
           } catch {
-            setError("Payment done but verification failed. Screenshot bhejo WhatsApp pe: " + SUPPORT_PHONE);
+            setError("Payment done but activation failed. Screenshot bhejo WhatsApp pe: " + SUPPORT_PHONE);
+            setStep("choose");
           }
           setLoading(false);
         }
@@ -4824,141 +4818,139 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", (resp: any) => {
-        setError("Payment failed: " + (resp.error?.description || "Unknown error"));
-        setLoading(false);
+        const msg = resp?.error?.description || resp?.error?.reason || "Payment failed";
+        setError(`Payment failed: ${msg}. Please try again or use UPI QR below.`);
+        setLoading(false); setStep("choose");
       });
       rzp.open();
 
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
-      setLoading(false);
+      setError(err.message || "Something went wrong. Try again.");
+      setLoading(false); setStep("choose");
     }
   };
 
+  // ── Success Screen ─────────────────────────────────────────────────────────
   if (success) return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.95)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem" }}>
-      <div style={{ background:"#080810", border:"1px solid #22c55e", borderRadius:"20px", padding:"2rem", maxWidth:"400px", width:"100%", textAlign:"center", animation:"slideUp .3s ease" }}>
-        <div style={{ fontSize:"3rem", marginBottom:".75rem" }}>🎉</div>
-        <h2 style={{ fontWeight:900, fontSize:"1.3rem", color:"#22c55e", marginBottom:".5rem" }}>Payment Successful!</h2>
-        <p style={{ color:"#71717a", fontSize:".85rem", marginBottom:"1rem" }}>{planData?.label} plan activating...</p>
-        <div style={{ background:"rgba(34,197,94,.08)", border:"1px solid rgba(34,197,94,.2)", borderRadius:"10px", padding:".75rem", fontSize:".8rem", color:"#22c55e" }}>
-          ✓ {planData?.limit} credits added to your account
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem" }}>
+      <div style={{ background:"#080810", border:"2px solid #22c55e", borderRadius:"20px", padding:"2.5rem 2rem", maxWidth:"380px", width:"100%", textAlign:"center", animation:"slideUp .3s ease" }}>
+        <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(34,197,94,.12)", border:"2px solid #22c55e", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2rem", margin:"0 auto 1rem" }}>🎉</div>
+        <h2 style={{ fontWeight:900, fontSize:"1.3rem", color:"#22c55e", margin:"0 0 .5rem" }}>Payment Successful!</h2>
+        <p style={{ color:"#71717a", fontSize:".85rem", margin:"0 0 1.25rem" }}>{planData?.label} plan activating...</p>
+        <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.2)", borderRadius:"12px", padding:"1rem" }}>
+          <p style={{ color:"#22c55e", fontWeight:800, fontSize:".9rem", margin:"0 0 .3rem" }}>✓ {planData?.limit} credits added</p>
+          <p style={{ color:"#52525b", fontSize:".75rem", margin:0 }}>Redirecting to dashboard...</p>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.95)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", overflowY:"auto" }}>
-      <div style={{ background:"#080810", border:"1px solid rgba(124,58,237,.3)", borderRadius:"20px", padding:"1.75rem", maxWidth:"440px", width:"100%", color:"#fff", animation:"slideUp .3s ease" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", overflowY:"auto" }}>
+      <div style={{ background:"#080810", border:"1px solid rgba(124,58,237,.3)", borderRadius:"20px", padding:"1.75rem", maxWidth:"420px", width:"100%", color:"#fff", animation:"slideUp .3s ease" }}>
 
         {/* Header */}
-        <div style={{ textAlign:"center", marginBottom:"1.25rem" }}>
-          <div style={{ fontSize:"1.75rem", marginBottom:".4rem" }}>💳</div>
-          <h2 style={{ fontWeight:900, fontSize:"1.2rem", margin:"0 0 .4rem" }}>Complete Payment</h2>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:".5rem", background:"rgba(124,58,237,.1)", border:"1px solid rgba(124,58,237,.25)", borderRadius:"20px", padding:".3rem .9rem" }}>
-            <span style={{ fontWeight:800, color:"#fff" }}>{planData?.label}</span>
-            <span style={{ color:"#a855f7", fontWeight:900 }}>₹{priceINR}</span>
+        <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:".5rem", background:"rgba(124,58,237,.08)", border:"1px solid rgba(124,58,237,.2)", borderRadius:"20px", padding:".3rem .9rem", marginBottom:".75rem" }}>
+            <span style={{ fontSize:".7rem", color:"#a855f7", fontWeight:700 }}>🔒 Secured by Razorpay</span>
+          </div>
+          <h2 style={{ fontWeight:900, fontSize:"1.25rem", margin:"0 0 .3rem" }}>Complete Your Purchase</h2>
+          <div style={{ display:"inline-flex", alignItems:"baseline", gap:".4rem", background:"rgba(124,58,237,.06)", border:"1px solid rgba(124,58,237,.15)", borderRadius:"10px", padding:".4rem 1rem" }}>
+            <span style={{ fontWeight:800, color:"#e2e8f0", fontSize:".9rem" }}>{planData?.label}</span>
+            <span style={{ color:"#a855f7", fontWeight:900, fontSize:"1.2rem" }}>₹{priceINR}</span>
             <span style={{ color:"#3f3f46", fontSize:".72rem" }}>/month</span>
           </div>
         </div>
 
-        {/* Currency toggle */}
-        <div style={{ display:"flex", gap:".35rem", background:"#0d0d18", borderRadius:"10px", padding:".25rem", marginBottom:"1.1rem" }}>
-          {[["INR","🇮🇳 UPI / Cards (India)"],["USD","🌍 PayPal (International)"]].map(([c,l]) => (
-            <button key={c} onClick={() => setCurrency(c)}
-              style={{ flex:1, padding:".5rem", borderRadius:"8px", border:"none", fontFamily:"inherit",
-                background: currency===c ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "transparent",
-                color: currency===c ? "#fff" : "#52525b", fontWeight:700, cursor:"pointer", fontSize:".78rem" }}>
-              {l}
-            </button>
-          ))}
+        {/* What you get */}
+        <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".65rem 1rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", gap:".75rem" }}>
+          <span style={{ fontSize:"1.1rem", flexShrink:0 }}>⚡</span>
+          <p style={{ color:"#94a3b8", fontSize:".75rem", margin:0, lineHeight:1.6 }}>
+            <strong style={{ color:"#22c55e" }}>{planData?.limit} credits/month</strong> · Instant activation · All features unlocked · Cancel anytime
+          </p>
         </div>
-
-        {/* INR — Razorpay */}
-        {currency === "INR" && (
-          <div>
-            {/* Primary — Razorpay button */}
-            <button onClick={payWithRazorpay} disabled={loading}
-              style={{ width:"100%", padding:"1rem", borderRadius:"12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color: loading ? "#444" : "#fff", fontWeight:800, fontSize:".95rem", cursor: loading ? "not-allowed" : "pointer", marginBottom:".75rem", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", boxShadow: loading ? "none" : "0 6px 24px rgba(124,58,237,.35)" }}>
-              {loading
-                ? <><span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin .8s linear infinite" }} /> Processing...</>
-                : <>💳 Pay ₹{priceINR} — UPI / Cards / NetBanking</>
-              }
-            </button>
-
-            {/* Divider */}
-            <div style={{ display:"flex", alignItems:"center", gap:".6rem", margin:".75rem 0" }}>
-              <div style={{ flex:1, height:"1px", background:"#1a1a2e" }} />
-              <span style={{ color:"#3f3f46", fontSize:".68rem", fontWeight:600 }}>or pay directly via UPI</span>
-              <div style={{ flex:1, height:"1px", background:"#1a1a2e" }} />
-            </div>
-
-            {/* Fallback — Direct UPI */}
-            <div style={{ background:"#050508", border:"1px solid #1a1a2e", borderRadius:"12px", padding:"1rem", textAlign:"center" }}>
-              <p style={{ color:"#52525b", fontSize:".72rem", margin:"0 0 .65rem" }}>📱 Scan with PhonePe / GPay / Paytm</p>
-              <div style={{ background:"#fff", borderRadius:"10px", padding:"8px", display:"inline-block", marginBottom:".65rem" }}>
-                <img src={getUPIQR(YOUR_UPI_ID, priceINR)} alt="UPI QR" style={{ width:140, height:140, display:"block" }} />
-              </div>
-              <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".5rem .8rem", display:"flex", alignItems:"center", justifyContent:"space-between", gap:".5rem" }}>
-                <span style={{ color:"#a855f7", fontWeight:700, fontSize:".8rem", wordBreak:"break-all" }}>{YOUR_UPI_ID}</span>
-                <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
-                  style={{ background: copied?"rgba(34,197,94,.1)":"rgba(124,58,237,.1)", border:`1px solid ${copied?"rgba(34,197,94,.3)":"rgba(124,58,237,.25)"}`, color: copied?"#22c55e":"#a855f7", padding:".2rem .55rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, flexShrink:0, fontFamily:"inherit" }}>
-                  {copied ? "✓ Copied" : "Copy"}
-                </button>
-              </div>
-              <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".5rem 0 0" }}>After UPI payment — WhatsApp screenshot to {SUPPORT_PHONE}</p>
-            </div>
-
-            {/* After UPI — correct flow: WhatsApp redirect */}
-            <button onClick={() => {
-              const msg = encodeURIComponent(`Hi, I have paid ₹${priceINR} for VCI ${plan} plan via UPI. Please activate my account.\n\nEmail: (your registered email)\nUPI Ref: (paste your transaction ID)`);
-              window.open(`https://wa.me/${SUPPORT_PHONE.replace(/\D/g,"")}?text=${msg}`, "_blank");
-            }}
-              style={{ width:"100%", marginTop:".75rem", padding:".75rem", borderRadius:"10px", background:"rgba(37,211,102,.08)", border:"1px solid rgba(37,211,102,.25)", color:"#25d366", fontWeight:700, fontSize:".82rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
-              <span>💬</span> I've Paid — Send Screenshot on WhatsApp
-            </button>
-            <p style={{ color:"#3f3f46", fontSize:".65rem", textAlign:"center", margin:".4rem 0 0", lineHeight:1.5 }}>
-              Send payment screenshot on WhatsApp → Plan activated within 2 hours
-            </p>
-          </div>
-        )}
-
-        {/* USD — PayPal */}
-        {currency === "USD" && (
-          <div style={{ background:"#050510", border:"1px solid #003087", borderRadius:"14px", padding:"1.5rem", textAlign:"center" }}>
-            <div style={{ fontSize:"2.5rem", marginBottom:".6rem" }}>🅿️</div>
-            <p style={{ color:"#71717a", fontSize:".8rem", margin:"0 0 1rem" }}>Pay securely via PayPal</p>
-            <a href={`${YOUR_PAYPAL_ME}/${priceUSD}`} target="_blank" rel="noopener noreferrer"
-              style={{ display:"inline-block", background:"linear-gradient(135deg,#003087,#009cde)", color:"#fff", padding:".85rem 2rem", borderRadius:"10px", textDecoration:"none", fontWeight:800, fontSize:".9rem", marginBottom:".75rem" }}>
-              Pay ${priceUSD} via PayPal →
-            </a>
-            <p style={{ color:"#3f3f46", fontSize:".65rem", margin:0 }}>After payment — email screenshot to us or WhatsApp {SUPPORT_PHONE}</p>
-          </div>
-        )}
 
         {/* Error */}
         {error && (
-          <div style={{ background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.25)", borderRadius:"10px", padding:".75rem", marginTop:".75rem" }}>
+          <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.25)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:"1rem" }}>
             <p style={{ color:"#f87171", fontSize:".78rem", margin:0 }}>⚠️ {error}</p>
           </div>
         )}
 
-        {/* What's included */}
-        <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.12)", borderRadius:"10px", padding:".75rem", marginTop:".75rem" }}>
-          <p style={{ color:"#a855f7", fontSize:".65rem", fontWeight:800, margin:"0 0 .4rem", letterSpacing:".06em" }}>WHAT YOU GET</p>
-          <p style={{ color:"#71717a", fontSize:".75rem", margin:0, lineHeight:1.6 }}>
-            ⚡ {planData?.limit} credits/month · ✓ Instant activation · ✓ All features unlocked · ✓ Cancel anytime
+        {/* Primary CTA — Razorpay */}
+        <button onClick={payWithRazorpay} disabled={loading}
+          style={{ width:"100%", padding:"1rem", borderRadius:"12px", background:loading?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:loading?"#444":"#fff", fontWeight:800, fontSize:"1rem", cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem", boxShadow:loading?"none":"0 6px 24px rgba(109,40,217,.35)", transition:"all .2s", marginBottom:".85rem" }}>
+          {loading
+            ? <><span style={{ width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0 }} /> Processing payment...</>
+            : <>💳 Pay ₹{priceINR} — UPI / Cards / NetBanking</>
+          }
+        </button>
+
+        {/* Payment methods icons */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.1rem", flexWrap:"wrap" }}>
+          {["PhonePe","GPay","Paytm","UPI","Visa","Mastercard","NetBanking"].map(m => (
+            <span key={m} style={{ background:"#0d0d18", border:"1px solid #1a1a2e", color:"#52525b", fontSize:".6rem", fontWeight:700, padding:".15rem .5rem", borderRadius:"5px" }}>{m}</span>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div style={{ display:"flex", alignItems:"center", gap:".75rem", marginBottom:"1rem" }}>
+          <div style={{ flex:1, height:"1px", background:"#141426" }} />
+          <span style={{ color:"#3f3f46", fontSize:".65rem", fontWeight:600, whiteSpace:"nowrap" }}>or pay directly via UPI</span>
+          <div style={{ flex:1, height:"1px", background:"#141426" }} />
+        </div>
+
+        {/* UPI Fallback */}
+        <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem", marginBottom:"1rem" }}>
+          <p style={{ color:"#52525b", fontSize:".72rem", textAlign:"center", margin:"0 0 .75rem" }}>📱 Scan with PhonePe / GPay / Paytm</p>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:".75rem" }}>
+            <div style={{ background:"#fff", borderRadius:"10px", padding:"8px" }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${YOUR_UPI_ID}&pn=VCI&am=${priceINR}&cu=INR`)}&bgcolor=ffffff&color=000000&margin=8`}
+                alt="UPI QR" style={{ width:150, height:150, display:"block" }} />
+            </div>
+          </div>
+          <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".5rem .85rem", display:"flex", alignItems:"center", justifyContent:"space-between", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ color:"#a855f7", fontWeight:700, fontSize:".82rem" }}>{YOUR_UPI_ID}</span>
+            <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
+              style={{ background:copied?"rgba(34,197,94,.1)":"rgba(124,58,237,.1)", border:`1px solid ${copied?"rgba(34,197,94,.3)":"rgba(124,58,237,.25)"}`, color:copied?"#22c55e":"#a855f7", padding:".2rem .6rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+              {copied ? "✓ Copied" : "Copy"}
+            </button>
+          </div>
+
+          {/* WhatsApp button after UPI */}
+          <button onClick={() => {
+            const msg = encodeURIComponent(`Hi, I paid ₹${priceINR} for VCI ${planData?.label} plan via UPI.
+
+Email: (your registered email)
+UPI Transaction ID: (paste here)
+
+Please activate my account.`);
+            window.open(`https://wa.me/${SUPPORT_PHONE.replace(/\D/g,"")}?text=${msg}`, "_blank");
+          }}
+            style={{ width:"100%", padding:".7rem", borderRadius:"10px", background:"rgba(37,211,102,.06)", border:"1px solid rgba(37,211,102,.2)", color:"#25d366", fontWeight:700, fontSize:".8rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".45rem" }}>
+            <span>💬</span> I've Paid — Send Screenshot on WhatsApp
+          </button>
+          <p style={{ color:"#3f3f46", fontSize:".62rem", textAlign:"center", margin:".4rem 0 0", lineHeight:1.5 }}>
+            Send screenshot → Plan activated within 2 hours
           </p>
         </div>
 
-        <button onClick={onClose} style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".78rem", padding:".6rem", marginTop:".4rem", fontFamily:"inherit" }}>
+        {/* Trust badges */}
+        <div style={{ display:"flex", justifyContent:"center", gap:".75rem", marginBottom:".75rem", flexWrap:"wrap" }}>
+          {["🔒 SSL Secured","✓ Instant Activation","↩️ 24hr Refund Policy"].map(t => (
+            <span key={t} style={{ color:"#3f3f46", fontSize:".62rem", fontWeight:600 }}>{t}</span>
+          ))}
+        </div>
+
+        <button onClick={onClose}
+          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".78rem", padding:".5rem", fontFamily:"inherit" }}>
           Cancel
         </button>
       </div>
     </div>
   );
 }
+
 
 function PaywallModal({ onClose, onSelectPlan, currency }: any) {
   const [selected, setSelected] = useState("creator_starter");
