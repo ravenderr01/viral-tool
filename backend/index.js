@@ -477,11 +477,45 @@ setInterval(() => {
 // ── RAZORPAY PAYMENT ROUTES ───────────────────────────────────────────────────
 
 const PLAN_CREDITS = {
-  creator_starter: 120,
-  creator_pro:     550,
-  advertiser:      1100,
-  agency:          2800,
+  creator_starter: 150,
+  creator_pro:     500,
+  advertiser:      950,
+  agency:          2400,
 };
+
+const PLAN_PRICES = {
+  creator_starter: 399,
+  creator_pro:     1299,
+  advertiser:      2499,
+  agency:          5999,
+};
+
+const PLAN_LABELS = {
+  creator_starter: "Creator Starter",
+  creator_pro:     "Creator Pro",
+  advertiser:      "Advertiser",
+  agency:          "Agency",
+};
+
+// ── TELEGRAM NOTIFICATION ─────────────────────────────────────────────────
+async function sendTelegramNotification(message) {
+  try {
+    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const CHAT_ID   = process.env.TELEGRAM_CHAT_ID;
+    if (!BOT_TOKEN || !CHAT_ID) return;
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id:    CHAT_ID,
+        text:       message,
+        parse_mode: "HTML"
+      })
+    });
+  } catch (err) {
+    console.log("Telegram notification failed (non-critical):", err.message);
+  }
+}
 
 // Create Razorpay order
 app.post("/api/create-order", async (req, res) => {
@@ -514,11 +548,12 @@ app.post("/api/verify-payment", async (req, res) => {
       razorpay_signature,
       plan,
       userId,
+      userEmail,
     } = req.body;
 
     // 1. Verify signature
-    const body    = razorpay_order_id + "|" + razorpay_payment_id;
-    const expected = crypto
+    const body      = razorpay_order_id + "|" + razorpay_payment_id;
+    const expected  = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest("hex");
@@ -534,17 +569,17 @@ app.post("/api/verify-payment", async (req, res) => {
 
     // 3. Update Supabase — activate plan + add credits
     const expiry = new Date();
-    expiry.setMonth(expiry.getMonth() + 1); // 1 month from now
+    expiry.setMonth(expiry.getMonth() + 1);
 
     const { error: dbError } = await supabase
       .from("users")
       .update({
-        plan:               plan,
-        credits_remaining:  credits,
-        credits_total:      credits,
-        plan_expiry:        expiry.toISOString(),
-        payment_id:         razorpay_payment_id,
-        updated_at:         new Date().toISOString(),
+        plan:              plan,
+        credits_remaining: credits,
+        credits_total:     credits,
+        plan_expiry:       expiry.toISOString(),
+        payment_id:        razorpay_payment_id,
+        updated_at:        new Date().toISOString(),
       })
       .eq("id", userId);
 
@@ -552,6 +587,23 @@ app.post("/api/verify-payment", async (req, res) => {
       console.error("Supabase update error:", dbError.message);
       return res.status(500).json({ success: false, error: "Plan activation failed" });
     }
+
+    // 4. Send Telegram notification
+    const planLabel  = PLAN_LABELS[plan] || plan;
+    const planPrice  = PLAN_PRICES[plan] || 0;
+    const expiryDate = expiry.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+
+    await sendTelegramNotification(
+`💰 <b>NEW PAYMENT — VCI</b>
+
+👤 User: <code>${userEmail || userId}</code>
+📦 Plan: <b>${planLabel}</b>
+💵 Amount: <b>₹${planPrice}</b>
+⚡ Credits: <b>${credits}</b>
+🔑 Payment ID: <code>${razorpay_payment_id}</code>
+📅 Expires: ${expiryDate}
+✅ Plan activated automatically`
+    );
 
     console.log(`✅ Payment verified: ${razorpay_payment_id} | Plan: ${plan} | User: ${userId}`);
     res.json({ success: true, plan, credits });
