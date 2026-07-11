@@ -34,11 +34,11 @@ function loadRazorpay(): Promise<boolean> {
 }
 
 const PLANS = {
-  free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0,  wasINR: 0,    wasUSD: 0  },
-  creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 399,     priceUSD: 9,  wasINR: 499,  wasUSD: 12, badge: "🔥 Popular",    segment: "creator"  },
-  creator_pro:      { label: "Creator Pro",      limit: 500,   priceINR: 1299,    priceUSD: 29, wasINR: 1599, wasUSD: 35, badge: "⚡ Best Value",  segment: "creator"  },
-  advertiser:       { label: "Advertiser",       limit: 950,   priceINR: 2499,    priceUSD: 49, wasINR: 2999, wasUSD: 59, badge: "📢 For Ads",     segment: "business" },
-  agency:           { label: "Agency",           limit: 2400,  priceINR: 5999.99, priceUSD: 99, wasINR: 7499, wasUSD: 119, badge: "👑 All Access",  segment: "agency"   },
+  free:             { label: "Free",             limit: 25,    priceINR: 0,       priceUSD: 0,   wasINR: 0,    wasUSD: 0   },
+  creator_starter:  { label: "Creator Starter",  limit: 100,   priceINR: 499,     priceUSD: 9,   wasINR: 699,  wasUSD: 12, badge: "🔥 Popular",    segment: "creator"  },
+  creator_pro:      { label: "Creator Pro",      limit: 350,   priceINR: 1299,    priceUSD: 29,  wasINR: 1799, wasUSD: 35, badge: "⚡ Best Value",  segment: "creator"  },
+  advertiser:       { label: "Advertiser",       limit: 700,   priceINR: 2499,    priceUSD: 49,  wasINR: 3499, wasUSD: 59, badge: "📢 For Ads",     segment: "business" },
+  agency:           { label: "Agency",           limit: 2000,  priceINR: 8999.99, priceUSD: 119, wasINR: 9999, wasUSD: 149, badge: "👑 All Access", segment: "agency"   },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -308,7 +308,7 @@ Return JSON only:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:600 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:600, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -439,7 +439,7 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -569,7 +569,7 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -951,7 +951,7 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:800, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -1074,7 +1074,7 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:900, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -1730,7 +1730,7 @@ Return ONLY a JSON array of 5 strings:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:700 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:700, plan: plan || "free" })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -1977,7 +1977,7 @@ Repurpose natively for all 8 platforms: Instagram Reel Hook, Twitter/X Thread, L
 Respond ONLY in JSON:
 {"original_summary":"2-line summary","repurposed":{"instagram":"...","twitter":"Tweet 1: ...","linkedin":"...","youtube":"...","pinterest":"...","whatsapp":"...","facebook":"...","tiktok":"..."},"best_platform":"which platform and why","tips":["tip 1","tip 2","tip 3"]}`;
     try {
-      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2500, messages: [{ role: "user", content: prompt }] }) });
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2500, messages: [{ role: "user", content: prompt }], plan: plan || "free" }) });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
       let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
@@ -2056,7 +2056,7 @@ PLATFORM: ${selectedPlatform}
 Respond ONLY in JSON:
 {"virality_score":0,"why_it_works":{"primary_technique":"the most powerful thing this content does","psychological_triggers":["trigger 1","trigger 2","trigger 3"],"platform_fit":"why this format works on ${selectedPlatform}"},"replicate_formula":"step-by-step formula to recreate this style WITHOUT copying","your_versions":["Version 1 — same technique, your own angle","Version 2 — different emotional trigger, same structure","Version 3 — curiosity-gap variation"],"avoid":"what NOT to copy","verdict":"one honest sentence about whether this technique is worth replicating"}`;
     try {
-      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }) });
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }], plan: plan || "free" }) });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
       let parsed; try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); } catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
@@ -2826,7 +2826,7 @@ Respond ONLY in JSON:
     const attemptRequest = async (retriesLeft: number): Promise<any> => {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -3228,7 +3228,7 @@ Respond ONLY in JSON:
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -3846,7 +3846,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -4104,7 +4104,7 @@ Generate exactly 30 days.`;
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -4260,7 +4260,7 @@ Respond ONLY in JSON:
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -4609,7 +4609,7 @@ CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a n
 
       const aiRes = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }], plan: plan || "free" })
       });
       const aiData = await aiRes.json();
       const text = aiData.content?.map((i: any) => i.text || "").join("") || "";
@@ -6008,7 +6008,7 @@ Respond ONLY in valid JSON:
 
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2200, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2200, messages: [{ role: "user", content: prompt }], plan })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
