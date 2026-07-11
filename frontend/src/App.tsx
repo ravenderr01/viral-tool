@@ -4747,19 +4747,29 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [success,  setSuccess]  = useState(false);
-  const [step,     setStep]     = useState<"choose"|"upi"|"processing">("choose");
   const [copied,   setCopied]   = useState(false);
+  const [rzpReady, setRzpReady] = useState<boolean|null>(null);
 
   const planData = PLANS[plan as keyof typeof PLANS];
   const priceINR = Math.round(planData?.priceINR || 0);
-  const priceUSD = planData?.priceUSD || 0;
 
-  // ── Razorpay Checkout ──────────────────────────────────────────────────────
+  // Check if Razorpay is working on mount
+  useEffect(() => {
+    fetch("https://viral-tool-1.onrender.com/api/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: 100, plan: "test" })
+    }).then(r => {
+      // If backend responds (even with error) = backend ok
+      setRzpReady(true);
+    }).catch(() => setRzpReady(false));
+  }, []);
+
   const payWithRazorpay = async () => {
-    setLoading(true); setError(""); setStep("processing");
+    setLoading(true); setError("");
     try {
       const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Razorpay load failed — check internet connection.");
+      if (!loaded) throw new Error("Razorpay SDK load failed.");
 
       const orderRes = await fetch("https://viral-tool-1.onrender.com/api/create-order", {
         method: "POST",
@@ -4768,12 +4778,12 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
       });
       const orderData = await orderRes.json();
       if (!orderRes.ok || !orderData.orderId) {
-        throw new Error(orderData.error || "Order creation failed. Try again.");
+        throw new Error(orderData.error || "Order creation failed.");
       }
 
       const { data: { user } } = await (window as any).supabase?.auth?.getUser() || { data: { user: null } };
 
-      const options = {
+      const rzp = new (window as any).Razorpay({
         key:         RAZORPAY_KEY_ID,
         amount:      priceINR * 100,
         currency:    "INR",
@@ -4782,63 +4792,46 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
         order_id:    orderData.orderId,
         prefill:     { email: user?.email || "", contact: "" },
         notes:       { plan, user_id: user?.id || "" },
-        theme:       { color: "#7c3aed", hide_topbar: false },
-        modal: {
-          ondismiss: () => { setLoading(false); setStep("choose"); }
-        },
+        theme:       { color: "#7c3aed" },
+        modal: { ondismiss: () => { setLoading(false); } },
         handler: async (response: any) => {
           try {
-            const verifyRes = await fetch("https://viral-tool-1.onrender.com/api/verify-payment", {
+            const vRes = await fetch("https://viral-tool-1.onrender.com/api/verify-payment", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
-                plan,
-                userId:    user?.id    || "",
-                userEmail: user?.email || "",
+                plan, userId: user?.id || "", userEmail: user?.email || "",
               })
             });
-            const result = await verifyRes.json();
-            if (result.success) {
-              setSuccess(true);
-              setTimeout(() => onPaid(plan), 2500);
-            } else {
-              setError("Plan activation failed. WhatsApp karo: " + SUPPORT_PHONE);
-              setStep("choose");
-            }
-          } catch {
-            setError("Payment done but activation failed. Screenshot bhejo WhatsApp pe: " + SUPPORT_PHONE);
-            setStep("choose");
-          }
+            const result = await vRes.json();
+            if (result.success) { setSuccess(true); setTimeout(() => onPaid(plan), 2500); }
+            else { setError("Activation failed. WhatsApp karo: " + SUPPORT_PHONE); }
+          } catch { setError("Payment done but activation pending. WhatsApp karo: " + SUPPORT_PHONE); }
           setLoading(false);
         }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
+      });
       rzp.on("payment.failed", (resp: any) => {
-        const msg = resp?.error?.description || resp?.error?.reason || "Payment failed";
-        setError(`Payment failed: ${msg}. Please try again or use UPI QR below.`);
-        setLoading(false); setStep("choose");
+        setError("Payment failed: " + (resp?.error?.description || "Try UPI QR below."));
+        setLoading(false);
       });
       rzp.open();
-
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Try again.");
-      setLoading(false); setStep("choose");
+      setError(err.message || "Something went wrong.");
+      setLoading(false);
     }
   };
 
-  // ── Success Screen ─────────────────────────────────────────────────────────
   if (success) return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem" }}>
       <div style={{ background:"#080810", border:"2px solid #22c55e", borderRadius:"20px", padding:"2.5rem 2rem", maxWidth:"380px", width:"100%", textAlign:"center", animation:"slideUp .3s ease" }}>
-        <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(34,197,94,.12)", border:"2px solid #22c55e", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2rem", margin:"0 auto 1rem" }}>🎉</div>
+        <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(34,197,94,.1)", border:"2px solid #22c55e", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2.5rem", margin:"0 auto 1rem" }}>🎉</div>
         <h2 style={{ fontWeight:900, fontSize:"1.3rem", color:"#22c55e", margin:"0 0 .5rem" }}>Payment Successful!</h2>
         <p style={{ color:"#71717a", fontSize:".85rem", margin:"0 0 1.25rem" }}>{planData?.label} plan activating...</p>
-        <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.2)", borderRadius:"12px", padding:"1rem" }}>
-          <p style={{ color:"#22c55e", fontWeight:800, fontSize:".9rem", margin:"0 0 .3rem" }}>✓ {planData?.limit} credits added</p>
+        <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.18)", borderRadius:"12px", padding:"1rem" }}>
+          <p style={{ color:"#22c55e", fontWeight:800, margin:"0 0 .25rem" }}>✓ {planData?.limit} credits added</p>
           <p style={{ color:"#52525b", fontSize:".75rem", margin:0 }}>Redirecting to dashboard...</p>
         </div>
       </div>
@@ -4851,99 +4844,116 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
 
         {/* Header */}
         <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:".5rem", background:"rgba(124,58,237,.08)", border:"1px solid rgba(124,58,237,.2)", borderRadius:"20px", padding:".3rem .9rem", marginBottom:".75rem" }}>
-            <span style={{ fontSize:".7rem", color:"#a855f7", fontWeight:700 }}>🔒 Secured by Razorpay</span>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:".4rem", background:"rgba(124,58,237,.08)", border:"1px solid rgba(124,58,237,.2)", borderRadius:"20px", padding:".25rem .85rem", marginBottom:".75rem" }}>
+            <span style={{ fontSize:".65rem", color:"#a855f7", fontWeight:700 }}>🔒 Secured Payment</span>
           </div>
-          <h2 style={{ fontWeight:900, fontSize:"1.25rem", margin:"0 0 .3rem" }}>Complete Your Purchase</h2>
+          <h2 style={{ fontWeight:900, fontSize:"1.2rem", margin:"0 0 .5rem" }}>Complete Your Purchase</h2>
           <div style={{ display:"inline-flex", alignItems:"baseline", gap:".4rem", background:"rgba(124,58,237,.06)", border:"1px solid rgba(124,58,237,.15)", borderRadius:"10px", padding:".4rem 1rem" }}>
-            <span style={{ fontWeight:800, color:"#e2e8f0", fontSize:".9rem" }}>{planData?.label}</span>
-            <span style={{ color:"#a855f7", fontWeight:900, fontSize:"1.2rem" }}>₹{priceINR}</span>
+            <span style={{ fontWeight:800, color:"#e2e8f0" }}>{planData?.label}</span>
+            <span style={{ color:"#a855f7", fontWeight:900, fontSize:"1.3rem" }}>₹{priceINR}</span>
             <span style={{ color:"#3f3f46", fontSize:".72rem" }}>/month</span>
           </div>
         </div>
 
-        {/* What you get */}
-        <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".65rem 1rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", gap:".75rem" }}>
-          <span style={{ fontSize:"1.1rem", flexShrink:0 }}>⚡</span>
+        {/* Credits pill */}
+        <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".6rem 1rem", marginBottom:"1.25rem", display:"flex", gap:".65rem", alignItems:"center" }}>
+          <span style={{ fontSize:"1rem", flexShrink:0 }}>⚡</span>
           <p style={{ color:"#94a3b8", fontSize:".75rem", margin:0, lineHeight:1.6 }}>
-            <strong style={{ color:"#22c55e" }}>{planData?.limit} credits/month</strong> · Instant activation · All features unlocked · Cancel anytime
+            <strong style={{ color:"#22c55e" }}>{planData?.limit} credits/month</strong> · Instant activation · All features · Cancel anytime
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.25)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:"1rem" }}>
-            <p style={{ color:"#f87171", fontSize:".78rem", margin:0 }}>⚠️ {error}</p>
+          <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.22)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:"1rem" }}>
+            <p style={{ color:"#f87171", fontSize:".78rem", margin:0, lineHeight:1.5 }}>⚠️ {error}</p>
           </div>
         )}
 
-        {/* Primary CTA — Razorpay */}
-        <button onClick={payWithRazorpay} disabled={loading}
-          style={{ width:"100%", padding:"1rem", borderRadius:"12px", background:loading?"#111":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:loading?"#444":"#fff", fontWeight:800, fontSize:"1rem", cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem", boxShadow:loading?"none":"0 6px 24px rgba(109,40,217,.35)", transition:"all .2s", marginBottom:".85rem" }}>
-          {loading
-            ? <><span style={{ width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0 }} /> Processing payment...</>
-            : <>💳 Pay ₹{priceINR} — UPI / Cards / NetBanking</>
-          }
-        </button>
-
-        {/* Payment methods icons */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.1rem", flexWrap:"wrap" }}>
-          {["PhonePe","GPay","Paytm","UPI","Visa","Mastercard","NetBanking"].map(m => (
-            <span key={m} style={{ background:"#0d0d18", border:"1px solid #1a1a2e", color:"#52525b", fontSize:".6rem", fontWeight:700, padding:".15rem .5rem", borderRadius:"5px" }}>{m}</span>
-          ))}
+        {/* ── OPTION A: Razorpay ── */}
+        <div style={{ background:"#050508", border:"1px solid #1a1a2e", borderRadius:"14px", padding:"1.1rem", marginBottom:".75rem" }}>
+          <p style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", letterSpacing:".08em", margin:"0 0 .75rem", textTransform:"uppercase" }}>Option 1 — Pay Online</p>
+          <button onClick={payWithRazorpay} disabled={loading}
+            style={{ width:"100%", padding:".9rem", borderRadius:"11px", background:loading?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:loading?"#444":"#fff", fontWeight:800, fontSize:".95rem", cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".55rem", boxShadow:loading?"none":"0 6px 24px rgba(109,40,217,.3)", marginBottom:".65rem" }}>
+            {loading
+              ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0 }} /> Processing...</>
+              : <>💳 Pay ₹{priceINR} — UPI / Card / NetBanking</>
+            }
+          </button>
+          <div style={{ display:"flex", justifyContent:"center", gap:".4rem", flexWrap:"wrap" }}>
+            {["📱 PhonePe","🔵 GPay","🟡 Paytm","💳 Cards","🏦 NetBanking"].map(m => (
+              <span key={m} style={{ color:"#3f3f46", fontSize:".6rem", fontWeight:600 }}>{m}</span>
+            ))}
+          </div>
         </div>
 
         {/* Divider */}
-        <div style={{ display:"flex", alignItems:"center", gap:".75rem", marginBottom:"1rem" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:".6rem", margin:".75rem 0" }}>
           <div style={{ flex:1, height:"1px", background:"#141426" }} />
-          <span style={{ color:"#3f3f46", fontSize:".65rem", fontWeight:600, whiteSpace:"nowrap" }}>or pay directly via UPI</span>
+          <span style={{ color:"#27272a", fontSize:".62rem", fontWeight:700 }}>OR</span>
           <div style={{ flex:1, height:"1px", background:"#141426" }} />
         </div>
 
-        {/* UPI Fallback */}
-        <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem", marginBottom:"1rem" }}>
-          <p style={{ color:"#52525b", fontSize:".72rem", textAlign:"center", margin:"0 0 .75rem" }}>📱 Scan with PhonePe / GPay / Paytm</p>
+        {/* ── OPTION B: Direct UPI ── */}
+        <div style={{ background:"#050508", border:"1px solid #1a1a2e", borderRadius:"14px", padding:"1.1rem", marginBottom:".75rem" }}>
+          <p style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", letterSpacing:".08em", margin:"0 0 .85rem", textTransform:"uppercase" }}>Option 2 — Direct UPI Transfer</p>
+
+          {/* QR Code */}
           <div style={{ display:"flex", justifyContent:"center", marginBottom:".75rem" }}>
-            <div style={{ background:"#fff", borderRadius:"10px", padding:"8px" }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${YOUR_UPI_ID}&pn=VCI&am=${priceINR}&cu=INR`)}&bgcolor=ffffff&color=000000&margin=8`}
-                alt="UPI QR" style={{ width:150, height:150, display:"block" }} />
+            <div style={{ background:"#fff", borderRadius:"12px", padding:"10px", boxShadow:"0 4px 20px rgba(0,0,0,.3)" }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=${YOUR_UPI_ID}&pn=VCI&am=${priceINR}&cu=INR&tn=VCI${planData?.label?.replace(/\s/g,"")}Plan`)}&bgcolor=ffffff&color=000000&margin=6`}
+                alt="UPI QR Code"
+                style={{ width:160, height:160, display:"block" }}
+              />
             </div>
           </div>
-          <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".5rem .85rem", display:"flex", alignItems:"center", justifyContent:"space-between", gap:".5rem", marginBottom:".6rem" }}>
-            <span style={{ color:"#a855f7", fontWeight:700, fontSize:".82rem" }}>{YOUR_UPI_ID}</span>
+
+          {/* UPI ID */}
+          <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".55rem .9rem", display:"flex", alignItems:"center", justifyContent:"space-between", gap:".5rem", marginBottom:".5rem" }}>
+            <div>
+              <p style={{ color:"#52525b", fontSize:".58rem", fontWeight:700, margin:"0 0 .1rem", textTransform:"uppercase", letterSpacing:".05em" }}>UPI ID</p>
+              <p style={{ color:"#a855f7", fontWeight:700, fontSize:".85rem", margin:0 }}>{YOUR_UPI_ID}</p>
+            </div>
             <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
-              style={{ background:copied?"rgba(34,197,94,.1)":"rgba(124,58,237,.1)", border:`1px solid ${copied?"rgba(34,197,94,.3)":"rgba(124,58,237,.25)"}`, color:copied?"#22c55e":"#a855f7", padding:".2rem .6rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+              style={{ background:copied?"rgba(34,197,94,.1)":"rgba(124,58,237,.1)", border:`1px solid ${copied?"rgba(34,197,94,.3)":"rgba(124,58,237,.25)"}`, color:copied?"#22c55e":"#a855f7", padding:".25rem .65rem", borderRadius:"7px", cursor:"pointer", fontSize:".68rem", fontWeight:800, fontFamily:"inherit", flexShrink:0 }}>
               {copied ? "✓ Copied" : "Copy"}
             </button>
           </div>
 
-          {/* WhatsApp button after UPI */}
-          <button onClick={() => {
-            const msg = encodeURIComponent(`Hi, I paid ₹${priceINR} for VCI ${planData?.label} plan via UPI.
+          <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".5rem .75rem", marginBottom:".75rem" }}>
+            <p style={{ color:"#a16207", fontSize:".7rem", margin:0, lineHeight:1.5 }}>
+              💡 Amount <strong style={{ color:"#f59e0b" }}>₹{priceINR}</strong> — Add this amount manually if not auto-filled
+            </p>
+          </div>
 
-Email: (your registered email)
+          {/* After UPI — WhatsApp */}
+          <button onClick={() => {
+            const msg = encodeURIComponent(`Hi! I've paid ₹${priceINR} for VCI ${planData?.label} plan via UPI.
+
+My registered email: (type here)
 UPI Transaction ID: (paste here)
 
-Please activate my account.`);
-            window.open(`https://wa.me/${SUPPORT_PHONE.replace(/\D/g,"")}?text=${msg}`, "_blank");
+Please activate my account. Thank you!`);
+            window.open(`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g,"")}?text=${msg}`, "_blank");
           }}
-            style={{ width:"100%", padding:".7rem", borderRadius:"10px", background:"rgba(37,211,102,.06)", border:"1px solid rgba(37,211,102,.2)", color:"#25d366", fontWeight:700, fontSize:".8rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".45rem" }}>
-            <span>💬</span> I've Paid — Send Screenshot on WhatsApp
+            style={{ width:"100%", padding:".75rem", borderRadius:"10px", background:"rgba(37,211,102,.06)", border:"1px solid rgba(37,211,102,.22)", color:"#25d366", fontWeight:800, fontSize:".82rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
+            <span style={{ fontSize:"1rem" }}>💬</span> Done Paying — Send Screenshot on WhatsApp
           </button>
           <p style={{ color:"#3f3f46", fontSize:".62rem", textAlign:"center", margin:".4rem 0 0", lineHeight:1.5 }}>
-            Send screenshot → Plan activated within 2 hours
+            Send screenshot → activated within 2 hours
           </p>
         </div>
 
-        {/* Trust badges */}
-        <div style={{ display:"flex", justifyContent:"center", gap:".75rem", marginBottom:".75rem", flexWrap:"wrap" }}>
-          {["🔒 SSL Secured","✓ Instant Activation","↩️ 24hr Refund Policy"].map(t => (
-            <span key={t} style={{ color:"#3f3f46", fontSize:".62rem", fontWeight:600 }}>{t}</span>
+        {/* Trust */}
+        <div style={{ display:"flex", justifyContent:"center", gap:"1rem", marginBottom:".6rem", flexWrap:"wrap" }}>
+          {["🔒 SSL Secured","✓ Instant Activation","↩️ 24hr Refund"].map(t => (
+            <span key={t} style={{ color:"#27272a", fontSize:".6rem", fontWeight:600 }}>{t}</span>
           ))}
         </div>
 
         <button onClick={onClose}
-          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".78rem", padding:".5rem", fontFamily:"inherit" }}>
+          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".75rem", padding:".4rem", fontFamily:"inherit" }}>
           Cancel
         </button>
       </div>
