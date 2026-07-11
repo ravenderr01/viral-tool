@@ -4279,7 +4279,6 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
           ondismiss: () => { setLoading(false); }
         },
         handler: async (response: any) => {
-          // Verify payment on backend
           try {
             const verifyRes = await fetch("https://viral-tool-1.onrender.com/api/verify-payment", {
               method: "POST",
@@ -4288,16 +4287,20 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
                 razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
-                plan:    plan,
-                userId:  user?.id || "",
+                plan:      plan,
+                userId:    user?.id || "",
+                userEmail: user?.email || "",
               })
             });
             const result = await verifyRes.json();
             if (result.success) {
               setSuccess(true);
+              // Update local state immediately — no need to refresh
+              setPlan(result.plan);
+              setUsageCount(0); // fresh credits
               setTimeout(() => onPaid(plan), 2000);
             } else {
-              setError("Payment verified but activation failed. WhatsApp karo: " + SUPPORT_PHONE);
+              setError("Activation failed. WhatsApp karo: " + SUPPORT_PHONE);
             }
           } catch {
             setError("Payment done but verification failed. Screenshot bhejo WhatsApp pe: " + SUPPORT_PHONE);
@@ -4394,11 +4397,17 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
               <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".5rem 0 0" }}>After UPI payment — WhatsApp screenshot to {SUPPORT_PHONE}</p>
             </div>
 
-            {/* After UPI — confirm button */}
-            <button onClick={() => { setSuccess(true); setTimeout(() => onPaid(plan), 2500); }}
-              style={{ width:"100%", marginTop:".75rem", padding:".75rem", borderRadius:"10px", background:"rgba(34,197,94,.08)", border:"1px solid rgba(34,197,94,.25)", color:"#22c55e", fontWeight:700, fontSize:".82rem", cursor:"pointer", fontFamily:"inherit" }}>
-              ✅ I've Paid via UPI — Request Activation
+            {/* After UPI — correct flow: WhatsApp redirect */}
+            <button onClick={() => {
+              const msg = encodeURIComponent(`Hi, I have paid ₹${priceINR} for VCI ${plan} plan via UPI. Please activate my account.\n\nEmail: (your registered email)\nUPI Ref: (paste your transaction ID)`);
+              window.open(`https://wa.me/${SUPPORT_PHONE.replace(/\D/g,"")}?text=${msg}`, "_blank");
+            }}
+              style={{ width:"100%", marginTop:".75rem", padding:".75rem", borderRadius:"10px", background:"rgba(37,211,102,.08)", border:"1px solid rgba(37,211,102,.25)", color:"#25d366", fontWeight:700, fontSize:".82rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
+              <span>💬</span> I've Paid — Send Screenshot on WhatsApp
             </button>
+            <p style={{ color:"#3f3f46", fontSize:".65rem", textAlign:"center", margin:".4rem 0 0", lineHeight:1.5 }}>
+              Send payment screenshot on WhatsApp → Plan activated within 2 hours
+            </p>
           </div>
         )}
 
