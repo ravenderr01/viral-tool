@@ -38,7 +38,7 @@ const PLANS = {
   creator_starter:  { label: "Creator Starter",  limit: 150,   priceINR: 399,     priceUSD: 9,  wasINR: 499,  wasUSD: 12, badge: "🔥 Popular",    segment: "creator"  },
   creator_pro:      { label: "Creator Pro",      limit: 500,   priceINR: 1299,    priceUSD: 29, wasINR: 1599, wasUSD: 35, badge: "⚡ Best Value",  segment: "creator"  },
   advertiser:       { label: "Advertiser",       limit: 950,   priceINR: 2499,    priceUSD: 49, wasINR: 2999, wasUSD: 59, badge: "📢 For Ads",     segment: "business" },
-  agency:           { label: "Agency",           limit: 2400,  priceINR: 5999,    priceUSD: 99, wasINR: 7499, wasUSD: 119, badge: "👑 All Access",  segment: "agency"   },
+  agency:           { label: "Agency",           limit: 2400,  priceINR: 5999.99, priceUSD: 99, wasINR: 7499, wasUSD: 119, badge: "👑 All Access",  segment: "agency"   },
 };
 
 // Safe call into the globally-exposed copy-signal tracker (no-op if not yet mounted)
@@ -1174,6 +1174,355 @@ Return ONLY valid JSON:
 }
 
 // ── VIRAL TEMPLATES ──────────────────────────────────────────────────────────
+// ── LOCAL BUSINESS KIT (Agency Only) ─────────────────────────────────────────
+function LocalBusinessKit({ plan, onUpgrade, onCreditUsed }: any) {
+  const isUnlocked = plan === "agency";
+
+  const [bizName,    setBizName]    = useState("");
+  const [category,   setCategory]   = useState("Retail Store");
+  const [city,       setCity]       = useState("");
+  const [phone,      setPhone]      = useState("");
+  const [website,    setWebsite]    = useState("");
+  const [usp,        setUsp]        = useState("");
+  const [hours,      setHours]      = useState("Mon-Sat 10am-8pm");
+  const [loading,    setLoading]    = useState(false);
+  const [result,     setResult]     = useState<any>(null);
+  const [copied,     setCopied]     = useState("");
+  const [openSec,    setOpenSec]    = useState<string>("description");
+
+  const CATEGORIES = [
+    "Retail Store","Restaurant / Cafe","Salon / Spa","Gym / Fitness",
+    "Medical Clinic","Dental Clinic","Law Firm","CA / Accounting",
+    "Real Estate Agency","Travel Agency","Education / Coaching",
+    "Photography Studio","Event Management","Interior Design",
+    "Automobile Service","Electronics Shop","Grocery Store","Hotel / Lodge",
+  ];
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  if (!isUnlocked) return (
+    <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"16px", padding:"2.5rem", textAlign:"center" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>🏪</div>
+      <h2 style={{ fontWeight:900, fontSize:"1.1rem", color:"#fff", margin:"0 0 .5rem" }}>Local Business Kit</h2>
+      <p style={{ color:"#52525b", fontSize:".82rem", marginBottom:".5rem", lineHeight:1.7, maxWidth:360, margin:"0 auto .75rem" }}>
+        Complete Google Business setup kit — description, posts, FAQ, review templates, keywords, and checklist. Exclusive to Agency plan.
+      </p>
+      <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:"1.25rem", maxWidth:360, margin:"0 auto 1.25rem" }}>
+        <p style={{ color:"#f59e0b", fontSize:".78rem", fontWeight:700, margin:0 }}>
+          👑 Agency Plan Only — ₹5,999.99/month
+        </p>
+      </div>
+      <button onClick={onUpgrade}
+        style={{ background:"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", color:"#000", padding:".75rem 2rem", borderRadius:"10px", fontWeight:800, cursor:"pointer", fontSize:".88rem" }}>
+        Upgrade to Agency →
+      </button>
+    </div>
+  );
+
+  const generate = async () => {
+    if (!bizName.trim() || !city.trim()) return;
+    setLoading(true); setResult(null);
+
+    const prompt = `You are India's top local SEO and Google Business Profile expert. Create a complete Google Business optimization kit.
+
+Business Details:
+- Name: ${bizName}
+- Category: ${category}
+- Location: ${city}
+- Phone: ${phone || "Not provided"}
+- Website: ${website || "Not provided"}
+- USP/Specialty: ${usp || "Quality products and services"}
+- Working Hours: ${hours}
+
+Generate a PROFESSIONAL, INDIA-SPECIFIC kit. All content must be:
+1. Naturally written — not robotic or template-like
+2. Specific to this business — not generic
+3. SEO-optimized for local Google search
+4. In English (professional Indian business tone)
+
+Return ONLY valid JSON:
+{
+  "description": "750 char max Google Business description — keyword-rich, benefit-focused, includes location, phone, hours naturally",
+  "posts": [
+    { "type": "Offer", "title": "post title", "content": "post content under 1500 chars with CTA", "cta": "Call Now / Visit Us / Learn More" },
+    { "type": "Product", "title": "...", "content": "...", "cta": "..." },
+    { "type": "Event", "title": "...", "content": "...", "cta": "..." },
+    { "type": "Update", "title": "...", "content": "...", "cta": "..." },
+    { "type": "Seasonal", "title": "...", "content": "...", "cta": "..." }
+  ],
+  "faqs": [
+    { "q": "question", "a": "answer" }
+  ],
+  "review_templates": {
+    "five_star": "response template for 5-star review",
+    "three_star": "response template for 3-star review with concern",
+    "one_star": "response template for 1-star review — apologetic, solution-focused"
+  },
+  "keywords": {
+    "primary": ["keyword 1", "keyword 2", "keyword 3"],
+    "secondary": ["keyword 4", "keyword 5", "keyword 6", "keyword 7", "keyword 8"],
+    "long_tail": ["long tail phrase 1", "long tail phrase 2", "long tail phrase 3"]
+  },
+  "checklist": [
+    { "step": 1, "action": "action title", "detail": "specific instruction", "time": "est time" }
+  ],
+  "pro_tips": ["tip 1 specific to ${category}", "tip 2", "tip 3"]
+}
+
+Generate exactly 10 FAQs and 10 checklist steps. Make everything specific to ${bizName} in ${city}.`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: 2500 })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      setResult(JSON.parse(clean));
+      onCreditUsed?.();
+    } catch { }
+    setLoading(false);
+  };
+
+  const Section = ({ id, label, emoji, children }: any) => (
+    <div style={{ background:"#080810", border:`1px solid ${openSec===id?"rgba(245,158,11,.35)":"#141426"}`, borderRadius:"14px", marginBottom:".6rem", overflow:"hidden", transition:"border-color .2s" }}>
+      <button onClick={() => setOpenSec(openSec===id?"":id)}
+        style={{ width:"100%", background:"none", border:"none", padding:"1rem 1.1rem", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }}>
+        <span style={{ color:"#fff", fontWeight:700, fontSize:".88rem" }}>{emoji} {label}</span>
+        <span style={{ color:"#f59e0b", fontSize:".75rem", transition:"transform .2s", display:"inline-block", transform:openSec===id?"rotate(180deg)":"rotate(0)" }}>▾</span>
+      </button>
+      {openSec === id && (
+        <div style={{ padding:"0 1.1rem 1.1rem", borderTop:"1px solid #141426" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+
+  const CopyBox = ({ label, value, keyName }: any) => (
+    <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem", marginBottom:".6rem" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
+        <span style={{ fontSize:".6rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase", letterSpacing:".06em" }}>{label}</span>
+        <button onClick={() => copy(value, keyName)}
+          style={{ background:copied===keyName?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied===keyName?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copied===keyName?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
+          {copied===keyName?"✓ Copied":"Copy"}
+        </button>
+      </div>
+      <p style={{ color:"#e2e8f0", fontSize:".8rem", lineHeight:1.7, margin:0, whiteSpace:"pre-wrap" }}>{value}</p>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🏪 Local Business Kit</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.1rem" }}>Complete Google Business Profile optimization — ready to copy-paste in 30 seconds.</p>
+
+      {/* Form */}
+      <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:"16px", padding:"1.25rem", marginBottom:"1rem" }}>
+        <p style={{ fontSize:".65rem", fontWeight:800, color:"#f59e0b", letterSpacing:".08em", margin:"0 0 1rem", textTransform:"uppercase" }}>Business Details</p>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".65rem", marginBottom:".65rem" }}>
+          {[
+            { label:"Business Name *", val:bizName, set:setBizName, placeholder:"e.g. Sharma Sarees" },
+            { label:"City / Area *", val:city, set:setCity, placeholder:"e.g. Chandni Chowk, Delhi" },
+            { label:"Phone Number", val:phone, set:setPhone, placeholder:"e.g. +91 9876543210" },
+            { label:"Website", val:website, set:setWebsite, placeholder:"e.g. sharmasarees.com" },
+          ].map(({ label, val, set, placeholder }) => (
+            <div key={label}>
+              <label style={{ fontSize:".6rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".25rem", textTransform:"uppercase", letterSpacing:".05em" }}>{label}</label>
+              <input value={val} onChange={e => set(e.target.value)} placeholder={placeholder}
+                style={{ width:"100%", background:"#050508", border:"1px solid #141426", borderRadius:"8px", padding:".55rem .75rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", outline:"none" }}
+                onFocus={e => e.target.style.borderColor="#f59e0b"}
+                onBlur={e => e.target.style.borderColor="#141426"} />
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginBottom:".65rem" }}>
+          <label style={{ fontSize:".6rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".25rem", textTransform:"uppercase", letterSpacing:".05em" }}>Business Category</label>
+          <select value={category} onChange={e => setCategory(e.target.value)}
+            style={{ width:"100%", background:"#050508", border:"1px solid #141426", borderRadius:"8px", padding:".55rem .75rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", outline:"none" }}>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div style={{ marginBottom:".65rem" }}>
+          <label style={{ fontSize:".6rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".25rem", textTransform:"uppercase", letterSpacing:".05em" }}>Working Hours</label>
+          <input value={hours} onChange={e => setHours(e.target.value)} placeholder="e.g. Mon-Sat 10am-8pm, Sunday Closed"
+            style={{ width:"100%", background:"#050508", border:"1px solid #141426", borderRadius:"8px", padding:".55rem .75rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#f59e0b"}
+            onBlur={e => e.target.style.borderColor="#141426"} />
+        </div>
+
+        <div style={{ marginBottom:".85rem" }}>
+          <label style={{ fontSize:".6rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".25rem", textTransform:"uppercase", letterSpacing:".05em" }}>What makes you special?</label>
+          <input value={usp} onChange={e => setUsp(e.target.value)} placeholder="e.g. Pure silk sarees since 1985, home delivery available"
+            style={{ width:"100%", background:"#050508", border:"1px solid #141426", borderRadius:"8px", padding:".55rem .75rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#f59e0b"}
+            onBlur={e => e.target.style.borderColor="#141426"} />
+        </div>
+
+        <button onClick={generate} disabled={loading || !bizName.trim() || !city.trim()}
+          style={{ width:"100%", padding:".85rem", borderRadius:"10px", background:(!bizName.trim()||!city.trim())?"#0d0d18":"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", color:(!bizName.trim()||!city.trim())?"#3f3f46":"#000", fontWeight:800, fontSize:".88rem", cursor:(!bizName.trim()||!city.trim())?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
+          {loading
+            ? <><span style={{ width:14,height:14,border:"2px solid rgba(0,0,0,.3)",borderTop:"2px solid #000",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating your kit...</>
+            : <>🏪 Generate Business Kit <span style={{ background:"rgba(0,0,0,.12)", borderRadius:"5px", fontSize:".65rem", padding:".08rem .4rem" }}>3 credits</span></>
+          }
+        </button>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div style={{ animation:"slideUp .4s ease" }}>
+
+          {/* Description */}
+          <Section id="description" label="Google Business Description" emoji="📝">
+            <div style={{ marginTop:".75rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".5rem" }}>
+                <span style={{ fontSize:".62rem", color:"#52525b" }}>{result.description?.length}/750 characters</span>
+                <button onClick={() => copy(result.description, "desc")}
+                  style={{ background:copied==="desc"?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied==="desc"?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copied==="desc"?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
+                  {copied==="desc"?"✓ Copied":"Copy"}
+                </button>
+              </div>
+              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.8, margin:"0 0 .75rem", background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>{result.description}</p>
+              <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+                <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 <strong style={{ color:"#f59e0b" }}>Where to paste:</strong> Google Business Profile → Edit Profile → Business description</p>
+              </div>
+            </div>
+          </Section>
+
+          {/* Google Posts */}
+          <Section id="posts" label="5 Google Posts (Ready to Publish)" emoji="📢">
+            <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".6rem" }}>
+              {result.posts?.map((post: any, i: number) => (
+                <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
+                    <span style={{ fontSize:".6rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase", background:"rgba(245,158,11,.08)", border:"1px solid rgba(245,158,11,.2)", padding:".08rem .45rem", borderRadius:"5px" }}>{post.type}</span>
+                    <button onClick={() => copy(`${post.title}\n\n${post.content}`, `post${i}`)}
+                      style={{ background:copied===`post${i}`?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied===`post${i}`?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copied===`post${i}`?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
+                      {copied===`post${i}`?"✓":"Copy"}
+                    </button>
+                  </div>
+                  <p style={{ color:"#fff", fontWeight:700, fontSize:".82rem", margin:"0 0 .35rem" }}>{post.title}</p>
+                  <p style={{ color:"#94a3b8", fontSize:".78rem", lineHeight:1.65, margin:"0 0 .4rem" }}>{post.content}</p>
+                  <span style={{ background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem", borderRadius:"5px" }}>CTA: {post.cta}</span>
+                </div>
+              ))}
+              <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+                <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 <strong style={{ color:"#f59e0b" }}>Where to paste:</strong> Google Business → Add Update → Post content</p>
+              </div>
+            </div>
+          </Section>
+
+          {/* FAQ */}
+          <Section id="faq" label="10 FAQ Answers" emoji="❓">
+            <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".5rem" }}>
+              {result.faqs?.map((faq: any, i: number) => (
+                <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".8rem 1rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", gap:".5rem" }}>
+                    <div style={{ flex:1 }}>
+                      <p style={{ color:"#fff", fontWeight:700, fontSize:".78rem", margin:"0 0 .25rem" }}>Q: {faq.q}</p>
+                      <p style={{ color:"#94a3b8", fontSize:".76rem", lineHeight:1.6, margin:0 }}>A: {faq.a}</p>
+                    </div>
+                    <button onClick={() => copy(`Q: ${faq.q}\nA: ${faq.a}`, `faq${i}`)}
+                      style={{ background:copied===`faq${i}`?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied===`faq${i}`?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copied===`faq${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"6px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit", flexShrink:0, alignSelf:"flex-start" }}>
+                      {copied===`faq${i}`?"✓":"Copy"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+                <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 <strong style={{ color:"#f59e0b" }}>Where to paste:</strong> Google Business → Q&A → Answer each question</p>
+              </div>
+            </div>
+          </Section>
+
+          {/* Review Templates */}
+          <Section id="reviews" label="Review Response Templates" emoji="⭐">
+            <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".6rem" }}>
+              {[
+                { key:"five_star",  label:"5-Star Response",  color:"#22c55e", icon:"⭐⭐⭐⭐⭐" },
+                { key:"three_star", label:"3-Star Response",  color:"#f59e0b", icon:"⭐⭐⭐" },
+                { key:"one_star",   label:"1-Star Response",  color:"#ef4444", icon:"⭐" },
+              ].map(({ key, label, color, icon }) => (
+                <CopyBox key={key} label={`${icon} ${label}`} value={result.review_templates?.[key]} keyName={`rev_${key}`} />
+              ))}
+              <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+                <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 <strong style={{ color:"#f59e0b" }}>Where to use:</strong> Google Business → Reviews → Reply (replace [Name] with reviewer's name)</p>
+              </div>
+            </div>
+          </Section>
+
+          {/* Keywords */}
+          <Section id="keywords" label="Local SEO Keywords" emoji="🔑">
+            <div style={{ marginTop:".75rem" }}>
+              {[
+                { label:"Primary Keywords", keys:"primary", color:"#a855f7" },
+                { label:"Secondary Keywords", keys:"secondary", color:"#06b6d4" },
+                { label:"Long-Tail Phrases", keys:"long_tail", color:"#22c55e" },
+              ].map(({ label, keys, color }) => (
+                <div key={keys} style={{ marginBottom:".75rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".35rem" }}>
+                    <span style={{ fontSize:".62rem", fontWeight:800, color, textTransform:"uppercase", letterSpacing:".06em" }}>{label}</span>
+                    <button onClick={() => copy((result.keywords?.[keys]||[]).join(", "), `kw_${keys}`)}
+                      style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`kw_${keys}`?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
+                      {copied===`kw_${keys}`?"✓":"Copy"}
+                    </button>
+                  </div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem" }}>
+                    {(result.keywords?.[keys]||[]).map((kw: string, i: number) => (
+                      <span key={i} style={{ background:`${color}10`, border:`1px solid ${color}25`, color, fontSize:".7rem", fontWeight:600, padding:".18rem .55rem", borderRadius:"6px" }}>{kw}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+                <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 <strong style={{ color:"#f59e0b" }}>How to use:</strong> Add naturally in description, posts, and Q&A answers</p>
+              </div>
+            </div>
+          </Section>
+
+          {/* Checklist */}
+          <Section id="checklist" label="Setup Checklist (10 Steps)" emoji="✅">
+            <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".5rem" }}>
+              {result.checklist?.map((item: any, i: number) => (
+                <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".75rem 1rem", display:"flex", gap:".75rem", alignItems:"flex-start" }}>
+                  <div style={{ width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#000",fontSize:".65rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>{item.step}</div>
+                  <div style={{ flex:1 }}>
+                    <p style={{ color:"#fff", fontWeight:700, fontSize:".8rem", margin:"0 0 .18rem" }}>{item.action}</p>
+                    <p style={{ color:"#71717a", fontSize:".74rem", margin:"0 0 .18rem", lineHeight:1.5 }}>{item.detail}</p>
+                    <span style={{ fontSize:".6rem", color:"#f59e0b", fontWeight:700 }}>⏱ {item.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* Pro Tips */}
+          {result.pro_tips && (
+            <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.2)", borderRadius:"14px", padding:"1rem 1.1rem", marginTop:".5rem" }}>
+              <p style={{ fontSize:".65rem", fontWeight:800, color:"#f59e0b", margin:"0 0 .65rem", letterSpacing:".08em", textTransform:"uppercase" }}>💡 Pro Tips for {category}</p>
+              {result.pro_tips.map((tip: string, i: number) => (
+                <div key={i} style={{ display:"flex", gap:".5rem", marginBottom:".4rem" }}>
+                  <span style={{ color:"#f59e0b", fontWeight:800, fontSize:".7rem", flexShrink:0 }}>{i+1}.</span>
+                  <p style={{ color:"#94a3b8", fontSize:".76rem", lineHeight:1.6, margin:0 }}>{tip}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ViralTemplates({ niche, platform, onCreditUsed }: any) {
   const [selected, setSelected] = useState<number | null>(null);
   const [customNiche, setCustomNiche] = useState(niche || "");
@@ -6133,13 +6482,14 @@ Respond ONLY in valid JSON:
             <div className="tab-box tab-box-advertiser">
               <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:".3rem" }}>
                 {[
-                  { id:"roi",         label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
-                  { id:"abtest",      label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
-                  { id:"landingpage", label:"Landing Page",  icon:"🖥️", color:"#22c55e" },
-                  { id:"whatsapp",    label:"WA & Email",    icon:"💬", color:"#25d366" },
-                  { id:"bio",         label:"Bio Writer",    icon:"✍️", color:"#a855f7" },
-                  { id:"product",     label:"Product Desc",  icon:"🛍️", color:"#f97316" },
-                  { id:"templates",   label:"Templates",     icon:"🎯", color:"#06b6d4" },
+                  { id:"roi",           label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
+                  { id:"abtest",        label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
+                  { id:"landingpage",   label:"Landing Page",  icon:"🖥️", color:"#22c55e" },
+                  { id:"whatsapp",      label:"WA & Email",    icon:"💬", color:"#25d366" },
+                  { id:"bio",           label:"Bio Writer",    icon:"✍️", color:"#a855f7" },
+                  { id:"product",       label:"Product Desc",  icon:"🛍️", color:"#f97316" },
+                  { id:"templates",     label:"Templates",     icon:"🎯", color:"#06b6d4" },
+                  { id:"localbusiness", label:"Local Biz",     icon:"🏪", color:"#f59e0b" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
                   const isLocked = !["advertiser","agency"].includes(plan);
@@ -6424,6 +6774,9 @@ Respond ONLY in valid JSON:
           )}
           {activeTab === "templates" && (
             <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} />
+          )}
+          {activeTab === "localbusiness" && (
+            <LocalBusinessKit plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
           )}
           {activeTab === "roi" && (
             <AdROICalculator plan={plan} onUpgrade={() => setShowPaywall(true)} />
