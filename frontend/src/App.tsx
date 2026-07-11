@@ -1178,46 +1178,53 @@ Return ONLY valid JSON:
 function LocalBusinessKit({ plan, onUpgrade }: any) {
   const isUnlocked = plan === "agency";
 
-  const [step,        setStep]        = useState<1|2>(1);
-  const [bizName,     setBizName]     = useState("");
-  const [category,    setCategory]    = useState("");
+  // Use refs for inputs to avoid re-render on each keystroke
+  const bizNameRef   = useRef<HTMLInputElement>(null);
+  const cityRef      = useRef<HTMLInputElement>(null);
+  const areaRef      = useRef<HTMLInputElement>(null);
+  const zipRef       = useRef<HTMLInputElement>(null);
+  const phoneRef     = useRef<HTMLInputElement>(null);
+  const websiteRef   = useRef<HTMLInputElement>(null);
+  const estYearRef   = useRef<HTMLInputElement>(null);
+  const uspRef       = useRef<HTMLTextAreaElement>(null);
+  const hoursRef     = useRef<HTMLInputElement>(null);
+
   const [subCat,      setSubCat]      = useState("");
-  const [city,        setCity]        = useState("");
-  const [area,        setArea]        = useState("");
-  const [zipCode,     setZipCode]     = useState("");
-  const [phone,       setPhone]       = useState("");
-  const [website,     setWebsite]     = useState("");
-  const [usp,         setUsp]         = useState("");
-  const [hours,       setHours]       = useState("");
-  const [estYear,     setEstYear]     = useState("");
+  const [category,    setCategory]    = useState("");
   const [priceRange,  setPriceRange]  = useState("Affordable");
+  const [step,        setStep]        = useState<1|2>(1);
   const [loading,     setLoading]     = useState(false);
   const [result,      setResult]      = useState<any>(null);
   const [copied,      setCopied]      = useState("");
   const [openSec,     setOpenSec]     = useState("description");
+  const [catSearch,   setCatSearch]   = useState("");
+  const [showCatDrop, setShowCatDrop] = useState(false);
 
   const CATEGORIES: Record<string, string[]> = {
-    "🛒 Retail & E-Commerce":   ["Clothing & Apparel Store","Saree & Ethnic Wear","Footwear Store","Jewellery & Accessories","Electronics & Gadgets Shop","Mobile Store & Accessories","Computer & IT Accessories","Sports & Fitness Equipment","Toy & Baby Products","Home Decor & Furniture","Books & Stationery","Gift & Craft Store","Optical Store","Watch & Timepiece Shop","Luggage & Travel Accessories"],
-    "🍽️ Food & Beverage":       ["Restaurant","Cafe & Coffee Shop","Fast Food & Snacks","Bakery & Confectionery","Sweet Shop & Mithai","Juice & Health Bar","Cloud Kitchen / Tiffin Service","Catering Service","Dhaba","Bar & Lounge","Ice Cream Parlour","Pizza & Burger Outlet"],
-    "💅 Beauty & Wellness":      ["Hair Salon (Unisex)","Ladies Beauty Parlour","Barbershop & Men's Salon","Spa & Massage Centre","Nail Studio","Skin & Dermatology Clinic","Tattoo Studio","Makeup Artist (Freelance)","Mehndi Artist"],
-    "🏋️ Health & Fitness":       ["Gym & Fitness Centre","Yoga Studio","Zumba & Dance Studio","Swimming Academy","Martial Arts Academy","CrossFit Box","Sports Academy","Physiotherapy Clinic","Dietitian & Nutrition Clinic","Ayurvedic Wellness Centre"],
-    "🏥 Medical & Healthcare":   ["General Physician Clinic","Dental Clinic","Eye Clinic & Optometrist","Orthopaedic Clinic","Paediatric Clinic","Gynaecology Clinic","Homeopathy Clinic","Pharmacy & Medical Store","Diagnostic Lab & Pathology","Blood Bank"],
-    "💻 IT & Technology":        ["Software Development Company","Web Design & Development","Mobile App Development","Digital Marketing Agency","SEO & Content Agency","Social Media Marketing","Graphic Design Studio","UI/UX Design Agency","IT Support & Maintenance","Cloud & Networking Services","Cybersecurity Services","E-Commerce Solutions","ERP & Software Consulting","Data Analytics & AI Services"],
-    "📚 Education & Coaching":   ["School (K-12)","College & University","Coaching Institute","Tuition Centre","Online Learning Platform","Spoken English Classes","Computer Training Institute","Music & Arts Academy","Dance Academy","Driving School","Vocational Training Centre","MBA & Professional Courses"],
-    "🏠 Home & Real Estate":     ["Real Estate Agency","Property Dealer","Interior Design Studio","Architecture Firm","Home Renovation & Construction","Plumbing & Electrical Services","Painting & Waterproofing","Pest Control Services","Packers & Movers","Cleaning & Housekeeping Services","HVAC & AC Services","Carpentry & Modular Kitchen"],
-    "🚗 Automotive":             ["Car Dealership (New)","Used Car Dealer","Car Service & Workshop","Two-Wheeler Showroom","Bike Service Centre","Car Wash & Detailing","Tyre & Wheel Alignment","Auto Spare Parts","CNG & EV Conversion","Driving School","Car Rental & Cab Service","Fleet Management"],
-    "⚖️ Professional Services":  ["Chartered Accountant (CA)","Tax Consultant & GST Filing","Law Firm & Advocate","Company Registration & Compliance","HR & Payroll Consulting","Business Consultant","Financial Planning & Investment","Insurance Agency","Labour Law Consultant","Import Export Consultant"],
-    "✈️ Travel & Hospitality":   ["Travel Agency & Tour Operator","Hotel & Lodge","Homestay & Guesthouse","Resort & Retreat","Visa Assistance","Cab & Transport Service","Car Rental","Event Venue & Banquet Hall","Airport Transfer","Trekking & Adventure Tours"],
-    "📸 Creative & Media":       ["Photography Studio","Videography & Film Production","Wedding Photographer","Event Photography","Printing & Branding Studio","Video Editing Services","Podcast & Content Studio","Animation & Motion Graphics","Advertising Agency","PR & Communications"],
-    "🎉 Events & Entertainment": ["Event Management Company","Wedding Planner","Catering & Decorations","DJ & Sound Systems","Kids Party Organiser","Corporate Event Planner","Exhibition & Trade Show","Balloon & Flower Decoration","Tent & Lighting Rentals"],
-    "🔧 Repair & Maintenance":   ["Mobile Repair Shop","Laptop & Computer Repair","AC & Appliance Repair","CCTV & Security Systems","Solar Panel Installation","Water Purifier Service","Refrigerator & Washing Machine Repair","Generator & UPS Service","Inverter & Battery Shop"],
-    "🐾 Pets & Animals":         ["Pet Shop & Accessories","Veterinary Clinic","Pet Grooming","Dog Training & Boarding","Aquarium & Fish Store","Pet Food Supplier"],
-    "🌿 Agriculture & Farming":  ["Organic Farm & Store","Seeds & Fertiliser Shop","Agricultural Equipment","Dairy & Milk Products","Poultry & Meat Supply","Hydroponics & Urban Farming"],
-    "📦 Logistics & Supply":     ["Courier & Delivery Service","Warehouse & Storage","Freight & Cargo","Cold Chain Logistics","Last-Mile Delivery","Import & Export Firm"],
+    "🛒 Retail & E-Commerce":    ["Clothing & Apparel Store","Saree & Ethnic Wear","Footwear Store","Jewellery & Accessories","Electronics & Gadgets Shop","Mobile Store & Accessories","Computer & IT Accessories","Sports & Fitness Equipment","Toy & Baby Products","Home Decor & Furniture","Books & Stationery","Gift & Craft Store","Optical Store","Watch & Timepiece Shop","Luggage & Travel Accessories","Grocery & Kirana Store","Medical & Pharma Store"],
+    "🍽️ Food & Beverage":        ["Restaurant","Cafe & Coffee Shop","Fast Food & Snacks","Bakery & Confectionery","Sweet Shop & Mithai","Juice & Health Bar","Cloud Kitchen / Tiffin Service","Catering Service","Dhaba","Bar & Lounge","Ice Cream Parlour","Pizza & Burger Outlet","Biryani & Non-Veg Restaurant"],
+    "💅 Beauty & Wellness":       ["Hair Salon (Unisex)","Ladies Beauty Parlour","Barbershop & Men's Salon","Spa & Massage Centre","Nail Studio","Skin & Dermatology Clinic","Tattoo Studio","Makeup Artist","Mehndi Artist","Bridal Makeup Studio"],
+    "🏋️ Health & Fitness":        ["Gym & Fitness Centre","Yoga Studio","Zumba & Dance Studio","Swimming Academy","Martial Arts Academy","CrossFit Box","Sports Academy","Physiotherapy Clinic","Dietitian & Nutrition Clinic","Ayurvedic Wellness Centre"],
+    "🏥 Medical & Healthcare":    ["General Physician Clinic","Dental Clinic","Eye Clinic & Optometrist","Orthopaedic Clinic","Paediatric Clinic","Gynaecology Clinic","Homeopathy Clinic","Pharmacy & Medical Store","Diagnostic Lab & Pathology","Veterinary Clinic","Nursing Home","Blood Bank"],
+    "💻 IT & Technology":         ["Software Development Company","Web Design & Development","Mobile App Development","Digital Marketing Agency","SEO & Content Agency","Social Media Marketing Agency","Graphic Design Studio","UI/UX Design Agency","IT Support & Maintenance","Cloud & Networking Services","Cybersecurity Services","E-Commerce Solutions","ERP & Software Consulting","Data Analytics & AI Services","Computer Repair & Service","CCTV & Security Systems"],
+    "📚 Education & Coaching":    ["School (K-12)","College & University","Coaching Institute","Tuition Centre","Online Learning Platform","Spoken English Classes","Computer Training Institute","Music Academy","Dance Academy","Driving School","Vocational Training Centre","MBA & Professional Courses","UPSC & Competitive Exam Coaching"],
+    "🏠 Home & Real Estate":      ["Real Estate Agency","Property Dealer","Interior Design Studio","Architecture Firm","Home Renovation & Construction","Plumbing & Electrical Services","Painting & Waterproofing","Pest Control Services","Packers & Movers","Cleaning & Housekeeping Services","HVAC & AC Services","Carpentry & Modular Kitchen","Solar Panel Installation"],
+    "🚗 Automotive":              ["Car Dealership (New)","Used Car Dealer","Car Service & Workshop","Two-Wheeler Showroom","Bike Service Centre","Car Wash & Detailing","Tyre & Wheel Alignment","Auto Spare Parts","EV & CNG Conversion","Car Rental & Cab Service","Automobile Accessories"],
+    "⚖️ Professional Services":   ["Chartered Accountant (CA)","Tax Consultant & GST Filing","Law Firm & Advocate","Company Registration","HR & Payroll Consulting","Business Consultant","Financial Planning & Investment","Insurance Agency","Import Export Consultant"],
+    "✈️ Travel & Hospitality":    ["Travel Agency & Tour Operator","Hotel & Lodge","Homestay & Guesthouse","Resort & Retreat","Visa Assistance","Cab & Transport Service","Car Rental","Event Venue & Banquet Hall","Trekking & Adventure Tours"],
+    "📸 Creative & Media":        ["Photography Studio","Videography & Film Production","Wedding Photographer","Printing & Branding Studio","Video Editing Services","Animation & Motion Graphics","Advertising Agency","Content Creation Studio","PR & Communications"],
+    "🎉 Events & Entertainment":  ["Event Management Company","Wedding Planner","Catering & Decorations","DJ & Sound Systems","Kids Party Organiser","Corporate Event Planner","Balloon & Flower Decoration","Tent & Lighting Rentals"],
+    "🔧 Repair & Services":       ["Mobile Repair Shop","Laptop & Computer Repair","AC & Appliance Repair","Water Purifier Service","Refrigerator & Washing Machine Repair","Generator & UPS Service","Inverter & Battery Shop"],
+    "📦 Logistics & Supply":      ["Courier & Delivery Service","Warehouse & Storage","Freight & Cargo","Packers & Movers","Last-Mile Delivery","Import & Export Firm"],
   };
 
+  const ALL_SUBS = Object.entries(CATEGORIES).flatMap(([cat, subs]) => subs.map(s => ({ cat, sub: s })));
+  const filteredSubs = catSearch.trim()
+    ? ALL_SUBS.filter(({ sub }) => sub.toLowerCase().includes(catSearch.toLowerCase()))
+    : ALL_SUBS;
+
   const PRICE_RANGES = ["Budget-Friendly","Affordable","Mid-Range","Premium","Luxury"];
-  const HOURS_PRESETS = ["Mon-Sat 9am-6pm","Mon-Sat 10am-8pm","Mon-Sun 8am-10pm","24 Hours / 7 Days","Mon-Fri 9am-5pm (Closed Weekends)","Appointment Only"];
+  const HOURS_PRESETS = ["Mon-Sat 9am-6pm","Mon-Sat 10am-8pm","Mon-Sun 8am-10pm","24 Hours / 7 Days","Mon-Fri 9am-5pm","Appointment Only"];
 
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -1225,17 +1232,15 @@ function LocalBusinessKit({ plan, onUpgrade }: any) {
     setTimeout(() => setCopied(""), 2000);
   };
 
-  const canGenerate = bizName.trim() && category && subCat && city.trim();
-
   if (!isUnlocked) return (
     <div style={{ background:"#080810", border:"1px solid rgba(245,158,11,.2)", borderRadius:"20px", padding:"2.5rem 2rem", textAlign:"center" }}>
       <div style={{ fontSize:"3rem", marginBottom:".75rem" }}>🏪</div>
       <h2 style={{ fontWeight:900, fontSize:"1.15rem", color:"#fff", margin:"0 0 .5rem" }}>Local Business Kit</h2>
       <p style={{ color:"#52525b", fontSize:".82rem", lineHeight:1.75, maxWidth:360, margin:"0 auto 1rem" }}>
-        Complete Google Business Profile optimization kit — description, posts, FAQs, review templates, local SEO keywords, and setup checklist.
+        Complete Google Business Profile optimization — description, posts, FAQs, review templates, local SEO keywords, hashtags and checklist. Free to use.
       </p>
       <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.2)", borderRadius:"12px", padding:".85rem 1.1rem", marginBottom:"1.5rem", maxWidth:340, margin:"0 auto 1.5rem" }}>
-        <p style={{ color:"#f59e0b", fontWeight:800, fontSize:".82rem", margin:"0 0 .25rem" }}>👑 Agency Plan Exclusive</p>
+        <p style={{ color:"#f59e0b", fontWeight:800, fontSize:".82rem", margin:"0 0 .2rem" }}>👑 Agency Plan Exclusive</p>
         <p style={{ color:"#a16207", fontSize:".72rem", margin:0 }}>Available only with Agency plan — ₹5,999.99/month</p>
       </div>
       <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", color:"#000", padding:".8rem 2rem", borderRadius:"12px", fontWeight:800, cursor:"pointer", fontSize:".9rem" }}>
@@ -1244,73 +1249,79 @@ function LocalBusinessKit({ plan, onUpgrade }: any) {
     </div>
   );
 
-  const generate = async () => {
-    if (!canGenerate) return;
+  const handleGenerate = async () => {
+    const bizName  = bizNameRef.current?.value.trim() || "";
+    const city     = cityRef.current?.value.trim() || "";
+    const area     = areaRef.current?.value.trim() || "";
+    const zipCode  = zipRef.current?.value.trim() || "";
+    const phone    = phoneRef.current?.value.trim() || "";
+    const website  = websiteRef.current?.value.trim() || "";
+    const estYear  = estYearRef.current?.value.trim() || "";
+    const usp      = uspRef.current?.value.trim() || "";
+    const hours    = hoursRef.current?.value.trim() || "Mon-Sat 10am-7pm";
+
+    if (!bizName || !subCat || !city) return;
+
     setLoading(true); setResult(null);
-
     const locationStr = [area, city, zipCode].filter(Boolean).join(", ");
-    const estInfo = estYear ? `Established in ${estYear}` : "";
 
-    const prompt = `You are India's top local SEO expert and Google Business Profile specialist. Create a COMPLETE, PROFESSIONAL Google Business optimization kit.
+    const prompt = `You are India's top local SEO expert. Create a COMPLETE, PROFESSIONAL Google Business optimization kit.
 
-BUSINESS DETAILS:
-- Business Name: ${bizName}
-- Category: ${subCat} (${category})
+BUSINESS:
+- Name: ${bizName}
+- Category: ${subCat}
 - Location: ${locationStr}
 - Phone: ${phone || "Not provided"}
 - Website: ${website || "Not provided"}
-- Working Hours: ${hours || "Mon-Sat 10am-7pm"}
+- Hours: ${hours}
 - Price Range: ${priceRange}
-- USP / Specialty: ${usp || "Quality products and excellent customer service"}
-- ${estInfo}
+- USP: ${usp || "Quality products and excellent service"}
+- ${estYear ? "Established: " + estYear : ""}
 
 RULES:
-1. Everything must be SPECIFIC to this exact business — no generic filler
-2. Use ${city} and ${area ? area + "," : ""} ${zipCode || ""} naturally in content for local SEO
-3. Description: exactly 700-750 characters, keyword-rich, natural tone
-4. Posts: written like a real business owner, not marketing speak
-5. FAQs: realistic questions customers actually ask
-6. Keywords: hyper-local — include ${city}, ${area || ""}, ${zipCode || ""}, nearby landmarks
-7. Hashtags: mix of local area tags, business category tags, city tags
+1. Everything specific to ${bizName} — no generic filler
+2. Use ${city}${area ? ", " + area : ""}${zipCode ? " PIN " + zipCode : ""} naturally for local SEO
+3. Description: exactly 700-750 characters
+4. Professional Indian business tone throughout
+5. Hashtags: hyper-local with area/city/ZIP
 
-Return ONLY valid JSON (no extra text):
+Return ONLY valid JSON:
 {
   "description": "700-750 char Google Business description",
-  "tagline": "One powerful tagline under 60 chars",
+  "tagline": "Tagline under 60 chars",
   "posts": [
     { "type": "Offer", "emoji": "🎉", "title": "...", "content": "...", "cta": "Call Now" },
-    { "type": "Product/Service", "emoji": "⭐", "title": "...", "content": "...", "cta": "..." },
-    { "type": "Why Choose Us", "emoji": "🏆", "title": "...", "content": "...", "cta": "..." },
-    { "type": "Seasonal", "emoji": "🎊", "title": "...", "content": "...", "cta": "..." },
-    { "type": "Announcement", "emoji": "📢", "title": "...", "content": "...", "cta": "..." }
+    { "type": "Why Choose Us", "emoji": "⭐", "title": "...", "content": "...", "cta": "Visit Us" },
+    { "type": "Product/Service", "emoji": "🏆", "title": "...", "content": "...", "cta": "Learn More" },
+    { "type": "Seasonal", "emoji": "🎊", "title": "...", "content": "...", "cta": "Book Now" },
+    { "type": "Announcement", "emoji": "📢", "title": "...", "content": "...", "cta": "Contact Us" }
   ],
   "faqs": [
-    { "q": "...", "a": "..." }
+    { "q": "question customers ask", "a": "helpful answer" }
   ],
   "review_templates": {
-    "five_star": "personalised 5-star response mentioning the business name",
-    "three_star": "empathetic 3-star response with resolution offer",
-    "one_star": "professional 1-star response — apologetic, solution-focused, include phone"
+    "five_star": "personalised thank you mentioning ${bizName}",
+    "three_star": "empathetic response with resolution offer and phone",
+    "one_star": "professional apology with solution and direct contact"
   },
   "keywords": {
-    "primary": ["3 main search phrases with city name"],
-    "secondary": ["5 supporting keywords with area/locality"],
-    "long_tail": ["4 full question-style searches people use"],
-    "near_me": ["3 'near me' style keywords with ZIP/area"]
+    "primary": ["3 main searches with city"],
+    "secondary": ["5 supporting with locality"],
+    "long_tail": ["4 full question-style searches"],
+    "near_me": ["3 near me phrases with area/PIN"]
   },
   "hashtags": {
-    "local": ["#${city.replace(/\s/g,"")}","#${(area||city).replace(/\s/g,"")}","#${zipCode||city.replace(/\s/g,"")}Business","#${city.replace(/\s/g,"")}Local","#${city.replace(/\s/g,"")}${subCat.split(" ")[0]}"],
-    "category": ["5 business-category specific hashtags"],
+    "local": ["#${city.replace(/\s+/g,"")}","#${(area||city).replace(/\s+/g,"")}Business","#${zipCode||city.replace(/\s+/g,"")}","#${city.replace(/\s+/g,"")}Local","#${city.replace(/\s+/g,"")}${subCat.split(" ")[0].replace(/[^a-zA-Z]/g,"")}"],
+    "category": ["5 business-type hashtags like #DigitalMarketing #ITServices"],
     "reach": ["#IndianBusiness","#LocalBusiness","#SupportLocal","#MadeInIndia","#SmallBusinessIndia"]
   },
+  "attributes": ["4-5 Google attributes to enable e.g. Free parking, Wheelchair accessible"],
   "checklist": [
-    { "step": 1, "action": "...", "detail": "...", "time": "2 min" }
+    { "step": 1, "action": "action title", "detail": "specific instruction", "time": "2 min" }
   ],
-  "attributes": ["3-5 Google Business attributes to select e.g. Free WiFi, Wheelchair accessible, Online appointments"],
-  "pro_tips": ["3 specific tips for ${subCat} in ${city}"]
+  "pro_tips": ["3 tips specific to ${subCat} in ${city}"]
 }
-
-Generate exactly 10 FAQs and 12 checklist steps. All content specific to ${bizName} in ${locationStr}.`;
+Generate exactly 10 FAQs and 12 checklist steps.`;
 
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
@@ -1328,15 +1339,15 @@ Generate exactly 10 FAQs and 12 checklist steps. All content specific to ${bizNa
   };
 
   const Section = ({ id, label, emoji, badge, children }: any) => (
-    <div style={{ background:"#080810", border:`1px solid ${openSec===id?"rgba(245,158,11,.4)":"#141426"}`, borderRadius:"14px", marginBottom:".6rem", overflow:"hidden", transition:"all .2s" }}>
+    <div style={{ background:"#080810", border:`1px solid ${openSec===id?"rgba(245,158,11,.4)":"#141426"}`, borderRadius:"14px", marginBottom:".6rem", overflow:"hidden", transition:"border-color .2s" }}>
       <button onClick={() => setOpenSec(openSec===id?"":id)}
         style={{ width:"100%", background:openSec===id?"rgba(245,158,11,.04)":"none", border:"none", padding:"1rem 1.1rem", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", gap:".5rem" }}>
         <div style={{ display:"flex", alignItems:"center", gap:".5rem" }}>
           <span style={{ fontSize:"1.1rem" }}>{emoji}</span>
           <span style={{ color:"#fff", fontWeight:700, fontSize:".85rem" }}>{label}</span>
-          {badge && <span style={{ background:"rgba(245,158,11,.12)", border:"1px solid rgba(245,158,11,.25)", color:"#f59e0b", fontSize:".55rem", fontWeight:800, padding:".08rem .4rem", borderRadius:"5px" }}>{badge}</span>}
+          {badge && <span style={{ background:"rgba(245,158,11,.1)", border:"1px solid rgba(245,158,11,.22)", color:"#f59e0b", fontSize:".55rem", fontWeight:800, padding:".08rem .4rem", borderRadius:"5px" }}>{badge}</span>}
         </div>
-        <span style={{ color:"#f59e0b", fontSize:".75rem", transition:"transform .2s", display:"inline-block", transform:openSec===id?"rotate(180deg)":"none" }}>▾</span>
+        <span style={{ color:"#f59e0b", fontSize:".75rem", display:"inline-block", transform:openSec===id?"rotate(180deg)":"none", transition:"transform .2s" }}>▾</span>
       </button>
       {openSec === id && (
         <div style={{ padding:"0 1.1rem 1.1rem", borderTop:"1px solid #141426" }}>
@@ -1353,155 +1364,181 @@ Generate exactly 10 FAQs and 12 checklist steps. All content specific to ${bizNa
     </button>
   );
 
-  const InputField = ({ label, value, onChange, placeholder, required, type="text" }: any) => (
-    <div>
-      <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>
-        {label} {required && <span style={{ color:"#ef4444" }}>*</span>}
-      </label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".6rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none", transition:"border .2s" }}
-        onFocus={e => e.target.style.borderColor="#f59e0b"}
-        onBlur={e => e.target.style.borderColor="#1a1a2e"} />
-    </div>
-  );
+  // Stable input style — no state-driven className to avoid re-render flicker
+  const iStyle: React.CSSProperties = { width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".6rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"'Inter',sans-serif", outline:"none" };
 
   return (
     <div style={{ animation:"slideUp .4s ease" }}>
-
-      {/* Header */}
-      <div style={{ marginBottom:"1.25rem" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:".3rem" }}>
-          <div style={{ width:38, height:38, borderRadius:"10px", background:"rgba(245,158,11,.12)", border:"1px solid rgba(245,158,11,.25)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.2rem" }}>🏪</div>
-          <div>
-            <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:0 }}>Local Business Kit</h2>
-            <p style={{ color:"#52525b", fontSize:".72rem", margin:0 }}>Google Business Profile — complete optimization kit</p>
-          </div>
-          <span style={{ marginLeft:"auto", background:"rgba(245,158,11,.1)", border:"1px solid rgba(245,158,11,.2)", color:"#f59e0b", fontSize:".6rem", fontWeight:800, padding:".15rem .55rem", borderRadius:"6px" }}>FREE</span>
+      <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:"1.25rem" }}>
+        <div style={{ width:38, height:38, borderRadius:"10px", background:"rgba(245,158,11,.12)", border:"1px solid rgba(245,158,11,.25)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.2rem" }}>🏪</div>
+        <div style={{ flex:1 }}>
+          <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:0 }}>Local Business Kit</h2>
+          <p style={{ color:"#52525b", fontSize:".72rem", margin:0 }}>Google Business Profile — complete optimization kit</p>
         </div>
+        <span style={{ background:"rgba(34,197,94,.08)", border:"1px solid rgba(34,197,94,.2)", color:"#22c55e", fontSize:".6rem", fontWeight:800, padding:".15rem .55rem", borderRadius:"6px" }}>FREE</span>
       </div>
 
-      {/* Step Indicator */}
-      <div style={{ display:"flex", gap:".5rem", marginBottom:"1.1rem" }}>
-        {[["1","Business Info"],["2","Your Kit"]].map(([n,l],i) => (
-          <div key={n} style={{ flex:1, display:"flex", alignItems:"center", gap:".4rem" }}>
-            <div style={{ width:24, height:24, borderRadius:"50%", background:step > i ? "linear-gradient(135deg,#f59e0b,#d97706)" : step === i+1 ? "rgba(245,158,11,.2)" : "#0d0d18", border:`1px solid ${step >= i+1 ? "#f59e0b" : "#1a1a2e"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:".65rem", fontWeight:800, color:step > i ? "#000" : step === i+1 ? "#f59e0b" : "#3f3f46", flexShrink:0 }}>
-              {step > i ? "✓" : n}
+      {/* Step bar */}
+      <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:"1.25rem" }}>
+        {["Business Info","Your Kit"].map((l, i) => (
+          <div key={l} style={{ display:"flex", alignItems:"center", gap:".4rem", flex: i===0 ? "none" : 1 }}>
+            {i === 1 && <div style={{ flex:1, height:"1px", background: step > 1 ? "#f59e0b" : "#1a1a2e" }} />}
+            <div style={{ width:22, height:22, borderRadius:"50%", background: step > i ? "linear-gradient(135deg,#f59e0b,#d97706)" : step===i+1 ? "rgba(245,158,11,.15)" : "#0d0d18", border:`1px solid ${step >= i+1 ? "#f59e0b" : "#1a1a2e"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:".6rem", fontWeight:800, color: step > i ? "#000" : step===i+1 ? "#f59e0b" : "#3f3f46", flexShrink:0 }}>
+              {step > i ? "✓" : i+1}
             </div>
-            <span style={{ fontSize:".7rem", fontWeight:600, color:step === i+1 ? "#f59e0b" : "#3f3f46" }}>{l}</span>
-            {i === 0 && <div style={{ flex:1, height:"1px", background: step > 1 ? "#f59e0b" : "#1a1a2e" }} />}
+            <span style={{ fontSize:".7rem", fontWeight:600, color: step===i+1 ? "#f59e0b" : "#3f3f46", whiteSpace:"nowrap" }}>{l}</span>
           </div>
         ))}
       </div>
 
-      {/* STEP 1 — Form */}
+      {/* ── STEP 1 ── */}
       {step === 1 && (
         <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:"16px", padding:"1.4rem" }}>
 
-          {/* Category Selection */}
-          <div style={{ marginBottom:"1.1rem" }}>
-            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".5rem", textTransform:"uppercase", letterSpacing:".06em" }}>
+          {/* Category Searchable Dropdown */}
+          <div style={{ marginBottom:"1rem" }}>
+            <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".35rem", textTransform:"uppercase", letterSpacing:".06em" }}>
               Business Category <span style={{ color:"#ef4444" }}>*</span>
             </label>
-            <div style={{ display:"flex", flexDirection:"column", gap:".3rem", maxHeight:220, overflowY:"auto", paddingRight:".2rem" }}>
-              {Object.entries(CATEGORIES).map(([cat, subs]) => (
-                <div key={cat}>
-                  <div style={{ fontSize:".6rem", fontWeight:800, color:"#3f3f46", padding:".25rem 0", letterSpacing:".05em", textTransform:"uppercase" }}>{cat}</div>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:".3rem", marginBottom:".3rem" }}>
-                    {subs.map(sub => (
-                      <button key={sub} onClick={() => { setCategory(cat); setSubCat(sub); }}
-                        style={{ padding:".28rem .65rem", borderRadius:"7px", border:`1px solid ${subCat===sub?"rgba(245,158,11,.5)":"#1a1a2e"}`, background:subCat===sub?"rgba(245,158,11,.1)":"transparent", color:subCat===sub?"#f59e0b":"#52525b", fontWeight:subCat===sub?800:500, fontSize:".7rem", cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}>
-                        {sub}
-                      </button>
-                    ))}
-                  </div>
+            <div style={{ position:"relative" }}>
+              <input
+                value={catSearch || subCat}
+                onChange={e => { setCatSearch(e.target.value); setShowCatDrop(true); if (!e.target.value) setSubCat(""); }}
+                onFocus={() => setShowCatDrop(true)}
+                placeholder="Search or select category..."
+                style={{ ...iStyle, paddingRight:"2rem" }}
+              />
+              <span style={{ position:"absolute", right:".75rem", top:"50%", transform:"translateY(-50%)", color:"#52525b", pointerEvents:"none" }}>▾</span>
+
+              {showCatDrop && (
+                <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, right:0, background:"#0a0a14", border:"1px solid rgba(245,158,11,.3)", borderRadius:"12px", zIndex:200, maxHeight:280, overflowY:"auto", boxShadow:"0 12px 40px rgba(0,0,0,.7)" }}>
+                  {Object.entries(CATEGORIES).map(([cat, subs]) => {
+                    const visible = subs.filter(s => !catSearch.trim() || s.toLowerCase().includes(catSearch.toLowerCase()));
+                    if (!visible.length) return null;
+                    return (
+                      <div key={cat}>
+                        <div style={{ padding:".5rem .85rem .2rem", fontSize:".58rem", fontWeight:800, color:"#3f3f46", letterSpacing:".08em", textTransform:"uppercase", position:"sticky", top:0, background:"#0a0a14" }}>{cat}</div>
+                        {visible.map(sub => (
+                          <button key={sub} onClick={() => { setSubCat(sub); setCategory(cat); setCatSearch(""); setShowCatDrop(false); }}
+                            style={{ width:"100%", background:subCat===sub?"rgba(245,158,11,.1)":"transparent", border:"none", padding:".55rem .85rem", textAlign:"left", color:subCat===sub?"#f59e0b":"#94a3b8", fontSize:".8rem", cursor:"pointer", fontFamily:"inherit", fontWeight:subCat===sub?700:400, display:"block" }}
+                            onMouseEnter={e => { if (subCat!==sub) e.currentTarget.style.background="rgba(255,255,255,.04)"; e.currentTarget.style.color="#fff"; }}
+                            onMouseLeave={e => { if (subCat!==sub) e.currentTarget.style.background="transparent"; e.currentTarget.style.color=subCat===sub?"#f59e0b":"#94a3b8"; }}>
+                            {sub}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {filteredSubs.length === 0 && <p style={{ color:"#3f3f46", padding:"1rem", textAlign:"center", fontSize:".78rem" }}>No results found</p>}
                 </div>
-              ))}
+              )}
             </div>
-            {subCat && (
-              <div style={{ marginTop:".5rem", background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.2)", borderRadius:"8px", padding:".4rem .75rem", display:"flex", alignItems:"center", gap:".4rem" }}>
-                <span style={{ color:"#f59e0b", fontSize:".72rem", fontWeight:700 }}>✓ {subCat}</span>
-                <span style={{ color:"#3f3f46", fontSize:".65rem" }}>selected</span>
+            {subCat && !showCatDrop && (
+              <div style={{ marginTop:".4rem", display:"flex", alignItems:"center", gap:".4rem" }}>
+                <span style={{ background:"rgba(245,158,11,.08)", border:"1px solid rgba(245,158,11,.25)", color:"#f59e0b", fontSize:".7rem", fontWeight:700, padding:".15rem .55rem", borderRadius:"6px" }}>✓ {subCat}</span>
+                <button onClick={() => { setSubCat(""); setCatSearch(""); }}
+                  style={{ background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".65rem", fontFamily:"inherit" }}>✕ Change</button>
               </div>
             )}
           </div>
 
-          {/* Basic Info */}
+          {/* Close dropdown on outside click */}
+          {showCatDrop && <div style={{ position:"fixed", inset:0, zIndex:199 }} onClick={() => setShowCatDrop(false)} />}
+
+          {/* Fields — using uncontrolled refs */}
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".7rem", marginBottom:".7rem" }}>
-            <InputField label="Business Name" value={bizName} onChange={setBizName} placeholder="e.g. Sharma Sarees" required />
-            <InputField label="City" value={city} onChange={setCity} placeholder="e.g. Delhi, Mumbai, Pune" required />
-            <InputField label="Area / Locality" value={area} onChange={setArea} placeholder="e.g. Chandni Chowk, Bandra" />
-            <InputField label="PIN / ZIP Code" value={zipCode} onChange={setZipCode} placeholder="e.g. 110001" type="tel" />
-            <InputField label="Phone Number" value={phone} onChange={setPhone} placeholder="+91 98XXXXXXXX" />
-            <InputField label="Website" value={website} onChange={setWebsite} placeholder="yourwebsite.com" />
-            <InputField label="Established Year" value={estYear} onChange={setEstYear} placeholder="e.g. 2010" />
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Business Name <span style={{ color:"#ef4444" }}>*</span></label>
+              <input ref={bizNameRef} defaultValue="" placeholder="e.g. Sharma Digital Agency" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>City <span style={{ color:"#ef4444" }}>*</span></label>
+              <input ref={cityRef} defaultValue="" placeholder="e.g. Delhi, Mumbai" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Area / Locality</label>
+              <input ref={areaRef} defaultValue="" placeholder="e.g. Chandni Chowk, Bandra" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>PIN / ZIP Code</label>
+              <input ref={zipRef} defaultValue="" placeholder="e.g. 110001" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Phone Number</label>
+              <input ref={phoneRef} defaultValue="" placeholder="+91 98XXXXXXXX" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Website</label>
+              <input ref={websiteRef} defaultValue="" placeholder="yourwebsite.com" style={iStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Established Year</label>
+              <input ref={estYearRef} defaultValue="" placeholder="e.g. 2010" style={iStyle} />
+            </div>
             <div>
               <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>Price Range</label>
               <select value={priceRange} onChange={e => setPriceRange(e.target.value)}
-                style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".6rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}>
+                style={{ ...iStyle }}>
                 {PRICE_RANGES.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
           </div>
 
           {/* Hours */}
-          <div style={{ marginBottom:".7rem" }}>
+          <div style={{ marginBottom:".75rem" }}>
             <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".35rem", textTransform:"uppercase", letterSpacing:".06em" }}>Working Hours</label>
             <div style={{ display:"flex", flexWrap:"wrap", gap:".3rem", marginBottom:".4rem" }}>
               {HOURS_PRESETS.map(h => (
-                <button key={h} onClick={() => setHours(h)}
-                  style={{ padding:".25rem .6rem", borderRadius:"6px", border:`1px solid ${hours===h?"rgba(245,158,11,.4)":"#1a1a2e"}`, background:hours===h?"rgba(245,158,11,.08)":"transparent", color:hours===h?"#f59e0b":"#52525b", fontSize:".68rem", fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                <button key={h} onClick={() => { if (hoursRef.current) hoursRef.current.value = h; }}
+                  style={{ padding:".25rem .6rem", borderRadius:"6px", border:"1px solid #1a1a2e", background:"transparent", color:"#52525b", fontSize:".68rem", fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#f59e0b"; e.currentTarget.style.color="#f59e0b"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#1a1a2e"; e.currentTarget.style.color="#52525b"; }}>
                   {h}
                 </button>
               ))}
             </div>
-            <input value={hours} onChange={e => setHours(e.target.value)} placeholder="Or type custom hours..."
-              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".6rem .85rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}
-              onFocus={e => e.target.style.borderColor="#f59e0b"}
-              onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+            <input ref={hoursRef} defaultValue="" placeholder="e.g. Mon-Sat 10am-8pm, Sunday Closed" style={iStyle} />
           </div>
 
           {/* USP */}
           <div style={{ marginBottom:"1.1rem" }}>
             <label style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".28rem", textTransform:"uppercase", letterSpacing:".06em" }}>What Makes You Special?</label>
-            <textarea value={usp} onChange={e => setUsp(e.target.value)} rows={2}
-              placeholder="e.g. Pure silk sarees since 1985, free delivery above ₹2,000, 500+ satisfied customers..."
-              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".6rem .85rem", color:"#fff", fontSize:".8rem", fontFamily:"inherit", outline:"none", resize:"none" }}
-              onFocus={e => e.target.style.borderColor="#f59e0b"}
-              onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+            <textarea ref={uspRef} rows={2}
+              defaultValue=""
+              placeholder="e.g. 10 years experience, free home delivery, 500+ happy clients, certified professionals..."
+              style={{ ...iStyle, resize:"none", minHeight:68 }} />
           </div>
 
-          <button onClick={generate} disabled={loading || !canGenerate}
-            style={{ width:"100%", padding:".9rem", borderRadius:"12px", background:!canGenerate?"#0d0d18":"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", color:!canGenerate?"#3f3f46":"#000", fontWeight:800, fontSize:".9rem", cursor:!canGenerate?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
+          <button onClick={handleGenerate} disabled={loading || !subCat}
+            style={{ width:"100%", padding:".9rem", borderRadius:"12px", background:!subCat?"#0d0d18":"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", color:!subCat?"#3f3f46":"#000", fontWeight:800, fontSize:".9rem", cursor:!subCat?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
             {loading
               ? <><span style={{ width:14,height:14,border:"2px solid rgba(0,0,0,.3)",borderTop:"2px solid #000",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0 }} /> Generating your complete kit...</>
               : <>🏪 Generate Business Kit →</>
             }
           </button>
-          {!canGenerate && <p style={{ color:"#3f3f46", fontSize:".65rem", textAlign:"center", margin:".4rem 0 0" }}>Fill Business Name, Category, and City to continue</p>}
+          {!subCat && <p style={{ color:"#3f3f46", fontSize:".65rem", textAlign:"center", margin:".4rem 0 0" }}>Select a business category to continue</p>}
         </div>
       )}
 
-      {/* STEP 2 — Results */}
+      {/* ── STEP 2 — Results ── */}
       {step === 2 && result && (
         <div style={{ animation:"slideUp .4s ease" }}>
-
-          {/* Summary bar */}
-          <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.25)", borderRadius:"12px", padding:".85rem 1.1rem", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:".5rem" }}>
+          <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.2)", borderRadius:"12px", padding:".85rem 1.1rem", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:".5rem" }}>
             <div>
-              <p style={{ color:"#f59e0b", fontWeight:800, fontSize:".88rem", margin:"0 0 .15rem" }}>✅ {bizName}</p>
-              <p style={{ color:"#52525b", fontSize:".72rem", margin:0 }}>{subCat} · {[area,city,zipCode].filter(Boolean).join(", ")}</p>
+              <p style={{ color:"#f59e0b", fontWeight:800, fontSize:".88rem", margin:"0 0 .15rem" }}>✅ {result.tagline || subCat}</p>
+              <p style={{ color:"#52525b", fontSize:".7rem", margin:0 }}>{subCat}</p>
             </div>
-            {result.tagline && <span style={{ background:"rgba(245,158,11,.1)", border:"1px solid rgba(245,158,11,.2)", color:"#f59e0b", fontSize:".72rem", fontWeight:700, padding:".2rem .6rem", borderRadius:"6px", fontStyle:"italic" }}>"{result.tagline}"</span>}
-            <button onClick={() => setStep(1)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:"#52525b", padding:".25rem .65rem", borderRadius:"7px", cursor:"pointer", fontSize:".7rem", fontWeight:600, fontFamily:"inherit" }}>← Edit Details</button>
+            <button onClick={() => { setStep(1); setResult(null); }}
+              style={{ background:"transparent", border:"1px solid #1a1a2e", color:"#52525b", padding:".28rem .7rem", borderRadius:"7px", cursor:"pointer", fontSize:".7rem", fontWeight:600, fontFamily:"inherit" }}>← Edit</button>
           </div>
 
           {/* Description */}
-          <Section id="description" label="Google Business Description" emoji="📝" badge={`${result.description?.length || 0}/750`}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".5rem" }}>
-              <span style={{ fontSize:".62rem", color:"#3f3f46" }}>Paste in: Google Business → Edit Profile → Description</span>
+          <Section id="description" label="Google Business Description" emoji="📝" badge={`${result.description?.length||0}/750`}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
+              <span style={{ fontSize:".62rem", color:"#3f3f46" }}>Edit Profile → Description</span>
               <CopyBtn value={result.description} keyName="desc" />
             </div>
-            <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.8, margin:0, background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".9rem 1rem" }}>{result.description}</p>
+            <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.8, margin:0, background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>{result.description}</p>
           </Section>
 
           {/* Posts */}
@@ -1509,11 +1546,8 @@ Generate exactly 10 FAQs and 12 checklist steps. All content specific to ${bizNa
             <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
               {result.posts?.map((post: any, i: number) => (
                 <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
-                    <span style={{ display:"flex", alignItems:"center", gap:".3rem" }}>
-                      <span>{post.emoji}</span>
-                      <span style={{ fontSize:".6rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase" }}>{post.type}</span>
-                    </span>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".35rem" }}>
+                    <span style={{ fontSize:".88rem" }}>{post.emoji} <span style={{ fontSize:".62rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase" }}>{post.type}</span></span>
                     <CopyBtn value={`${post.title}
 
 ${post.content}`} keyName={`post${i}`} />
@@ -1523,23 +1557,21 @@ ${post.content}`} keyName={`post${i}`} />
                   <span style={{ background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", fontSize:".62rem", fontWeight:700, padding:".1rem .45rem", borderRadius:"5px" }}>CTA: {post.cta}</span>
                 </div>
               ))}
-              <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".25rem 0 0", textAlign:"center" }}>Paste in: Google Business → Add update → What's new</p>
             </div>
           </Section>
 
           {/* FAQ */}
-          <Section id="faq" label="10 Customer FAQs" emoji="❓" badge="Copy each answer">
-            <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
+          <Section id="faq" label="10 Customer FAQs" emoji="❓">
+            <div style={{ display:"flex", flexDirection:"column", gap:".45rem" }}>
               {result.faqs?.map((faq: any, i: number) => (
-                <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".8rem 1rem", display:"flex", gap:".6rem" }}>
+                <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".75rem 1rem", display:"flex", gap:".6rem" }}>
                   <div style={{ flex:1 }}>
-                    <p style={{ color:"#fff", fontWeight:700, fontSize:".78rem", margin:"0 0 .22rem" }}>Q: {faq.q}</p>
-                    <p style={{ color:"#94a3b8", fontSize:".76rem", lineHeight:1.6, margin:0 }}>A: {faq.a}</p>
+                    <p style={{ color:"#fff", fontWeight:700, fontSize:".77rem", margin:"0 0 .2rem" }}>Q: {faq.q}</p>
+                    <p style={{ color:"#94a3b8", fontSize:".75rem", lineHeight:1.6, margin:0 }}>A: {faq.a}</p>
                   </div>
                   <CopyBtn value={faq.a} keyName={`faq${i}`} />
                 </div>
               ))}
-              <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".25rem 0 0", textAlign:"center" }}>Paste in: Google Business → Q&A section → Add your answer</p>
             </div>
           </Section>
 
@@ -1552,73 +1584,70 @@ ${post.content}`} keyName={`post${i}`} />
             ].map(({ key, stars, label, color }) => (
               <div key={key} style={{ background:"#050508", border:`1px solid ${color}18`, borderRadius:"10px", padding:".85rem 1rem", marginBottom:".5rem" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
-                  <span style={{ fontSize:".8rem" }}>{stars} <span style={{ color, fontSize:".65rem", fontWeight:800 }}>{label} Response</span></span>
+                  <span style={{ color, fontWeight:800, fontSize:".72rem" }}>{stars} {label}</span>
                   <CopyBtn value={result.review_templates?.[key]} keyName={`rev_${key}`} />
                 </div>
                 <p style={{ color:"#e2e8f0", fontSize:".8rem", lineHeight:1.7, margin:0 }}>{result.review_templates?.[key]}</p>
               </div>
             ))}
-            <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".25rem 0 0", textAlign:"center" }}>Replace [Name] with reviewer's actual name before sending</p>
+            <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".25rem 0 0", textAlign:"center" }}>Replace [Name] with reviewer's actual name before posting</p>
           </Section>
 
           {/* Keywords */}
           <Section id="keywords" label="Local SEO Keywords" emoji="🔑">
             {[
-              { key:"primary",   label:"Primary",      color:"#a855f7" },
-              { key:"secondary", label:"Secondary",     color:"#06b6d4" },
-              { key:"long_tail", label:"Long-Tail",     color:"#22c55e" },
-              { key:"near_me",   label:"Near Me",       color:"#f59e0b" },
+              { key:"primary",   label:"Primary",   color:"#a855f7" },
+              { key:"secondary", label:"Secondary", color:"#06b6d4" },
+              { key:"long_tail", label:"Long-Tail", color:"#22c55e" },
+              { key:"near_me",   label:"Near Me",   color:"#f59e0b" },
             ].map(({ key, label, color }) => (
-              <div key={key} style={{ marginBottom:".75rem" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".35rem" }}>
-                  <span style={{ fontSize:".6rem", fontWeight:800, color, textTransform:"uppercase", letterSpacing:".06em" }}>{label} Keywords</span>
+              <div key={key} style={{ marginBottom:".7rem" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".32rem" }}>
+                  <span style={{ fontSize:".6rem", fontWeight:800, color, textTransform:"uppercase", letterSpacing:".06em" }}>{label}</span>
                   <CopyBtn value={(result.keywords?.[key]||[]).join(", ")} keyName={`kw_${key}`} />
                 </div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:".3rem" }}>
                   {(result.keywords?.[key]||[]).map((kw: string, i: number) => (
-                    <span key={i} style={{ background:`${color}10`, border:`1px solid ${color}25`, color, fontSize:".7rem", fontWeight:600, padding:".18rem .55rem", borderRadius:"6px" }}>{kw}</span>
+                    <span key={i} style={{ background:`${color}10`, border:`1px solid ${color}22`, color, fontSize:".7rem", fontWeight:600, padding:".18rem .55rem", borderRadius:"6px" }}>{kw}</span>
                   ))}
                 </div>
               </div>
             ))}
-            <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".25rem 0 0", textAlign:"center" }}>Add these naturally in description, posts, and Q&A for better local ranking</p>
           </Section>
 
           {/* Hashtags */}
-          <Section id="hashtags" label="Local Hashtags" emoji="#️⃣" badge="Area + Category + Reach">
+          <Section id="hashtags" label="Local Hashtags" emoji="#️⃣" badge="ZIP + Category + Reach">
             {[
-              { key:"local",    label:"📍 Local Area",      color:"#f59e0b" },
-              { key:"category", label:"🏪 Business Type",   color:"#a855f7" },
-              { key:"reach",    label:"🌐 Broad Reach",     color:"#06b6d4" },
+              { key:"local",    label:"📍 Local Area",    color:"#f59e0b" },
+              { key:"category", label:"🏪 Business Type", color:"#a855f7" },
+              { key:"reach",    label:"🌐 Broad Reach",   color:"#06b6d4" },
             ].map(({ key, label, color }) => (
               <div key={key} style={{ marginBottom:".75rem" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".35rem" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".32rem" }}>
                   <span style={{ fontSize:".62rem", fontWeight:800, color }}>{label}</span>
                   <CopyBtn value={(result.hashtags?.[key]||[]).join(" ")} keyName={`ht_${key}`} />
                 </div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:".3rem" }}>
                   {(result.hashtags?.[key]||[]).map((tag: string, i: number) => (
-                    <span key={i} onClick={() => copy(tag, `htag_${tag}`)} style={{ background:`${color}08`, border:`1px solid ${color}20`, color, fontSize:".72rem", fontWeight:700, padding:".18rem .55rem", borderRadius:"6px", cursor:"pointer" }}>
-                      {copied===`htag_${tag}` ? "✓" : tag}
-                    </span>
+                    <button key={i} onClick={() => copy(tag, `htag_${i}_${key}`)}
+                      style={{ background:`${color}08`, border:`1px solid ${color}20`, color, fontSize:".72rem", fontWeight:700, padding:".18rem .55rem", borderRadius:"6px", cursor:"pointer", fontFamily:"inherit" }}>
+                      {copied===`htag_${i}_${key}` ? "✓" : tag}
+                    </button>
                   ))}
                 </div>
               </div>
             ))}
-            <div style={{ background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
-              <p style={{ color:"#a16207", fontSize:".7rem", margin:0 }}>📌 Use in Google Posts, Instagram, Facebook. Click any hashtag to copy individually.</p>
-            </div>
           </Section>
 
           {/* Attributes */}
           {result.attributes?.length > 0 && (
-            <Section id="attributes" label="Google Business Attributes" emoji="✔️" badge="Select these in profile">
-              <div style={{ display:"flex", flexWrap:"wrap", gap:".4rem", paddingTop:".25rem" }}>
+            <Section id="attributes" label="Google Business Attributes" emoji="✔️" badge="Enable in profile">
+              <div style={{ display:"flex", flexWrap:"wrap", gap:".4rem" }}>
                 {result.attributes.map((attr: string, i: number) => (
                   <span key={i} style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.2)", color:"#22c55e", fontSize:".75rem", fontWeight:600, padding:".25rem .7rem", borderRadius:"7px" }}>✓ {attr}</span>
                 ))}
               </div>
-              <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".5rem 0 0" }}>Go to: Edit Profile → More → Attributes → select these</p>
+              <p style={{ color:"#3f3f46", fontSize:".65rem", margin:".5rem 0 0" }}>Edit Profile → More → Attributes → enable these</p>
             </Section>
           )}
 
@@ -1627,7 +1656,7 @@ ${post.content}`} keyName={`post${i}`} />
             <div style={{ display:"flex", flexDirection:"column", gap:".45rem" }}>
               {result.checklist?.map((item: any, i: number) => (
                 <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".7rem 1rem", display:"flex", gap:".65rem", alignItems:"flex-start" }}>
-                  <div style={{ width:24,height:24,borderRadius:"50%",background:`linear-gradient(135deg,#f59e0b,#d97706)`,color:"#000",fontSize:".6rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:".05rem" }}>{item.step}</div>
+                  <div style={{ width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#000",fontSize:".62rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:".05rem" }}>{item.step}</div>
                   <div style={{ flex:1 }}>
                     <p style={{ color:"#fff", fontWeight:700, fontSize:".78rem", margin:"0 0 .15rem" }}>{item.action}</p>
                     <p style={{ color:"#71717a", fontSize:".72rem", margin:"0 0 .15rem", lineHeight:1.5 }}>{item.detail}</p>
@@ -1640,8 +1669,8 @@ ${post.content}`} keyName={`post${i}`} />
 
           {/* Pro Tips */}
           {result.pro_tips && (
-            <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"14px", padding:"1rem 1.1rem", marginTop:".5rem" }}>
-              <p style={{ fontSize:".65rem", fontWeight:800, color:"#f59e0b", margin:"0 0 .65rem", letterSpacing:".08em", textTransform:"uppercase" }}>💡 Pro Tips for {subCat} in {city}</p>
+            <div style={{ background:"rgba(245,158,11,.04)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"14px", padding:"1rem 1.1rem", marginTop:".5rem" }}>
+              <p style={{ fontSize:".65rem", fontWeight:800, color:"#f59e0b", margin:"0 0 .65rem", letterSpacing:".08em", textTransform:"uppercase" }}>💡 Pro Tips</p>
               {result.pro_tips.map((tip: string, i: number) => (
                 <div key={i} style={{ display:"flex", gap:".5rem", marginBottom:".4rem" }}>
                   <span style={{ color:"#f59e0b", fontWeight:800, fontSize:".7rem", flexShrink:0 }}>{i+1}.</span>
@@ -1651,9 +1680,8 @@ ${post.content}`} keyName={`post${i}`} />
             </div>
           )}
 
-          {/* Generate again */}
-          <button onClick={() => { setStep(1); setResult(null); }}
-            style={{ width:"100%", padding:".7rem", borderRadius:"10px", background:"transparent", border:"1px solid rgba(245,158,11,.25)", color:"#f59e0b", fontWeight:700, fontSize:".8rem", cursor:"pointer", fontFamily:"inherit", marginTop:".75rem" }}>
+          <button onClick={() => { setStep(1); setResult(null); setCatSearch(""); setSubCat(""); }}
+            style={{ width:"100%", padding:".7rem", borderRadius:"10px", background:"transparent", border:"1px solid rgba(245,158,11,.2)", color:"#f59e0b", fontWeight:700, fontSize:".8rem", cursor:"pointer", fontFamily:"inherit", marginTop:".75rem" }}>
             🔄 Generate for Another Business
           </button>
         </div>
@@ -1661,7 +1689,6 @@ ${post.content}`} keyName={`post${i}`} />
     </div>
   );
 }
-
 
 function ViralTemplates({ niche, platform, onCreditUsed }: any) {
   const [selected, setSelected] = useState<number | null>(null);
