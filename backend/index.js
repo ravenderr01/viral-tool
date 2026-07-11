@@ -487,7 +487,7 @@ const PLAN_PRICES = {
   creator_starter: 399,
   creator_pro:     1299,
   advertiser:      2499,
-  agency:          5999,
+  agency:          5999.99,
 };
 
 const PLAN_LABELS = {
