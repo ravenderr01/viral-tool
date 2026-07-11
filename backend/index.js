@@ -113,9 +113,57 @@ async function callAI(options) {
     throw new Error("AI temporarily busy. Please try again in a few seconds.");
   }
 }
-// ─────────────────────────────────────────────────────────────────────────────
+async function callClaude({ system, messages, max_tokens = 1500, model = "claude-haiku-4-5" }) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens,
+      system: system || undefined,
+      messages
+    }),
+    signal: AbortSignal.timeout(30000)
+  });
 
-const app = express();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Claude HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.content?.[0]?.text || "";
+}
+
+// Smart routing — plan ke hissab se model choose karo
+async function callAISmart(options, plan) {
+  const aiModel = getAIModel(plan);
+
+  // Free users → Groq always (₹0 cost)
+  if (aiModel === "groq") {
+    return callAI(options);
+  }
+
+  // Paid users → Claude (Haiku or Sonnet)
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const text = await callClaude({ ...options, model: aiModel });
+      console.log(`✅ AI: Claude (${aiModel}) — plan: ${plan}`);
+      return text;
+    } catch (err) {
+      console.log(`⚠️ Claude failed (${err.message?.slice(0,50)}) → Groq fallback`);
+    }
+  }
+
+  // Fallback to Groq if Claude fails or key missing
+  return callAI(options);
+}
+
+
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -124,7 +172,7 @@ app.options("/api/generate", cors());
 app.post("/api/generate", async (req, res) => {
   console.log("Request received");
   try {
-    const { messages, max_tokens } = req.body;
+    const { messages, max_tokens, plan } = req.body;
 
     // Vira Assistant + Image AI ke liye
     if (req.body.system) {
@@ -133,7 +181,6 @@ app.post("/api/generate", async (req, res) => {
       );
 
       if (hasImage) {
-        // Vision: Groq vision model, Gemini fallback handles image via text description
         const groqMessages = req.body.messages.map((m) => {
           if (Array.isArray(m.content)) {
             return {
@@ -157,7 +204,7 @@ app.post("/api/generate", async (req, res) => {
         return res.json({ content: [{ type: "text", text }] });
       }
 
-      // Regular text (Vira Assistant)
+      // Vira Assistant — always Groq (free, fast)
       const text = await callAI({
         system: req.body.system,
         messages: req.body.messages,
@@ -205,12 +252,12 @@ app.post("/api/generate", async (req, res) => {
 `${BASE} Snapchat expert. Fun casual hooks 30-50 chars. Short captions 20-40 chars. Youth-focused Indian content.`
     : `${BASE} Expert in Indian digital marketing and content creation. Platform-specific rules, Indian audience psychology, bilingual Hindi/English capability.`;
 
-    const text = await callAI({
+    const text = await callAISmart({
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       max_tokens: max_tokens || 2000,
       temperature: 0.7
-    });
+    }, plan || "free");
     res.json({ content: [{ type: "text", text }] });
 
   } catch (err) {
@@ -476,18 +523,19 @@ setInterval(() => {
 
 // ── RAZORPAY PAYMENT ROUTES ───────────────────────────────────────────────────
 
+// ── FINAL PLANS — Haiku for Starter/Pro, Sonnet for Advertiser/Agency ────────
 const PLAN_CREDITS = {
-  creator_starter: 150,
-  creator_pro:     500,
-  advertiser:      950,
-  agency:          2400,
+  creator_starter: 100,   // Haiku — cheap, 46% margin
+  creator_pro:     350,   // Haiku — 63% margin
+  advertiser:      700,   // Sonnet — 48% margin
+  agency:          2000,  // Sonnet — 66% margin
 };
 
 const PLAN_PRICES = {
-  creator_starter: 399,
+  creator_starter: 499,
   creator_pro:     1299,
   advertiser:      2499,
-  agency:          5999.99,
+  agency:          8999.99,
 };
 
 const PLAN_LABELS = {
@@ -496,6 +544,20 @@ const PLAN_LABELS = {
   advertiser:      "Advertiser",
   agency:          "Agency",
 };
+
+// ── AI MODEL ROUTING ──────────────────────────────────────────────────────────
+// Free users  → Groq (₹0 cost always)
+// Starter/Pro → Claude Haiku ($0.25/M in, $1.25/M out — 46-63% margin)
+// Advertiser+ → Claude Sonnet ($3/M in, $15/M out — 48-66% margin)
+// Switch: set ANTHROPIC_API_KEY in Render when ready (10+ paid users)
+
+function getAIModel(plan) {
+  if (!process.env.ANTHROPIC_API_KEY) return "groq"; // fallback if no key
+  if (plan === "free" || !plan) return "groq";
+  if (plan === "creator_starter" || plan === "creator_pro") return "claude-haiku-4-5";
+  if (plan === "advertiser" || plan === "agency") return "claude-sonnet-4-5";
+  return "groq";
+}
 
 // ── TELEGRAM NOTIFICATION ─────────────────────────────────────────────────
 async function sendTelegramNotification(message) {
