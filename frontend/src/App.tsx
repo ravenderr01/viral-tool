@@ -392,7 +392,7 @@ Return JSON only:
 }
 
 // ── A/B AD COPY GENERATOR (Advertiser Exclusive) ─────────────────────────────
-function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed }: any) {
+function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
   const isUnlocked = ["advertiser","agency"].includes(plan);
   const [product, setProduct]   = useState("");
   const [platform, setPlatform] = useState("Meta Ads");
@@ -522,7 +522,7 @@ Return ONLY valid JSON:
 }
 
 // ── LANDING PAGE COPY GENERATOR (Advertiser Exclusive) ───────────────────────
-function LandingPageCopy({ plan, onUpgrade, onCreditUsed }: any) {
+function LandingPageCopy({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
   const isUnlocked = ["advertiser","agency"].includes(plan);
   const [product, setProduct]   = useState("");
   const [audience, setAudience] = useState("");
@@ -707,7 +707,7 @@ Return ONLY valid JSON:
 }
 
 // ── WHATSAPP & EMAIL COPY GENERATOR ─────────────────────────────────────────
-function WhatsAppEmailCopy({ onCreditUsed }: any) {
+function WhatsAppEmailCopy({ onCreditUsed, onSaveHistory, plan }: any) {
   const [type, setType]       = useState<"whatsapp"|"email"|"colddm">("whatsapp");
   const [occasion, setOccasion] = useState("Diwali Sale");
   const [business, setBusiness] = useState("");
@@ -908,7 +908,7 @@ Return ONLY valid JSON:
 }
 
 // ── BIO WRITER ───────────────────────────────────────────────────────────────
-function BioWriter({ onCreditUsed }: any) {
+function BioWriter({ onCreditUsed, onSaveHistory, plan }: any) {
   const [platform, setPlatform] = useState("Instagram");
   const [name, setName]         = useState("");
   const [profession, setProfession] = useState("");
@@ -1029,7 +1029,7 @@ Return ONLY valid JSON:
 }
 
 // ── PRODUCT DESCRIPTION WRITER ───────────────────────────────────────────────
-function ProductDescWriter({ onCreditUsed }: any) {
+function ProductDescWriter({ onCreditUsed, onSaveHistory, plan }: any) {
   const [platform, setPlatform] = useState("Instagram Shop");
   const [productName, setProductName] = useState("");
   const [features, setFeatures] = useState("");
@@ -1690,7 +1690,7 @@ ${post.content}`} keyName={`post${i}`} />
   );
 }
 
-function ViralTemplates({ niche, platform, onCreditUsed }: any) {
+function ViralTemplates({ niche, platform, onCreditUsed, onSaveHistory }: any) {
   const [selected, setSelected] = useState<number | null>(null);
   const [customNiche, setCustomNiche] = useState(niche || "");
   const [loading, setLoading]   = useState(false);
@@ -6912,7 +6912,7 @@ Respond ONLY in valid JSON:
           {/* TAB: REPURPOSE ENGINE — Creator Pro+ only */}
           {activeTab === "repurpose" && (
             ["creator_pro","advertiser","agency"].includes(plan)
-              ? <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} />
+              ? <AutoRepurposeEngine usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("pack")} langStrict={langStrict} onSaveHistory={saveToHistory} />
               : <LockedFeaturePreview emoji="🔄" title="Auto-Repurpose Engine"
                   tagline="Paste any content — get 8 platform-native rewrites in one click. Instagram, LinkedIn, Twitter, WhatsApp, YouTube and more."
                   previewItems={["🔄 8 platforms rewritten natively", "📋 Best platform recommendation", "⚡ One click, instant output"]}
@@ -6922,7 +6922,7 @@ Respond ONLY in valid JSON:
           {/* TAB: COMPETITOR ANALYZER — Creator Pro+ only */}
           {activeTab === "competitor" && (
             ["creator_pro","advertiser","agency"].includes(plan)
-              ? <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} />
+              ? <CompetitorHookAnalyzer usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("score")} platform={platform} onSaveHistory={saveToHistory} />
               : <LockedFeaturePreview emoji="🕵️" title="Competitor Hook Analyzer"
                   tagline="Paste any viral content — understand the psychology, get a virality score, and receive 3 original versions for your niche."
                   previewItems={["📊 Virality score /100", "🧠 Psychological triggers decoded", "✍️ 3 original inspired versions"]}
@@ -6933,16 +6933,16 @@ Respond ONLY in valid JSON:
             <ContentLibrary userId={user?.id} supabase={supabase} />
           )}
           {activeTab === "whatsapp" && (
-            <WhatsAppEmailCopy onCreditUsed={() => incrementUsage("generate")} />
+            <WhatsAppEmailCopy onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "bio" && (
-            <BioWriter onCreditUsed={() => incrementUsage("generate")} />
+            <BioWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "product" && (
-            <ProductDescWriter onCreditUsed={() => incrementUsage("generate")} />
+            <ProductDescWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "templates" && (
-            <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} />
+            <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
           )}
           {activeTab === "localbusiness" && (
             <LocalBusinessKit plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
@@ -6951,10 +6951,10 @@ Respond ONLY in valid JSON:
             <AdROICalculator plan={plan} onUpgrade={() => setShowPaywall(true)} />
           )}
           {activeTab === "abtest" && (
-            <ABAdCopyGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
+            <ABAdCopyGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
           )}
           {activeTab === "landingpage" && (
-            <LandingPageCopy plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
+            <LandingPageCopy plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
           )}
 
           {/* TAB: SCRIPT LAB */}
@@ -7045,7 +7045,7 @@ Respond ONLY in valid JSON:
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} onSelectPlan={handleSelectPlan} currency={currency} />}
       {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} detectedCurrency={currency} />}
 
-      <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} />
+      <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} activeTab={activeTab} usageCount={usageCount} limit={limit} userType={userType} />
 
       {/* FAQ Modal */}
       {showTutorial && (
