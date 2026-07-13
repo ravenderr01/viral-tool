@@ -5872,7 +5872,7 @@ export default function ViralContentTool() {
           credits_total: planLimit,
           generations_used_today: newCount,
           updated_at: new Date().toISOString(),
-        }).eq("id", user.id).catch(() => {});
+        }).eq("id", user.id).then(() => {});
       }
       return newCount;
     });
