@@ -48,25 +48,25 @@ const fireCopySignal = (feature: string, contentType: string, text: string, extr
 
 const detectNiche = (keyword: string, currentNiche: string): string => {
   const kw = keyword.toLowerCase();
-  if (kw.match(/weight|gym|fitness|workout|diet|protein|fat|muscle|exercise|yoga/)) return "Fitness";
-  if (kw.match(/money|income|invest|business|startup|freelanc|passive|earn|profit|revenue/)) return "Business";
-  if (kw.match(/\bai\b|tech|code|app|software|chatgpt|programming|developer|crypto|saas/)) return "Tech";
-  if (kw.match(/food|recipe|cook|eat|meal|biryani|street food|restaurant|bake|chef/)) return "Food";
-  if (kw.match(/travel|trip|tour|vacation|hotel|flight|destination|backpack|explore/)) return "Travel";
-  if (kw.match(/fashion|style|outfit|clothes|wear|dress|skincare|beauty|makeup|glow/)) return "Fashion & Style";
-  if (kw.match(/cricket|football|sport|match|player|team|ipl|fifa|basketball|badminton/)) return "Sports";
-  if (kw.match(/motivation|mindset|success|hustle|inspire|goal|discipline|growth/)) return "Motivational";
-  if (kw.match(/meditation|spiritual|manifest|chakra|astrology|mindful|universe/)) return "Spirituality";
-  if (kw.match(/mental|anxiety|stress|depression|therapy|self care|emotion|healing/)) return "Mental Health";
-  if (kw.match(/real estate|property|house|rent|flat|plot|home buying|apartment/)) return "Real Estate";
-  if (kw.match(/study|learn|education|course|exam|college|school|skill|tutorial/)) return "Education";
-  if (kw.match(/facebook ads|google ads|marketing|campaign|funnel|conversion|copywriting/)) return "Ads & Marketing";
-  if (kw.match(/gaming|pubg|free fire|esport|minecraft|stream|gamer|valorant/)) return "Gaming";
-  if (kw.match(/vlog|day in my life|daily routine|morning routine|night routine|lifestyle vlog/)) return "Daily Vlog";
-  if (kw.match(/comedy|funny|meme|joke|prank|skit|humor|roast/)) return "Comedy & Entertainment";
-  if (kw.match(/budget|save money|tax|mutual fund|sip|loan|personal finance|stock market/)) return "Personal Finance";
-  if (kw.match(/lifestyle|minimalism|productivity|habit|self improvement|declutter/)) return "Lifestyle";
-  if (kw.match(/health|wellness|immune|vitamin|nutrition|sleep|detox|ayurveda/)) return "Health & Wellness";
+  if (kw.match(/weight|gym|fitness|workout|diet|protein|fat|muscle|exercise|yoga|zumba|cardio|abs|bicep|squat|deadlift|bench press|gains|cut|bulk|shred/)) return "Fitness";
+  if (kw.match(/money|income|invest|business|startup|freelanc|passive|earn|profit|revenue|entrepreneur|side hustle|self employed|b2b|b2c|sales|client|agency|dropship/)) return "Business";
+  if (kw.match(/\bai\b|tech|code|app|software|chatgpt|programming|developer|crypto|saas|python|javascript|web dev|machine learning|data science|automation|no code/)) return "Tech";
+  if (kw.match(/food|recipe|cook|eat|meal|biryani|street food|restaurant|bake|chef|snack|breakfast|lunch|dinner|thali|curry|dal|roti|dessert|sweet|chaat/)) return "Food";
+  if (kw.match(/travel|trip|tour|vacation|hotel|flight|destination|backpack|explore|road trip|himalaya|goa|manali|kashmir|rajasthan|kerala|hills|beach|visa/)) return "Travel";
+  if (kw.match(/fashion|style|outfit|clothes|wear|dress|skincare|beauty|makeup|glow|ootd|haul|thrift|ethnic|saree|kurta|western|accessori/)) return "Fashion & Style";
+  if (kw.match(/cricket|football|sport|match|player|team|ipl|fifa|basketball|badminton|kabaddi|hockey|virat|rohit|dhoni|messi|ronaldo|nba|isl/)) return "Sports";
+  if (kw.match(/motivation|mindset|success|hustle|inspire|goal|discipline|growth|grind|winner|champion|believe|attitude|positive|consistency/)) return "Motivational";
+  if (kw.match(/meditation|spiritual|manifest|chakra|astrology|mindful|universe|zodiac|tarot|numerology|awakening|consciousness|divine|karma/)) return "Spirituality";
+  if (kw.match(/mental|anxiety|stress|depression|therapy|self care|emotion|healing|overthink|burnout|loneliness|confidence|self love|self worth/)) return "Mental Health";
+  if (kw.match(/real estate|property|house|rent|flat|plot|home buying|apartment|builder|construction|interior|vastu|bhk|society|gated community/)) return "Real Estate";
+  if (kw.match(/study|learn|education|course|exam|college|school|skill|tutorial|upsc|jee|neet|gate|mba|ielts|online learning|degree|scholarship/)) return "Education";
+  if (kw.match(/facebook ads|google ads|marketing|campaign|funnel|conversion|copywriting|meta ads|digital marketing|seo|email marketing|influencer/)) return "Ads & Marketing";
+  if (kw.match(/gaming|pubg|bgmi|battleground|free fire|freefire|esport|minecraft|stream|gamer|valorant|cod|call of duty|fortnite|roblox|gta|league|mobile legend|clash|gameplay|squad|rank push|clutch|headshot|pochinki|noobs/)) return "Gaming";
+  if (kw.match(/vlog|day in my life|daily routine|morning routine|night routine|lifestyle vlog|a day|24 hours|week in my life/)) return "Daily Vlog";
+  if (kw.match(/comedy|funny|meme|joke|prank|skit|humor|roast|troll|viral video|react|cringe|relatable/)) return "Comedy & Entertainment";
+  if (kw.match(/budget|save money|tax|mutual fund|sip|loan|personal finance|stock market|demat|zerodha|groww|fd|ppf|insurance|emi|credit card/)) return "Personal Finance";
+  if (kw.match(/lifestyle|minimalism|productivity|habit|self improvement|declutter|morning|routine|journal|notion|planner|life hack|work life/)) return "Lifestyle";
+  if (kw.match(/health|wellness|immune|vitamin|nutrition|sleep|detox|ayurveda|gut|digestion|diabetes|thyroid|bp|sugar|natural remedy|home remedy/)) return "Health & Wellness";
   // E-commerce / product-selling categories (for advertisers selling physical products)
   if (kw.match(/\bbag|handbag|backpack|purse|luggage|wallet\b/)) return "Bags & Accessories";
   if (kw.match(/shoe|sneaker|sandal|footwear|boots|heels/)) return "Footwear";
@@ -5775,8 +5775,11 @@ export default function ViralContentTool() {
         if (data?.referral_code) { localStorage.setItem("viral_profile", JSON.stringify(data)); }
         if (isAdmin) { setPlan("agency"); setUserType("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
-        if (data?.credits_remaining !== undefined) {
-          setUsageCount((data.credits_total || 100) - data.credits_remaining);
+        if (data?.credits_remaining !== undefined && data?.plan) {
+          // Use PLANS as source of truth for total — Supabase credits_total may be stale
+          const planLimit = PLANS[data.plan as keyof typeof PLANS]?.limit || 25;
+          const used = Math.max(0, planLimit - data.credits_remaining);
+          setUsageCount(used);
         }
       }
       setProfileLoading(false);
@@ -5791,8 +5794,10 @@ export default function ViralContentTool() {
         const isAdmin = session.user.email === ADMIN_EMAIL;
         if (isAdmin) { setPlan("agency"); }
         else if (data?.plan) { setPlan(data.plan); }
-        if (data?.credits_remaining !== undefined) {
-          setUsageCount((data.credits_total || 100) - data.credits_remaining);
+        if (data?.credits_remaining !== undefined && data?.plan) {
+          const planLimit = PLANS[data.plan as keyof typeof PLANS]?.limit || 25;
+          const used = Math.max(0, planLimit - data.credits_remaining);
+          setUsageCount(used);
         }
         if (isAdmin) { setUserType("agency"); }
         else if (!data?.user_type) { setShowOnboarding(true); } else { setUserType(data.user_type); }
@@ -5805,7 +5810,7 @@ export default function ViralContentTool() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const limit = PLANS[plan as keyof typeof PLANS]?.limit || 100;
+  const limit = PLANS[plan as keyof typeof PLANS]?.limit || 25;
 
   // Safety: if the saved platform (from localStorage) doesn't match the user's type
   // (e.g. a Creator had "Google Ads" selected from before), snap to a sensible default.
@@ -5852,17 +5857,22 @@ export default function ViralContentTool() {
     const cost = CREDIT_COSTS[feature] || 1;
     setUsageCount(prev => {
       const newCount = prev + cost;
-      const newRemaining = Math.max(0, limit - newCount);
-      // Show toast
+      const planLimit = PLANS[plan as keyof typeof PLANS]?.limit || 25;
+      const newRemaining = Math.max(0, planLimit - newCount);
+
+      // Show toast notification
       if (creditToastTimer.current) clearTimeout(creditToastTimer.current);
       setCreditToast({ feature, cost, remaining: newRemaining });
       creditToastTimer.current = setTimeout(() => setCreditToast(null), 3500);
-      // Update Supabase in background
+
+      // Sync to Supabase — profile credits update instantly
       if (user?.id) {
         supabase.from("users").update({
           credits_remaining: newRemaining,
-          generations_used_today: (newCount),
-        }).eq("id", user.id).then(() => {});
+          credits_total: planLimit,
+          generations_used_today: newCount,
+          updated_at: new Date().toISOString(),
+        }).eq("id", user.id).catch(() => {});
       }
       return newCount;
     });
@@ -6138,13 +6148,27 @@ Respond ONLY in valid JSON:
     setPayingPlan(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 5000);
-    // Refresh user data from Supabase so plan + credits update instantly
+
+    // Wait a moment for Supabase to process, then refresh
+    await new Promise(r => setTimeout(r, 1500));
+
     if (user?.id) {
       const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
       if (data) {
         setProfile(data);
-        setPlan(data.plan || "free");
-        setUsageCount((data.credits_total || 25) - (data.credits_remaining ?? 0));
+        const newPlan = data.plan || "free";
+        // Use PLANS limit as source of truth
+        const planLimit = PLANS[newPlan as keyof typeof PLANS]?.limit || 25;
+        // If credits_remaining not set yet, give full plan limit
+        const creditsRemaining = data.credits_remaining !== undefined
+          ? data.credits_remaining
+          : planLimit;
+        const creditsUsed = Math.max(0, planLimit - creditsRemaining);
+        setPlan(newPlan);
+        setUsageCount(creditsUsed);
+        // Show upgrade toast
+        setCreditToast({ feature: "plan_upgrade", cost: 0, remaining: creditsRemaining });
+        setTimeout(() => setCreditToast(null), 6000);
       }
     }
   };
@@ -6799,22 +6823,31 @@ Respond ONLY in valid JSON:
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", cursor: "pointer" }} onClick={() => setShowNiche(!showNiche)}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer" }}>NICHE</label>
-                    <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.25)", color: "#8b5cf6", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>{niche}</span>
-                    <span style={{ color: "#3f3f46", fontSize: "0.6rem" }}>auto-detected</span>
+                    {niche ? (
+                      <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#a855f7", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>
+                        ✓ {niche}
+                      </span>
+                    ) : (
+                      <span style={{ background: "rgba(100,100,100,0.08)", border: "1px solid rgba(100,100,100,0.2)", color: "#52525b", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem" }}>
+                        type keyword to auto-detect
+                      </span>
+                    )}
                   </div>
                   <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 600 }}>{showNiche ? "▲ Hide" : "▼ Change"}</span>
                 </div>
-                {showNiche && <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-                  {Object.keys(NICHE_EXAMPLES).map(n => {
-                    const isLocked = false; // All niches open for all plans
-                    return (
-                      <button key={n} className="tbtn" onClick={() => isLocked ? setShowPaywall(true) : setNiche(n)}
-                        style={{ background: niche === n ? "#6d28d912" : "#0d0d0d", border: `1px solid ${niche === n ? "#6d28d9" : "#1a1a1a"}`, color: niche === n ? "#8b5cf6" : isLocked ? "#2a2a2a" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, transition: "all 0.2s" }}>
-                        {isLocked ? "🔒 " : ""}{n}
+                {showNiche && (
+                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+                    {Object.keys(NICHE_EXAMPLES).map(n => (
+                      <button key={n} className="tbtn" onClick={() => {
+                        setNiche(n);
+                        try { localStorage.setItem("vci_niche", n); } catch {}
+                      }}
+                        style={{ background: niche === n ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${niche === n ? "#7c3aed" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontWeight: niche === n ? 700 : 600, transition: "all 0.2s" }}>
+                        {n}
                       </button>
-                    );
-                  })}
-                </div>}
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Platform */}
@@ -6848,12 +6881,18 @@ Respond ONLY in valid JSON:
                     const val = e.target.value;
                     setKeyword(val);
                     setError("");
-                    if (val.length > 3) {
-                      const detected = detectNiche(val, niche);
-                      if (detected !== niche) setNiche(detected);
+                    // Auto-detect niche from keyword — triggers at 3+ chars
+                    if (val.trim().length >= 3) {
+                      const detected = detectNiche(val.trim(), niche);
+                      // Only update if a real niche was detected (not returning currentNiche)
+                      const allNiches = Object.keys(NICHE_EXAMPLES);
+                      if (detected && allNiches.includes(detected)) {
+                        setNiche(detected);
+                        try { localStorage.setItem("vci_niche", detected); } catch {}
+                      }
                     }
                   }} onKeyDown={e => e.key === "Enter" && handleGenerate()}
-                  placeholder={`e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}`}
+                  placeholder={niche ? `e.g. ${NICHE_EXAMPLES[niche]?.[0] || "weight loss"}` : "Type keyword — niche auto-detects"}
                   style={{ width: "100%", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.8rem 1rem", color: "#fff", fontSize: "0.92rem", outline: "none", transition: "border 0.2s" }}
                   onFocus={e => e.target.style.borderColor = "#6d28d9"} onBlur={e => e.target.style.borderColor = "#1a1a1a"} />
 
@@ -7284,8 +7323,11 @@ Respond ONLY in valid JSON:
                  creditToast.feature === "image" ? "Image AI" :
                  creditToast.feature === "scriptgenerate" ? "Script Lab" :
                  creditToast.feature === "scriptimprove" ? "Script Improve" :
-                 creditToast.feature === "voiceover" ? "AI Voice" : creditToast.feature}
-                {" "}— <span style={{ color:"#ef4444" }}>−{creditToast.cost} credit{creditToast.cost > 1 ? "s" : ""}</span>
+                 creditToast.feature === "voiceover" ? "AI Voice" :
+                 creditToast.feature === "plan_upgrade" ? "🎉 Plan Activated!" : creditToast.feature}
+                {creditToast.feature !== "plan_upgrade" && (
+                  <>{" "}— <span style={{ color:"#ef4444" }}>−{creditToast.cost} credit{creditToast.cost > 1 ? "s" : ""}</span></>
+                )}
               </p>
               <p style={{ margin:0, color:"#52525b", fontSize:".68rem" }}>
                 <span style={{ color: creditToast.remaining <= 10 ? "#f59e0b" : "#a855f7", fontWeight:700 }}>{creditToast.remaining}</span>
