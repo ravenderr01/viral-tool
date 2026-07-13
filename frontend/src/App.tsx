@@ -5837,9 +5837,35 @@ export default function ViralContentTool() {
 
   const CREDIT_COSTS: Record<string, number> = { generate: 1, score: 2, caption: 2, image: 6, pack: 5, calendar: 6, scriptgenerate: 8, scriptimprove: 5, voiceover: 3 };
 
+  // Credit toast — shows what was just deducted
+  const [creditToast, setCreditToast] = useState<{feature: string; cost: number; remaining: number} | null>(null);
+  const creditToastTimer = useRef<any>(null);
+
+  const FEATURE_LABELS: Record<string, string> = {
+    generate: "Generate", score: "Hook Score", caption: "Captions",
+    image: "Image AI", pack: "Content Pack", calendar: "Calendar",
+    scriptgenerate: "Script Lab", scriptimprove: "Script Improve",
+    voiceover: "AI Voice", generate3: "A/B Ads", generate4: "Landing Page",
+  };
+
   const incrementUsage = (feature: string = "generate") => {
     const cost = CREDIT_COSTS[feature] || 1;
-    setUsageCount(prev => prev + cost);
+    setUsageCount(prev => {
+      const newCount = prev + cost;
+      const newRemaining = Math.max(0, limit - newCount);
+      // Show toast
+      if (creditToastTimer.current) clearTimeout(creditToastTimer.current);
+      setCreditToast({ feature, cost, remaining: newRemaining });
+      creditToastTimer.current = setTimeout(() => setCreditToast(null), 3500);
+      // Update Supabase in background
+      if (user?.id) {
+        supabase.from("users").update({
+          credits_remaining: newRemaining,
+          generations_used_today: (newCount),
+        }).eq("id", user.id).then(() => {});
+      }
+      return newCount;
+    });
   };
 
   // Universal history saver — call this from any feature after a successful generation
@@ -6577,61 +6603,96 @@ Respond ONLY in valid JSON:
             </div>
           </div>
 
-          {/* Credits bar — professional */}
+          {/* ── CREDITS BAR — UPGRADED ── */}
           <div className="credits-bar">
-            <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:"12px", padding:".6rem 1rem", display:"flex", alignItems:"center", gap:".75rem" }}>
-              {/* Plan badge */}
-              <div style={{ display:"flex", alignItems:"center", gap:".35rem", flexShrink:0 }}>
-                <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".08em", color:"#3f3f46", textTransform:"uppercase" }}>Plan</span>
-                <span style={{ background:"rgba(109,40,217,.12)", border:"1px solid rgba(109,40,217,.25)", color:"#a855f7", fontSize:".62rem", fontWeight:800, padding:".1rem .5rem", borderRadius:"6px" }}>
-                  {PLANS[plan as keyof typeof PLANS]?.label}
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div style={{ flex:1 }}>
-                <div style={{ background:"#0d0d1a", borderRadius:"4px", height:"4px", overflow:"hidden" }}>
-                  <div style={{ height:"100%", borderRadius:"4px", transition:"width 0.5s", width:`${usedPct}%`,
-                    background: remaining === 0 ? "#ef4444" : remaining <= 5 ? "linear-gradient(90deg,#f59e0b,#ef4444)" : "linear-gradient(90deg,#6d28d9,#a855f7)" }} />
+            <div style={{ background:"#080810", border:`1px solid ${remaining === 0 ? "rgba(239,68,68,.3)" : remaining <= 10 ? "rgba(245,158,11,.25)" : "#141426"}`, borderRadius:"14px", padding:".65rem 1rem", transition:"border-color .3s" }}>
+              
+              {/* Row 1: Plan + bar + count + cost */}
+              <div style={{ display:"flex", alignItems:"center", gap:".75rem", marginBottom:".4rem" }}>
+                {/* Plan badge */}
+                <div style={{ flexShrink:0, display:"flex", alignItems:"center", gap:".3rem" }}>
+                  <span style={{ fontSize:".55rem", fontWeight:800, letterSpacing:".08em", color:"#3f3f46", textTransform:"uppercase" as const }}>Plan</span>
+                  <span style={{ background:"rgba(109,40,217,.12)", border:"1px solid rgba(109,40,217,.25)", color:"#a855f7", fontSize:".62rem", fontWeight:800, padding:".1rem .5rem", borderRadius:"6px" }}>
+                    {PLANS[plan as keyof typeof PLANS]?.label}
+                  </span>
                 </div>
-              </div>
 
-              {/* Credit count */}
-              <div style={{ flexShrink:0, textAlign:"right" }}>
-                <span style={{ fontSize:".7rem", fontWeight:800,
-                  color: remaining === 0 ? "#ef4444" : remaining <= 5 ? "#f59e0b" : "#a855f7" }}>
-                  {remaining === 0 ? "⛔ No credits" : `${remaining}`}
-                </span>
-                <span style={{ fontSize:".62rem", color:"#3f3f46" }}> / {limit}</span>
-              </div>
-
-              {/* Active tab cost pill */}
-              {(() => {
-                const TAB_COST: Record<string, { cost: string; color: string }> = {
-                  generate:     { cost: "1 cr", color: "#a855f7" },
-                  score:        { cost: "2 cr", color: "#06b6d4" },
-                  caption:      { cost: "2 cr", color: "#22c55e" },
-                  intelligence: { cost: "Free", color: "#22c55e" },
-                  trends:       { cost: "Free", color: "#22c55e" },
-                  calendar:     { cost: "6 cr", color: "#f59e0b" },
-                  pack:         { cost: "5 cr", color: "#f59e0b" },
-                  image:        { cost: "6 cr", color: "#14b8a6" },
-                  scriptlab:    { cost: "8 cr", color: "#a855f7" },
-                  repurpose:    { cost: "5 cr", color: "#6d28d9" },
-                  competitor:   { cost: "2 cr", color: "#ef4444" },
-                  roi:          { cost: "Free", color: "#22c55e" },
-                  abtest:       { cost: "3 cr", color: "#06b6d4" },
-                  landingpage:  { cost: "4 cr", color: "#22c55e" },
-                };
-                const info = TAB_COST[activeTab];
-                if (!info) return null;
-                return (
-                  <div style={{ flexShrink:0, background:`${info.color}12`, border:`1px solid ${info.color}30`, borderRadius:"6px", padding:".12rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
-                    <span style={{ fontSize:".55rem" }}>⚡</span>
-                    <span style={{ fontSize:".62rem", fontWeight:800, color:info.color }}>{info.cost}</span>
+                {/* Progress bar */}
+                <div style={{ flex:1, position:"relative" as const }}>
+                  <div style={{ background:"#0d0d1a", borderRadius:"4px", height:"6px", overflow:"hidden" }}>
+                    <div style={{ height:"100%", borderRadius:"4px", transition:"width .6s cubic-bezier(.4,0,.2,1)", width:`${usedPct}%`,
+                      background: remaining === 0 ? "#ef4444" : remaining <= 10 ? "linear-gradient(90deg,#f59e0b,#ef4444)" : "linear-gradient(90deg,#6d28d9,#a855f7)" }} />
                   </div>
-                );
-              })()}
+                </div>
+
+                {/* Count */}
+                <div style={{ flexShrink:0 }}>
+                  <span style={{ fontSize:".75rem", fontWeight:900, color: remaining === 0 ? "#ef4444" : remaining <= 10 ? "#f59e0b" : "#a855f7" }}>
+                    {remaining === 0 ? "⛔ 0" : remaining}
+                  </span>
+                  <span style={{ fontSize:".6rem", color:"#3f3f46" }}> / {limit} cr</span>
+                </div>
+
+                {/* Active tab cost */}
+                {(() => {
+                  const TAB_COST: Record<string, string> = {
+                    generate:"1 cr", score:"2 cr", caption:"2 cr",
+                    intelligence:"Free", trends:"Free", library:"Free",
+                    calendar:"6 cr", pack:"5 cr", image:"6 cr",
+                    scriptlab:"8 cr", repurpose:"5 cr", competitor:"2 cr",
+                    roi:"Free", abtest:"3 cr", landingpage:"4 cr",
+                    whatsapp:"2 cr", bio:"1 cr", product:"2 cr", templates:"1 cr",
+                    localbusiness:"Free",
+                  };
+                  const costStr = TAB_COST[activeTab];
+                  if (!costStr) return null;
+                  const isFree = costStr === "Free";
+                  const col = isFree ? "#22c55e" : "#a855f7";
+                  return (
+                    <div style={{ flexShrink:0, background:`${col}10`, border:`1px solid ${col}28`, borderRadius:"6px", padding:".12rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
+                      <span style={{ fontSize:".55rem" }}>{isFree ? "✓" : "⚡"}</span>
+                      <span style={{ fontSize:".62rem", fontWeight:800, color:col }}>{costStr}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Row 2: Usage mini-log — last 5 actions */}
+              <div style={{ display:"flex", alignItems:"center", gap:".4rem", flexWrap:"wrap" as const }}>
+                <span style={{ fontSize:".55rem", color:"#27272a", fontWeight:700, letterSpacing:".06em", flexShrink:0 }}>USED:</span>
+                {usageCount === 0 ? (
+                  <span style={{ fontSize:".6rem", color:"#27272a" }}>No activity yet — generate something!</span>
+                ) : (
+                  <>
+                    <div style={{ flex:1, height:2, background:"#0d0d18", borderRadius:1, overflow:"hidden" }}>
+                      <div style={{ width:`${usedPct}%`, height:"100%",
+                        background: remaining <= 10 ? "rgba(245,158,11,.4)" : "rgba(109,40,217,.3)" }} />
+                    </div>
+                    <span style={{ fontSize:".6rem", color:"#3f3f46", flexShrink:0 }}>
+                      {usageCount} of {limit} used ({Math.round(usedPct)}%)
+                    </span>
+                    {remaining > 0 && remaining <= 20 && (
+                      <span style={{ fontSize:".58rem", color:"#f59e0b", fontWeight:700, background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"5px", padding:".05rem .35rem" }}>
+                        ⚠ Low credits
+                      </span>
+                    )}
+                  </>
+                )}
+
+                {/* Upgrade nudge when low */}
+                {remaining <= 10 && remaining > 0 && plan !== "agency" && (
+                  <button onClick={() => setShowPaywall(true)}
+                    style={{ marginLeft:"auto", background:"rgba(109,40,217,.12)", border:"1px solid rgba(109,40,217,.3)", color:"#a855f7", fontSize:".58rem", fontWeight:700, padding:".08rem .45rem", borderRadius:"6px", cursor:"pointer", flexShrink:0 }}>
+                    Upgrade →
+                  </button>
+                )}
+                {remaining === 0 && (
+                  <button onClick={() => setShowPaywall(true)}
+                    style={{ marginLeft:"auto", background:"rgba(239,68,68,.12)", border:"1px solid rgba(239,68,68,.3)", color:"#ef4444", fontSize:".6rem", fontWeight:700, padding:".1rem .5rem", borderRadius:"6px", cursor:"pointer", flexShrink:0 }}>
+                    ⛔ Get more credits
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -7208,8 +7269,38 @@ Respond ONLY in valid JSON:
         </div>
       )}
 
-      {showHistory && (
-        <HistoryPanel userId={user?.id} onClose={() => setShowHistory(false)} onRestore={restoreFromHistory} />
+      {/* ── CREDIT DEDUCTION TOAST ── */}
+      {creditToast && (
+        <div style={{ position:"fixed", bottom:"5rem", left:"50%", transform:"translateX(-50%)", zIndex:9998, animation:"slideUp .3s ease", pointerEvents:"none" }}>
+          <div style={{ background:"#080810", border:"1px solid rgba(109,40,217,.4)", borderRadius:"14px", padding:".65rem 1.1rem", display:"flex", alignItems:"center", gap:".65rem", boxShadow:"0 8px 32px rgba(0,0,0,.6)", whiteSpace:"nowrap" as const }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(109,40,217,.15)", border:"1px solid rgba(109,40,217,.35)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:".85rem", flexShrink:0 }}>⚡</div>
+            <div>
+              <p style={{ margin:0, color:"#fff", fontWeight:700, fontSize:".78rem" }}>
+                {creditToast.feature === "generate" ? "Generate" :
+                 creditToast.feature === "score" ? "Hook Score" :
+                 creditToast.feature === "caption" ? "Captions" :
+                 creditToast.feature === "calendar" ? "Calendar" :
+                 creditToast.feature === "pack" ? "Content Pack" :
+                 creditToast.feature === "image" ? "Image AI" :
+                 creditToast.feature === "scriptgenerate" ? "Script Lab" :
+                 creditToast.feature === "scriptimprove" ? "Script Improve" :
+                 creditToast.feature === "voiceover" ? "AI Voice" : creditToast.feature}
+                {" "}— <span style={{ color:"#ef4444" }}>−{creditToast.cost} credit{creditToast.cost > 1 ? "s" : ""}</span>
+              </p>
+              <p style={{ margin:0, color:"#52525b", fontSize:".68rem" }}>
+                <span style={{ color: creditToast.remaining <= 10 ? "#f59e0b" : "#a855f7", fontWeight:700 }}>{creditToast.remaining}</span>
+                {" "}credits remaining
+                {creditToast.remaining <= 10 && creditToast.remaining > 0 && <span style={{ color:"#f59e0b" }}> · Low!</span>}
+                {creditToast.remaining === 0 && <span style={{ color:"#ef4444" }}> · Upgrade now</span>}
+              </p>
+            </div>
+            {/* Progress mini */}
+            <div style={{ width:60, height:4, background:"#1a1a2e", borderRadius:2, overflow:"hidden", flexShrink:0 }}>
+              <div style={{ height:"100%", borderRadius:2, background: creditToast.remaining <= 10 ? "#f59e0b" : "#a855f7",
+                width:`${Math.round((creditToast.remaining/limit)*100)}%`, transition:"width .3s" }} />
+            </div>
+          </div>
+        </div>
       )}
 
       {showFaq && (
