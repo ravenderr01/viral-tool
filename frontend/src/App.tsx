@@ -4804,6 +4804,7 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
                 plan, userId: user?.id || "", userEmail: user?.email || "",
+                refCode: (() => { try { return localStorage.getItem("vci_ref") || ""; } catch { return ""; } })(),
               })
             });
             const result = await vRes.json();
@@ -5701,7 +5702,7 @@ export default function ViralContentTool() {
     try { return localStorage.getItem("vci_platform") || "Instagram"; } catch { return "Instagram"; }
   });
   const [niche, setNiche] = useState(() => {
-    try { return localStorage.getItem("vci_niche") || ""; } catch { return ""; }
+    try { return localStorage.getItem("vci_niche") || "Lifestyle"; } catch { return "Lifestyle"; }
   });
   const [showNiche, setShowNiche] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -5762,8 +5763,28 @@ export default function ViralContentTool() {
       .catch(() => { /* silent fallback — stays INR */ });
   }, []);
 
+  // ── Affiliate ref code capture ───────────────────────────────────────────────
   useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref") || urlParams.get("affiliate");
+      if (ref) {
+        localStorage.setItem("vci_ref", ref.toUpperCase());
+        // Clean URL without removing ref from memory
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    // Safety timeout — agar 5 sec mein load nahi hua to force complete
+    const safetyTimer = setTimeout(() => {
+      setAuthLoading(false);
+      setProfileLoading(false);
+    }, 5000);
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(safetyTimer);
       setUser(session?.user ?? null);
       setAuthLoading(false);
       if (session?.user) {
@@ -5782,6 +5803,11 @@ export default function ViralContentTool() {
           setUsageCount(used);
         }
       }
+      setProfileLoading(false);
+    }).catch(() => {
+      // Network error — clear loading immediately
+      clearTimeout(safetyTimer);
+      setAuthLoading(false);
       setProfileLoading(false);
     });
 
@@ -6189,23 +6215,63 @@ Respond ONLY in valid JSON:
   ];
 
   if (authLoading || profileLoading) return (
-    <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#6d28d9", fontFamily: "sans-serif", animation: "pulse 1s infinite" }}>⚡ Loading...</p>
+    <div style={{ minHeight:"100vh", background:"#040410", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"1.5rem" }}>
+      <div style={{ position:"relative", width:72, height:72 }}>
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:"3px solid rgba(124,58,237,.15)" }} />
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:"3px solid transparent", borderTopColor:"#7c3aed", animation:"spin .8s linear infinite" }} />
+        <div style={{ position:"absolute", inset:"50%", transform:"translate(-50%,-50%)", fontSize:"1.6rem", lineHeight:1 }}>⚡</div>
+      </div>
+      <div style={{ textAlign:"center" }}>
+        <p style={{ color:"#fff", fontFamily:"sans-serif", fontWeight:700, fontSize:"1rem", margin:"0 0 .3rem" }}>VCI</p>
+        <p style={{ color:"#52525b", fontFamily:"sans-serif", fontSize:".75rem", margin:0 }}>Loading your workspace...</p>
+      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (showContact) return <Contact onBack={() => setShowContact(false)} />;
   if (legalPage) return <Legal page={legalPage} onBack={() => setLegalPage(null)} />;
   if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={async (type: string) => {
+    // Step 1: Set userType immediately
     setUserType(type);
     setShowOnboarding(false);
-    setActiveTab("generate");
+
+    // Step 2: Set correct tab based on type
+    if (type === "business") {
+      setActiveTab("roi");
+      try { localStorage.setItem("vci_activeTab", "roi"); } catch {}
+    } else if (type === "agency") {
+      setActiveTab("localbusiness");
+      try { localStorage.setItem("vci_activeTab", "localbusiness"); } catch {}
+    } else {
+      setActiveTab("generate");
+      try { localStorage.setItem("vci_activeTab", "generate"); } catch {}
+    }
+
+    // Step 3: Set default niche based on userType
+    if (type === "creator") {
+      const savedNiche = localStorage.getItem("vci_niche");
+      if (!savedNiche) {
+        setNiche("Lifestyle");
+        try { localStorage.setItem("vci_niche", "Lifestyle"); } catch {}
+      }
+    }
+
+    // Step 4: Fetch fresh profile from Supabase
     const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
     if (data) {
       setProfile(data);
-      setPlan(data.plan || "free");
-      setUsageCount((data.credits_total || 25) - (data.credits_remaining ?? 25));
+      const newPlan = data.plan || "free";
+      setPlan(newPlan);
+      // Use PLANS as source of truth — not stale credits_total
+      const planLimit = PLANS[newPlan as keyof typeof PLANS]?.limit || 25;
+      const creditsRemaining = data.credits_remaining ?? planLimit;
+      const used = Math.max(0, planLimit - creditsRemaining);
+      setUsageCount(used);
     }
+
+    // Step 5: Small delay then scroll to top for fresh feel
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
   }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} currency={currency} />;
