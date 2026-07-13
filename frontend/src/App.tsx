@@ -5208,24 +5208,57 @@ function SmartKeywordSuggestions({ niche, currentKeyword, onSelect }: any) {
     setLoading(true);
     (async () => {
       try {
-        // Try recent (last 7 days) trending keywords first
-        const { data: recent, error: e1 } = await supabase.rpc("get_smart_keywords", { p_niche: niche, p_limit: 6 });
+        // Try generated_content table directly (no RPC needed)
+        const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+        const { data: recent } = await supabase
+          .from("generated_content")
+          .select("keyword, user_id")
+          .eq("niche", niche)
+          .gte("created_at", sevenDaysAgo)
+          .not("keyword", "is", null)
+          .neq("keyword", "");
+
         if (!active) return;
 
-        if (!e1 && recent && recent.length >= 3) {
-          setSmartKeywords(recent.map((r: any) => ({ keyword: r.keyword, users: r.unique_users })));
+        if (recent && recent.length >= 3) {
+          // Count unique users per keyword
+          const counts: Record<string, Set<string>> = {};
+          recent.forEach((r: any) => {
+            if (!counts[r.keyword]) counts[r.keyword] = new Set();
+            counts[r.keyword].add(r.user_id);
+          });
+          const sorted = Object.entries(counts)
+            .map(([kw, users]) => ({ keyword: kw, users: users.size }))
+            .sort((a, b) => b.users - a.users)
+            .slice(0, 6);
+          setSmartKeywords(sorted);
           setLoading(false);
           return;
         }
 
-        // Fallback: all-time popular keywords for this niche
-        const { data: allTime, error: e2 } = await supabase.rpc("get_alltime_keywords", { p_niche: niche, p_limit: 6 });
+        // Fallback: all-time from generated_content
+        const { data: allTime } = await supabase
+          .from("generated_content")
+          .select("keyword, user_id")
+          .eq("niche", niche)
+          .not("keyword", "is", null)
+          .neq("keyword", "");
+
         if (!active) return;
 
-        if (!e2 && allTime && allTime.length >= 2) {
-          setSmartKeywords(allTime.map((r: any) => ({ keyword: r.keyword, users: r.unique_users })));
+        if (allTime && allTime.length >= 2) {
+          const counts: Record<string, Set<string>> = {};
+          allTime.forEach((r: any) => {
+            if (!counts[r.keyword]) counts[r.keyword] = new Set();
+            counts[r.keyword].add(r.user_id);
+          });
+          const sorted = Object.entries(counts)
+            .map(([kw, users]) => ({ keyword: kw, users: users.size }))
+            .sort((a, b) => b.users - a.users)
+            .slice(0, 6);
+          setSmartKeywords(sorted);
         } else {
-          setSmartKeywords([]); // not enough data yet — will fall back to static list in render
+          setSmartKeywords([]);
         }
       } catch {
         setSmartKeywords([]);
@@ -5246,8 +5279,9 @@ function SmartKeywordSuggestions({ niche, currentKeyword, onSelect }: any) {
       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
         {showingSmart ? <Flame size={11} color="#f59e0b" /> : <Tag size={11} color="#52525b" />}
         <span style={{ color: showingSmart ? "#f59e0b" : "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em" }}>
-          {showingSmart ? "TRENDING SEARCHES" : "RELATED KEYWORDS"}
+          {showingSmart ? "🔥 TRENDING IN YOUR NICHE" : "RELATED KEYWORDS"}
         </span>
+        {showingSmart && <span style={{ color:"#3f3f46", fontSize:"0.58rem" }}>last 7 days</span>}
       </div>
       <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
         {displayList.map(({ keyword: ex, users }) => (
@@ -5256,7 +5290,9 @@ function SmartKeywordSuggestions({ niche, currentKeyword, onSelect }: any) {
             onMouseEnter={e => { if (currentKeyword !== ex) { (e.currentTarget as any).style.borderColor = "#333"; (e.currentTarget as any).style.color = "#888"; } }}
             onMouseLeave={e => { if (currentKeyword !== ex) { (e.currentTarget as any).style.borderColor = "#1e1e1e"; (e.currentTarget as any).style.color = "#444"; } }}>
             {users >= 5 && <span style={{ fontSize: "0.6rem" }}>🔥</span>}
+            {users >= 2 && users < 5 && <span style={{ fontSize: "0.6rem" }}>⬆</span>}
             {ex}
+            {users >= 2 && <span style={{ color:"#3f3f46", fontSize:"0.55rem" }}>{users} users</span>}
           </button>
         ))}
       </div>
@@ -5273,34 +5309,42 @@ function TrendingNowCard({ niche, platform }: any) {
     setLoading(true);
     (async () => {
       try {
-        // Prefer a trend specific to the selected platform
-        const { data: platformData } = await supabase
-          .from("trending_styles")
-          .select("*")
+        // Count hook_styles from generated_content for this niche+platform
+        const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+
+        const { data } = await supabase
+          .from("generated_content")
+          .select("hook_styles, platform, niche")
           .eq("niche", niche)
           .eq("platform", platform)
-          .order("generation_count", { ascending: false })
-          .limit(1);
+          .gte("created_at", sevenDaysAgo)
+          .not("hook_styles", "is", null);
 
         if (!active) return;
 
-        if (platformData && platformData.length > 0) {
-          setTrend(platformData[0]);
-          setLoading(false);
-          return;
+        if (data && data.length >= 3) {
+          // Count most popular hook style
+          const styleCounts: Record<string, number> = {};
+          data.forEach((row: any) => {
+            if (Array.isArray(row.hook_styles)) {
+              row.hook_styles.forEach((style: string) => {
+                styleCounts[style] = (styleCounts[style] || 0) + 1;
+              });
+            }
+          });
+          const topStyle = Object.entries(styleCounts).sort((a,b) => b[1]-a[1])[0];
+          if (topStyle) {
+            const total = data.length;
+            const pct = Math.round((topStyle[1]/total)*100);
+            setTrend({
+              style: topStyle[0],
+              platform,
+              generation_count: total,
+              pct_share: pct
+            });
+          }
         }
-
-        // Fall back to the top trend across any platform for this niche
-        const { data: anyData, error } = await supabase
-          .from("trending_styles")
-          .select("*")
-          .eq("niche", niche)
-          .order("generation_count", { ascending: false })
-          .limit(1);
-
-        if (!active) return;
-        if (error || !anyData || anyData.length === 0) { setTrend(null); setLoading(false); return; }
-        setTrend(anyData[0]);
+        // If not enough data → trend stays null → component returns null → nothing shown
       } catch {
         if (active) setTrend(null);
       }
@@ -5309,20 +5353,18 @@ function TrendingNowCard({ niche, platform }: any) {
     return () => { active = false; };
   }, [niche, platform]);
 
+  // Not enough data yet — hide completely (don't show wrong info)
   if (loading || !trend) return null;
-
-  const samePlatform = trend.platform === platform;
 
   return (
     <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.03))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "0.9rem 1.1rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
       <span style={{ fontSize: "1.4rem" }}>🔥</span>
       <div>
         <p style={{ margin: 0, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700 }}>
-          Trending now on <strong>{trend.platform}</strong>: <strong>{trend.style}</strong> style hooks <span style={{ color: "#71717a", fontWeight: 500 }}>in {niche}</span>
+          Trending on <strong>{trend.platform}</strong>: <strong>{trend.style}</strong> style hooks in {niche}
         </p>
         <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
-          {trend.pct_share}% of creators used this style in the last 7 days · Based on {trend.generation_count} generations
-          {!samePlatform && <span style={{ color: "#3f3f46" }}> · Showing top platform overall</span>}
+          {trend.pct_share}% of creators used this style · Based on {trend.generation_count} generations this week
         </p>
       </div>
     </div>
