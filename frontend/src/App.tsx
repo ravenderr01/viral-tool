@@ -992,43 +992,47 @@ Return ONLY valid JSON:
 }`;
 
     } else if (type === "email") {
-      const stylePrompt = EMAIL_STYLE_PROMPTS[emailStyle];
-      const styleLabel = EMAIL_STYLES.find(s => s.id === emailStyle)?.label || emailStyle;
+      const styleLabel = EMAIL_STYLES.find(s => s.id === emailStyle)?.label || "Sales";
+      const styleGoals: Record<string,string> = {
+        sales:    "Drive purchase — offer + urgency + social proof",
+        upsell:   "Get existing customer to upgrade — show new value",
+        renewal:  "Remind to renew before expiry — positive + gentle urgency",
+        welcome:  "Warm welcome — make first impression excellent",
+        nurture:  "Add value, build trust — no direct selling",
+        winback:  "Re-engage inactive customer — acknowledge gap, offer incentive",
+        awareness:"Introduce brand/product — educate and inspire",
+        event:    "Drive event registration — excitement + clear details",
+      };
 
-      prompt = `You are a senior email marketing copywriter specializing in ${styleLabel} for Indian businesses.
+      prompt = `Write a professional ${styleLabel} for an Indian business. Goal: ${styleGoals[emailStyle] || "drive action"}.
 
-Brand Name: ${brandName}
-${offer ? `Offer/Details: ${offer}` : ""}
-${audience ? `Target Audience: ${audience}` : "Target Audience: Indian customers"}
+DETAILS:
+Brand: ${brandName}
+${offer ? `Offer/Campaign: ${offer}` : ""}
+${audience ? `Audience: ${audience}` : "Audience: Indian customers"}
 
-EMAIL TYPE: ${styleLabel}
+RULES:
+- Complete professional email — minimum 300 words body
+- Flowing paragraphs — NO labels like "Hook:" or "Para 1:"
+- Start body with "Hi [First Name],"
+- Use "${brandName}" naturally
+- End with warm sign-off + brand name
+- Indian cultural context, warm professional tone
+- Subject lines: 35-50 characters each
 
-${stylePrompt}
-
-CRITICAL RULES:
-- Write complete, professional paragraphs — minimum 3-4 sentences each
-- Total email body must be 400-600 words
-- Indian audience — culturally relevant, warm tone
-- No placeholder brackets except [First Name]
-- Subject lines: 35-50 chars (mobile-friendly)
-- Use brand name "${brandName}" naturally throughout
-- NO meta-labels like "Hook:" or "Para 1:" in the actual email text
-- Write the email AS IF it's already being sent — complete and ready to use
-- CTA button: 3-6 words, action-oriented
-
-Return ONLY valid JSON:
+Return ONLY this JSON (no extra text):
 {
   "subject_lines": [
-    {"text": "Subject option 1", "char_count": 0, "strategy": "What makes this work"},
-    {"text": "Subject option 2", "char_count": 0, "strategy": "What makes this work"},
-    {"text": "Subject option 3", "char_count": 0, "strategy": "What makes this work"}
+    {"text": "subject 1 (curiosity/question)", "strategy": "why this works"},
+    {"text": "subject 2 (benefit/offer)", "strategy": "why this works"},
+    {"text": "subject 3 (urgency/deadline)", "strategy": "why this works"}
   ],
-  "preview_text": "85-100 char inbox preview text",
-  "email_body": "COMPLETE PROFESSIONAL EMAIL BODY — 400-600 words. Write it as one flowing email with proper paragraphs. Use line breaks between paragraphs. Start with greeting Hi [First Name], then the full email content ending with sign-off and brand name. NO section labels.",
-  "cta_button": "CTA button text (3-6 words)",
-  "ps_line": "P.S. line text",
-  "best_send_time": "Best day + time for Indian audience",
-  "compliance_note": "Key email compliance reminder"
+  "preview_text": "preview text 80-100 chars",
+  "email_body": "Complete email body starting with Hi [First Name], — write 300+ words as flowing professional email paragraphs. NO section labels. Real content that can be sent as-is.",
+  "cta_button": "Action CTA 3-5 words",
+  "ps_line": "P.S. compelling bonus line",
+  "best_send_time": "Best day and time for Indian audience",
+  "compliance_note": "Key compliance reminder"
 }`;
 
     } else {
@@ -1080,15 +1084,25 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content: prompt }], max_tokens:2000 })
+        body: JSON.stringify({ messages:[{ role:"user", content: prompt }], max_tokens:2500 })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      // Clean and extract JSON safely
+      let cleanText = text.replace(/```json|```/g,"").trim();
+      // Find JSON object boundaries
+      const jsonStart = cleanText.indexOf("{");
+      const jsonEnd = cleanText.lastIndexOf("}");
+      if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON in response");
+      cleanText = cleanText.slice(jsonStart, jsonEnd + 1);
+      const parsed = JSON.parse(cleanText);
       setResult(parsed);
       onCreditUsed?.();
       onSaveHistory?.("whatsapp", { inputSummary: `${type}: ${brandName}`, resultData: parsed });
-    } catch { setResult(null); }
+    } catch (err) {
+      console.error("WA/Email generate error:", err);
+      setResult({ _error: true });
+    }
     setLoading(false);
   };
 
@@ -1194,14 +1208,22 @@ Return ONLY valid JSON:
       <button onClick={generate} disabled={loading||!brandName.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!brandName.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!brandName.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!brandName.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!brandName.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
         {loading
-          ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Crafting your copy...</>
+          ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating your copy...</>
           : type === "email"
-            ? `✍️ Generate ${EMAIL_STYLES.find(s=>s.id===emailStyle)?.label || "Email"} — 2 cr`
+            ? `✍️ Generate ${EMAIL_STYLES.find(s=>s.id===emailStyle)?.label || "Email"}`
             : type === "whatsapp"
-              ? "💬 Generate WhatsApp Messages — 2 cr"
-              : "📩 Generate Cold DM Scripts — 2 cr"
+              ? "💬 Generate WhatsApp Messages"
+              : "📩 Generate Cold DM Scripts"
         }
       </button>
+
+      {result?._error && (
+        <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.25)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}>
+          <p style={{ margin:0, color:"#f87171", fontSize:".8rem", fontWeight:600 }}>
+            ⚠️ Something went wrong. Please try again with shorter/simpler input, or check your connection.
+          </p>
+        </div>
+      )}
 
       {/* ── WHATSAPP RESULT ── */}
       {result && type === "whatsapp" && (
