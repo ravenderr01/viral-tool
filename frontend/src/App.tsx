@@ -7583,28 +7583,36 @@ Respond ONLY in valid JSON:
           {/* TAB: GENERATE */}
           {activeTab === "generate" && (
             <div>
-              {/* Niche — always visible buttons, no hide/show toggle */}
+              {/* Niche — collapsed by default, expand on click */}
               <div style={{ marginBottom: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: showNiche ? "0.5rem" : "0" }}>
                   <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em" }}>NICHE</label>
-                  {niche && (
+                  {niche ? (
                     <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#a855f7", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>
                       ✓ {niche}
                     </span>
+                  ) : (
+                    <span style={{ color: "#3f3f46", fontSize: "0.65rem" }}>auto-detects from keyword</span>
                   )}
-                  <span style={{ color: "#3f3f46", fontSize: "0.6rem", marginLeft: "auto" }}>auto-detects from keyword</span>
+                  <button onClick={() => setShowNiche(!showNiche)}
+                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#3f3f46", cursor: "pointer", fontSize: "0.65rem", fontWeight: 600, padding: "0.1rem 0.4rem", fontFamily: "inherit" }}>
+                    {showNiche ? "▲ Hide" : "▼ Change"}
+                  </button>
                 </div>
-                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" as const, marginBottom: "0.5rem" }}>
-                  {Object.keys(NICHE_EXAMPLES).map(n => (
-                    <button key={n} className="tbtn" onClick={() => {
-                      setNiche(n);
-                      try { localStorage.setItem("vci_niche", n); } catch {}
-                    }}
-                      style={{ background: niche === n ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${niche === n ? "#7c3aed" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: niche === n ? 700 : 500, transition: "all 0.2s", boxShadow: niche === n ? "0 0 0 2px rgba(124,58,237,0.2)" : "none" }}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
+                {showNiche && (
+                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" as const, marginBottom: "0.5rem" }}>
+                    {Object.keys(NICHE_EXAMPLES).map(n => (
+                      <button key={n} className="tbtn" onClick={() => {
+                        setNiche(n);
+                        setShowNiche(false);
+                        try { localStorage.setItem("vci_niche", n); } catch {}
+                      }}
+                        style={{ background: niche === n ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${niche === n ? "#7c3aed" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: niche === n ? 700 : 500, transition: "all 0.2s", boxShadow: niche === n ? "0 0 0 2px rgba(124,58,237,0.2)" : "none" }}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Platform */}
@@ -7743,8 +7751,15 @@ Respond ONLY in valid JSON:
                                 <div style={{ background:`${scoreColor}15`, border:`1px solid ${scoreColor}30`, borderRadius:6, padding:".1rem .4rem", fontSize:".62rem", fontWeight:800, color:scoreColor }}>
                                   {scoreLabel} {score}
                                 </div>
-                                <button onClick={() => { navigator.clipboard.writeText(hook); }}
-                                  style={{ background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", padding:".15rem .5rem", borderRadius:6, cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+                                <button onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(hook);
+                                      const btn = document.getElementById(`hcopy-${i}`);
+                                      if (btn) { btn.textContent = "✓"; btn.style.color = "#22c55e"; btn.style.borderColor = "rgba(34,197,94,.3)"; setTimeout(() => { btn.textContent = "Copy"; btn.style.color = "#a855f7"; btn.style.borderColor = "rgba(109,40,217,.2)"; }, 1500); }
+                                    } catch { /* fallback */ const ta = document.createElement("textarea"); ta.value = hook; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); const btn = document.getElementById(`hcopy-${i}`); if (btn) { btn.textContent = "✓"; setTimeout(() => { btn.textContent = "Copy"; }, 1500); } }
+                                  }}
+                                  id={`hcopy-${i}`}
+                                  style={{ background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", padding:".15rem .5rem", borderRadius:6, cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit", flexShrink:0, transition:"all .2s" }}>
                                   Copy
                                 </button>
                               </div>
