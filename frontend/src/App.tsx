@@ -873,15 +873,43 @@ EMAIL COMPLIANCE (mandatory):
 - From name must be recognizable — write as the actual business
 - No purchased lists reference — assume opted-in subscribers
 
-PROFESSIONAL EMAIL STRUCTURE:
+PROFESSIONAL EMAIL STRUCTURE (minimum 600-800 words body):
 Subject Line: 40-50 chars ideal (shows fully on mobile)
 Preview Text: 85-100 chars (shows in inbox before opening)
 Greeting: Personalized (use [First Name] token)
-Body Para 1: Hook — connect with reader's current situation (2-3 lines)
-Body Para 2: The offer — specific, clear, no fluff (3-4 lines)
-Body Para 3: Social proof + urgency — trust then action (2-3 lines)
+
+Body Para 1 — HOOK (80-120 words):
+  Open with a relatable scenario or pain point. 
+  Make the reader feel seen and understood.
+  End with a bridge to your solution.
+
+Body Para 2 — STORY/CONTEXT (100-150 words):
+  Brief background or why this offer exists.
+  Build credibility and relatability.
+  Create emotional connection before the pitch.
+
+Body Para 3 — THE OFFER (100-150 words):
+  Full offer details — clear, specific, no fluff.
+  Include exact price, discount, what they get.
+  Break down the value step by step.
+
+Body Para 4 — SOCIAL PROOF (80-120 words):
+  Specific testimonial or result.
+  Numbers, names (fictional ok), outcomes.
+  Make it believable and relevant.
+
+Body Para 5 — OBJECTION HANDLING (80-100 words):
+  Address the #1 reason they won't buy.
+  Answer it directly and confidently.
+
+Body Para 6 — URGENCY + CTA (60-80 words):
+  Why they must act NOW (genuine reason).
+  Clear next step. Repeat offer briefly.
+  
 CTA Button: Action verb + benefit (e.g. "Claim My 40% Off" not just "Click Here")
 PS Line: Often most-read line — use for bonus offer or deadline reminder
+
+TOTAL EMAIL: minimum 500 words, maximum 800 words. Professional but conversational.
 
 Return ONLY valid JSON:
 {
@@ -892,11 +920,14 @@ Return ONLY valid JSON:
   ],
   "preview_text": "85-100 char preview that completes the subject promise",
   "greeting": "Hi [First Name],",
-  "body_para_1": "Hook paragraph — connect with reader",
-  "body_para_2": "Offer paragraph — specific and clear",
-  "body_para_3": "Social proof + urgency paragraph",
-  "cta_button": "Action CTA text (5-7 words)",
-  "ps_line": "P.S. — Bonus or deadline reminder",
+  "body_para_1": "Hook paragraph 80-120 words — relatable scenario or pain point",
+  "body_para_2": "Story/Context paragraph 100-150 words — background, credibility, emotion",
+  "body_para_3": "Offer paragraph 100-150 words — full offer details, price, what they get",
+  "body_para_4": "Social proof paragraph 80-120 words — specific result or testimonial",
+  "body_para_5": "Objection handling 80-100 words — address top concern directly",
+  "body_para_6": "Urgency + CTA paragraph 60-80 words — why act now + next step",
+  "cta_button": "Action CTA text (5-7 words max)",
+  "ps_line": "P.S. line — bonus or deadline (often most-read part of email)",
   "unsubscribe_text": "Standard unsubscribe line to add at footer",
   "best_send_time": "Best day and time to send for Indian audience",
   "compliance_checklist": ["Check 1", "Check 2", "Check 3"]
@@ -956,7 +987,7 @@ Return ONLY valid JSON:
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content: prompts[type] }], max_tokens:900 })
+        body: JSON.stringify({ messages:[{ role:"user", content: prompts[type] }], max_tokens:2000 })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
@@ -1107,45 +1138,109 @@ Return ONLY valid JSON:
 
           {/* Email Body */}
           <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".65rem" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".75rem" }}>
               <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:0, textTransform:"uppercase" as const, letterSpacing:".06em" }}>📝 Email Body</p>
-              <button onClick={() => copy([result.greeting, result.body_para_1, result.body_para_2, result.body_para_3, result.ps_line].filter(Boolean).join("\n\n"), "fullbody")}
-                style={{ background: copied==="fullbody"?"rgba(109,40,217,.1)":"transparent", border:`1px solid ${copied==="fullbody"?"rgba(109,40,217,.3)":"#1a1a2e"}`, color:copied==="fullbody"?"#a855f7":"#52525b", padding:".15rem .55rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
-                {copied==="fullbody" ? "✓ Copied" : "Copy Full Email"}
+              <button onClick={() => copy([
+                result.greeting,
+                result.body_para_1,
+                result.body_para_2,
+                result.body_para_3,
+                result.body_para_4,
+                result.body_para_5,
+                result.body_para_6,
+                result.ps_line
+              ].filter(Boolean).join("\n\n"), "fullbody")}
+                style={{ background: copied==="fullbody"?"rgba(109,40,217,.15)":"rgba(109,40,217,.08)", border:`1px solid ${copied==="fullbody"?"rgba(109,40,217,.5)":"rgba(109,40,217,.25)"}`, color:copied==="fullbody"?"#c4b5fd":"#a855f7", padding:".3rem .85rem", borderRadius:"8px", cursor:"pointer", fontSize:".7rem", fontWeight:800, fontFamily:"inherit" }}>
+                {copied==="fullbody" ? "✓ Copied!" : "📋 Copy Full Email"}
               </button>
             </div>
-            {[
-              { label:"Greeting", val: result.greeting, key: "greet" },
-              { label:"Para 1 — Hook", val: result.body_para_1, key: "p1" },
-              { label:"Para 2 — Offer", val: result.body_para_2, key: "p2" },
-              { label:"Para 3 — Social Proof + Urgency", val: result.body_para_3, key: "p3" },
-            ].filter(r => r.val).map(({ label, val, key }) => (
-              <div key={key} style={{ marginBottom:".65rem", paddingBottom:".65rem", borderBottom:"1px solid #0d0d18" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".2rem" }}>
-                  <span style={{ fontSize:".58rem", fontWeight:800, color:"#3f3f46", textTransform:"uppercase" as const, letterSpacing:".06em" }}>{label}</span>
-                  <button onClick={() => copy(val, key)}
-                    style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===key?"#22c55e":"#52525b", padding:".08rem .35rem", borderRadius:"4px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>
-                    {copied===key ? "✓" : "Copy"}
-                  </button>
+
+            {/* Email Preview Box */}
+            <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:"1.25rem", marginBottom:".75rem" }}>
+              {/* Email Header mock */}
+              <div style={{ borderBottom:"1px solid #1a1a2e", paddingBottom:".65rem", marginBottom:"1rem" }}>
+                <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".65rem" }}>
+                  <span style={{ color:"#3f3f46" }}>From:</span> {business} &lt;hello@yourdomain.com&gt;
+                </p>
+                <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".65rem" }}>
+                  <span style={{ color:"#3f3f46" }}>To:</span> [First Name] &lt;customer@email.com&gt;
+                </p>
+                <p style={{ margin:0, color:"#e2e8f0", fontSize:".75rem", fontWeight:700 }}>
+                  <span style={{ color:"#3f3f46" }}>Subject:</span> {result.subject_lines?.[0]?.text || result.subject_lines?.[0] || ""}
+                </p>
+              </div>
+
+              {/* Greeting */}
+              <p style={{ color:"#e2e8f0", fontSize:".84rem", fontWeight:700, margin:"0 0 .85rem", lineHeight:1.6 }}>
+                {result.greeting || "Hi [First Name],"}
+              </p>
+
+              {/* All paragraphs */}
+              {[
+                { key: "body_para_1", label: "Hook", color: "#a855f7" },
+                { key: "body_para_2", label: "Story", color: "#06b6d4" },
+                { key: "body_para_3", label: "Offer", color: "#22c55e" },
+                { key: "body_para_4", label: "Social Proof", color: "#f59e0b" },
+                { key: "body_para_5", label: "Objection", color: "#f97316" },
+                { key: "body_para_6", label: "Urgency + CTA", color: "#ef4444" },
+              ].map(({ key, label, color }) => result[key] ? (
+                <div key={key} style={{ marginBottom:"1rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                    <span style={{ fontSize:".55rem", fontWeight:800, color, letterSpacing:".08em", textTransform:"uppercase" as const, background:`${color}15`, border:`1px solid ${color}30`, padding:".08rem .4rem", borderRadius:"4px" }}>
+                      {label}
+                    </span>
+                    <button onClick={() => copy(result[key], key)}
+                      style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===key?"#22c55e":"#3f3f46", padding:".08rem .35rem", borderRadius:"4px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>
+                      {copied===key ? "✓" : "Copy"}
+                    </button>
+                  </div>
+                  <p style={{ color:"#cbd5e1", fontSize:".82rem", lineHeight:1.75, margin:0 }}>{result[key]}</p>
                 </div>
-                <p style={{ color:"#e2e8f0", fontSize:".8rem", lineHeight:1.7, margin:0 }}>{val}</p>
+              ) : null)}
+
+              {/* CTA Button */}
+              {result.cta_button && (
+                <div style={{ textAlign:"center" as const, margin:"1.25rem 0" }}>
+                  <div style={{ display:"inline-block", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", color:"#fff", fontWeight:800, fontSize:".9rem", padding:".7rem 2rem", borderRadius:"8px", cursor:"pointer" }}
+                    onClick={() => copy(result.cta_button, "cta_b")}>
+                    {result.cta_button} →
+                  </div>
+                  <p style={{ color:copied==="cta_b"?"#22c55e":"#3f3f46", fontSize:".6rem", margin:".3rem 0 0", cursor:"pointer" }}
+                    onClick={() => copy(result.cta_button, "cta_b")}>
+                    {copied==="cta_b" ? "✓ Copied" : "Click to copy CTA text"}
+                  </p>
+                </div>
+              )}
+
+              {/* PS Line */}
+              {result.ps_line && (
+                <div style={{ borderTop:"1px solid #1a1a2e", paddingTop:".75rem", marginTop:".25rem" }}>
+                  <p style={{ color:"#f59e0b", fontSize:".8rem", fontStyle:"italic", margin:0, lineHeight:1.65 }}>{result.ps_line}</p>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div style={{ borderTop:"1px solid #0d0d18", paddingTop:".65rem", marginTop:"1rem" }}>
+                <p style={{ color:"#3f3f46", fontSize:".62rem", margin:0 }}>
+                  {result.unsubscribe_text || "You received this email because you subscribed to our list. Unsubscribe | View in browser"}
+                </p>
               </div>
-            ))}
-            {result.cta_button && (
-              <div style={{ textAlign:"center" as const, margin:".5rem 0" }}>
-                <span style={{ display:"inline-flex", alignItems:"center", gap:".5rem", background:"rgba(109,40,217,.15)", border:"1px solid rgba(109,40,217,.3)", color:"#a855f7", fontSize:".8rem", fontWeight:800, padding:".45rem 1.25rem", borderRadius:"8px" }}>
-                  🔘 {result.cta_button}
-                </span>
-                <button onClick={() => copy(result.cta_button, "cta_btn")} style={{ display:"block", margin:".3rem auto 0", background:"transparent", border:"none", color:copied==="cta_btn"?"#22c55e":"#52525b", fontSize:".62rem", cursor:"pointer", fontFamily:"inherit" }}>
-                  {copied==="cta_btn" ? "✓ Copied" : "Copy CTA"}
-                </button>
-              </div>
-            )}
-            {result.ps_line && (
-              <div style={{ background:"rgba(245,158,11,.05)", borderRadius:"6px", padding:".5rem .75rem" }}>
-                <p style={{ margin:0, color:"#fbbf24", fontSize:".78rem", fontStyle:"italic" }}>{result.ps_line}</p>
-              </div>
-            )}
+            </div>
+
+            {/* Word count indicator */}
+            {(() => {
+              const allText = [result.body_para_1, result.body_para_2, result.body_para_3, result.body_para_4, result.body_para_5, result.body_para_6].filter(Boolean).join(" ");
+              const wordCount = allText.trim().split(/\s+/).length;
+              return (
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <span style={{ fontSize:".65rem", color: wordCount >= 400 ? "#22c55e" : "#f59e0b", fontWeight:700 }}>
+                    {wordCount >= 400 ? "✅" : "⚠️"} {wordCount} words
+                    {wordCount < 400 ? " (try adding more details to get 400+ words)" : " — professional length"}
+                  </span>
+                  <span style={{ fontSize:".6rem", color:"#3f3f46" }}>Ideal: 400-800 words</span>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Send time + compliance */}
