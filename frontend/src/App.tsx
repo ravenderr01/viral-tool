@@ -8039,9 +8039,9 @@ Respond ONLY in valid JSON:
           {/* TAB: PACK */}
           {activeTab === "pack" && (
             plan === "free" ? (
-              <LockedFeaturePreview emoji="📦" title="Content Pack"
-                tagline="One click for a complete platform bundle — hooks, titles, captions, scripts, and hashtags, all matched to each other."
-                previewItems={["🎣 10 viral hooks", "📝 8 post/reel titles", "🎬 5 ready-to-shoot scripts"]}
+              <LockedFeaturePreview emoji="📦" title="Content Pack — Everything for One Keyword"
+                tagline="Generate takes 30 seconds. Pack gives 28+ pieces: 10 hooks, 8 titles, 5 captions, 5 full scripts, and 15 hashtags — across Instagram, YouTube, or Ads format. One click, weeks of content."
+                previewItems={["🎣 10 viral hooks (2x Generate)", "🎬 5 full scripts (unique to Pack)", "📢 Ads, YouTube or Instagram mode"]}
                 onUpgrade={() => setShowPaywall(true)} />
             ) : (
               <ContentPack plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} platform={platform} langStrict={langStrict} onSaveHistory={saveToHistory} onCreditUsed={() => incrementUsage("pack")} userType={userType} />
