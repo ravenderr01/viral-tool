@@ -797,15 +797,15 @@ Return ONLY valid JSON:
 
 // ── WHATSAPP & EMAIL COPY GENERATOR ─────────────────────────────────────────
 function WhatsAppEmailCopy({ onCreditUsed, onSaveHistory, plan }: any) {
-  const [type, setType]       = useState<"whatsapp"|"email"|"colddm">("whatsapp");
-  const [occasion, setOccasion] = useState("Diwali Sale");
-  const [business, setBusiness] = useState("");
-  const [offer, setOffer]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult]   = useState<any>(null);
-  const [copied, setCopied]   = useState("");
-
-  const OCCASIONS = ["Diwali Sale","New Year Offer","Product Launch","Weekend Sale","Festival Discount","New Arrival","Customer Offer","Flash Sale"];
+  const [type, setType]           = useState<"whatsapp"|"email"|"colddm">("whatsapp");
+  const [emailStyle, setEmailStyle] = useState("sales");
+  const [brandName, setBrandName] = useState("");
+  const [offer, setOffer]         = useState("");
+  const [audience, setAudience]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<any>(null);
+  const [copied, setCopied]       = useState("");
+  const [occasion, setOccasion]   = useState("Diwali Sale");
 
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -813,144 +813,237 @@ function WhatsAppEmailCopy({ onCreditUsed, onSaveHistory, plan }: any) {
     setTimeout(() => setCopied(""), 2000);
   };
 
+  const EMAIL_STYLES = [
+    { id:"sales",     icon:"💰", label:"Sales Email",     desc:"Promote an offer or product" },
+    { id:"upsell",    icon:"⬆️", label:"Upsell Email",    desc:"Sell more to existing customers" },
+    { id:"renewal",   icon:"🔄", label:"Renewal Email",   desc:"Remind to renew subscription/service" },
+    { id:"welcome",   icon:"👋", label:"Welcome Email",   desc:"Greet new customer or subscriber" },
+    { id:"nurture",   icon:"🌱", label:"Nurture Email",   desc:"Build relationship, add value" },
+    { id:"winback",   icon:"💔", label:"Win-Back Email",  desc:"Re-engage inactive customers" },
+    { id:"awareness", icon:"📢", label:"Awareness Email", desc:"Introduce your brand or new product" },
+    { id:"event",     icon:"🗓️", label:"Event Email",     desc:"Invite to webinar, sale, or event" },
+  ];
+
+  const OCCASIONS = ["Diwali Sale","New Year Offer","Product Launch","Weekend Sale",
+    "Festival Discount","New Arrival","Flash Sale","Anniversary Offer"];
+
+  const EMAIL_STYLE_PROMPTS: Record<string, string> = {
+    sales: `Write a high-converting SALES EMAIL for an Indian business.
+Goal: Drive immediate purchase or inquiry.
+Structure: 
+1. Subject lines that create desire
+2. Opening that connects with a pain or desire (2-3 sentences)
+3. Introduce the solution naturally (2-3 sentences)
+4. Present the offer with full details — price, what's included, deadline (3-4 sentences)
+5. Social proof — specific result or customer story (2-3 sentences)
+6. Handle the main objection (2-3 sentences)
+7. Clear CTA with urgency (2-3 sentences)
+8. P.S. line with bonus or deadline
+
+Tone: Confident, warm, professional. Like a trusted business friend writing to you.`,
+
+    upsell: `Write a persuasive UPSELL EMAIL for an Indian business.
+Goal: Get existing customer to upgrade or buy more.
+Structure:
+1. Subject lines that feel exclusive (for existing customers only)
+2. Open by appreciating their loyalty (2-3 sentences)
+3. Reference what they already have/use (2-3 sentences)
+4. Introduce the upgrade with clear comparison — what they have vs what they'll get (4-5 sentences)
+5. Make the upgrade feel like a natural next step (2-3 sentences)
+6. Exclusive price or offer for existing customers (2-3 sentences)
+7. Soft CTA — not pushy (2-3 sentences)
+8. P.S. — Remind this offer is only for existing customers
+
+Tone: Appreciative, exclusive, not pushy.`,
+
+    renewal: `Write a RENEWAL EMAIL for an Indian business.
+Goal: Remind customer to renew before expiry.
+Structure:
+1. Subject lines with urgency but not alarming
+2. Open with what they've achieved/used (positive) (2-3 sentences)
+3. Mention renewal date approaching (2-3 sentences)
+4. What they'll lose if they don't renew (briefly, not fear-mongering) (2-3 sentences)
+5. Renewal offer — early renewal discount or bonus (3-4 sentences)
+6. Simple renewal process (1-2 sentences)
+7. CTA — Renew Now button
+8. P.S. — What happens after expiry / grace period
+
+Tone: Helpful, friendly, clear — like a reminder from a friend.`,
+
+    welcome: `Write a WELCOME EMAIL for a new customer/subscriber.
+Goal: Make excellent first impression, set expectations, build trust.
+Structure:
+1. Subject lines that feel warm and personal
+2. Warm welcome — make them feel great about their decision (3-4 sentences)
+3. What to expect from this relationship (3-4 sentences)
+4. Quick win — something immediately useful or valuable (3-4 sentences)
+5. How to get the best experience (2-3 sentences)
+6. Invitation to connect (reply, follow, WhatsApp) (2-3 sentences)
+7. CTA — Guide them to first action
+8. P.S. — Personal touch or founder note
+
+Tone: Warm, excited, genuine. Like welcoming a friend home.`,
+
+    nurture: `Write a VALUE NURTURE EMAIL for an Indian business.
+Goal: Build trust, educate, strengthen relationship — NOT sell directly.
+Structure:
+1. Subject lines based on curiosity or value (not salesy)
+2. Open with a relevant insight or tip (3-4 sentences)
+3. Tell a brief story or case study (4-5 sentences)
+4. Share actionable advice they can use today (4-5 sentences)
+5. Soft mention of how your product/service relates (2-3 sentences)
+6. Ask a question or invite reply (1-2 sentences)
+7. Gentle CTA — low friction (read more, reply, etc.)
+8. P.S. — Personal note or upcoming content preview
+
+Tone: Helpful, educational, genuine. Zero selling pressure.`,
+
+    winback: `Write a WIN-BACK EMAIL for inactive customers.
+Goal: Re-engage customers who haven't bought/visited in a while.
+Structure:
+1. Subject lines that acknowledge the gap with humor or honesty
+2. Acknowledge the silence honestly (2-3 sentences)
+3. Show what's changed or improved since they left (3-4 sentences)
+4. Make them feel missed and valued (2-3 sentences)
+5. Special win-back offer — make it worth coming back (3-4 sentences)
+6. Remove friction — make returning easy (2-3 sentences)
+7. CTA — Come Back button
+8. P.S. — What if they don't want to? (unsubscribe gracefully)
+
+Tone: Honest, a little humble, warm. Not desperate.`,
+
+    awareness: `Write an AWARENESS EMAIL to introduce brand or new product.
+Goal: Educate, create interest, plant the seed.
+Structure:
+1. Subject lines that spark curiosity
+2. Open with the problem your audience faces (3-4 sentences)
+3. Introduce yourself/brand naturally (3-4 sentences)
+4. Present your solution with key benefits (4-5 sentences)
+5. Show proof you're credible (3-4 sentences)
+6. Paint the picture of life with your solution (3-4 sentences)
+7. Low-friction CTA — Learn more, Watch demo, etc.
+8. P.S. — Free resource or introductory offer
+
+Tone: Educational, inspiring, confident. Not pushy.`,
+
+    event: `Write an EVENT INVITATION EMAIL for an Indian business.
+Goal: Drive registrations or attendance for webinar/sale/event.
+Structure:
+1. Subject lines that create excitement and urgency
+2. Open with what they'll gain from attending (3-4 sentences)
+3. Event details — what, when, where, who (4-5 sentences)
+4. Why this event is worth their time — specific outcomes (3-4 sentences)
+5. Who else is coming / speaker credentials (2-3 sentences)
+6. Overcome "I'm too busy" objection (2-3 sentences)
+7. Register Now CTA with deadline
+8. P.S. — Replay available? Early bird bonus?
+
+Tone: Exciting, clear, persuasive. Make them feel they'll miss out if they skip.`,
+  };
+
   const generate = async () => {
-    if (!business.trim()) return;
+    if (!brandName.trim()) return;
     setLoading(true); setResult(null);
-    const prompts: Record<string, string> = {
-      whatsapp: `You are a senior WhatsApp Business marketing expert for Indian SMBs.
 
-Business: ${business}
-Occasion/Offer: ${occasion} — ${offer || "Special discount"}
+    let prompt = "";
 
-WHATSAPP BUSINESS COMPLIANCE:
-- Messages must follow WhatsApp Business Policy
-- No spam language: avoid "FREE!!!", excessive caps, or misleading offers
-- Must be for genuine opted-in customers only (add context if needed)
-- Include business name naturally (receivers must know who is messaging)
-- No bulk unsolicited messages — write as if for opted-in list
-- Keep under 1000 chars (WhatsApp preview cuts at ~300 chars)
-- Emojis: 1-3 max, relevant only
+    if (type === "whatsapp") {
+      prompt = `You are a senior WhatsApp Business marketing expert for Indian SMBs.
 
-PROFESSIONAL FORMAT:
-Message 1 — Soft Announce (friendly, relationship-first)
-Message 2 — Value Highlight (what's in it for them, specific benefit)
-Message 3 — Urgency/CTA (genuine deadline, clear action step)
+Business: ${brandName}
+Occasion/Offer: ${occasion} — ${offer || "Special offer"}
+
+WHATSAPP BUSINESS POLICY COMPLIANCE:
+- Messages for opted-in customers only
+- No spam trigger words or excessive caps
+- Include business name naturally
+- Max 3 emojis per message
+- No misleading offers
+
+Write 3 professional WhatsApp broadcast messages:
+Message 1 — Soft Announce (friendly, no hard sell)
+Message 2 — Value Highlight (specific benefit + offer)  
+Message 3 — Urgency + CTA (genuine deadline, clear action)
 
 Return ONLY valid JSON:
 {
   "messages": [
-    { 
+    {
       "tone": "Soft Announce",
-      "text": "Full message text",
+      "text": "Full professional message",
       "char_count": 0,
-      "best_time": "When to send this (e.g. 11 AM weekday)"
+      "best_time": "Best send time for Indian audience"
     },
-    { 
-      "tone": "Value Highlight", 
-      "text": "Full message text",
+    {
+      "tone": "Value Highlight",
+      "text": "Full professional message",
       "char_count": 0,
       "best_time": "Best send time"
     },
-    { 
+    {
       "tone": "Urgency + CTA",
-      "text": "Full message text", 
+      "text": "Full professional message",
       "char_count": 0,
       "best_time": "Best send time"
     }
   ],
-  "compliance_note": "One important WhatsApp Business policy reminder for this type of message",
-  "pro_tip": "One actionable tip to improve open/response rates for Indian audience"
-}`,
-      email: `You are a senior email marketing strategist specializing in Indian market campaigns with deep knowledge of deliverability and compliance.
+  "compliance_note": "Key WhatsApp policy reminder for this campaign",
+  "pro_tip": "One tip to improve response rate for Indian audience"
+}`;
 
-Business: ${business}
-Campaign: ${occasion} — ${offer || "Special offer"}
+    } else if (type === "email") {
+      const stylePrompt = EMAIL_STYLE_PROMPTS[emailStyle];
+      const styleLabel = EMAIL_STYLES.find(s => s.id === emailStyle)?.label || emailStyle;
 
-EMAIL COMPLIANCE (mandatory):
-- CAN-SPAM / India IT Act compliant: must have unsubscribe option mention
-- No spam trigger words: avoid "FREE!!!", "ACT NOW", "GUARANTEED", all-caps words
-- Subject line: NO deceptive subjects, no "Re:" or "Fwd:" tricks, no misleading claims
-- From name must be recognizable — write as the actual business
-- No purchased lists reference — assume opted-in subscribers
+      prompt = `You are a senior email marketing copywriter specializing in ${styleLabel} for Indian businesses.
 
-PROFESSIONAL EMAIL STRUCTURE (minimum 600-800 words body):
-Subject Line: 40-50 chars ideal (shows fully on mobile)
-Preview Text: 85-100 chars (shows in inbox before opening)
-Greeting: Personalized (use [First Name] token)
+Brand Name: ${brandName}
+${offer ? `Offer/Details: ${offer}` : ""}
+${audience ? `Target Audience: ${audience}` : "Target Audience: Indian customers"}
 
-Body Para 1 — HOOK (80-120 words):
-  Open with a relatable scenario or pain point. 
-  Make the reader feel seen and understood.
-  End with a bridge to your solution.
+EMAIL TYPE: ${styleLabel}
 
-Body Para 2 — STORY/CONTEXT (100-150 words):
-  Brief background or why this offer exists.
-  Build credibility and relatability.
-  Create emotional connection before the pitch.
+${stylePrompt}
 
-Body Para 3 — THE OFFER (100-150 words):
-  Full offer details — clear, specific, no fluff.
-  Include exact price, discount, what they get.
-  Break down the value step by step.
-
-Body Para 4 — SOCIAL PROOF (80-120 words):
-  Specific testimonial or result.
-  Numbers, names (fictional ok), outcomes.
-  Make it believable and relevant.
-
-Body Para 5 — OBJECTION HANDLING (80-100 words):
-  Address the #1 reason they won't buy.
-  Answer it directly and confidently.
-
-Body Para 6 — URGENCY + CTA (60-80 words):
-  Why they must act NOW (genuine reason).
-  Clear next step. Repeat offer briefly.
-  
-CTA Button: Action verb + benefit (e.g. "Claim My 40% Off" not just "Click Here")
-PS Line: Often most-read line — use for bonus offer or deadline reminder
-
-TOTAL EMAIL: minimum 500 words, maximum 800 words. Professional but conversational.
+CRITICAL RULES:
+- Write complete, professional paragraphs — minimum 3-4 sentences each
+- Total email body must be 400-600 words
+- Indian audience — culturally relevant, warm tone
+- No placeholder brackets except [First Name]
+- Subject lines: 35-50 chars (mobile-friendly)
+- Use brand name "${brandName}" naturally throughout
+- NO meta-labels like "Hook:" or "Para 1:" in the actual email text
+- Write the email AS IF it's already being sent — complete and ready to use
+- CTA button: 3-6 words, action-oriented
 
 Return ONLY valid JSON:
 {
   "subject_lines": [
-    {"text": "Subject option 1 (curiosity)", "char_count": 0, "open_rate_tip": "Why this works"},
-    {"text": "Subject option 2 (benefit)", "char_count": 0, "open_rate_tip": "Why this works"},
-    {"text": "Subject option 3 (urgency)", "char_count": 0, "open_rate_tip": "Why this works"}
+    {"text": "Subject option 1", "char_count": 0, "strategy": "What makes this work"},
+    {"text": "Subject option 2", "char_count": 0, "strategy": "What makes this work"},
+    {"text": "Subject option 3", "char_count": 0, "strategy": "What makes this work"}
   ],
-  "preview_text": "85-100 char preview that completes the subject promise",
-  "greeting": "Hi [First Name],",
-  "body_para_1": "Hook paragraph 80-120 words — relatable scenario or pain point",
-  "body_para_2": "Story/Context paragraph 100-150 words — background, credibility, emotion",
-  "body_para_3": "Offer paragraph 100-150 words — full offer details, price, what they get",
-  "body_para_4": "Social proof paragraph 80-120 words — specific result or testimonial",
-  "body_para_5": "Objection handling 80-100 words — address top concern directly",
-  "body_para_6": "Urgency + CTA paragraph 60-80 words — why act now + next step",
-  "cta_button": "Action CTA text (5-7 words max)",
-  "ps_line": "P.S. line — bonus or deadline (often most-read part of email)",
-  "unsubscribe_text": "Standard unsubscribe line to add at footer",
-  "best_send_time": "Best day and time to send for Indian audience",
-  "compliance_checklist": ["Check 1", "Check 2", "Check 3"]
-}`,
-      colddm: `You are an expert at writing high-converting cold outreach messages for Indian creators and B2B professionals.
+  "preview_text": "85-100 char inbox preview text",
+  "email_body": "COMPLETE PROFESSIONAL EMAIL BODY — 400-600 words. Write it as one flowing email with proper paragraphs. Use line breaks between paragraphs. Start with greeting Hi [First Name], then the full email content ending with sign-off and brand name. NO section labels.",
+  "cta_button": "CTA button text (3-6 words)",
+  "ps_line": "P.S. line text",
+  "best_send_time": "Best day + time for Indian audience",
+  "compliance_note": "Key email compliance reminder"
+}`;
 
-Your Service/Business: ${business}
-Outreach Goal: ${offer || "Get a client or collaboration"}
+    } else {
+      prompt = `You are an expert at writing high-converting cold outreach for Indian professionals.
 
-COLD DM RULES (professional + compliant):
-- Never buy followers/engagement offers — not our purpose
-- Not for mass spam — these are personalized templates requiring manual customization
-- Add [Their Name] and [Specific Reference] tokens for personalization
-- Instagram DM: under 300 chars (gets cut off otherwise)
-- LinkedIn InMail: under 300 chars for connection request note
-- Never lead with "I" — start with them or a genuine observation
-- Research-based openers perform 3x better than generic ones
-- Must have a soft CTA — never hard sell in first message
+Your Business/Service: ${brandName}
+Goal: ${offer || "Find new clients or collaborations"}
+${audience ? `Target: ${audience}` : ""}
 
-3 DMs for 3 different situations:
-DM 1 — Creator Collab (for reaching out to similar creators)
-DM 2 — B2B Prospect (for reaching out to potential clients)  
-DM 3 — Follow-up (for following up after no reply, after 5-7 days)
+Write 3 personalized cold DM templates:
+DM 1 — Creator Collaboration (Instagram, under 280 chars)
+DM 2 — B2B Client Outreach (LinkedIn, under 300 chars)
+DM 3 — Follow-up Message (after no reply, 5-7 days later)
+
+Rules: Start with THEM not "I", use [Name] token, genuine not salesy, soft CTA.
 
 Return ONLY valid JSON:
 {
@@ -958,7 +1051,7 @@ Return ONLY valid JSON:
     {
       "situation": "Creator Collaboration",
       "platform": "Instagram",
-      "text": "Full DM with [Name] and [Specific Reference] tokens",
+      "text": "Complete DM with [Name] token",
       "char_count": 0,
       "approach": "Genuine compliment → shared value → soft ask",
       "personalization_tip": "What to research before sending"
@@ -966,7 +1059,7 @@ Return ONLY valid JSON:
     {
       "situation": "B2B Client Outreach",
       "platform": "LinkedIn",
-      "text": "Full DM with [Name] and [Company] tokens",
+      "text": "Complete DM with [Name] and [Company] tokens",
       "char_count": 0,
       "approach": "Specific problem → your solution → low-commitment CTA",
       "personalization_tip": "What to check on their profile first"
@@ -974,25 +1067,27 @@ Return ONLY valid JSON:
     {
       "situation": "Follow-up (No Reply)",
       "platform": "Instagram or LinkedIn",
-      "text": "Short, non-pushy follow-up referencing first message",
+      "text": "Short non-pushy follow-up",
       "char_count": 0,
       "approach": "Add new value → restate ask simply",
-      "personalization_tip": "Best time to send follow-up"
+      "personalization_tip": "Best timing for follow-up"
     }
   ],
-  "response_rate_tips": ["Tip 1 for Indian audience", "Tip 2 for timing", "Tip 3 for personalization"]
-}`
-    };
+  "response_rate_tips": ["Tip 1", "Tip 2", "Tip 3"]
+}`;
+    }
 
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content: prompts[type] }], max_tokens:2000 })
+        body: JSON.stringify({ messages:[{ role:"user", content: prompt }], max_tokens:2000 })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
-      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setResult(parsed);
       onCreditUsed?.();
+      onSaveHistory?.("whatsapp", { inputSummary: `${type}: ${brandName}`, resultData: parsed });
     } catch { setResult(null); }
     setLoading(false);
   };
@@ -1000,305 +1095,294 @@ Return ONLY valid JSON:
   const TYPE_CONFIG = {
     whatsapp: { label:"💬 WhatsApp Broadcast", color:"#25d366" },
     email:    { label:"📧 Email Campaign",      color:"#6d28d9" },
-    colddm:   { label:"📩 Cold DM",             color:"#06b6d4" },
+    colddm:   { label:"📩 Cold DM / Outreach",  color:"#06b6d4" },
   };
 
   return (
     <div style={{ animation:"slideUp .4s ease" }}>
       <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>💬 WhatsApp & Email Copy</h2>
-      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.1rem" }}>Festival messages, email campaigns, cold DMs — India-specific, ready to send.</p>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1rem" }}>Professional marketing copy for WhatsApp broadcasts, email campaigns, and cold outreach.</p>
 
-      {/* Type selector */}
-      <div style={{ display:"flex", gap:".4rem", marginBottom:"1rem", flexWrap:"wrap" }}>
+      {/* Type Tabs */}
+      <div style={{ display:"flex", gap:".4rem", marginBottom:"1.25rem" }}>
         {(Object.entries(TYPE_CONFIG) as any).map(([key, val]: any) => (
-          <button key={key} onClick={() => setType(key)}
-            style={{ flex:1, minWidth:100, padding:".5rem .75rem", borderRadius:"9px", border:`1px solid ${type===key?val.color+"50":"#1a1a2e"}`, background:type===key?val.color+"14":"transparent", color:type===key?val.color:"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", whiteSpace:"nowrap" }}>
+          <button key={key} onClick={() => { setType(key); setResult(null); }}
+            style={{ flex:1, padding:".55rem .5rem", borderRadius:"10px", border:`1px solid ${type===key?val.color+"60":"#1a1a2e"}`, background:type===key?val.color+"14":"transparent", color:type===key?val.color:"#52525b", fontWeight:700, fontSize:".72rem", cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}>
             {val.label}
           </button>
         ))}
       </div>
 
-      <div style={{ display:"flex", flexDirection:"column", gap:".75rem", marginBottom:".85rem" }}>
+      {/* Email Style Selector — only for email */}
+      {type === "email" && (
+        <div style={{ marginBottom:"1rem" }}>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".5rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>📧 Email Type</label>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:".4rem" }}>
+            {EMAIL_STYLES.map(s => (
+              <button key={s.id} onClick={() => { setEmailStyle(s.id); setResult(null); }}
+                style={{ padding:".55rem .75rem", borderRadius:"9px", border:`1px solid ${emailStyle===s.id?"rgba(109,40,217,.5)":"#1a1a2e"}`, background:emailStyle===s.id?"rgba(109,40,217,.12)":"#050508", cursor:"pointer", fontFamily:"inherit", textAlign:"left" as const, transition:"all .15s" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:".4rem" }}>
+                  <span style={{ fontSize:".9rem" }}>{s.icon}</span>
+                  <div>
+                    <p style={{ margin:0, fontSize:".72rem", fontWeight:800, color:emailStyle===s.id?"#c4b5fd":"#e2e8f0" }}>{s.label}</p>
+                    <p style={{ margin:0, fontSize:".6rem", color:"#52525b" }}>{s.desc}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Occasion */}
+      {type === "whatsapp" && (
+        <div style={{ marginBottom:".85rem" }}>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".4rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Campaign Occasion</label>
+          <div style={{ display:"flex", flexWrap:"wrap" as const, gap:".35rem" }}>
+            {OCCASIONS.map(o => (
+              <button key={o} onClick={() => setOccasion(o)}
+                style={{ padding:".28rem .65rem", borderRadius:"6px", border:`1px solid ${occasion===o?"rgba(37,211,102,.4)":"#1a1a2e"}`, background:occasion===o?"rgba(37,211,102,.1)":"transparent", color:occasion===o?"#25d366":"#52525b", fontWeight:700, fontSize:".68rem", cursor:"pointer", fontFamily:"inherit" }}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inputs */}
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
         <div>
-          <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Your Business / Brand</label>
-          <input value={business} onChange={e => setBusiness(e.target.value)}
-            placeholder="e.g. Ramesh Sarees Jaipur, FitZone Gym Mumbai, Digital Marketing Agency..."
-            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>
+            {type === "colddm" ? "Your Business / Service" : "Brand / Business Name"}
+          </label>
+          <input value={brandName} onChange={e => setBrandName(e.target.value)}
+            placeholder={type === "colddm" ? "e.g. Digital Marketing Agency, VCI Tool, Fitness Coach..." : "e.g. FitZone Gym, Ramesh Sarees, TechSoft Solutions..."}
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"}
+            onBlur={e => e.target.style.borderColor="#1a1a2e"} />
         </div>
 
-        {type !== "colddm" && (
-          <div>
-            <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Occasion</label>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem" }}>
-              {OCCASIONS.map(o => (
-                <button key={o} onClick={() => setOccasion(o)}
-                  style={{ padding:".28rem .65rem", borderRadius:"6px", border:`1px solid ${occasion===o?"rgba(124,58,237,.4)":"#1a1a2e"}`, background:occasion===o?"rgba(124,58,237,.12)":"transparent", color:occasion===o?"#a855f7":"#52525b", fontWeight:700, fontSize:".68rem", cursor:"pointer", fontFamily:"inherit" }}>
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div>
-          <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>
-            {type === "colddm" ? "Your Goal" : "Offer Details"}
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>
+            {type === "colddm" ? "Your Goal / Pitch" : type === "email" ? "Offer / Campaign Details" : "Offer Details"}
           </label>
           <input value={offer} onChange={e => setOffer(e.target.value)}
-            placeholder={type === "colddm" ? "e.g. Get brand collab, find clients for social media management..." : "e.g. 40% off on all sarees, Buy 1 Get 1 free, Extra ₹200 off..."}
-            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+            placeholder={
+              type === "colddm" ? "e.g. Get brand collaboration, find social media clients..." :
+              type === "email" && emailStyle === "renewal" ? "e.g. Annual subscription ₹2,999 expiring, 10% early renewal discount..." :
+              type === "email" && emailStyle === "upsell" ? "e.g. Currently on Basic plan, upgrade to Pro at ₹1,299 for 3x features..." :
+              type === "email" && emailStyle === "welcome" ? "e.g. New subscriber, free resource to share, what to expect next..." :
+              "e.g. 40% off on all products, Buy 2 Get 1 free, ₹500 discount on orders above ₹2,000..."
+            }
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"}
+            onBlur={e => e.target.style.borderColor="#1a1a2e"} />
         </div>
+
+        {type === "email" && (
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Target Audience <span style={{ color:"#27272a", fontWeight:400 }}>(optional)</span></label>
+            <input value={audience} onChange={e => setAudience(e.target.value)}
+              placeholder="e.g. Small business owners in Mumbai, fitness enthusiasts 25-40, existing customers..."
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+              onFocus={e => e.target.style.borderColor="#6d28d9"}
+              onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+          </div>
+        )}
       </div>
 
-      <button onClick={generate} disabled={loading||!business.trim()}
-        style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:!business.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!business.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:!business.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
+      <button onClick={generate} disabled={loading||!brandName.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!brandName.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!brandName.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!brandName.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!brandName.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
         {loading
-          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing your copy...</>
-          : <><span>{TYPE_CONFIG[type].label}</span></>
+          ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Crafting your copy...</>
+          : type === "email"
+            ? `✍️ Generate ${EMAIL_STYLES.find(s=>s.id===emailStyle)?.label || "Email"} — 2 cr`
+            : type === "whatsapp"
+              ? "💬 Generate WhatsApp Messages — 2 cr"
+              : "📩 Generate Cold DM Scripts — 2 cr"
         }
       </button>
 
+      {/* ── WHATSAPP RESULT ── */}
       {result && type === "whatsapp" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:".75rem" }}>
+        <div style={{ display:"flex", flexDirection:"column" as const, gap:".75rem" }}>
           {result.messages?.map((m: any, i: number) => {
-            const charCount = (m.text || "").length;
+            const charCount = (m.text||"").length;
             return (
             <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".5rem" }}>
                 <span style={{ fontSize:".6rem", fontWeight:800, color:"#25d366", textTransform:"uppercase" as const, letterSpacing:".06em" }}>{m.tone}</span>
                 <div style={{ display:"flex", alignItems:"center", gap:".5rem" }}>
-                  <span style={{ fontSize:".62rem", fontWeight:700, color: charCount > 300 ? "#ef4444" : charCount > 160 ? "#f59e0b" : "#22c55e" }}>
-                    {charCount} chars {charCount > 300 ? "⚠ Long" : charCount > 160 ? "📱 Full view" : "✓ Preview"}
+                  <span style={{ fontSize:".6rem", fontWeight:700, color: charCount > 300 ? "#ef4444" : charCount > 160 ? "#f59e0b" : "#22c55e" }}>
+                    {charCount} chars
                   </span>
                   <button onClick={() => copy(m.text, `wa${i}`)}
-                    style={{ background: copied===`wa${i}`?"rgba(37,211,102,.1)":"transparent", border:`1px solid ${copied===`wa${i}`?"rgba(37,211,102,.3)":"#1a1a2e"}`, color:copied===`wa${i}`?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
+                    style={{ background:copied===`wa${i}`?"rgba(37,211,102,.1)":"transparent", border:`1px solid ${copied===`wa${i}`?"rgba(37,211,102,.3)":"#1a1a2e"}`, color:copied===`wa${i}`?"#22c55e":"#52525b", padding:".15rem .55rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
                     {copied===`wa${i}` ? "✓ Copied" : "Copy"}
                   </button>
                 </div>
               </div>
-              <p style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.7, margin:"0 0 .4rem", whiteSpace:"pre-line" as const }}>{m.text}</p>
-              {m.best_time && (
-                <p style={{ margin:0, color:"#3f3f46", fontSize:".65rem" }}>⏰ Best time: <span style={{ color:"#52525b" }}>{m.best_time}</span></p>
-              )}
+              <p style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.75, margin:"0 0 .4rem", whiteSpace:"pre-line" as const }}>{m.text}</p>
+              {m.best_time && <p style={{ margin:0, color:"#3f3f46", fontSize:".65rem" }}>⏰ Best time: <span style={{ color:"#52525b" }}>{m.best_time}</span></p>}
             </div>
           );})}
           {result.compliance_note && (
-            <div style={{ background:"rgba(239,68,68,.05)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"8px", padding:".65rem .9rem" }}>
-              <p style={{ margin:0, color:"#f87171", fontSize:".72rem", lineHeight:1.6 }}>
-                <strong>⚖️ Compliance Note:</strong> {result.compliance_note}
-              </p>
+            <div style={{ background:"rgba(239,68,68,.05)", border:"1px solid rgba(239,68,68,.18)", borderRadius:"8px", padding:".65rem .9rem" }}>
+              <p style={{ margin:0, color:"#f87171", fontSize:".72rem" }}>⚖️ <strong>Compliance:</strong> {result.compliance_note}</p>
             </div>
           )}
           {result.pro_tip && (
-            <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.18)", borderRadius:"8px", padding:".65rem .9rem" }}>
-              <p style={{ margin:0, color:"#a16207", fontSize:".72rem", lineHeight:1.6 }}><strong style={{ color:"#fbbf24" }}>💡 Pro Tip:</strong> {result.pro_tip}</p>
+            <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".65rem .9rem" }}>
+              <p style={{ margin:0, color:"#a16207", fontSize:".72rem" }}>💡 <strong style={{ color:"#fbbf24" }}>Pro Tip:</strong> {result.pro_tip}</p>
             </div>
           )}
         </div>
       )}
 
+      {/* ── EMAIL RESULT ── */}
       {result && type === "email" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:".75rem" }}>
+        <div style={{ display:"flex", flexDirection:"column" as const, gap:".85rem" }}>
+
           {/* Subject Lines */}
           <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
             <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .65rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>📧 Subject Lines — Pick & A/B Test</p>
-            {(result.subject_lines || []).map((s: any, i: number) => {
+            {(result.subject_lines||[]).map((s: any, i: number) => {
               const text = typeof s === "string" ? s : s.text;
-              const tip = typeof s === "object" ? s.open_rate_tip : null;
+              const strategy = typeof s === "object" ? s.strategy : null;
               return (
-              <div key={i} style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".55rem .8rem", marginBottom:".4rem" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <p style={{ color:"#e2e8f0", fontSize:".82rem", margin:0, flex:1 }}>{text}</p>
-                  <div style={{ display:"flex", alignItems:"center", gap:".4rem", flexShrink:0, marginLeft:".5rem" }}>
-                    <span style={{ fontSize:".6rem", color: (text?.length||0) > 50 ? "#f59e0b" : "#22c55e" }}>{text?.length||0}/50</span>
+              <div key={i} style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"8px", padding:".6rem .85rem", marginBottom:".4rem" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:".5rem" }}>
+                  <p style={{ color:"#e2e8f0", fontSize:".84rem", fontWeight:600, margin:0, flex:1 }}>{text}</p>
+                  <div style={{ display:"flex", alignItems:"center", gap:".35rem", flexShrink:0 }}>
+                    <span style={{ fontSize:".6rem", fontWeight:700, color:(text?.length||0)>50?"#f59e0b":"#22c55e" }}>{text?.length||0}/50</span>
                     <button onClick={() => copy(text, `sub${i}`)}
-                      style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`sub${i}`?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".6rem", fontWeight:700, fontFamily:"inherit" }}>
+                      style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`sub${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
                       {copied===`sub${i}` ? "✓" : "Copy"}
                     </button>
                   </div>
                 </div>
-                {tip && <p style={{ margin:".2rem 0 0", color:"#3f3f46", fontSize:".62rem" }}>💡 {tip}</p>}
+                {strategy && <p style={{ margin:".25rem 0 0", color:"#3f3f46", fontSize:".62rem" }}>💡 {strategy}</p>}
               </div>
             );})}
           </div>
 
           {/* Preview Text */}
           {result.preview_text && (
-            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".3rem" }}>
-                <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:0, textTransform:"uppercase" as const, letterSpacing:".06em" }}>Preview Text</p>
-                <button onClick={() => copy(result.preview_text, "preview")}
-                  style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied==="preview"?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".6rem", fontWeight:700, fontFamily:"inherit" }}>
-                  {copied==="preview" ? "✓" : "Copy"}
-                </button>
+            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem", display:"flex", justifyContent:"space-between", alignItems:"center", gap:".5rem" }}>
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:".58rem", fontWeight:800, color:"#52525b", margin:"0 0 .2rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Preview Text <span style={{ color:"#27272a" }}>(shows in inbox before opening)</span></p>
+                <p style={{ color:"#94a3b8", fontSize:".8rem", margin:0 }}>{result.preview_text}</p>
               </div>
-              <p style={{ color:"#94a3b8", fontSize:".8rem", margin:0 }}>{result.preview_text}</p>
+              <button onClick={() => copy(result.preview_text, "prev")}
+                style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied==="prev"?"#22c55e":"#52525b", padding:".15rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+                {copied==="prev" ? "✓" : "Copy"}
+              </button>
             </div>
           )}
 
-          {/* Email Body */}
-          <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".75rem" }}>
-              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:0, textTransform:"uppercase" as const, letterSpacing:".06em" }}>📝 Email Body</p>
-              <button onClick={() => copy([
-                result.greeting,
-                result.body_para_1,
-                result.body_para_2,
-                result.body_para_3,
-                result.body_para_4,
-                result.body_para_5,
-                result.body_para_6,
-                result.ps_line
-              ].filter(Boolean).join("\n\n"), "fullbody")}
-                style={{ background: copied==="fullbody"?"rgba(109,40,217,.15)":"rgba(109,40,217,.08)", border:`1px solid ${copied==="fullbody"?"rgba(109,40,217,.5)":"rgba(109,40,217,.25)"}`, color:copied==="fullbody"?"#c4b5fd":"#a855f7", padding:".3rem .85rem", borderRadius:"8px", cursor:"pointer", fontSize:".7rem", fontWeight:800, fontFamily:"inherit" }}>
-                {copied==="fullbody" ? "✓ Copied!" : "📋 Copy Full Email"}
+          {/* Full Email Preview */}
+          <div style={{ background:"#050508", border:"1px solid rgba(109,40,217,.25)", borderRadius:"14px", overflow:"hidden" }}>
+            {/* Email toolbar */}
+            <div style={{ background:"rgba(109,40,217,.08)", borderBottom:"1px solid rgba(109,40,217,.15)", padding:".65rem 1rem", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div>
+                <p style={{ margin:0, color:"#a855f7", fontWeight:800, fontSize:".7rem" }}>
+                  {EMAIL_STYLES.find(s=>s.id===emailStyle)?.icon} {EMAIL_STYLES.find(s=>s.id===emailStyle)?.label}
+                </p>
+                <p style={{ margin:".1rem 0 0", color:"#52525b", fontSize:".6rem" }}>From: {brandName}</p>
+              </div>
+              <button onClick={() => copy(
+                `Subject: ${(result.subject_lines?.[0]?.text || result.subject_lines?.[0]) || ""}\n\n${result.email_body || ""}\n\n${result.cta_button ? `[ ${result.cta_button} ]` : ""}\n\n${result.ps_line || ""}`,
+                "full_email"
+              )}
+                style={{ background: copied==="full_email"?"rgba(34,197,94,.1)":"rgba(109,40,217,.1)", border:`1px solid ${copied==="full_email"?"rgba(34,197,94,.3)":"rgba(109,40,217,.3)"}`, color:copied==="full_email"?"#22c55e":"#a855f7", padding:".35rem .85rem", borderRadius:"8px", cursor:"pointer", fontSize:".7rem", fontWeight:800, fontFamily:"inherit" }}>
+                {copied==="full_email" ? "✓ Copied!" : "📋 Copy Full Email"}
               </button>
             </div>
 
-            {/* Email Preview Box */}
-            <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:"1.25rem", marginBottom:".75rem" }}>
-              {/* Email Header mock */}
-              <div style={{ borderBottom:"1px solid #1a1a2e", paddingBottom:".65rem", marginBottom:"1rem" }}>
-                <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".65rem" }}>
-                  <span style={{ color:"#3f3f46" }}>From:</span> {business} &lt;hello@yourdomain.com&gt;
-                </p>
-                <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".65rem" }}>
-                  <span style={{ color:"#3f3f46" }}>To:</span> [First Name] &lt;customer@email.com&gt;
-                </p>
-                <p style={{ margin:0, color:"#e2e8f0", fontSize:".75rem", fontWeight:700 }}>
-                  <span style={{ color:"#3f3f46" }}>Subject:</span> {result.subject_lines?.[0]?.text || result.subject_lines?.[0] || ""}
-                </p>
+            {/* Email content */}
+            <div style={{ padding:"1.25rem" }}>
+              {/* Full email body as one block */}
+              <div style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.85, whiteSpace:"pre-line" as const, marginBottom:"1.25rem" }}>
+                {result.email_body || ""}
               </div>
 
-              {/* Greeting */}
-              <p style={{ color:"#e2e8f0", fontSize:".84rem", fontWeight:700, margin:"0 0 .85rem", lineHeight:1.6 }}>
-                {result.greeting || "Hi [First Name],"}
-              </p>
-
-              {/* All paragraphs */}
-              {[
-                { key: "body_para_1", label: "Hook", color: "#a855f7" },
-                { key: "body_para_2", label: "Story", color: "#06b6d4" },
-                { key: "body_para_3", label: "Offer", color: "#22c55e" },
-                { key: "body_para_4", label: "Social Proof", color: "#f59e0b" },
-                { key: "body_para_5", label: "Objection", color: "#f97316" },
-                { key: "body_para_6", label: "Urgency + CTA", color: "#ef4444" },
-              ].map(({ key, label, color }) => result[key] ? (
-                <div key={key} style={{ marginBottom:"1rem" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
-                    <span style={{ fontSize:".55rem", fontWeight:800, color, letterSpacing:".08em", textTransform:"uppercase" as const, background:`${color}15`, border:`1px solid ${color}30`, padding:".08rem .4rem", borderRadius:"4px" }}>
-                      {label}
-                    </span>
-                    <button onClick={() => copy(result[key], key)}
-                      style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===key?"#22c55e":"#3f3f46", padding:".08rem .35rem", borderRadius:"4px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>
-                      {copied===key ? "✓" : "Copy"}
-                    </button>
-                  </div>
-                  <p style={{ color:"#cbd5e1", fontSize:".82rem", lineHeight:1.75, margin:0 }}>{result[key]}</p>
-                </div>
-              ) : null)}
-
-              {/* CTA Button */}
+              {/* CTA Button visual */}
               {result.cta_button && (
-                <div style={{ textAlign:"center" as const, margin:"1.25rem 0" }}>
-                  <div style={{ display:"inline-block", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", color:"#fff", fontWeight:800, fontSize:".9rem", padding:".7rem 2rem", borderRadius:"8px", cursor:"pointer" }}
-                    onClick={() => copy(result.cta_button, "cta_b")}>
+                <div style={{ textAlign:"center" as const, margin:"1.5rem 0" }}>
+                  <div style={{ display:"inline-block", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", color:"#fff", fontWeight:800, fontSize:".9rem", padding:".75rem 2.25rem", borderRadius:"9px", cursor:"pointer", boxShadow:"0 4px 16px rgba(109,40,217,.35)", letterSpacing:".02em" }}
+                    onClick={() => copy(result.cta_button, "cta_copy")}>
                     {result.cta_button} →
                   </div>
-                  <p style={{ color:copied==="cta_b"?"#22c55e":"#3f3f46", fontSize:".6rem", margin:".3rem 0 0", cursor:"pointer" }}
-                    onClick={() => copy(result.cta_button, "cta_b")}>
-                    {copied==="cta_b" ? "✓ Copied" : "Click to copy CTA text"}
+                  <p style={{ color:copied==="cta_copy"?"#22c55e":"#3f3f46", fontSize:".62rem", margin:".4rem 0 0", cursor:"pointer" }}
+                    onClick={() => copy(result.cta_button, "cta_copy")}>
+                    {copied==="cta_copy" ? "✓ CTA Copied" : "Click to copy CTA text"}
                   </p>
                 </div>
               )}
 
               {/* PS Line */}
               {result.ps_line && (
-                <div style={{ borderTop:"1px solid #1a1a2e", paddingTop:".75rem", marginTop:".25rem" }}>
-                  <p style={{ color:"#f59e0b", fontSize:".8rem", fontStyle:"italic", margin:0, lineHeight:1.65 }}>{result.ps_line}</p>
+                <div style={{ borderTop:"1px solid #141426", paddingTop:".85rem", marginTop:".5rem" }}>
+                  <p style={{ color:"#f59e0b", fontSize:".82rem", fontStyle:"italic", margin:0, lineHeight:1.7 }}>{result.ps_line}</p>
                 </div>
               )}
 
-              {/* Footer */}
+              {/* Email footer */}
               <div style={{ borderTop:"1px solid #0d0d18", paddingTop:".65rem", marginTop:"1rem" }}>
-                <p style={{ color:"#3f3f46", fontSize:".62rem", margin:0 }}>
-                  {result.unsubscribe_text || "You received this email because you subscribed to our list. Unsubscribe | View in browser"}
+                <p style={{ color:"#27272a", fontSize:".62rem", margin:0 }}>
+                  © {new Date().getFullYear()} {brandName} · You received this because you subscribed · <span style={{ color:"#3f3f46", textDecoration:"underline" }}>Unsubscribe</span>
                 </p>
               </div>
             </div>
-
-            {/* Word count indicator */}
-            {(() => {
-              const allText = [result.body_para_1, result.body_para_2, result.body_para_3, result.body_para_4, result.body_para_5, result.body_para_6].filter(Boolean).join(" ");
-              const wordCount = allText.trim().split(/\s+/).length;
-              return (
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                  <span style={{ fontSize:".65rem", color: wordCount >= 400 ? "#22c55e" : "#f59e0b", fontWeight:700 }}>
-                    {wordCount >= 400 ? "✅" : "⚠️"} {wordCount} words
-                    {wordCount < 400 ? " (try adding more details to get 400+ words)" : " — professional length"}
-                  </span>
-                  <span style={{ fontSize:".6rem", color:"#3f3f46" }}>Ideal: 400-800 words</span>
-                </div>
-              );
-            })()}
           </div>
 
           {/* Send time + compliance */}
           <div style={{ display:"flex", gap:".65rem", flexWrap:"wrap" as const }}>
             {result.best_send_time && (
-              <div style={{ flex:1, minWidth:160, background:"rgba(34,197,94,.05)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
+              <div style={{ flex:1, minWidth:150, background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"9px", padding:".6rem .85rem" }}>
                 <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>⏰ Best Send Time</p>
                 <p style={{ margin:0, color:"#86efac", fontSize:".75rem" }}>{result.best_send_time}</p>
               </div>
             )}
-            {result.unsubscribe_text && (
-              <div style={{ flex:1, minWidth:160, background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"8px", padding:".6rem .85rem" }}>
-                <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>⚖️ Add to Footer</p>
-                <p style={{ margin:0, color:"#fca5a5", fontSize:".72rem" }}>{result.unsubscribe_text}</p>
+            {result.compliance_note && (
+              <div style={{ flex:1, minWidth:150, background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"9px", padding:".6rem .85rem" }}>
+                <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>⚖️ Compliance</p>
+                <p style={{ margin:0, color:"#fca5a5", fontSize:".72rem" }}>{result.compliance_note}</p>
               </div>
             )}
           </div>
-
-          {result.compliance_checklist && result.compliance_checklist.length > 0 && (
-            <div style={{ background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"8px", padding:".65rem .9rem" }}>
-              <p style={{ margin:"0 0 .4rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>✅ Compliance Checklist Before Sending</p>
-              {result.compliance_checklist.map((c: string, i: number) => (
-                <p key={i} style={{ margin:"0 0 .2rem", color:"#94a3b8", fontSize:".72rem" }}>□ {c}</p>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
+      {/* ── COLD DM RESULT ── */}
       {result && type === "colddm" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:".75rem" }}>
+        <div style={{ display:"flex", flexDirection:"column" as const, gap:".75rem" }}>
           {result.dms?.map((dm: any, i: number) => (
             <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:".5rem" }}>
                 <div>
-                  <span style={{ fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const, letterSpacing:".06em", display:"block" }}>{dm.situation}</span>
-                  <span style={{ fontSize:".58rem", color:"#3f3f46" }}>{dm.platform}</span>
+                  <span style={{ fontSize:".62rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const, letterSpacing:".06em", display:"block", marginBottom:".1rem" }}>{dm.situation}</span>
+                  <span style={{ fontSize:".6rem", color:"#3f3f46", background:"#0a0a18", border:"1px solid #1a1a2e", padding:".05rem .35rem", borderRadius:"4px" }}>{dm.platform}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:".4rem" }}>
-                  <span style={{ fontSize:".6rem", color: (dm.char_count||dm.text?.length||0) > 300 ? "#ef4444" : "#22c55e", fontWeight:700 }}>
-                    {dm.char_count || dm.text?.length || 0} chars
+                  <span style={{ fontSize:".62rem", fontWeight:700, color:(dm.text?.length||0) > 300 ? "#ef4444" : "#22c55e" }}>
+                    {dm.text?.length||0} chars
                   </span>
                   <button onClick={() => copy(dm.text, `dm${i}`)}
-                    style={{ background: copied===`dm${i}`?"rgba(6,182,212,.1)":"transparent", border:`1px solid ${copied===`dm${i}`?"rgba(6,182,212,.3)":"#1a1a2e"}`, color:copied===`dm${i}`?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
+                    style={{ background:copied===`dm${i}`?"rgba(6,182,212,.1)":"transparent", border:`1px solid ${copied===`dm${i}`?"rgba(6,182,212,.3)":"#1a1a2e"}`, color:copied===`dm${i}`?"#22c55e":"#52525b", padding:".15rem .55rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit" }}>
                     {copied===`dm${i}` ? "✓ Copied" : "Copy"}
                   </button>
                 </div>
               </div>
-              <p style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.7, margin:"0 0 .4rem", whiteSpace:"pre-line" as const }}>{dm.text}</p>
+              <p style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.75, margin:"0 0 .5rem", whiteSpace:"pre-line" as const }}>{dm.text}</p>
+              {dm.approach && <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".65rem" }}>Strategy: <span style={{ color:"#3f3f46" }}>{dm.approach}</span></p>}
               {dm.personalization_tip && (
-                <p style={{ margin:0, color:"#3f3f46", fontSize:".65rem", lineHeight:1.5 }}>
-                  🔍 <span style={{ color:"#52525b" }}>{dm.personalization_tip}</span>
-                </p>
+                <p style={{ margin:0, color:"#3f3f46", fontSize:".65rem" }}>🔍 <span style={{ color:"#52525b" }}>{dm.personalization_tip}</span></p>
               )}
             </div>
           ))}
-          {result.response_rate_tips && (
-            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"8px", padding:".65rem .9rem" }}>
+          {result.response_rate_tips?.length > 0 && (
+            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"9px", padding:".7rem .9rem" }}>
               <p style={{ margin:"0 0 .4rem", fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const }}>💡 Response Rate Tips</p>
               {result.response_rate_tips.map((t: string, i: number) => (
                 <p key={i} style={{ margin:"0 0 .2rem", color:"#94a3b8", fontSize:".72rem" }}>• {t}</p>
@@ -1310,6 +1394,7 @@ Return ONLY valid JSON:
     </div>
   );
 }
+
 
 // ── BIO WRITER ───────────────────────────────────────────────────────────────
 function BioWriter({ onCreditUsed, onSaveHistory, plan }: any) {
