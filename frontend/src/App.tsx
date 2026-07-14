@@ -1359,7 +1359,7 @@ Return ONLY valid JSON:
           </div>
 
           {/* Send time + compliance */}
-          <div style={{ display:"flex", gap:".65rem", flexWrap:"wrap" as const }}>
+          <div style={{ display:"flex", gap:".65rem", flexWrap:"wrap" as const, marginBottom:".65rem" }}>
             {result.best_send_time && (
               <div style={{ flex:1, minWidth:150, background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"9px", padding:".6rem .85rem" }}>
                 <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>⏰ Best Send Time</p>
@@ -1368,10 +1368,25 @@ Return ONLY valid JSON:
             )}
             {result.compliance_note && (
               <div style={{ flex:1, minWidth:150, background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"9px", padding:".6rem .85rem" }}>
-                <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>⚖️ Compliance</p>
+                <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>⚖️ Compliance Note</p>
                 <p style={{ margin:0, color:"#fca5a5", fontSize:".72rem" }}>{result.compliance_note}</p>
               </div>
             )}
+          </div>
+
+          {/* Static compliance checklist */}
+          <div style={{ background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"9px", padding:".75rem .9rem" }}>
+            <p style={{ margin:"0 0 .5rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const, letterSpacing:".06em" }}>✅ Pre-Send Compliance Checklist</p>
+            {[
+              "Unsubscribe link added to email footer",
+              "Business name clearly visible in From field",
+              "Subject line is not misleading or deceptive",
+              "All offers/prices match your actual website",
+              "Only sending to opted-in subscribers",
+              "No ALL CAPS words or excessive exclamation marks",
+            ].map((item, i) => (
+              <p key={i} style={{ margin:"0 0 .25rem", color:"#94a3b8", fontSize:".72rem" }}>□ {item}</p>
+            ))}
           </div>
         </div>
       )}
@@ -6852,44 +6867,33 @@ Respond ONLY in valid JSON:
   if (showOnboarding && user) return <Onboarding userId={user.id} onComplete={async (type: string) => {
     // Step 1: Set userType immediately
     setUserType(type);
-    setShowOnboarding(false);
 
-    // Step 2: Set correct tab based on type
-    if (type === "business") {
-      setActiveTab("roi");
-      try { localStorage.setItem("vci_activeTab", "roi"); } catch {}
-    } else if (type === "agency") {
-      setActiveTab("localbusiness");
-      try { localStorage.setItem("vci_activeTab", "localbusiness"); } catch {}
-    } else {
-      setActiveTab("generate");
-      try { localStorage.setItem("vci_activeTab", "generate"); } catch {}
-    }
+    // Step 2: Set niche BEFORE hiding onboarding
+    const defaultNiche = type === "agency" ? "Business" : type === "business" ? "Business" : "Lifestyle";
+    const savedNiche = (() => { try { return localStorage.getItem("vci_niche"); } catch { return null; } })();
+    const nicheToSet = savedNiche || defaultNiche;
+    setNiche(nicheToSet);
+    try { localStorage.setItem("vci_niche", nicheToSet); } catch {}
 
-    // Step 3: Set default niche based on userType
-    if (type === "creator") {
-      const savedNiche = localStorage.getItem("vci_niche");
-      if (!savedNiche) {
-        setNiche("Lifestyle");
-        try { localStorage.setItem("vci_niche", "Lifestyle"); } catch {}
-      }
-    }
+    // Step 3: Set correct tab
+    const tabToSet = type === "business" ? "roi" : type === "agency" ? "localbusiness" : "generate";
+    setActiveTab(tabToSet);
+    try { localStorage.setItem("vci_activeTab", tabToSet); } catch {}
 
-    // Step 4: Fetch fresh profile from Supabase
+    // Step 4: Fetch fresh profile
     const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
     if (data) {
       setProfile(data);
       const newPlan = data.plan || "free";
       setPlan(newPlan);
-      // Use PLANS as source of truth — not stale credits_total
       const planLimit = PLANS[newPlan as keyof typeof PLANS]?.limit || 25;
       const creditsRemaining = data.credits_remaining ?? planLimit;
-      const used = Math.max(0, planLimit - creditsRemaining);
-      setUsageCount(used);
+      setUsageCount(Math.max(0, planLimit - creditsRemaining));
     }
 
-    // Step 5: Small delay then scroll to top for fresh feel
-    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+    // Step 5: Hide onboarding LAST — after all state is set
+    setShowOnboarding(false);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 150);
   }} />;
   if (showAdmin) return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   if (showPlans) return <Plans onBack={() => setShowPlans(false)} onUpgrade={(selectedPlan: string) => { setShowPlans(false); setPayingPlan(selectedPlan); }} currentPlan={plan} currency={currency} />;
@@ -7502,36 +7506,28 @@ Respond ONLY in valid JSON:
           {/* TAB: GENERATE */}
           {activeTab === "generate" && (
             <div>
-              {/* Niche */}
+              {/* Niche — always visible buttons, no hide/show toggle */}
               <div style={{ marginBottom: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", cursor: "pointer" }} onClick={() => setShowNiche(!showNiche)}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer" }}>NICHE</label>
-                    {niche ? (
-                      <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#a855f7", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>
-                        ✓ {niche}
-                      </span>
-                    ) : (
-                      <span style={{ background: "rgba(100,100,100,0.08)", border: "1px solid rgba(100,100,100,0.2)", color: "#52525b", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem" }}>
-                        type keyword to auto-detect
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 600 }}>{showNiche ? "▲ Hide" : "▼ Change"}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em" }}>NICHE</label>
+                  {niche && (
+                    <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#a855f7", padding: "0.1rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700 }}>
+                      ✓ {niche}
+                    </span>
+                  )}
+                  <span style={{ color: "#3f3f46", fontSize: "0.6rem", marginLeft: "auto" }}>auto-detects from keyword</span>
                 </div>
-                {showNiche && (
-                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-                    {Object.keys(NICHE_EXAMPLES).map(n => (
-                      <button key={n} className="tbtn" onClick={() => {
-                        setNiche(n);
-                        try { localStorage.setItem("vci_niche", n); } catch {}
-                      }}
-                        style={{ background: niche === n ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${niche === n ? "#7c3aed" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : "#52525b", padding: "0.4rem 1rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.82rem", fontWeight: niche === n ? 700 : 600, transition: "all 0.2s" }}>
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" as const, marginBottom: "0.5rem" }}>
+                  {Object.keys(NICHE_EXAMPLES).map(n => (
+                    <button key={n} className="tbtn" onClick={() => {
+                      setNiche(n);
+                      try { localStorage.setItem("vci_niche", n); } catch {}
+                    }}
+                      style={{ background: niche === n ? "rgba(109,40,217,0.15)" : "#0d0d0d", border: `1px solid ${niche === n ? "#7c3aed" : "#1a1a1a"}`, color: niche === n ? "#a855f7" : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: niche === n ? 700 : 500, transition: "all 0.2s", boxShadow: niche === n ? "0 0 0 2px rgba(124,58,237,0.2)" : "none" }}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Platform */}
