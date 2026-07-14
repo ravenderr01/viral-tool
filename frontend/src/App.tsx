@@ -2342,7 +2342,7 @@ Return ONLY a valid JSON array of 5 objects:
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:(selected===null||!customNiche.trim())?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:(selected===null||!customNiche.trim())?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:(selected===null||!customNiche.trim())?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
           ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating complete posts...</>
-          : <>🎯 Generate 5 Complete Posts — 1 cr</>
+          : <>🎯 Generate 5 Complete Posts</>
         }
       </button>
 
@@ -6349,7 +6349,7 @@ export default function ViralContentTool() {
   const [payingPlan, setPayingPlan] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en");
-  const [currency, setCurrency] = useState<"INR" | "USD">("INR"); // default INR, auto-detected on mount
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [langCategoryTab, setLangCategoryTab] = useState<"indian" | "global">("indian");
   const [activeTab, setActiveTab] = useState(() => {
@@ -6363,6 +6363,40 @@ export default function ViralContentTool() {
   const [userType, setUserType] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reviewText, setReviewText] = useState("");
+
+  // ── Streak System ─────────────────────────────────────────────────────────
+  const [streak, setStreak] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("vci_streak") || "{}");
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now()-86400000).toDateString();
+      if (s.lastDate === today) return s.count || 1;
+      if (s.lastDate === yesterday) return s.count || 1;
+      return 0;
+    } catch { return 0; }
+  });
+
+  const updateStreak = () => {
+    try {
+      const s = JSON.parse(localStorage.getItem("vci_streak") || "{}");
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now()-86400000).toDateString();
+      let newCount = 1;
+      if (s.lastDate === today) newCount = s.count || 1;
+      else if (s.lastDate === yesterday) newCount = (s.count || 0) + 1;
+      localStorage.setItem("vci_streak", JSON.stringify({ count: newCount, lastDate: today }));
+      setStreak(newCount);
+    } catch {}
+  };
+
+  // ── Viral Score per hook ──────────────────────────────────────────────────
+  const [hookScores, setHookScores] = useState<Record<number,number>>({});
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelected, setCompareSelected] = useState<number[]>([]);
+  const [showWow, setShowWow] = useState(false);
+  const [isFirstGeneration, setIsFirstGeneration] = useState(() => {
+    try { return !localStorage.getItem("vci_generated_once"); } catch { return true; }
+  });
   const [reviewRole, setReviewRole] = useState("");
   const [reviewStars, setReviewStars] = useState(5);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -6769,6 +6803,49 @@ Respond ONLY in valid JSON:
       };
       setResults(safeResults);
       incrementUsage();
+
+      // ── Viral Score per hook ────────────────────────────────────────────
+      const calcViralScore = (hook: string): number => {
+        let score = 50;
+        const h = hook.toLowerCase();
+        // Positive signals
+        if (/\d+/.test(h)) score += 8;                          // Has number
+        if (h.includes("?")) score += 6;                        // Question hook
+        if (/secret|nobody|truth|reveal|hidden/.test(h)) score += 10; // Curiosity gap
+        if (/before|after|transform|result/.test(h)) score += 7;     // Transformation
+        if (/mistake|wrong|stop|quit/.test(h)) score += 8;           // Pattern interrupt
+        if (hook.length >= 20 && hook.length <= 60) score += 5;      // Ideal length
+        if (/₹|rs\.|rupee/.test(h)) score += 5;                      // Price mention
+        if (/day|week|month|year|minutes|hours/.test(h)) score += 5; // Timeframe
+        if (/i |my |i've |i was /.test(h)) score += 6;               // Personal story
+        if (/\b1\b|\b3\b|\b5\b|\b7\b|\b10\b/.test(h)) score += 4;  // Specific number
+        // Negative signals
+        if (/click here|like and|subscribe|welcome back/.test(h)) score -= 15;
+        if (hook.length > 100) score -= 8;
+        if (hook.length < 15) score -= 10;
+        if (/^today |^in this /.test(h)) score -= 8;
+        return Math.max(10, Math.min(99, score));
+      };
+
+      const scores: Record<number,number> = {};
+      safeResults.viralHooks.forEach((h: string, i: number) => {
+        scores[i] = calcViralScore(h);
+      });
+      setHookScores(scores);
+      setCompareMode(false);
+      setCompareSelected([]);
+
+      // ── Streak update ───────────────────────────────────────────────────
+      updateStreak();
+
+      // ── First generation WOW ───────────────────────────────────────────
+      if (isFirstGeneration) {
+        setIsFirstGeneration(false);
+        setShowWow(true);
+        try { localStorage.setItem("vci_generated_once", "1"); } catch {}
+        setTimeout(() => setShowWow(false), 4000);
+      }
+
       const detectedStyles = safeResults.viralHooks.map((h: string) => detectHookStyle(h));
 
       // Fire-and-forget — failures don't block history
@@ -7348,12 +7425,12 @@ Respond ONLY in valid JSON:
                 {/* Active tab cost */}
                 {(() => {
                   const TAB_COST: Record<string, string> = {
-                    generate:"1 cr", score:"2 cr", caption:"2 cr",
+                    generate:"1 credit", score:"2 credits", caption:"2 credits",
                     intelligence:"Free", trends:"Free", library:"Free",
-                    calendar:"6 cr", pack:"5 cr", image:"6 cr",
-                    scriptlab:"8 cr", repurpose:"5 cr", competitor:"2 cr",
-                    roi:"Free", abtest:"3 cr", landingpage:"4 cr",
-                    whatsapp:"2 cr", bio:"1 cr", product:"2 cr", templates:"1 cr",
+                    calendar:"6 credits", pack:"5 credits", image:"6 credits",
+                    scriptlab:"8 credits", repurpose:"5 credits", competitor:"2 credits",
+                    roi:"Free", abtest:"3 credits", landingpage:"4 credits",
+                    whatsapp:"2 credits", bio:"1 credit", product:"2 credits", templates:"1 credit",
                     localbusiness:"Free",
                   };
                   const costStr = TAB_COST[activeTab];
@@ -7593,10 +7670,121 @@ Respond ONLY in valid JSON:
 
               {results && (
                 <div style={{ animation: "slideUp 0.4s ease" }}>
+
+                  {/* WOW moment — first generation only */}
+                  {showWow && (
+                    <div style={{ background:"linear-gradient(135deg,rgba(109,40,217,.2),rgba(168,85,247,.1))", border:"1px solid rgba(168,85,247,.4)", borderRadius:14, padding:"1rem 1.25rem", marginBottom:"1rem", display:"flex", alignItems:"center", gap:".75rem", animation:"slideUp .3s ease" }}>
+                      <span style={{ fontSize:"1.8rem" }}>🎉</span>
+                      <div>
+                        <p style={{ margin:0, fontWeight:900, color:"#fff", fontSize:".9rem" }}>Your first viral content is ready!</p>
+                        <p style={{ margin:".2rem 0 0", color:"#a78bfa", fontSize:".75rem" }}>Copy a hook below → paste on Instagram or YouTube → watch the results.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Streak banner */}
+                  {streak > 0 && (
+                    <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".75rem", background:"rgba(245,158,11,.06)", border:"1px solid rgba(245,158,11,.2)", borderRadius:10, padding:".45rem .85rem" }}>
+                      <span style={{ fontSize:"1.1rem" }}>🔥</span>
+                      <span style={{ color:"#f59e0b", fontWeight:700, fontSize:".75rem" }}>
+                        {streak} day streak — keep it going!
+                      </span>
+                      {streak >= 7 && <span style={{ marginLeft:"auto", fontSize:".65rem", color:"#a16207", background:"rgba(245,158,11,.1)", border:"1px solid rgba(245,158,11,.25)", borderRadius:6, padding:".1rem .4rem", fontWeight:700 }}>🏆 Week Legend</span>}
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "#6d28d908", border: "1px solid #6d28d920", borderRadius: "8px", fontSize: "0.75rem", color: "#6d28d9" }}>
                     🌐 Generated in <strong>{langLabel}</strong>
                     <span style={{ marginLeft: "auto", color: "#333", fontSize: "0.7rem" }}>💡 Try Hook Score tab</span>
                   </div>
+
+                  {/* Viral Hooks with scores + compare mode */}
+                  {results.viralHooks?.length > 0 && !["Google Ads","Meta Ads","Native Ads","YouTube Ads"].includes(platform) && platform !== "YouTube" && platform !== "Reddit" && (
+                    <div style={{ background:"#080810", border:"1px solid #141426", borderRadius:14, padding:"1rem", marginBottom:"1rem" }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:".75rem" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:".5rem" }}>
+                          <span style={{ fontSize:".62rem", fontWeight:800, color:"#6d28d9", textTransform:"uppercase" as const, letterSpacing:".08em" }}>🎣 Viral Hooks</span>
+                          <span style={{ fontSize:".58rem", color:"#3f3f46", background:"#0d0d18", border:"1px solid #1a1a2e", padding:".05rem .4rem", borderRadius:4 }}>scored by AI</span>
+                        </div>
+                        <button onClick={() => { setCompareMode(!compareMode); setCompareSelected([]); }}
+                          style={{ background: compareMode?"rgba(109,40,217,.15)":"transparent", border:`1px solid ${compareMode?"rgba(109,40,217,.4)":"#1a1a2e"}`, color: compareMode?"#a855f7":"#52525b", fontSize:".65rem", fontWeight:700, padding:".2rem .6rem", borderRadius:7, cursor:"pointer", fontFamily:"inherit" }}>
+                          {compareMode ? "✕ Exit Compare" : "⚔️ Compare"}
+                        </button>
+                      </div>
+
+                      {compareMode && (
+                        <p style={{ color:"#52525b", fontSize:".65rem", marginBottom:".65rem" }}>
+                          Select 2 hooks to compare side by side →
+                          {compareSelected.length === 2 && <span style={{ color:"#a855f7", fontWeight:700 }}> Ready! Scroll down.</span>}
+                        </p>
+                      )}
+
+                      <div style={{ display:"flex", flexDirection:"column" as const, gap:".5rem" }}>
+                        {results.viralHooks.map((hook: string, i: number) => {
+                          const score = hookScores[i] || 0;
+                          const scoreColor = score >= 80 ? "#22c55e" : score >= 65 ? "#f59e0b" : "#ef4444";
+                          const scoreLabel = score >= 80 ? "🔥 High" : score >= 65 ? "⚡ Good" : "💡 Fair";
+                          const isSelected = compareSelected.includes(i);
+                          return (
+                          <div key={i} style={{ background: isSelected?"rgba(109,40,217,.1)":"#050508", border:`1px solid ${isSelected?"rgba(109,40,217,.4)":"#1a1a2e"}`, borderRadius:10, padding:".7rem .85rem", cursor: compareMode?"pointer":"default", transition:"all .15s" }}
+                            onClick={() => {
+                              if (!compareMode) return;
+                              if (isSelected) setCompareSelected(prev => prev.filter(x=>x!==i));
+                              else if (compareSelected.length < 2) setCompareSelected(prev => [...prev, i]);
+                            }}>
+                            <div style={{ display:"flex", alignItems:"flex-start", gap:".6rem" }}>
+                              {compareMode && (
+                                <div style={{ width:18, height:18, borderRadius:"50%", border:`2px solid ${isSelected?"#a855f7":"#1a1a2e"}`, background:isSelected?"rgba(109,40,217,.2)":"transparent", flexShrink:0, marginTop:2, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                  {isSelected && <div style={{ width:8, height:8, borderRadius:"50%", background:"#a855f7" }} />}
+                                </div>
+                              )}
+                              <p style={{ flex:1, color:"#e2e8f0", fontSize:".84rem", lineHeight:1.6, margin:0 }}>{hook}</p>
+                              <div style={{ flexShrink:0, display:"flex", alignItems:"center", gap:".35rem" }}>
+                                <div style={{ background:`${scoreColor}15`, border:`1px solid ${scoreColor}30`, borderRadius:6, padding:".1rem .4rem", fontSize:".62rem", fontWeight:800, color:scoreColor }}>
+                                  {scoreLabel} {score}
+                                </div>
+                                <HookCopyButton text={hook} niche={niche} platform={platform} onSave={saveToLibrary} />
+                              </div>
+                            </div>
+                          </div>
+                        );})}
+                      </div>
+
+                      {/* Compare side by side */}
+                      {compareMode && compareSelected.length === 2 && (() => {
+                        const [a, b] = compareSelected;
+                        const hookA = results.viralHooks[a];
+                        const hookB = results.viralHooks[b];
+                        const scoreA = hookScores[a] || 0;
+                        const scoreB = hookScores[b] || 0;
+                        const winner = scoreA >= scoreB ? a : b;
+                        return (
+                          <div style={{ marginTop:"1rem", borderTop:"1px solid #141426", paddingTop:"1rem" }}>
+                            <p style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase" as const, letterSpacing:".06em", marginBottom:".65rem" }}>⚔️ Head-to-Head Comparison</p>
+                            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".6rem" }}>
+                              {[{idx:a,hook:hookA,score:scoreA},{idx:b,hook:hookB,score:scoreB}].map(({idx,hook,score}) => {
+                                const isW = idx === winner;
+                                const col = score >= 80 ? "#22c55e" : score >= 65 ? "#f59e0b" : "#ef4444";
+                                return (
+                                <div key={idx} style={{ background: isW?"rgba(34,197,94,.06)":"#050508", border:`2px solid ${isW?"rgba(34,197,94,.4)":"#1a1a2e"}`, borderRadius:10, padding:".75rem" }}>
+                                  {isW && <p style={{ margin:"0 0 .4rem", color:"#22c55e", fontSize:".6rem", fontWeight:800 }}>👑 WINNER</p>}
+                                  <p style={{ color:"#e2e8f0", fontSize:".78rem", lineHeight:1.6, margin:"0 0 .5rem" }}>{hook}</p>
+                                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                                    <span style={{ color:col, fontWeight:800, fontSize:".72rem" }}>Score: {score}/100</span>
+                                    <button onClick={() => navigator.clipboard.writeText(hook)}
+                                      style={{ background:isW?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${isW?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:isW?"#22c55e":"#52525b", fontSize:".62rem", fontWeight:700, padding:".12rem .45rem", borderRadius:5, cursor:"pointer", fontFamily:"inherit" }}>
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
+                              );})}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {["Google Ads", "Meta Ads", "Native Ads", "YouTube Ads"].includes(platform) ? (
                     <>
                       <ResultCard title="Headlines" items={results.viralHooks} emoji="📢" color="#8b8cf8" charLimit={platform === "Google Ads" ? 30 : undefined} onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
@@ -7620,14 +7808,13 @@ Respond ONLY in valid JSON:
                   ) : (
                     <>
                       <ResultCard title="Trending Topics" items={results.trendingTopics} emoji="📈" color="#8b8cf8" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
-                      <ResultCard title="Viral Hooks" items={results.viralHooks} emoji="🎣" color="#6d28d9" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="hook" />
                       <ResultCard title="Title Ideas" items={results.titles} emoji="📝" color="#22c55e" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="title" />
                       <ResultCard title="Captions" items={results.captions} emoji="💬" color="#f59e0b" onSaveToLibrary={saveToLibrary} niche={niche} platform={platform} type="caption" />
                     </>
                   )}
                   <div style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
                     <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "#444", fontWeight: 600 }}>WANT MORE FROM THIS KEYWORD?</p>
-                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" as const }}>
                       {[["📊 Score my hooks", "score"], ["📅 Plan 30 days", "calendar"], ["📦 Full content pack", "pack"], ["🔍 See trends", "intelligence"], ["🎯 Templates", "templates"]].map(([label, tab]) => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "#111111", border: "1px solid #1f1f1f", color: "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}
                           onMouseEnter={e => { (e.currentTarget.style.borderColor = "#6d28d9"); (e.currentTarget.style.color = "#6d28d9"); }}
