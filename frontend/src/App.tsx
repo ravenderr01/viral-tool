@@ -7743,7 +7743,10 @@ Respond ONLY in valid JSON:
                                 <div style={{ background:`${scoreColor}15`, border:`1px solid ${scoreColor}30`, borderRadius:6, padding:".1rem .4rem", fontSize:".62rem", fontWeight:800, color:scoreColor }}>
                                   {scoreLabel} {score}
                                 </div>
-                                <HookCopyButton text={hook} niche={niche} platform={platform} onSave={saveToLibrary} />
+                                <button onClick={() => { navigator.clipboard.writeText(hook); }}
+                                  style={{ background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", padding:".15rem .5rem", borderRadius:6, cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
+                                  Copy
+                                </button>
                               </div>
                             </div>
                           </div>
