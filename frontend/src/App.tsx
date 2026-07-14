@@ -413,28 +413,60 @@ function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any
   const generate = async () => {
     if (!product.trim()) return;
     setLoading(true); setResult(null);
-    const prompt = `You are an expert paid-ads copywriter. Generate 2 completely different A/B test ad copies for ${platform}.
+    const isGoogle = platform === "Google Ads";
+    const prompt = `You are a senior performance marketing copywriter specializing in Indian market paid advertising. Generate 2 completely different A/B test ad copies for ${platform}.
+
 Product/Service: ${product}
 
-The two variants must use DIFFERENT psychological angles (e.g. fear vs aspiration, logic vs emotion, social proof vs urgency).
+PLATFORM RULES:
+${isGoogle ? `Google Search Ads:
+- Headline 1: max 30 characters (STRICT — count every character)
+- Headline 2: max 30 characters (STRICT)
+- Headline 3: max 30 characters (STRICT)
+- Description 1: max 90 characters (STRICT)
+- Description 2: max 90 characters (STRICT)
+- Use keywords in headlines for Quality Score
+- Include price/offer/CTA in descriptions
+- No exclamation marks in headlines` : `Meta Ads (Facebook/Instagram):
+- Primary Text: 125 characters for preview, up to 500 for full
+- Headline: max 40 characters
+- Description: max 30 characters
+- Lead with the pain point or desire
+- First line must stop the scroll
+- Include social proof when possible`}
+
+The two variants MUST use completely DIFFERENT psychological angles:
+Variant A: Choose from — Fear of Loss, FOMO, Urgency, Problem Agitation
+Variant B: Choose from — Aspiration, Social Proof, Curiosity, Value/ROI
 
 Return ONLY valid JSON:
 {
   "variant_a": {
-    "angle": "name of psychological angle used",
-    "headline": "main headline (under 40 chars for Meta, 30 for Google)",
-    "primary_text": "ad body copy (100-150 chars for Meta)",
-    "cta": "Call to action button text",
-    "why_it_works": "1 sentence explanation"
+    "angle": "specific psychological angle name",
+    ${isGoogle ? `"headline_1": "max 30 chars",
+    "headline_2": "max 30 chars", 
+    "headline_3": "max 30 chars",
+    "description_1": "max 90 chars",
+    "description_2": "max 90 chars",` : `"headline": "max 40 chars",
+    "primary_text": "125 chars for preview, hook in first line",
+    "description": "max 30 chars",`}
+    "cta": "CTA button text",
+    "why_it_works": "1 sentence — specific reason this angle works for this product"
   },
   "variant_b": {
     "angle": "different psychological angle",
-    "headline": "completely different headline",
-    "primary_text": "completely different body copy",
-    "cta": "CTA button text",
-    "why_it_works": "1 sentence explanation"
+    ${isGoogle ? `"headline_1": "max 30 chars",
+    "headline_2": "max 30 chars",
+    "headline_3": "max 30 chars", 
+    "description_1": "max 90 chars",
+    "description_2": "max 90 chars",` : `"headline": "max 40 chars",
+    "primary_text": "completely different angle, hook in first line",
+    "description": "max 30 chars",`}
+    "cta": "different CTA",
+    "why_it_works": "1 sentence — specific reason"
   },
-  "test_recommendation": "What to measure to pick the winner (e.g. CTR, CPL, ROAS)"
+  "test_recommendation": "Specific metric to measure and why (e.g. Test for 7 days, minimum 1000 impressions each. Declare winner on CTR if brand awareness goal, CPL if lead gen goal)",
+  "budget_split": "How to split budget between variants (e.g. 50/50 for week 1, then 70/30 to winner)"
 }`;
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
@@ -449,20 +481,41 @@ Return ONLY valid JSON:
     setLoading(false);
   };
 
-  const VariantCard = ({ variant, label, color }: any) => (
-    <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"12px", padding:"1rem", flex:1 }}>
+  const VariantCard = ({ variant, label, color }: any) => {
+    const isGoogle = platform === "Google Ads";
+    const fields = isGoogle
+      ? [
+          { label:"Headline 1", value:variant.headline_1, limit:30 },
+          { label:"Headline 2", value:variant.headline_2, limit:30 },
+          { label:"Headline 3", value:variant.headline_3, limit:30 },
+          { label:"Description 1", value:variant.description_1, limit:90 },
+          { label:"Description 2", value:variant.description_2, limit:90 },
+          { label:"CTA", value:variant.cta, limit:null },
+          { label:"Why It Works", value:variant.why_it_works, limit:null },
+        ]
+      : [
+          { label:"Headline", value:variant.headline, limit:40 },
+          { label:"Primary Text", value:variant.primary_text, limit:125 },
+          { label:"Description", value:variant.description, limit:30 },
+          { label:"CTA", value:variant.cta, limit:null },
+          { label:"Why It Works", value:variant.why_it_works, limit:null },
+        ];
+    return (
+    <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"12px", padding:"1rem", flex:1, minWidth:0 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".75rem" }}>
         <span style={{ fontSize:".65rem", fontWeight:800, color, letterSpacing:".08em" }}>{label}</span>
         <span style={{ background:`${color}15`, border:`1px solid ${color}30`, color, fontSize:".6rem", fontWeight:700, padding:".12rem .5rem", borderRadius:"6px" }}>{variant.angle}</span>
       </div>
-      {[
-        { label:"Headline", value:variant.headline },
-        { label:"Primary Text", value:variant.primary_text },
-        { label:"CTA Button", value:variant.cta },
-        { label:"Why It Works", value:variant.why_it_works },
-      ].map(({ label:l, value }) => (
+      {fields.map(({ label:l, value, limit }) => value && (
         <div key={l} style={{ marginBottom:".6rem" }}>
-          <p style={{ fontSize:".57rem", fontWeight:800, color:"#3f3f46", margin:"0 0 .18rem", letterSpacing:".08em", textTransform:"uppercase" }}>{l}</p>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".18rem" }}>
+            <p style={{ fontSize:".57rem", fontWeight:800, color:"#3f3f46", margin:0, letterSpacing:".08em", textTransform:"uppercase" as const }}>{l}</p>
+            {limit && value && (
+              <span style={{ fontSize:".55rem", color: (value?.length||0) > limit ? "#ef4444" : "#22c55e", fontWeight:700 }}>
+                {value?.length||0}/{limit}
+              </span>
+            )}
+          </div>
           <div style={{ display:"flex", gap:".4rem", alignItems:"flex-start" }}>
             <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0, flex:1, lineHeight:1.55 }}>{value}</p>
             <button onClick={() => copy(value, l+label)} style={{ background:"none", border:"1px solid #1a1a2e", color: copied === l+label ? color : "#52525b", borderRadius:"6px", padding:".15rem .4rem", cursor:"pointer", fontSize:".6rem", flexShrink:0 }}>
@@ -472,7 +525,7 @@ Return ONLY valid JSON:
         </div>
       ))}
     </div>
-  );
+  );};
 
   return (
     <div style={{ background:"#080810", border:"1px solid rgba(109,40,217,.25)", borderRadius:"16px", padding:"1.4rem" }}>
@@ -512,8 +565,14 @@ Return ONLY valid JSON:
             <VariantCard variant={result.variant_b} label="VARIANT B" color="#f59e0b" />
           </div>
           <div style={{ background:"rgba(109,40,217,.06)", border:"1px solid rgba(109,40,217,.18)", borderRadius:"10px", padding:".75rem 1rem" }}>
-            <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .25rem", letterSpacing:".06em" }}>📈 HOW TO TEST</p>
-            <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0 }}>{result.test_recommendation}</p>
+            <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .25rem", letterSpacing:".06em" }}>📈 TESTING STRATEGY</p>
+            <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:"0 0 .5rem" }}>{result.test_recommendation}</p>
+            {result.budget_split && (
+              <>
+                <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .2rem", letterSpacing:".06em" }}>💰 BUDGET SPLIT</p>
+                <p style={{ fontSize:".78rem", color:"#cbd5e1", margin:0 }}>{result.budget_split}</p>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -544,28 +603,39 @@ function LandingPageCopy({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) 
   const generate = async () => {
     if (!product.trim()) return;
     setLoading(true); setResult(null);
-    const prompt = `You are a conversion copywriter. Write complete landing page copy for:
-Product: ${product}
-Target audience: ${audience || "Indian users"}
-Primary goal: ${goal}
+    const prompt = `You are a senior conversion copywriter for Indian market landing pages.
+
+Product/Service: ${product}
+Target Audience: ${audience || "Indian consumers and business owners"}
+Primary Goal: ${goal === "leads" ? "Lead Generation — capture contacts" : goal === "sales" ? "Direct Sales — drive purchase" : goal === "signup" ? "App Signup — free trial" : "Phone Call / Consultation"}
+
+RULES:
+- Headline: under 10 words, specific benefit (not generic)
+- Pain points: real daily frustrations, be specific and emotional
+- Benefits: outcome-based not feature-based ("Save 3 hours" not "time-saving")
+- Social proof: use specific numbers
+- FAQs: real objections that stop Indian buyers (price, trust, results)
 
 Return ONLY valid JSON:
 {
-  "hero_headline": "Main headline (benefit-driven, under 10 words)",
-  "hero_subheadline": "Supporting line that adds specificity (under 20 words)",
-  "hero_cta": "Primary CTA button text (action-oriented, 3-5 words)",
-  "problem_statement": "1-2 sentences agitating the pain point",
-  "solution_intro": "1-2 sentences introducing the product as the solution",
-  "benefits": [
-    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" },
-    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" },
-    { "icon": "emoji", "title": "Benefit title", "desc": "One sentence description" }
+  "hero_headline": "Under 10 words — bold specific claim",
+  "hero_subheadline": "15-25 words — expand the promise",
+  "hero_cta": "3-5 word action CTA",
+  "pain_section_heading": "Section heading e.g. 'Sound Familiar?'",
+  "pain_points": ["specific emotional pain 1", "specific pain 2", "specific pain 3"],
+  "benefits_heading": "Benefits section heading",
+  "benefits": ["Outcome benefit 1 with number/time", "Outcome benefit 2", "Outcome benefit 3", "Outcome benefit 4"],
+  "social_proof": "Specific credibility with numbers",
+  "urgency_line": "Genuine scarcity or deadline line",
+  "faq": [
+    {"q": "Price objection", "a": "Value reframe answer"},
+    {"q": "Trust concern", "a": "Proof-based answer"},
+    {"q": "Results timeline", "a": "Specific honest answer"}
   ],
-  "social_proof": "A realistic-sounding testimonial or social proof statement",
-  "urgency_line": "Scarcity or urgency line for bottom CTA",
-  "final_cta": "Final CTA button text",
-  "trust_elements": ["trust badge 1", "trust badge 2", "trust badge 3"]
-}`;
+  "footer_cta_headline": "Final push — different angle from hero",
+  "footer_cta_button": "Final CTA button text",
+  "meta_description": "150-160 char SEO description"
+}`
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -923,30 +993,35 @@ function BioWriter({ onCreditUsed, onSaveHistory, plan }: any) {
   const generate = async () => {
     if (!profession.trim()) return;
     setLoading(true); setResult(null);
-    const prompt = `You are an expert at writing social media bios for Indian creators and professionals.
-Platform: ${platform}
-Name: ${name || "Creator"}
-Profession/Role: ${profession}
-Unique selling point: ${usp || "Helping people with " + profession}
+    const prompt = `You are a personal branding expert writing high-converting bios for Indian creators and professionals.
 
-Write 3 different ${platform} bios. Follow ${platform}'s character limits and tone exactly.
-Instagram: casual, emoji-friendly, 150 chars max, include CTA
-LinkedIn: professional, keyword-rich, 220 chars max
-Twitter/X: punchy, personality-driven, 160 chars max
-YouTube: SEO-friendly, 100 chars max for channel description opener
-Facebook: friendly, local, 255 chars max
-WhatsApp Business: professional, contact info focused, 139 chars max
+Platform: ${platform}
+Name: ${name}
+Profession/Niche: ${profession}
+USP/Achievement: ${usp}
+
+PLATFORM LIMITS:
+${platform === "Instagram" ? "Instagram: 150 chars MAX. Emoji ok. End with CTA." : ""}${platform === "LinkedIn" ? "LinkedIn: 220 char headline + 2000 char summary. Professional tone. First line critical." : ""}${platform === "Twitter/X" ? "Twitter/X: 160 chars MAX. Punchy one-liner." : ""}${platform === "YouTube" ? "YouTube: 1000 chars. Include what channel is about + upload schedule + subscribe CTA." : ""}${platform === "Facebook" ? "Facebook: 255 chars. What you do + who you help." : ""}${platform === "Pinterest" ? "Pinterest: 160 chars. What you pin + keywords." : ""}
+
+RULES:
+- Open with outcome/identity, not job title
+- Specific beats generic (numbers, achievements, niche)
+- Natural human tone — not robotic
+- Answer: what's in it for the follower?
+
+Write 3 bios with different angles:
+1. Professional/Achievement-focused
+2. Personality/Story-led
+3. Benefit/Outcome for audience
 
 Return ONLY valid JSON:
 {
   "bios": [
-    { "text": "bio option 1", "style": "Professional" },
-    { "text": "bio option 2", "style": "Casual" },
-    { "text": "bio option 3", "style": "Bold" }
-  ],
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "tip": "one platform-specific tip for ${platform} bios"
-}`;
+    {"angle": "Professional", "text": "bio text here", "char_count": 0},
+    {"angle": "Personality", "text": "bio text here", "char_count": 0},
+    {"angle": "Benefit-led", "text": "bio text here", "char_count": 0}
+  ]
+}`
 
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
@@ -998,23 +1073,37 @@ Return ONLY valid JSON:
       </button>
 
       {result && (
-        <div style={{ display:"flex", flexDirection:"column", gap:".6rem" }}>
-          {result.bios?.map((b: any, i: number) => (
-            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".4rem" }}>
-                <span style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase", letterSpacing:".06em" }}>{b.style}</span>
-                <div style={{ display:"flex", gap:".35rem", alignItems:"center" }}>
-                  <span style={{ fontSize:".58rem", color: b.text.length > 150 ? "#f59e0b" : "#3f3f46" }}>{b.text.length} chars</span>
-                  <button onClick={() => copy(b.text, `bio${i}`)} style={{ background: copied===`bio${i}`?"rgba(168,85,247,.1)":"transparent", border:`1px solid ${copied===`bio${i}`?"rgba(168,85,247,.3)":"#1a1a2e"}`, color:copied===`bio${i}`?"#22c55e":"#52525b", padding:".12rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`bio${i}`?"✓":"Copy"}</button>
+        <div style={{ display:"flex", flexDirection:"column", gap:".75rem" }}>
+          {(result.bios || []).map((b: any, i: number) => {
+            const text = b.text || b || "";
+            const angle = b.angle || `Version ${i+1}`;
+            const charCount = text.length;
+            const limits: Record<string,number> = { Instagram:150, "Twitter/X":160, Facebook:255, Pinterest:160, LinkedIn:220, YouTube:1000 };
+            const limit = limits[platform] || 300;
+            const isOver = charCount > limit;
+            return (
+            <div key={i} style={{ background:"#050508", border:`1px solid ${isOver?"rgba(239,68,68,.25)":"#141426"}`, borderRadius:"12px", padding:"1rem" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".5rem" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:".5rem" }}>
+                  <span style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase" as const, letterSpacing:".06em" }}>{angle}</span>
+                </div>
+                <div style={{ display:"flex", gap:".5rem", alignItems:"center" }}>
+                  <span style={{ fontSize:".62rem", fontWeight:700, color: isOver ? "#ef4444" : "#22c55e" }}>
+                    {charCount}/{limit} chars {isOver ? "⚠ Over limit" : "✓"}
+                  </span>
+                  <button onClick={() => copy(text, `bio${i}`)}
+                    style={{ background: copied===`bio${i}`?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied===`bio${i}`?"rgba(34,197,94,.3)":"#1a1a2e"}`, color:copied===`bio${i}`?"#22c55e":"#52525b", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>
+                    {copied===`bio${i}` ? "✓ Copied" : "Copy"}
+                  </button>
                 </div>
               </div>
-              <p style={{ color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{b.text}</p>
+              <p style={{ color:"#e2e8f0", fontSize:".84rem", lineHeight:1.7, margin:0, whiteSpace:"pre-line" as const }}>{text}</p>
             </div>
-          ))}
+          );})}
           {result.keywords && (
             <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.15)", borderRadius:"8px", padding:".65rem .9rem" }}>
-              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .4rem", textTransform:"uppercase", letterSpacing:".06em" }}>Keywords to use</p>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:".35rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .4rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Keywords to use</p>
+              <div style={{ display:"flex", flexWrap:"wrap" as const, gap:".35rem" }}>
                 {result.keywords.map((k: string, i: number) => (
                   <span key={i} style={{ background:"rgba(124,58,237,.1)", border:"1px solid rgba(124,58,237,.2)", color:"#a855f7", fontSize:".68rem", fontWeight:700, padding:".15rem .5rem", borderRadius:"5px" }}>{k}</span>
                 ))}
@@ -1728,7 +1817,7 @@ IMPORTANT RULES:
 - Include: Hook line + 2-4 body lines + CTA
 - Make it specific to ${customNiche} niche
 - Indian audience, relatable tone
-- Hindi-English mix is ok
+- Write naturally for Indian audience
 - Each should be 4-8 lines total
 
 Return ONLY a valid JSON array of 5 objects:
@@ -1840,9 +1929,9 @@ Return ONLY a valid JSON array of 5 objects:
 
           {/* Usage tip */}
           <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"10px", padding:".65rem .85rem" }}>
-            <p style={{ margin:0, color:"#f59e0b", fontSize:".72rem", fontWeight:700, marginBottom:".2rem" }}>💡 Kahan use karein?</p>
+            <p style={{ margin:0, color:"#f59e0b", fontSize:".72rem", fontWeight:700, marginBottom:".2rem" }}>💡 Best used for:</p>
             <p style={{ margin:0, color:"#78716c", fontSize:".7rem", lineHeight:1.6 }}>
-              {selected !== null ? TEMPLATES[selected].where : ""} — Copy complete post → paste karo → post karo. Hook se reel bhi bana sakte ho Script Lab mein.
+              {selected !== null ? TEMPLATES[selected].where : ""} — Copy the complete post → paste on your platform → post. Use the hook in Script Lab to create a full reel.
             </p>
           </div>
         </div>
@@ -2842,7 +2931,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   const lineColor = (type: string) => type === "strong" ? "#22c55e" : type === "weak" ? "#ef4444" : "#71717a";
 
   const analyzeScript = async () => {
-    if (!script.trim()) { setError("Apna script paste karo."); return; }
+    if (!script.trim()) { setError("Please paste your script first."); return; }
     if (script.trim().split(" ").length < 5) { setError("Script thodi lambi honi chahiye."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setImproveLoading(true); setError(""); setImproveResult(null);
@@ -2902,7 +2991,7 @@ Respond ONLY in JSON:
       if (onSaveHistory) onSaveHistory("scriptimprove", { platform, inputSummary: script.slice(0, 80), resultData: parsed });
     } catch (err: any) {
       if (err?.message === "RATE_LIMITED") {
-        setError("Server thoda busy hai (bahut requests aa rahi hain). 10-15 second wait karo aur phir try karo.");
+        setError("Server is busy right now. Please wait 10–15 seconds and try again.");
       } else {
         setError("Analysis failed. Try again.");
       }
@@ -3334,7 +3423,7 @@ Respond ONLY in JSON:
             <span style={{ fontSize: "1.3rem" }}>🎬</span>
             <div>
               <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
-              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Keyword daalo → complete word-for-word script ready</p>
+              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Enter a keyword → get a complete word-for-word script</p>
             </div>
           </div>
 
@@ -3847,7 +3936,7 @@ function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onS
   };
 
   const analyze = async () => {
-    if (!contentInput.trim()) { setError("Apna content ya hook paste karo."); return; }
+    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
@@ -3926,7 +4015,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
           <span style={{ fontSize: "1.4rem" }}>📊</span>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Poora content paste karo → detailed analysis + fixes + 3 improved versions</p>
+            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Paste your content → get detailed analysis, fixes, and 3 improved versions</p>
           </div>
         </div>
 
@@ -4043,7 +4132,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
                     {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
                   </div>
                   <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>
-                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Content mein yeh improvements karo"}
+                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Suggested improvements for your content"}
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
                     <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
@@ -4527,7 +4616,7 @@ Respond ONLY in JSON:
           <div style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "10px", padding: "0.4rem 0.6rem", fontSize: "1.2rem" }}>📋</div>
           <div>
             <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Caption & Hashtags</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Platform select karo → keyword daalo → ready-to-post! (2 credits)</p>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Select platform → enter keyword → get ready-to-post captions</p>
           </div>
         </div>
         <div style={{ marginBottom: "0.85rem" }}>
@@ -4862,8 +4951,8 @@ function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
             });
             const result = await vRes.json();
             if (result.success) { setSuccess(true); setTimeout(() => onPaid(plan), 2500); }
-            else { setError("Activation failed. WhatsApp karo: " + SUPPORT_PHONE); }
-          } catch { setError("Payment done but activation pending. WhatsApp karo: " + SUPPORT_PHONE); }
+            else { setError("Plan activation failed. Contact support: " + SUPPORT_PHONE); }
+          } catch { setError("Payment received. Activation pending — contact support: " + SUPPORT_PHONE); }
           setLoading(false);
         }
       });
@@ -5358,14 +5447,35 @@ function TrendingNowCard({ niche, platform }: any) {
   const [trend, setTrend] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Curated trending formats by niche — shown when no real data yet
+  const CURATED_TRENDS: Record<string, { style: string; tip: string }> = {
+    "Fitness":        { style: "Before/After Transformation", tip: "Showing physical results in first 3 seconds drives highest saves" },
+    "Gaming":         { style: "POV Gameplay Moment",         tip: "First-person perspective hooks get 2x more watch time" },
+    "Food":           { style: "Satisfying Process Reveal",   tip: "The 'reveal' moment at the end drives 80% of shares" },
+    "Business":       { style: "Specific Number Proof",       tip: "Exact figures (₹47,230 not ₹47K) increase credibility by 40%" },
+    "Tech":           { style: "Problem → Solution Demo",     tip: "Live screen demos have 3x higher completion rate" },
+    "Travel":         { style: "Hidden Gem Reveal",           tip: "Location tags + 'you won't believe' hooks drive discovery" },
+    "Fashion & Style":{ style: "Outfit Transformation",       tip: "Mirror shots with direct eye contact get highest saves" },
+    "Motivational":   { style: "Contrarian Truth",            tip: "Going against popular advice gets 5x more comments" },
+    "Education":      { style: "Myth vs Reality",             tip: "Debunking common beliefs drives shares and saves" },
+    "Personal Finance":{ style: "Specific ₹ Amount Reveal",  tip: "Exact money numbers outperform vague claims by 60%" },
+    "Mental Health":  { style: "Relatable Confession",        tip: "Vulnerability + solution format gets highest saves" },
+    "Comedy & Entertainment": { style: "Unexpected Twist Ending", tip: "Twist in last 2 seconds drives 90% rewatch rate" },
+    "Daily Vlog":     { style: "Morning Routine Peek",        tip: "'Day in my life' with timestamps keeps viewers till end" },
+    "Real Estate":    { style: "Property Tour Reveal",        tip: "Price reveal at the end gets highest engagement" },
+    "Spirituality":   { style: "One Powerful Truth",          tip: "Single insight with pause gets highest save rate" },
+    "Sports":         { style: "Unbelievable Skill Moment",   tip: "Slow-motion replays increase rewatch by 3x" },
+    "Health & Wellness": { style: "Quick Tip with Proof",     tip: "Before/after with timeline drives most saves" },
+    "Ads & Marketing":{ style: "Results Screenshot Reveal",   tip: "Actual numbers/metrics outperform claims by 70%" },
+    "Lifestyle":      { style: "Aesthetic Day Reveal",        tip: "Soft music + clean visuals drives highest shares" },
+  };
+
   useEffect(() => {
     let active = true;
     setLoading(true);
     (async () => {
       try {
-        // Count hook_styles from generated_content for this niche+platform
         const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-
         const { data } = await supabase
           .from("generated_content")
           .select("hook_styles, platform, niche")
@@ -5377,7 +5487,6 @@ function TrendingNowCard({ niche, platform }: any) {
         if (!active) return;
 
         if (data && data.length >= 3) {
-          // Count most popular hook style
           const styleCounts: Record<string, number> = {};
           data.forEach((row: any) => {
             if (Array.isArray(row.hook_styles)) {
@@ -5388,38 +5497,53 @@ function TrendingNowCard({ niche, platform }: any) {
           });
           const topStyle = Object.entries(styleCounts).sort((a,b) => b[1]-a[1])[0];
           if (topStyle) {
-            const total = data.length;
-            const pct = Math.round((topStyle[1]/total)*100);
             setTrend({
               style: topStyle[0],
               platform,
-              generation_count: total,
-              pct_share: pct
+              generation_count: data.length,
+              pct_share: Math.round((topStyle[1]/data.length)*100),
+              isReal: true
             });
           }
+        } else {
+          // Show curated trend for this niche
+          const curated = CURATED_TRENDS[niche];
+          if (curated) {
+            setTrend({ style: curated.style, tip: curated.tip, isReal: false, platform });
+          }
         }
-        // If not enough data → trend stays null → component returns null → nothing shown
       } catch {
-        if (active) setTrend(null);
+        const curated = CURATED_TRENDS[niche];
+        if (active && curated) {
+          setTrend({ style: curated.style, tip: curated.tip, isReal: false, platform });
+        }
       }
       if (active) setLoading(false);
     })();
     return () => { active = false; };
   }, [niche, platform]);
 
-  // Not enough data yet — hide completely (don't show wrong info)
   if (loading || !trend) return null;
 
   return (
-    <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.03))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "0.9rem 1.1rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-      <span style={{ fontSize: "1.4rem" }}>🔥</span>
-      <div>
-        <p style={{ margin: 0, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700 }}>
-          Trending on <strong>{trend.platform}</strong>: <strong>{trend.style}</strong> style hooks in {niche}
-        </p>
-        <p style={{ margin: "0.15rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>
-          {trend.pct_share}% of creators used this style · Based on {trend.generation_count} generations this week
-        </p>
+    <div style={{ background: trend.isReal ? "linear-gradient(135deg,rgba(245,158,11,.1),rgba(245,158,11,.03))" : "linear-gradient(135deg,rgba(109,40,217,.08),rgba(109,40,217,.02))", border: `1px solid ${trend.isReal ? "rgba(245,158,11,.25)" : "rgba(109,40,217,.2)"}`, borderRadius: "14px", padding: "0.85rem 1rem", marginBottom: "0.75rem" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:".6rem" }}>
+        <span style={{ fontSize: "1.2rem", flexShrink:0 }}>{trend.isReal ? "🔥" : "💡"}</span>
+        <div style={{ flex:1 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", flexWrap:"wrap" as const }}>
+            <p style={{ margin: 0, color: trend.isReal ? "#f59e0b" : "#a855f7", fontSize: "0.78rem", fontWeight: 700 }}>
+              {trend.isReal ? "Trending on" : "Top format for"} <strong>{niche}</strong>
+              {trend.isReal && <> on <strong>{platform}</strong></>}:
+              {" "}<strong>{trend.style}</strong>
+            </p>
+            <span style={{ fontSize:".58rem", color:"#3f3f46", background:"#0d0d18", border:"1px solid #1a1a2e", borderRadius:"4px", padding:".08rem .4rem", flexShrink:0 }}>
+              {trend.isReal ? `${trend.pct_share}% of creators · ${trend.generation_count} this week` : "Editor's pick"}
+            </span>
+          </div>
+          <p style={{ margin: "0.2rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight:1.5 }}>
+            {trend.isReal ? `${trend.pct_share}% of ${niche} creators on ${platform} used this format this week` : trend.tip}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -7172,7 +7296,7 @@ Respond ONLY in valid JSON:
               <div style={{ fontSize:"2.5rem", marginBottom:"1rem" }}>📈</div>
               <h3 style={{ color:"#fff", fontWeight:800, fontSize:"1rem", margin:"0 0 .5rem" }}>Trends is now in Intelligence 🔍</h3>
               <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>
-                Intelligence tab mein real-time trends, keywords aur viral topics — sab ek jagah.
+                Real-time trends, keywords and viral topics are all in the Intelligence tab.
               </p>
               <button onClick={() => setActiveTab("intelligence")}
                 style={{ background:"linear-gradient(135deg,#0891b2,#06b6d4)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
@@ -7263,7 +7387,7 @@ Respond ONLY in valid JSON:
               <div style={{ fontSize:"2.5rem", marginBottom:"1rem" }}>📋</div>
               <h3 style={{ color:"#fff", fontWeight:800, fontSize:"1rem", margin:"0 0 .5rem" }}>Captions are now in Generate ⚡</h3>
               <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>
-                Generate tab mein hooks, titles, captions aur hashtags — sab ek jagah milte hain.
+                All hooks, titles, captions and hashtags are now in the Generate tab — all in one place.
               </p>
               <button onClick={() => setActiveTab("generate")}
                 style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
@@ -7279,8 +7403,8 @@ Respond ONLY in valid JSON:
               <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"12px", padding:".65rem 1rem", marginBottom:"1rem", display:"flex", alignItems:"center", gap:".65rem" }}>
                 <span style={{ fontSize:"1.1rem" }}>📈</span>
                 <div>
-                  <p style={{ margin:0, color:"#06b6d4", fontWeight:800, fontSize:".75rem" }}>Trends are now here — inside Intelligence</p>
-                  <p style={{ margin:".1rem 0 0", color:"#52525b", fontSize:".68rem" }}>Real-time trending topics + keyword intelligence — sab ek jagah</p>
+                  <p style={{ margin:0, color:"#06b6d4", fontWeight:800, fontSize:".75rem" }}>Trends + Intelligence — all in one place</p>
+                  <p style={{ margin:".1rem 0 0", color:"#52525b", fontSize:".68rem" }}>Real-time trending topics + keyword intelligence — all in one place</p>
                 </div>
               </div>
               <TrendingNowCard niche={niche} platform={platform} />
@@ -7540,7 +7664,7 @@ Respond ONLY in valid JSON:
             <div style={{ marginTop: "1.25rem", background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
               <p style={{ margin: "0 0 0.5rem", fontSize: "0.82rem", color: "#fff", fontWeight: 700 }}>Have more questions? 🙋</p>
               <a href="https://wa.me/919315133390?text=Hi! VCI ke baare mein kuch poochna tha" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "8px", textDecoration: "none", fontWeight: 700, fontSize: "0.82rem" }}>
-                💬 WhatsApp karo
+                💬 WhatsApp Support
               </a>
             </div>
           </div>
