@@ -1694,48 +1694,64 @@ function ViralTemplates({ niche, platform, onCreditUsed, onSaveHistory }: any) {
   const [selected, setSelected] = useState<number | null>(null);
   const [customNiche, setCustomNiche] = useState(niche || "");
   const [loading, setLoading]   = useState(false);
-  const [result, setResult]     = useState<string[]>([]);
+  const [result, setResult]     = useState<any[]>([]);
   const [copied, setCopied]     = useState("");
 
   const copy = (text: string, key: string) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 2000); };
 
   const TEMPLATES = [
-    { id:0, icon:"📈", label:"X to Y Journey",    formula:"I went from [X] to [Y] in [Z days]. Here's exactly what I did.",     example:"I went from 0 to 10K followers in 90 days. Here's exactly what I did." },
-    { id:1, icon:"🤫", label:"Nobody Talks About", formula:"Nobody talks about [uncomfortable truth in your niche] — but they should.",  example:"Nobody talks about how much time creators waste on production — but they should." },
-    { id:2, icon:"🔄", label:"Stop/Start",         formula:"Stop doing [wrong thing]. Start doing [right thing] instead.",         example:"Stop writing generic captions. Start writing platform-specific hooks instead." },
-    { id:3, icon:"📋", label:"3 Things I Wish",    formula:"3 things I wish I knew before [starting/doing X]:",                   example:"3 things I wish I knew before starting my Instagram page:" },
-    { id:4, icon:"🎯", label:"Unpopular Opinion",  formula:"Unpopular opinion: [contrarian take on your niche].",                  example:"Unpopular opinion: Posting more frequently is why your reach is declining." },
-    { id:5, icon:"⚡", label:"Before/After",        formula:"Before: [painful situation]. After: [transformation]. Here's what changed:", example:"Before: 3 hours to make one reel. After: 10 minutes. Here's what changed:" },
-    { id:6, icon:"💡", label:"How I [Result]",      formula:"How I [achieved result] with [simple method/tool].",                  example:"How I planned 30 days of content in under 5 minutes." },
-    { id:7, icon:"🔑", label:"Truth Nobody Tells",  formula:"The [niche] truth nobody tells you:",                                 example:"The content creation truth nobody tells you:" },
-    { id:8, icon:"🧵", label:"Thread Starter",      formula:"[Bold claim]. A thread 🧵",                                           example:"I analyzed 500 viral Indian reels. Here's the pattern. A thread 🧵" },
-    { id:9, icon:"❓", label:"Ask Me Anything",      formula:"I've been [doing X] for [Y years]. Ask me anything 👇",               example:"I've been creating content for 3 years. Ask me anything 👇" },
-    { id:10, icon:"😮", label:"Confession",          formula:"Confession: I [did something unexpected/vulnerable] and it [result].", example:"Confession: I didn't post for 30 days and my engagement actually went up." },
-    { id:11, icon:"📊", label:"Data/Stats Hook",    formula:"[Specific number] [surprising stat about your niche]. Here's why:",   example:"80% of Indian creators quit in 6 months. Here's why:" },
+    { id:0, icon:"📈", label:"X to Y Journey",    formula:"I went from [X] to [Y] in [Z days]. Here's exactly what I did.",     example:"I went from 0 to 10K followers in 90 days. Here's exactly what I did.", where:"Instagram Reel caption, YouTube description, LinkedIn post" },
+    { id:1, icon:"🤫", label:"Nobody Talks About", formula:"Nobody talks about [uncomfortable truth in your niche] — but they should.",  example:"Nobody talks about how much time creators waste on production — but they should.", where:"Instagram Reel hook, Twitter/X post, LinkedIn" },
+    { id:2, icon:"🔄", label:"Stop/Start",         formula:"Stop doing [wrong thing]. Start doing [right thing] instead.",         example:"Stop writing generic captions. Start writing platform-specific hooks instead.", where:"Instagram carousel, Reel caption, Facebook post" },
+    { id:3, icon:"📋", label:"3 Things I Wish",    formula:"3 things I wish I knew before [starting/doing X]:",                   example:"3 things I wish I knew before starting my Instagram page:", where:"Instagram carousel, YouTube video title, LinkedIn" },
+    { id:4, icon:"🎯", label:"Unpopular Opinion",  formula:"Unpopular opinion: [contrarian take on your niche].",                  example:"Unpopular opinion: Posting more frequently is why your reach is declining.", where:"Twitter/X, Instagram Reel, LinkedIn — high engagement" },
+    { id:5, icon:"⚡", label:"Before/After",        formula:"Before: [painful situation]. After: [transformation]. Here's what changed:", example:"Before: 3 hours to make one reel. After: 10 minutes. Here's what changed:", where:"Instagram Reel, Facebook ad, Landing page" },
+    { id:6, icon:"💡", label:"How I [Result]",      formula:"How I [achieved result] with [simple method/tool].",                  example:"How I planned 30 days of content in under 5 minutes.", where:"YouTube title, Instagram Reel caption, Blog post" },
+    { id:7, icon:"🔑", label:"Truth Nobody Tells",  formula:"The [niche] truth nobody tells you:",                                 example:"The content creation truth nobody tells you:", where:"Instagram Reel, YouTube Short, Twitter/X thread" },
+    { id:8, icon:"🧵", label:"Thread Starter",      formula:"[Bold claim]. A thread 🧵",                                           example:"I analyzed 500 viral Indian reels. Here's the pattern. A thread 🧵", where:"Twitter/X thread, LinkedIn carousel" },
+    { id:9, icon:"❓", label:"Ask Me Anything",      formula:"I've been [doing X] for [Y years]. Ask me anything 👇",               example:"I've been creating content for 3 years. Ask me anything 👇", where:"Instagram Story, LinkedIn post, community engagement" },
+    { id:10, icon:"😮", label:"Confession",          formula:"Confession: I [did something unexpected/vulnerable] and it [result].", example:"Confession: I didn't post for 30 days and my engagement actually went up.", where:"Instagram Reel, YouTube vlog, authentic storytelling" },
+    { id:11, icon:"📊", label:"Data/Stats Hook",    formula:"[Specific number] [surprising stat about your niche]. Here's why:",   example:"80% of Indian creators quit in 6 months. Here's why:", where:"LinkedIn, Twitter/X, Instagram carousel, ads" },
   ];
 
   const generate = async () => {
     if (selected === null || !customNiche.trim()) return;
     setLoading(true); setResult([]);
     const template = TEMPLATES[selected];
-    const prompt = `Fill this viral content template for ${customNiche} niche on ${platform || "Instagram"}:
+    const plat = platform || "Instagram";
+    const prompt = `You are a viral content expert for Indian social media. Generate 5 complete, ready-to-post content pieces using this viral template for ${customNiche} niche on ${plat}.
 
-Template formula: "${template.formula}"
+Template: "${template.formula}"
 
-Generate 5 different variations of this template filled in for ${customNiche} niche. Make them specific, authentic, and viral-worthy for Indian audience.
+IMPORTANT RULES:
+- Each variation must be COMPLETE and READY TO POST (not just a hook line)
+- Include: Hook line + 2-4 body lines + CTA
+- Make it specific to ${customNiche} niche
+- Indian audience, relatable tone
+- Hindi-English mix is ok
+- Each should be 4-8 lines total
 
-Return ONLY a JSON array of 5 strings:
-["variation 1", "variation 2", "variation 3", "variation 4", "variation 5"]`;
+Return ONLY a valid JSON array of 5 objects:
+[
+  {
+    "hook": "The opening line (most important)",
+    "body": "2-4 lines of content body",
+    "cta": "Call to action line",
+    "full": "Complete post ready to copy"
+  }
+]`;
 
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:700 })
+        body: JSON.stringify({ messages:[{ role:"user", content:prompt }], max_tokens:1500 })
       });
       const d = await res.json();
       const text = d.content?.[0]?.text || "";
-      setResult(JSON.parse(text.replace(/```json|```/g,"").trim()));
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setResult(parsed);
       onCreditUsed?.();
+      onSaveHistory?.("templates", { inputSummary: `${template.label}: ${customNiche}`, resultData: { variations: parsed } });
     } catch { setResult([]); }
     setLoading(false);
   };
@@ -1743,13 +1759,13 @@ Return ONLY a JSON array of 5 strings:
   return (
     <div style={{ animation:"slideUp .4s ease" }}>
       <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🎯 Viral Post Templates</h2>
-      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1rem" }}>12 proven viral formats. Pick one → fill for your niche → post.</p>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1rem" }}>12 proven viral formats → complete ready-to-post content. Pick template → add your niche → get 5 full posts.</p>
 
       {/* Template grid */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:".4rem", marginBottom:"1rem" }}>
         {TEMPLATES.map(t => (
           <button key={t.id} onClick={() => { setSelected(t.id); setResult([]); }}
-            style={{ padding:".55rem .4rem", borderRadius:"9px", border:`1px solid ${selected===t.id?"rgba(124,58,237,.45)":"#1a1a2e"}`, background:selected===t.id?"rgba(124,58,237,.12)":"#080810", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", textAlign:"center" }}>
+            style={{ padding:".55rem .4rem", borderRadius:"9px", border:`1px solid ${selected===t.id?"rgba(124,58,237,.45)":"#1a1a2e"}`, background:selected===t.id?"rgba(124,58,237,.12)":"#080810", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", textAlign:"center" as const }}>
             <div style={{ fontSize:"1.1rem", marginBottom:".2rem" }}>{t.icon}</div>
             <div style={{ fontSize:".6rem", fontWeight: selected===t.id?800:600, color:selected===t.id?"#c4b5fd":"#52525b", lineHeight:1.3 }}>{t.label}</div>
           </button>
@@ -1758,40 +1774,77 @@ Return ONLY a JSON array of 5 strings:
 
       {selected !== null && (
         <div style={{ background:"rgba(124,58,237,.05)", border:"1px solid rgba(124,58,237,.18)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".85rem" }}>
-          <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Formula</p>
+          <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Formula</p>
           <p style={{ color:"#a1a1aa", fontSize:".8rem", margin:"0 0 .4rem", fontStyle:"italic", lineHeight:1.6 }}>"{TEMPLATES[selected].formula}"</p>
-          <p style={{ fontSize:".6rem", fontWeight:700, color:"#3f3f46", margin:"0 0 .2rem" }}>Example:</p>
-          <p style={{ color:"#52525b", fontSize:".76rem", margin:0, lineHeight:1.55 }}>{TEMPLATES[selected].example}</p>
+          <p style={{ fontSize:".6rem", fontWeight:700, color:"#3f3f46", margin:"0 0 .2rem" }}>Example output:</p>
+          <p style={{ color:"#52525b", fontSize:".76rem", margin:"0 0 .4rem", lineHeight:1.55 }}>{TEMPLATES[selected].example}</p>
+          <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"7px", padding:".35rem .65rem" }}>
+            <p style={{ margin:0, color:"#22c55e", fontSize:".65rem", fontWeight:700 }}>
+              📍 Best for: {TEMPLATES[selected].where}
+            </p>
+          </div>
         </div>
       )}
 
       <div style={{ marginBottom:".85rem" }}>
-        <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase", letterSpacing:".06em" }}>Your Niche</label>
+        <label style={{ fontSize:".65rem", fontWeight:700, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Your Niche / Topic</label>
         <input value={customNiche} onChange={e => setCustomNiche(e.target.value)}
-          placeholder="e.g. Fitness, Saree Business, Digital Marketing, Travel..."
-          style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit" }} />
+          placeholder="e.g. Fitness, Saree Business, Digital Marketing, BGMI Gaming..."
+          style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }} />
       </div>
 
       <button onClick={generate} disabled={loading||selected===null||!customNiche.trim()}
         style={{ width:"100%", padding:".82rem", borderRadius:"10px", background:(selected===null||!customNiche.trim())?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:(selected===null||!customNiche.trim())?"#3f3f46":"#fff", fontWeight:800, fontSize:".88rem", cursor:(selected===null||!customNiche.trim())?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1rem" }}>
         {loading
-          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating variations...</>
-          : <><span>🎯 Generate 5 Variations</span></>
+          ? <><span style={{ width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating complete posts...</>
+          : <>🎯 Generate 5 Complete Posts — 1 cr</>
         }
       </button>
 
       {result.length > 0 && (
-        <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
-          {result.map((r, i) => (
-            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem", display:"flex", gap:".75rem", alignItems:"flex-start" }}>
-              <div style={{ width:22,height:22,borderRadius:"50%",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontSize:".62rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:".1rem" }}>{i+1}</div>
-              <p style={{ flex:1, color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65, margin:0 }}>{r}</p>
-              <button onClick={() => copy(r, `tpl${i}`)}
-                style={{ background: copied===`tpl${i}`?"rgba(168,85,247,.1)":"transparent", border:`1px solid ${copied===`tpl${i}`?"rgba(168,85,247,.3)":"#1a1a2e"}`, color:copied===`tpl${i}`?"#22c55e":"#52525b", padding:".18rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
-                {copied===`tpl${i}` ? "✓" : "Copy"}
+        <div style={{ display:"flex", flexDirection:"column", gap:".75rem" }}>
+          {result.map((r: any, i: number) => (
+            <div key={i} style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem", position:"relative" as const }}>
+              {/* Number badge */}
+              <div style={{ position:"absolute" as const, top:"-10px", left:"12px", width:22,height:22,borderRadius:"50%",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",fontSize:".62rem",fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center" }}>{i+1}</div>
+
+              {/* Hook */}
+              <div style={{ marginBottom:".5rem", paddingTop:".25rem" }}>
+                <span style={{ fontSize:".58rem", fontWeight:800, color:"#f59e0b", letterSpacing:".06em", textTransform:"uppercase" as const }}>🎣 Hook</span>
+                <p style={{ color:"#fff", fontSize:".85rem", fontWeight:700, lineHeight:1.55, margin:".2rem 0 0" }}>{r.hook || ""}</p>
+              </div>
+
+              {/* Body */}
+              {r.body && (
+                <div style={{ marginBottom:".5rem" }}>
+                  <span style={{ fontSize:".58rem", fontWeight:800, color:"#a855f7", letterSpacing:".06em", textTransform:"uppercase" as const }}>📝 Body</span>
+                  <p style={{ color:"#a1a1aa", fontSize:".8rem", lineHeight:1.65, margin:".2rem 0 0", whiteSpace:"pre-line" as const }}>{r.body}</p>
+                </div>
+              )}
+
+              {/* CTA */}
+              {r.cta && (
+                <div style={{ marginBottom:".65rem" }}>
+                  <span style={{ fontSize:".58rem", fontWeight:800, color:"#22c55e", letterSpacing:".06em", textTransform:"uppercase" as const }}>👉 CTA</span>
+                  <p style={{ color:"#86efac", fontSize:".78rem", fontWeight:600, lineHeight:1.5, margin:".2rem 0 0" }}>{r.cta}</p>
+                </div>
+              )}
+
+              {/* Copy full post button */}
+              <button onClick={() => copy(r.full || `${r.hook}\n\n${r.body}\n\n${r.cta}`, `tpl${i}`)}
+                style={{ width:"100%", background: copied===`tpl${i}`?"rgba(34,197,94,.1)":"rgba(124,58,237,.08)", border:`1px solid ${copied===`tpl${i}`?"rgba(34,197,94,.3)":"rgba(124,58,237,.2)"}`, color:copied===`tpl${i}`?"#22c55e":"#a855f7", padding:".4rem", borderRadius:"8px", cursor:"pointer", fontSize:".72rem", fontWeight:700, fontFamily:"inherit" }}>
+                {copied===`tpl${i}` ? "✓ Copied!" : "📋 Copy Complete Post"}
               </button>
             </div>
           ))}
+
+          {/* Usage tip */}
+          <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"10px", padding:".65rem .85rem" }}>
+            <p style={{ margin:0, color:"#f59e0b", fontSize:".72rem", fontWeight:700, marginBottom:".2rem" }}>💡 Kahan use karein?</p>
+            <p style={{ margin:0, color:"#78716c", fontSize:".7rem", lineHeight:1.6 }}>
+              {selected !== null ? TEMPLATES[selected].where : ""} — Copy complete post → paste karo → post karo. Hook se reel bhi bana sakte ho Script Lab mein.
+            </p>
+          </div>
         </div>
       )}
     </div>
