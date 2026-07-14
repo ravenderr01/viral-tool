@@ -6255,11 +6255,11 @@ Respond ONLY in valid JSON:
   const tabs = [
     { id: "generate",     label: "Generate",    Icon: Zap },
     { id: "score",        label: "Hook Score",  Icon: BarChart2 },
-    { id: "caption",      label: "Captions",    Icon: FileText },
+    // Caption tab merged into Generate — removed
     { id: "intelligence", label: "Intelligence", Icon: Search },
     { id: "calendar",     label: "Calendar",    Icon: CalendarDays },
     { id: "pack",         label: "Pack",        Icon: Package },
-    { id: "trends",       label: "Trends",      Icon: TrendingUp },
+    // Trends tab merged into Intelligence — removed
     { id: "image",        label: "Image AI",    Icon: Image },
     { id: "scriptlab",    label: "Script Lab",  Icon: Film },
     { id: "repurpose",    label: "Repurpose",   Icon: Layers },
@@ -6854,9 +6854,9 @@ Respond ONLY in valid JSON:
                 {[
                   { id:"generate",     label:"Generate",    icon:"⚡" },
                   { id:"score",        label:"Hook Score",  icon:"📊" },
-                  { id:"caption",      label:"Captions",    icon:"📋" },
+                  // Caption merged into Generate
                   { id:"intelligence", label:"Intelligence", icon:"🔍" },
-                  { id:"trends",       label:"Trends",      icon:"📈" },
+                  // Trends merged into Intelligence
                   { id:"library",      label:"My Library",  icon:"💾" },
                   { id:"calendar",     label:"Calendar",    icon:"📅", locked: plan === "free" },
                   { id:"pack",         label:"Pack",        icon:"📦", locked: plan === "free" },
@@ -7067,7 +7067,7 @@ Respond ONLY in valid JSON:
                   <div style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginTop: "0.5rem" }}>
                     <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "#444", fontWeight: 600 }}>WANT MORE FROM THIS KEYWORD?</p>
                     <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                      {[["📊 Score my hooks", "score"], ["📅 Plan 30 days", "calendar"], ["📦 Full content pack", "pack"]].map(([label, tab]) => (
+                      {[["📊 Score my hooks", "score"], ["📅 Plan 30 days", "calendar"], ["📦 Full content pack", "pack"], ["🔍 See trends", "intelligence"], ["🎯 Templates", "templates"]].map(([label, tab]) => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{ background: "#111111", border: "1px solid #1f1f1f", color: "#555", padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}
                           onMouseEnter={e => { (e.currentTarget.style.borderColor = "#6d28d9"); (e.currentTarget.style.color = "#6d28d9"); }}
                           onMouseLeave={e => { (e.currentTarget.style.borderColor = "#1e1e1e"); (e.currentTarget.style.color = "#555"); }}>
@@ -7167,7 +7167,18 @@ Respond ONLY in valid JSON:
 
           {/* TAB: TRENDS */}
           {activeTab === "trends" && (
-            <Trends niche={niche} keyword={keyword} langLabel={langLabel} />
+            // Trends merged into Intelligence tab — redirect
+            <div style={{ textAlign:"center", padding:"2rem 1rem", animation:"slideUp .3s ease" }}>
+              <div style={{ fontSize:"2.5rem", marginBottom:"1rem" }}>📈</div>
+              <h3 style={{ color:"#fff", fontWeight:800, fontSize:"1rem", margin:"0 0 .5rem" }}>Trends is now in Intelligence 🔍</h3>
+              <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>
+                Intelligence tab mein real-time trends, keywords aur viral topics — sab ek jagah.
+              </p>
+              <button onClick={() => setActiveTab("intelligence")}
+                style={{ background:"linear-gradient(135deg,#0891b2,#06b6d4)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
+                🔍 Go to Intelligence
+              </button>
+            </div>
           )}
 
           {/* TAB: REPURPOSE ENGINE — Creator Pro+ only */}
@@ -7194,13 +7205,28 @@ Respond ONLY in valid JSON:
             <ContentLibrary userId={user?.id} supabase={supabase} />
           )}
           {activeTab === "whatsapp" && (
-            <WhatsAppEmailCopy onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="💬" title="WhatsApp & Email Copy"
+                  tagline="Festival broadcasts, cold DMs, email campaigns — India-specific tone, ready to send."
+                  previewItems={["💬 WhatsApp broadcasts", "📧 Email campaigns", "📱 Cold DMs"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <WhatsAppEmailCopy onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "bio" && (
-            <BioWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="✍️" title="Bio Writer"
+                  tagline="Professional bios for Instagram, LinkedIn, Twitter, YouTube — platform-perfect every time."
+                  previewItems={["✍️ Instagram bio", "💼 LinkedIn bio", "🐦 Twitter bio"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <BioWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "product" && (
-            <ProductDescWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="🛍️" title="Product Description"
+                  tagline="SEO-optimized product listings for Meesho, Amazon, Flipkart, Instagram Shop."
+                  previewItems={["🛍️ Amazon listing", "📦 Meesho description", "📱 Instagram Shop"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <ProductDescWriter onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} plan={plan} />
           )}
           {activeTab === "templates" && (
             <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
@@ -7232,12 +7258,34 @@ Respond ONLY in valid JSON:
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} onSaveHistory={saveToHistory} userType={userType} />
+            // Caption merged into Generate tab — redirect
+            <div style={{ textAlign:"center", padding:"2rem 1rem", animation:"slideUp .3s ease" }}>
+              <div style={{ fontSize:"2.5rem", marginBottom:"1rem" }}>📋</div>
+              <h3 style={{ color:"#fff", fontWeight:800, fontSize:"1rem", margin:"0 0 .5rem" }}>Captions are now in Generate ⚡</h3>
+              <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>
+                Generate tab mein hooks, titles, captions aur hashtags — sab ek jagah milte hain.
+              </p>
+              <button onClick={() => setActiveTab("generate")}
+                style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
+                ⚡ Go to Generate
+              </button>
+            </div>
           )}
 
           {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
           {activeTab === "intelligence" && (
-            <NicheIntelligence niche={niche} keyword={keyword} langLabel={langLabel} />
+            <div>
+              {/* Trends section merged here */}
+              <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"12px", padding:".65rem 1rem", marginBottom:"1rem", display:"flex", alignItems:"center", gap:".65rem" }}>
+                <span style={{ fontSize:"1.1rem" }}>📈</span>
+                <div>
+                  <p style={{ margin:0, color:"#06b6d4", fontWeight:800, fontSize:".75rem" }}>Trends are now here — inside Intelligence</p>
+                  <p style={{ margin:".1rem 0 0", color:"#52525b", fontSize:".68rem" }}>Real-time trending topics + keyword intelligence — sab ek jagah</p>
+                </div>
+              </div>
+              <TrendingNowCard niche={niche} platform={platform} />
+              <NicheIntelligence niche={niche} keyword={keyword} langLabel={langLabel} />
+            </div>
           )}
 
           {/* TAB: PACK */}
@@ -7436,7 +7484,7 @@ Respond ONLY in valid JSON:
               <p style={{ margin:0, color:"#fff", fontWeight:700, fontSize:".78rem" }}>
                 {creditToast.feature === "generate" ? "Generate" :
                  creditToast.feature === "score" ? "Hook Score" :
-                 creditToast.feature === "caption" ? "Captions" :
+                 creditToast.feature === "caption" ? "Captions (via Generate)" :
                  creditToast.feature === "calendar" ? "Calendar" :
                  creditToast.feature === "pack" ? "Content Pack" :
                  creditToast.feature === "image" ? "Image AI" :
