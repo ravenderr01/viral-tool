@@ -6950,6 +6950,7 @@ Respond ONLY in valid JSON:
     const savedNiche = (() => { try { return localStorage.getItem("vci_niche"); } catch { return null; } })();
     const nicheToSet = savedNiche || defaultNiche;
     setNiche(nicheToSet);
+    setShowNiche(false); // Always collapsed after onboarding
     try { localStorage.setItem("vci_niche", nicheToSet); } catch {}
 
     // Step 3: Set correct tab
