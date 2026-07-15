@@ -2626,7 +2626,7 @@ Respond ONLY in JSON:
               </div>
               <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{cnt}</p>
             </div>); })}
-          {results.tips && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginTop: "0.5rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💡 REPURPOSING TIPS</p>{results.tips.map((tip: string, i: number) => <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}><span style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{i + 1}.</span><span style={{ color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{tip}</span></div>)}</div>}
+          {results.tips && <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem", marginTop: "0.5rem" }}><p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💡 REPURPOSING TIPS</p>{results.tips?.map((tip: string, i: number) => <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}><span style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{i + 1}.</span><span style={{ color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{tip}</span></div>)}</div>}
         </div>
       )}
     </div>
@@ -4491,7 +4491,7 @@ Respond ONLY in this exact JSON (no markdown, no extra text):
         {/* Content textarea */}
         <div style={{ marginBottom: "0.75rem" }}>
           <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>
-            APNA CONTENT PASTE KARO
+            PASTE YOUR CONTENT HERE
             <span style={{ color: "#222", fontWeight: 400, marginLeft: "0.5rem" }}>
               (caption, hook, script, ad copy — kuch bhi)
             </span>
@@ -7729,7 +7729,7 @@ Respond ONLY in valid JSON:
                       )}
 
                       <div style={{ display:"flex", flexDirection:"column" as const, gap:".5rem" }}>
-                        {results.viralHooks.map((hook: string, i: number) => {
+                        {results.viralHooks?.map((hook: string, i: number) => {
                           const score = hookScores[i] || 0;
                           const scoreColor = score >= 80 ? "#22c55e" : score >= 65 ? "#f59e0b" : "#ef4444";
                           const scoreLabel = score >= 80 ? "🔥 High" : score >= 65 ? "⚡ Good" : "💡 Fair";
