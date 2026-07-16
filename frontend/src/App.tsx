@@ -872,7 +872,6 @@ function AdCopyVariations({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any)
     if (!product.trim()) return;
     setLoading(true); setResult(null);
     const isGoogle = platform === "Google Ads";
-    const isGoogle = platform === "Google Ads";
     const charRule = isGoogle
       ? "HEADLINES: Exactly 25-30 characters. Count every letter, space, and punctuation. NEVER below 20 characters. Descriptions: exactly 75-90 characters."
       : "HEADLINES: Exactly 35-40 characters. PRIMARY TEXT: 100-125 characters, first line must stop scroll.";
