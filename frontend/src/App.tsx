@@ -310,9 +310,21 @@ The 10 angles are:
 
 For each angle provide:
 - Complete ${isGoogle ? "Google Ads" : "Meta Ads"} ready copy
-- ${isGoogle ? "Headline (max 30 chars STRICT), Description (max 90 chars STRICT)" : "Headline (max 40 chars), Primary Text (first 125 chars most important)"}
+- ${isGoogle ? "Headline: EXACTLY 25-30 characters (count every character including spaces). Description: EXACTLY 75-90 characters. NEVER write headlines under 20 characters." : "Headline: EXACTLY 35-40 characters. Primary Text: 100-125 characters, first line must stop the scroll."}
 - Which audience segment this angle works best for
 - Best time to use this angle in campaign
+
+IMPORTANT: Headlines that are too short (under 20 chars for Google, under 30 for Meta) are REJECTED. Use the full character space available to make copy compelling and specific.
+
+Good Google headline examples (25-30 chars each):
+"Lose Weight Without the Gym" = 27 ✓
+"Cut Your Ad Budget by 40%" = 25 ✓
+"India's Top AI Content Tool" = 27 ✓
+
+Bad examples (too short — never do this):
+"Try Now" = 7 ✗
+"Get Results" = 11 ✗
+"Learn More" = 10 ✗
 
 Return ONLY valid JSON:
 {
@@ -321,8 +333,8 @@ Return ONLY valid JSON:
       "number": 1,
       "name": "Price/Value Angle",
       "trigger": "One word psychological trigger",
-      "headline": "${isGoogle ? "max 30 chars" : "max 40 chars"}",
-      "body": "${isGoogle ? "max 90 chars description" : "125 char primary text — first line must stop scroll"}",
+      "headline": "${isGoogle ? "25-30 chars — count every character" : "35-40 chars"}",
+      "body": "${isGoogle ? "75-90 chars description — specific and compelling" : "100-125 chars primary text — first line stops scroll"}",
       "cta": "3-5 word CTA",
       "best_for": "Which audience segment responds best",
       "when_to_use": "Specific campaign scenario",
@@ -405,7 +417,7 @@ Return ONLY valid JSON:
 
       <button onClick={generate} disabled={loading || !product.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
-        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating 10 angles...</> : "🎯 Generate 10 Ad Angles — 3 credits"}
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating 10 angles...</> : "🎯 Generate 10 Ad Angles"}
       </button>
 
       {result?._error && (
@@ -665,7 +677,7 @@ Return ONLY valid JSON:
 
       <button onClick={generate} disabled={loading || !product.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
-        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building 3 customer avatars...</> : "👤 Build Audience Profiles — 3 credits"}
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building 3 customer avatars...</> : "👤 Build Audience Profiles"}
       </button>
 
       {result?._error && (
@@ -860,33 +872,52 @@ function AdCopyVariations({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any)
     if (!product.trim()) return;
     setLoading(true); setResult(null);
     const isGoogle = platform === "Google Ads";
-    const prompt = `You are a performance marketing expert. Generate ${count} completely different ad copy variations for ${platform}.
+    const isGoogle = platform === "Google Ads";
+    const charRule = isGoogle
+      ? "HEADLINES: Exactly 25-30 characters. Count every letter, space, and punctuation. NEVER below 20 characters. Descriptions: exactly 75-90 characters."
+      : "HEADLINES: Exactly 35-40 characters. PRIMARY TEXT: 100-125 characters, first line must stop scroll.";
+    const prompt = `You are a senior performance marketing copywriter at a top Indian agency. Generate ${count} high-quality ad copy variations for ${platform}.
 
 Product/Service: ${product}
 Campaign Goal: ${goal}
 Platform: ${platform}
 
-RULES:
-- Every variation must use a DIFFERENT hook/angle/approach
-- ${isGoogle ? `Headlines: STRICT max 30 characters each (count spaces). Descriptions: STRICT max 90 characters.` : `Headlines: max 40 chars. Primary text: first line must stop scroll in feed.`}
-- No two variations should sound similar
-- Mix these types across variations: emotional, logical, curiosity, social proof, fear, aspiration, urgency, story, comparison, question
-- All copy must be ${platform} policy compliant
+CHARACTER LIMIT RULES — THIS IS CRITICAL:
+${charRule}
 
-Return ONLY valid JSON:
+EXAMPLES of correct Google Ads headlines (25-30 chars):
+"Lose Weight Without the Gym" = 27 chars ✓
+"Join 2400 Indian Creators" = 25 chars ✓  
+"Start Free Trial — No Card" = 26 chars ✓
+"Cut Your Ad Spend by 40%" = 25 chars ✓
+"India's #1 Content AI Tool" = 27 chars ✓
+
+NEVER write headlines like these (too short):
+"Try Yoga" = 8 chars ✗
+"Best Classes" = 12 chars ✗
+"Learn More" = 10 chars ✗
+
+QUALITY RULES:
+- Every variation must use a COMPLETELY DIFFERENT psychological angle
+- Types to mix: emotional, logical, curiosity, social_proof, fear, aspiration, urgency, story, comparison, question
+- Be specific — use numbers, timeframes, outcomes (not generic claims)
+- All copy must be ${platform} policy compliant (no ALL CAPS words, no "guaranteed", no "click here")
+- Write for Indian audience — culturally relevant examples
+
+Return ONLY valid JSON with exactly ${count} variations:
 {
   "variations": [
     {
       "number": 1,
-      "type": "emotional/logical/curiosity/social_proof/fear/aspiration/urgency/story/comparison/question",
-      "headline": "${isGoogle ? "max 30 chars STRICT" : "max 40 chars"}",
-      "body": "${isGoogle ? "max 90 chars description" : "primary text, strong first line"}",
-      "cta": "3-5 word CTA",
-      "strength": "Why this variation could win"
+      "type": "emotional",
+      "headline": "${isGoogle ? "25-30 chars EXACTLY — count it" : "35-40 chars"}",
+      "body": "${isGoogle ? "75-90 chars description" : "100-125 chars primary text"}",
+      "cta": "3-5 word action CTA",
+      "strength": "One specific reason this angle wins"
     }
   ],
-  "top_3_picks": "Which 3 to launch first and why",
-  "testing_plan": "Systematic testing approach for all ${count} variations"
+  "top_3_picks": "Which 3 numbers to launch first and exactly why",
+  "testing_plan": "Systematic ${platform} testing approach"
 }`;
 
     try {
@@ -960,7 +991,7 @@ Return ONLY valid JSON:
 
       <button onClick={generate} disabled={loading||!product.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
-        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating {count} variations...</> : `📋 Generate ${count} Ad Variations — 3 credits`}
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating {count} variations...</> : `📋 Generate ${count} Ad Variations`}
       </button>
 
       {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
@@ -1072,11 +1103,11 @@ Return ONLY valid JSON:
       "hook_visual": "What the viewer should SEE on screen during hook",
       "hook_text_overlay": "Text to show on screen (5 words max)",
       "full_script": {
-        "hook": "0-3 seconds: exact words",
-        "problem": "3-8 seconds: expand the pain or desire",
-        "solution": "8-20 seconds: introduce product naturally",
-        "proof": "20-25 seconds: social proof or result",
-        "cta": "25-${duration} seconds: clear next step"
+        "hook": "0-3s: Exact opening words that stop the scroll",
+        "problem": "3-8s: Expand the pain or desire — be specific",
+        "solution": "8-20s: Introduce product naturally, not salesy",
+        "proof": "20-25s: Specific social proof with numbers",
+        "cta": "25-${duration}s: Clear, low-friction next step"
       },
       "skip_rate": "Estimated skip rate — Low/Medium/High retention",
       "best_audience": "Who responds best to this hook"
@@ -1150,7 +1181,7 @@ Return ONLY valid JSON:
 
       <button onClick={generate} disabled={loading||!product.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
-        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing 8 video hooks + scripts...</> : "🎬 Generate Video Ad Hooks — 3 credits"}
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing 8 video hooks + scripts...</> : "🎬 Generate Video Ad Hooks"}
       </button>
 
       {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
@@ -1366,7 +1397,7 @@ Return ONLY valid JSON:
 
       <button onClick={generate} disabled={loading||!product.trim()}
         style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
-        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building your USP & offer...</> : "💎 Build USP & Offer — 2 credits"}
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building your USP & offer...</> : "💎 Build USP & Offer"}
       </button>
 
       {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
@@ -1775,7 +1806,7 @@ Return ONLY valid JSON:
               <span>🧪</span>
               <span>Generate 2 Ad Variants</span>
               <span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"6px", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
-                <span style={{ fontSize:".6rem" }}>⚡</span> 3 cr
+                <span style={{ fontSize:".6rem" }}>⚡</span> 3 credits
               </span>
             </>
         }
@@ -1915,7 +1946,7 @@ Return ONLY valid JSON:
               <span>🖥️</span>
               <span>Generate Landing Page Copy</span>
               <span style={{ background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:"6px", fontSize:".65rem", fontWeight:700, padding:".1rem .45rem", display:"flex", alignItems:"center", gap:".2rem" }}>
-                <span style={{ fontSize:".6rem" }}>⚡</span> 4 cr
+                <span style={{ fontSize:".6rem" }}>⚡</span> 4 credits
               </span>
             </>
         }
