@@ -1,632 +1,1068 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="robots" content="index, follow">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Features — VCI Viral Content Intelligence</title>
-<meta name="description" content="18 AI tools for Indian creators and advertisers. Script, Voice, Music, Hooks, Ads — one tab. getvci.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<meta name="description" content="24 AI-powered tools for Indian creators, advertisers and agencies. From viral hooks to Google Ads copy — all in one platform.">
 <style>
-:root{
-  --bg:#020204;--s1:#07070e;--s2:#0b0b16;--s3:#0f0f1e;
-  --border:#1a1a2e;--border2:rgba(124,58,237,.3);
-  --pu:#7c3aed;--pul:#a855f7;--puxl:#c4b5fd;
-  --cy:#22d3ee;--gr:#4ade80;--am:#fbbf24;--re:#f87171;--or:#fb923c;
-  --t1:#ffffff;--t2:#cbd5e1;--t3:#94a3b8;--t4:#64748b;
-  --mono:'JetBrains Mono',monospace;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-.launch-bar{background:linear-gradient(135deg,rgba(109,40,217,.25),rgba(168,85,247,.15));border-bottom:1px solid rgba(168,85,247,.2);padding:.55rem 1.5rem;text-align:center;display:flex;align-items:center;justify-content:center;gap:.6rem;font-size:.72rem;font-weight:700;color:#c4b5fd}
-.launch-bar span{color:var(--am)}
-.launch-bar a{color:var(--pul);text-decoration:none;font-weight:800}
-.hero{padding:6.5rem 1.5rem 5rem;text-align:center;position:relative;background:radial-gradient(ellipse 65% 45% at 50% -5%,rgba(124,58,237,.25),transparent 70%);border-bottom:1px solid var(--border);overflow:hidden}
-.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(124,58,237,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,.04) 1px,transparent 1px);background-size:72px 72px;pointer-events:none}
-.hero-badge{display:inline-flex;align-items:center;gap:.45rem;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);border-radius:100px;padding:.3rem 1rem;font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--pul);text-transform:uppercase;margin-bottom:1.6rem;position:relative;z-index:1}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--pul);animation:pd 2s infinite}
-@keyframes pd{0%,100%{opacity:1}50%{opacity:.35}}
-.hero h1{font-size:clamp(2.2rem,5.5vw,3.5rem);font-weight:900;line-height:1.08;letter-spacing:-.03em;position:relative;z-index:1;margin-bottom:1.1rem;color:var(--t1)}
-.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--pul) 20%,var(--puxl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{color:var(--t3);font-size:.95rem;line-height:1.75;max-width:520px;margin:0 auto 2.75rem;position:relative;z-index:1}
-.hero-stats{display:flex;justify-content:center;gap:2.5rem;flex-wrap:wrap;position:relative;z-index:1}
-.hstat .n{font-size:1.7rem;font-weight:900;color:var(--pul);line-height:1}
-.hstat .l{font-size:.62rem;font-weight:600;color:var(--t4);margin-top:.2rem;letter-spacing:.05em;text-transform:uppercase}
-.nav{position:sticky;top:0;z-index:90;background:rgba(2,2,4,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:.65rem 1.5rem;display:flex;gap:.4rem;overflow-x:auto;scrollbar-width:none}
-.nav::-webkit-scrollbar{display:none}
-.nav-label{font-size:.55rem;font-weight:800;letter-spacing:.1em;color:var(--t4);text-transform:uppercase;padding:.3rem .5rem;white-space:nowrap;flex-shrink:0;display:flex;align-items:center}
-.np{display:inline-flex;align-items:center;gap:.3rem;background:transparent;border:1px solid var(--border);border-radius:100px;padding:.3rem .75rem;font-size:.65rem;font-weight:700;color:var(--t4);white-space:nowrap;cursor:pointer;text-decoration:none;transition:all .18s;flex-shrink:0}
-.np:hover,.np.act{border-color:var(--border2);color:var(--pul);background:rgba(124,58,237,.09)}
-.np.nf{border-color:rgba(74,222,128,.2);color:var(--gr)}
-.np.nf:hover,.np.nf.act{background:rgba(74,222,128,.06);border-color:rgba(74,222,128,.4)}
-.np.na{border-color:rgba(34,211,238,.2);color:var(--cy)}
-.np.na:hover,.np.na.act{background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.4)}
-.nav-div{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 .25rem}
-.wrap{max-width:980px;margin:0 auto;padding:0 1.25rem}
-.section{padding:5rem 0 1rem}
-.sh{margin-bottom:3rem}
-.sk{font-size:.6rem;font-weight:800;letter-spacing:.15em;color:var(--pu);text-transform:uppercase;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
-.sk::before{content:'';width:18px;height:1.5px;background:var(--pu);border-radius:1px}
-.st{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:900;letter-spacing:-.025em;line-height:1.15;margin-bottom:.65rem;color:var(--t1)}
-.sd{color:var(--t3);font-size:.88rem;line-height:1.75;max-width:560px}
-.sec-divider{display:flex;align-items:center;gap:1rem;margin:3rem 0 1.5rem;padding:.65rem 1rem;border-radius:12px;border:1px solid}
-.sec-divider.creator{background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.2)}
-.sec-divider.advertiser{background:rgba(34,211,238,.04);border-color:rgba(34,211,238,.15)}
-.sec-divider-icon{font-size:1.3rem;flex-shrink:0}
-.sec-divider-title{font-size:.9rem;font-weight:800;color:var(--t1)}
-.sec-divider-desc{font-size:.72rem;color:var(--t3);margin-top:.1rem}
-.sec-divider-badge{margin-left:auto;font-size:.6rem;font-weight:800;padding:.2rem .55rem;border-radius:6px;white-space:nowrap;flex-shrink:0}
-.creator .sec-divider-badge{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.25);color:var(--pul)}
-.advertiser .sec-divider-badge{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cy)}
-.fc{background:var(--s1);border:1px solid var(--border);border-radius:20px;margin-bottom:1rem;overflow:hidden;transition:border-color .22s,box-shadow .22s;position:relative}
-.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--fc,var(--pu));border-radius:20px 20px 0 0}
-.fc:hover{border-color:rgba(124,58,237,.28);box-shadow:0 0 0 1px rgba(124,58,237,.06),0 20px 50px rgba(0,0,0,.5)}
-.fc.adv-card:hover{border-color:rgba(34,211,238,.2)}
-.fh{padding:1.4rem 1.6rem;display:grid;grid-template-columns:50px 1fr 28px;gap:1.1rem;align-items:flex-start;cursor:pointer;user-select:none}
-.fi{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;background:var(--fi-bg,rgba(124,58,237,.12));border:1px solid var(--fi-bd,rgba(124,58,237,.25));flex-shrink:0}
-.ft{font-size:1rem;font-weight:800;color:var(--t1);margin-bottom:.28rem;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem}
-.fs{font-size:.77rem;color:var(--t3);line-height:1.55;margin-bottom:.5rem}
-.fb-tags{display:flex;gap:.3rem;flex-wrap:wrap}
-.tg{display:inline-flex;align-items:center;font-size:.56rem;font-weight:800;padding:.12rem .48rem;border-radius:6px;border:1px solid;letter-spacing:.04em}
-.tg-fr{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.28);color:var(--gr)}
-.tg-pd{background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.25);color:var(--pul)}
-.tg-ex{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.28);color:var(--re)}
-.tg-cr{background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2);color:var(--cy)}
-.tg-ad{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.2);color:var(--am)}
-.tg-cr2{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.18);color:#8b5cf6;font-family:var(--mono)}
-.tg-new{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.3);color:var(--or)}
-.tog{width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:.15rem;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--t4);transition:all .2s}
-.fc.open .tog{background:rgba(124,58,237,.15);border-color:var(--border2);color:var(--pul);transform:rotate(180deg)}
-.fb-body{display:none;padding:0 1.6rem 1.6rem;border-top:1px solid var(--border)}
-.fc.open .fb-body{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-@media(max-width:620px){.fc.open .fb-body{grid-template-columns:1fr}}
-.blk{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.95rem 1rem}
-.blk-lbl{font-size:.56rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem;color:inherit}
-.blk-lbl::before{content:'';width:10px;height:1.5px;border-radius:1px;background:currentColor;opacity:.7}
-.lbl-cy{color:var(--cy)}.lbl-gr{color:var(--gr)}.lbl-pu{color:var(--pul)}.lbl-am{color:var(--am)}
-.steps{display:flex;flex-direction:column;gap:.55rem}
-.step{display:flex;gap:.65rem;align-items:flex-start}
-.sn{min-width:21px;height:21px;border-radius:50%;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;font-size:.58rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.15rem}
-.step p{font-size:.77rem;color:var(--t2);line-height:1.65}
-.step p strong{color:var(--t1);font-weight:700}
-.bens{display:flex;flex-direction:column;gap:.48rem}
-.ben{display:flex;gap:.6rem;align-items:flex-start}
-.bi{font-size:.78rem;flex-shrink:0;margin-top:.05rem;line-height:1}
-.ben p{font-size:.77rem;color:var(--t2);line-height:1.6}
-.ben p strong{color:var(--t1);font-weight:700}
-.ex{background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.18);border-left:3px solid var(--pu);border-radius:0 12px 12px 0;padding:.85rem 1rem;grid-column:1/-1}
-.exl{font-size:.55rem;font-weight:800;letter-spacing:.12em;color:var(--pul);margin-bottom:.5rem;text-transform:uppercase}
-.exc{font-size:.76rem;color:var(--t2);line-height:1.8;font-family:var(--mono)}
-.exc .hi{color:var(--puxl);font-weight:700}
-.exc .out{color:var(--gr);font-weight:700}
-.op-row{display:flex;flex-wrap:wrap;gap:.35rem;grid-column:1/-1}
-.op{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);color:var(--gr);font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:100px}
-.op-cy{background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);color:var(--cy)}
-.pipeline{grid-column:1/-1;display:flex;background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.2);border-radius:14px;overflow:hidden}
-.ps{flex:1;padding:.85rem .6rem;text-align:center;border-right:1px solid rgba(124,58,237,.12);display:flex;flex-direction:column;align-items:center;gap:.28rem;position:relative}
-.ps:last-child{border-right:none}
-.ps::after{content:'→';position:absolute;right:-9px;top:50%;transform:translateY(-50%);color:rgba(124,58,237,.4);font-size:.75rem;z-index:1}
-.ps:last-child::after{display:none}
-.ps-ic{font-size:1.15rem}
-.ps-lb{font-size:.58rem;font-weight:800;color:var(--t2);letter-spacing:.04em}
-.ps-dt{font-size:.5rem;color:var(--t4);line-height:1.4;margin-top:.08rem}
-.ps.hl{background:rgba(124,58,237,.1)}
-.ps.hl .ps-lb{color:var(--puxl)}
-.cr-wrap{background:var(--s1);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-top:1.5rem}
-.cr-table{width:100%;border-collapse:collapse}
-.cr-table th{text-align:left;padding:.6rem 1rem;font-size:.57rem;font-weight:800;letter-spacing:.08em;color:var(--t4);border-bottom:1px solid var(--border);text-transform:uppercase}
-.cr-table td{padding:.68rem 1rem;font-size:.78rem;color:var(--t2);border-bottom:1px solid var(--s3)}
-.cr-table td:first-child{color:var(--t1);font-weight:600}
-.cr-table tr:last-child td{border-bottom:none}
-.cr-table tr:hover td{background:rgba(124,58,237,.03)}
-.cr-table .fr td{color:var(--gr)}
-.cr-table .fr td:first-child{color:var(--gr)}
-.crn{color:var(--pul);font-weight:800;font-family:var(--mono)}
-.cr-new td:first-child::after{content:' NEW';font-size:.5rem;color:var(--or);font-weight:800;margin-left:.3rem}
-.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.85rem;margin-top:1.5rem}
-.price-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .22s}
-.price-card:hover{transform:translateY(-4px)}
-.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--pc,var(--pu))}
-.pc-name{font-size:.82rem;font-weight:800;color:var(--t1);margin-bottom:.35rem}
-.pc-was{font-size:.7rem;color:var(--t4);text-decoration:line-through;margin-bottom:.1rem}
-.pc-price{font-size:1.6rem;font-weight:900;line-height:1}
-.pc-period{font-size:.7rem;color:var(--t4)}
-.pc-credits{margin:.5rem 0;border-radius:7px;padding:.28rem .6rem;font-size:.72rem;font-weight:800;display:inline-block}
-.pc-badge{position:absolute;top:-.5rem;right:.85rem;color:#fff;font-size:.55rem;font-weight:800;padding:.12rem .55rem;border-radius:100px}
-.pc-disc{position:absolute;top:.75rem;left:.85rem;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--re);font-size:.55rem;font-weight:800;padding:.08rem .38rem;border-radius:5px}
-.cta{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(124,58,237,.04));border:1px solid rgba(124,58,237,.28);border-radius:24px;padding:4rem 2rem;text-align:center;margin:3rem 0 5rem}
-.cta h2{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:900;letter-spacing:-.025em;margin-bottom:.75rem;color:var(--t1)}
-.cta p{color:var(--t3);font-size:.88rem;max-width:420px;margin:0 auto 2rem;line-height:1.75}
-.cta-btn{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;border-radius:12px;padding:.85rem 2.1rem;font-weight:800;font-size:.88rem;text-decoration:none;box-shadow:0 8px 32px rgba(124,58,237,.45);transition:transform .2s,box-shadow .2s}
-.cta-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(124,58,237,.55)}
-.cta-sub{margin-top:1rem;font-size:.68rem;color:var(--t4)}
-.cta-links{margin-top:.75rem;font-size:.68rem;color:var(--t4)}
-.cta-links a{color:var(--pul);font-weight:700;text-decoration:none}
-.rv{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
-.rv.vis{opacity:1;transform:none}
-@media(max-width:640px){
-  .fh{grid-template-columns:42px 1fr 24px;gap:.8rem;padding:1.1rem}
-  .fb-body{padding:0 1.1rem 1.25rem}
-  .pipeline{flex-direction:column}
-  .ps{border-right:none;border-bottom:1px solid rgba(124,58,237,.12);flex-direction:row;text-align:left;gap:.65rem}
-  .ps::after{content:'↓';right:auto;left:50%;bottom:-10px;top:auto;transform:translateX(-50%)}
-  .ps:last-child::after{display:none}
-  .hero-stats{gap:1.5rem}
-  .launch-bar{flex-direction:column;gap:.2rem}
-  .price-grid{grid-template-columns:1fr 1fr}
-  .nav-label,.nav-div{display:none}
-}
-@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}*{transition:none!important;animation:none!important}}
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:       #04040e;
+    --surface:  #080814;
+    --card:     #0b0b1a;
+    --border:   #14142a;
+    --purple:   #7c3aed;
+    --purple2:  #a855f7;
+    --cyan:     #06b6d4;
+    --green:    #22c55e;
+    --amber:    #f59e0b;
+    --pink:     #ec4899;
+    --text:     #e2e8f0;
+    --muted:    #52525b;
+    --dim:      #3f3f46;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(4,4,14,.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: .85rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: .6rem; text-decoration: none; }
+  .logo-mark {
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    border-radius: 10px; padding: .3rem .6rem;
+    font-size: .9rem; font-weight: 900; color: #fff;
+  }
+  .logo-name { font-weight: 900; font-size: 1rem; color: #fff; }
+  .nav-cta {
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    border: none; color: #fff; padding: .5rem 1.25rem;
+    border-radius: 20px; font-weight: 700; font-size: .82rem;
+    cursor: pointer; text-decoration: none; transition: opacity .2s;
+  }
+  .nav-cta:hover { opacity: .85; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 8rem 1.5rem 5rem;
+    text-align: center;
+    max-width: 780px; margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(124,58,237,.1); border: 1px solid rgba(124,58,237,.25);
+    border-radius: 20px; padding: .3rem .85rem;
+    font-size: .72rem; font-weight: 700; color: var(--purple2);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900; color: #fff; line-height: 1.15;
+    margin-bottom: 1.1rem; letter-spacing: -.03em;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--purple2), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 1rem; color: var(--muted); max-width: 540px;
+    margin: 0 auto 2.5rem; line-height: 1.7;
+  }
+  .hero-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    border: none; color: #fff; padding: .75rem 1.75rem;
+    border-radius: 12px; font-weight: 800; font-size: .9rem;
+    cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 6px 24px rgba(124,58,237,.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(124,58,237,.45); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: .75rem 1.75rem;
+    border-radius: 12px; font-weight: 700; font-size: .9rem;
+    cursor: pointer; text-decoration: none; transition: border-color .2s, color .2s;
+  }
+  .btn-ghost:hover { border-color: var(--purple); color: var(--purple2); }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex; justify-content: center; gap: 0;
+    background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    padding: 1.25rem 2.5rem; text-align: center;
+    border-right: 1px solid var(--border); flex: 1; min-width: 120px;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num { font-size: 1.6rem; font-weight: 900; color: #fff; }
+  .stat-label { font-size: .7rem; color: var(--muted); font-weight: 600; margin-top: .15rem; }
+
+  /* ── SECTION ── */
+  section { padding: 5rem 1.5rem; max-width: 1000px; margin: 0 auto; }
+  .section-eyebrow {
+    font-size: .65rem; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--purple2); margin-bottom: .6rem;
+  }
+  .section-title {
+    font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900;
+    color: #fff; margin-bottom: .75rem; line-height: 1.2;
+  }
+  .section-sub {
+    font-size: .9rem; color: var(--muted); max-width: 560px; line-height: 1.7;
+  }
+  .section-header { margin-bottom: 3rem; }
+
+  /* ── USER TYPE TABS ── */
+  .user-tabs {
+    display: flex; gap: .4rem; margin-bottom: 3rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: .35rem;
+    width: fit-content;
+  }
+  .user-tab {
+    padding: .55rem 1.25rem; border-radius: 10px; border: none;
+    background: transparent; color: var(--muted);
+    font-weight: 700; font-size: .82rem; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+  }
+  .user-tab.active {
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    color: #fff;
+  }
+
+  /* ── FEATURE GRID ── */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .feature-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem;
+    transition: border-color .2s, transform .2s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--card-accent, linear-gradient(90deg, var(--purple), var(--purple2)));
+  }
+  .feature-card:hover { border-color: rgba(124,58,237,.35); transform: translateY(-2px); }
+  .card-icon { font-size: 1.6rem; margin-bottom: .85rem; display: block; }
+  .card-plan {
+    position: absolute; top: 1rem; right: 1rem;
+    font-size: .55rem; font-weight: 800; padding: .15rem .45rem;
+    border-radius: 5px; text-transform: uppercase; letter-spacing: .06em;
+  }
+  .plan-free   { background: rgba(34,197,94,.1); color: #22c55e; border: 1px solid rgba(34,197,94,.2); }
+  .plan-starter{ background: rgba(124,58,237,.1); color: #a855f7; border: 1px solid rgba(124,58,237,.2); }
+  .plan-pro    { background: rgba(6,182,212,.1); color: #06b6d4; border: 1px solid rgba(6,182,212,.2); }
+  .plan-adv    { background: rgba(245,158,11,.1); color: #f59e0b; border: 1px solid rgba(245,158,11,.2); }
+  .plan-agency { background: rgba(236,72,153,.1); color: #ec4899; border: 1px solid rgba(236,72,153,.2); }
+  .card-title { font-size: .92rem; font-weight: 800; color: #fff; margin-bottom: .4rem; }
+  .card-desc { font-size: .78rem; color: var(--muted); line-height: 1.6; margin-bottom: 1rem; }
+  .card-outputs { display: flex; flex-direction: column; gap: .25rem; }
+  .card-output-item {
+    font-size: .7rem; color: var(--dim);
+    display: flex; align-items: center; gap: .4rem;
+  }
+  .card-output-item::before { content: '→'; color: var(--purple); font-weight: 700; }
+
+  /* ── FLOW SECTION ── */
+  .flow-container { position: relative; }
+  .flow-line {
+    position: absolute; left: 27px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, var(--purple), transparent);
+  }
+  .flow-step { display: flex; gap: 1.25rem; margin-bottom: 1.75rem; position: relative; }
+  .flow-num {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: .85rem; color: #fff; position: relative; z-index: 1;
+  }
+  .flow-content { padding-top: .6rem; flex: 1; }
+  .flow-tag {
+    font-size: .6rem; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--purple2); margin-bottom: .3rem;
+  }
+  .flow-title { font-size: .95rem; font-weight: 800; color: #fff; margin-bottom: .3rem; }
+  .flow-desc { font-size: .8rem; color: var(--muted); line-height: 1.65; }
+  .flow-tool {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(124,58,237,.08); border: 1px solid rgba(124,58,237,.2);
+    color: var(--purple2); font-size: .65rem; font-weight: 700;
+    padding: .15rem .5rem; border-radius: 6px; margin-top: .5rem;
+  }
+
+  /* ── COMPARE TABLE ── */
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+  .compare-table th {
+    padding: .85rem 1rem; text-align: left; font-size: .75rem;
+    font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .compare-table th:first-child { color: var(--muted); }
+  .compare-table th.vci-col { color: var(--purple2); }
+  .compare-table td {
+    padding: .85rem 1rem; font-size: .8rem; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table td:first-child { color: var(--text); font-weight: 600; }
+  .compare-table td.vci-col { color: #fff; font-weight: 700; }
+  .check { color: var(--green); font-size: .9rem; }
+  .cross { color: var(--dim); font-size: .9rem; }
+  .compare-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── PLAN CARDS ── */
+  .plan-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: .85rem; margin-top: 2.5rem;
+  }
+  .plan-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem; position: relative;
+  }
+  .plan-card.featured {
+    border-color: rgba(124,58,237,.4);
+    background: rgba(124,58,237,.06);
+  }
+  .plan-name { font-size: .72rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .4rem; }
+  .plan-price { font-size: 1.4rem; font-weight: 900; color: #fff; }
+  .plan-price span { font-size: .75rem; font-weight: 500; color: var(--muted); }
+  .plan-credits { font-size: .7rem; color: var(--purple2); font-weight: 700; margin: .3rem 0 .85rem; }
+  .plan-features { list-style: none; }
+  .plan-features li {
+    font-size: .72rem; color: var(--muted); padding: .2rem 0;
+    display: flex; gap: .4rem; align-items: flex-start;
+  }
+  .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .plan-badge {
+    position: absolute; top: -1px; right: 1rem;
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    color: #fff; font-size: .58rem; font-weight: 800;
+    padding: .2rem .55rem; border-radius: 0 0 6px 6px;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* ── CTA SECTION ── */
+  .cta-section {
+    text-align: center; padding: 5rem 1.5rem;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.15) 0%, transparent 70%);
+    border-top: 1px solid var(--border);
+  }
+  .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 900; color: #fff; margin-bottom: .85rem; }
+  .cta-section p { color: var(--muted); font-size: .9rem; margin-bottom: 2rem; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.7; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 1.5rem; text-align: center;
+    font-size: .75rem; color: var(--muted);
+  }
+  footer a { color: var(--purple2); text-decoration: none; }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 1.5rem;
+  }
+
+  /* ── FLOW TABS ── */
+  .flow-tabs { display: flex; gap: .4rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+  .flow-tab {
+    padding: .45rem 1rem; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-weight: 700;
+    font-size: .78rem; cursor: pointer; transition: all .2s; font-family: inherit;
+  }
+  .flow-tab.active { background: rgba(124,58,237,.12); border-color: rgba(124,58,237,.4); color: var(--purple2); }
+
+  .flow-section { display: none; }
+  .flow-section.active { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 640px) {
+    .hero { padding: 7rem 1rem 4rem; }
+    section { padding: 3rem 1rem; }
+    .stat-item { padding: 1rem 1.25rem; }
+    .user-tabs { width: 100%; }
+    .compare-table { font-size: .72rem; }
+    .compare-table th, .compare-table td { padding: .6rem .6rem; }
+  }
 </style>
 </head>
 <body>
 
-<div class="launch-bar">🎉 <span>Launch Offer:</span> First 100 users get special pricing — plans from ₹499/month &nbsp;·&nbsp; <a href="https://getvci.com">Start free →</a></div>
-
-<section class="hero">
-  <div class="hero-badge"><span class="badge-dot"></span>VCI · Viral Content Intelligence · getvci.com</div>
-  <h1>18 AI tools.<br><em>One subscription.</em></h1>
-  <p class="hero-sub">India's first all-in-one content tool for creators and advertisers. Keyword to reel-ready audio — one browser tab. Built for India, priced for India.</p>
-  <div class="hero-stats">
-    <div class="hstat"><div class="n">18</div><div class="l">AI Tools</div></div>
-    <div class="hstat"><div class="n">7</div><div class="l">Indian Languages</div></div>
-    <div class="hstat"><div class="n">15+</div><div class="l">Platforms</div></div>
-    <div class="hstat"><div class="n">~10 min</div><div class="l">Keyword → Reel</div></div>
-  </div>
-</section>
-
-<nav class="nav">
-  <span class="nav-label">📱 Creator</span>
-  <a class="np nf" href="#gen">⚡ Generate</a>
-  <a class="np nf" href="#hs">📊 Hook Score</a>
-  <a class="np nf" href="#cap">📋 Captions</a>
-  <a class="np nf" href="#intel">🔍 Intelligence</a>
-  <a class="np nf" href="#tr">📈 Trends</a>
-  <a class="np nf" href="#lib">💾 Library</a>
-  <a class="np" href="#cal">📅 Calendar</a>
-  <a class="np" href="#pk">📦 Pack</a>
-  <a class="np" href="#img">🖼️ Image AI</a>
-  <a class="np" href="#sl">🎬 Script Lab</a>
-  <a class="np" href="#rp">🔄 Repurpose</a>
-  <a class="np" href="#comp">🕵️ Competitor</a>
-  <div class="nav-div"></div>
-  <span class="nav-label">📢 Advertiser</span>
-  <a class="np na" href="#roi">📊 ROI Calc</a>
-  <a class="np na" href="#ab">🧪 A/B Ads</a>
-  <a class="np na" href="#lp">🖥️ Landing Page</a>
-  <a class="np na" href="#wa">💬 WA & Email</a>
-  <a class="np na" href="#bio">✍️ Bio Writer</a>
-  <a class="np na" href="#prod">🛍️ Product Desc</a>
-  <a class="np na" href="#tpl">🎯 Templates</a>
+<!-- NAV -->
+<nav>
+  <a href="https://getvci.com" class="logo">
+    <span class="logo-mark">⚡</span>
+    <span class="logo-name">VCI</span>
+  </a>
+  <a href="https://getvci.com" class="nav-cta">Start Free →</a>
 </nav>
 
-<div class="wrap">
-<section class="section">
-<div class="sh rv">
-  <div class="sk">All 18 Features</div>
-  <div class="st">Built for creators who ship daily.</div>
-  <div class="sd">Click any card to see exactly how it works. Free tools marked in green — no credits ever.</div>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">⚡ 24 AI-Powered Tools · India's Most Complete Content Platform</div>
+  <h1>Everything you need to<br><span>create, advertise, and grow</span></h1>
+  <p>One platform for creators who post daily, advertisers who run campaigns, and agencies who manage clients. 30+ Indian languages. Built for India.</p>
+  <div class="hero-actions">
+    <a href="https://getvci.com" class="btn-primary">Start Free — No Card Required</a>
+    <a href="#features" class="btn-ghost">Explore All Features</a>
+  </div>
 </div>
 
-<div class="sec-divider creator rv">
-  <div class="sec-divider-icon">📱</div>
-  <div><div class="sec-divider-title">Creator Tools — 12 features</div><div class="sec-divider-desc">For Instagram, YouTube, TikTok, LinkedIn and all social platforms</div></div>
-  <div class="sec-divider-badge">Free + Paid</div>
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num">24</div><div class="stat-label">AI Tools</div></div>
+  <div class="stat-item"><div class="stat-num">30+</div><div class="stat-label">Indian Languages</div></div>
+  <div class="stat-item"><div class="stat-num">₹499</div><div class="stat-label">Starting Price</div></div>
+  <div class="stat-item"><div class="stat-num">10s</div><div class="stat-label">To First Hook</div></div>
+  <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Competitors</div></div>
 </div>
 
-<!-- 1 GENERATE -->
-<div class="fc rv" id="gen" style="--fc:#7c3aed">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(124,58,237,.12);--fi-bd:rgba(124,58,237,.28)">⚡</div>
-    <div>
-      <div class="ft">Viral Content Generator</div>
-      <div class="fs">Type a keyword → 5 viral hooks + 5 titles + 3 captions + trending topics in 8 seconds. 15+ platforms, 30+ languages.</div>
-      <div class="fb-tags"><span class="tg tg-fr">✓ Free Tier</span><span class="tg tg-cr">Creators</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">1 credit</span></div>
+<!-- FEATURES SECTION -->
+<section id="features">
+  <div class="section-header">
+    <div class="section-eyebrow">All 24 Features</div>
+    <h2 class="section-title">Every tool you need. Nothing you don't.</h2>
+    <p class="section-sub">From your first viral hook to a complete Google Ads campaign — VCI covers the entire workflow in one subscription.</p>
+  </div>
+
+  <!-- CREATOR FEATURES -->
+  <h3 style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.25rem;">
+    🎬 Creator Tools — Free to Starter Pro
+  </h3>
+  <div class="feature-grid" style="margin-bottom:2.5rem;">
+
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#7c3aed,#a855f7)">
+      <span class="card-icon">⚡</span>
+      <span class="card-plan plan-free">Free</span>
+      <div class="card-title">Generate</div>
+      <div class="card-desc">Type a keyword. Get 5 viral hooks, 5 titles, 5 captions, and 20 hashtags — with a viral score on every hook. 10 seconds.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">5 hooks with viral score (0–100)</div>
+        <div class="card-output-item">5 title ideas + 5 captions</div>
+        <div class="card-output-item">20 hashtags + trending topics</div>
+        <div class="card-output-item">Compare Mode — pick the winner</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Live Example</div><div class="exc">Input: <span class="hi">"protein powder"</span> → Instagram → Fitness<br><br><span class="out">Hook 1 →</span> "Your post-workout window closes in 45 minutes. Most people miss it."<br><span class="out">Hook 2 →</span> "Trainer said I'd never build muscle. I changed one thing."<br><span class="out">Title →</span> "Why 90% of gym-goers never see results (and how to fix it)"</div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">How it works</div><div class="steps"><div class="step"><div class="sn">1</div><p>Type keyword — <strong>niche auto-detected instantly</strong></p></div><div class="step"><div class="sn">2</div><p>Choose platform — <strong>15+ options</strong>, each with its own tone rules</p></div><div class="step"><div class="sn">3</div><p>Choose language — <strong>30+ including Hindi, Tamil, Telugu, Marathi</strong></p></div><div class="step"><div class="sn">4</div><p><strong>5 hooks · 5 titles · 3 captions · trending topics</strong> in 8 seconds</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Google Ads headlines <strong>hard-limited to 30 chars, auto-enforced</strong></p></div><div class="ben"><div class="bi">✦</div><p>Generate in <strong>Hindi, Tamil, Telugu — native output, not translations</strong></p></div><div class="ben"><div class="bi">✦</div><p>Save any output to <strong>My Library</strong> with one click</p></div></div></div>
-  </div>
-</div>
 
-<!-- 2 HOOK SCORE -->
-<div class="fc rv" id="hs" style="--fc:#22d3ee">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(34,211,238,.1);--fi-bd:rgba(34,211,238,.22)">📊</div>
-    <div>
-      <div class="ft">Hook Score Analyzer</div>
-      <div class="fs">Paste any hook → A–F grade → exact weak line identified → 3 platform-native rewrites. Know before you post.</div>
-      <div class="fb-tags"><span class="tg tg-fr">✓ Free Tier</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">2 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#6d28d9,#7c3aed)">
+      <span class="card-icon">📊</span>
+      <span class="card-plan plan-free">Free</span>
+      <div class="card-title">Hook Score</div>
+      <div class="card-desc">Paste your content. Get an A–F grade, line-by-line feedback, and 3 rewritten versions. Use before every post.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Grade A to F with reasoning</div>
+        <div class="card-output-item">Line-by-line improvement notes</div>
+        <div class="card-output-item">3 stronger versions generated</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Live Example</div><div class="exc">Input: <span class="hi">"Today I will share some skin care tips with you all"</span><br><br><span class="out">Score: D — 42/100</span> · Weak: generic opener, no curiosity gap<br>Weak line: "Today I will share" — tells instead of hooks<br><br><span class="out">Rewrite →</span> "I stopped using this one ingredient 3 years ago. People keep asking what changed."<br><span class="out">New Score: B — 79/100</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">4 dimensions scored</div><div class="bens"><div class="ben"><div class="bi">🎯</div><p><strong>Curiosity</strong> — information gap the viewer needs to close?</p></div><div class="ben"><div class="bi">❤️</div><p><strong>Emotion</strong> — triggers a feeling in 3 seconds?</p></div><div class="ben"><div class="bi">🔁</div><p><strong>Virality</strong> — reason to share or save?</p></div><div class="ben"><div class="bi">💡</div><p><strong>Clarity</strong> — instantly understood, zero ambiguity?</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p><strong>Check before you post</strong> — stop wasting effort on weak hooks</p></div><div class="ben"><div class="bi">✦</div><p>Tells you the <strong>exact weak line</strong>, not vague feedback</p></div><div class="ben"><div class="bi">✦</div><p>Use repeatedly — <strong>writing instincts sharpen over time</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 3 CAPTIONS -->
-<div class="fc rv" id="cap" style="--fc:#4ade80">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(74,222,128,.08);--fi-bd:rgba(74,222,128,.22)">📋</div>
-    <div>
-      <div class="ft">Caption & Hashtag Generator</div>
-      <div class="fs">5 ready-to-post captions + 20 hashtags. Each platform's rules enforced automatically — Instagram ≠ LinkedIn ≠ WhatsApp.</div>
-      <div class="fb-tags"><span class="tg tg-fr">✓ Free Tier</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">2 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#22c55e,#16a34a)">
+      <span class="card-icon">📋</span>
+      <span class="card-plan plan-free">Free</span>
+      <div class="card-title">Captions & Hashtags</div>
+      <div class="card-desc">Platform-specific captions with deep hashtag research. Different tone for Instagram vs LinkedIn vs YouTube.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">5 full captions with CTA</div>
+        <div class="card-output-item">Platform-tuned tone</div>
+        <div class="card-output-item">20+ targeted hashtags</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-cy">Platform rules enforced</div><div class="bens"><div class="ben"><div class="bi">📸</div><p><strong>Instagram:</strong> emojis, 20 hashtags, hook in first line</p></div><div class="ben"><div class="bi">💼</div><p><strong>LinkedIn:</strong> professional, max 3–5 hashtags</p></div><div class="ben"><div class="bi">𝕏</div><p><strong>Twitter/X:</strong> under 280 chars, max 2 hashtags</p></div><div class="ben"><div class="bi">💬</div><p><strong>WhatsApp:</strong> personal — hashtags removed</p></div><div class="ben"><div class="bi">▶️</div><p><strong>YouTube:</strong> SEO-optimized, CTA included</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Caption writing: <strong>25 minutes → 30 seconds</strong></p></div><div class="ben"><div class="bi">✦</div><p><strong>5 variations</strong> per generation — pick the right tone</p></div><div class="ben"><div class="bi">✦</div><p>Save best captions to <strong>My Library</strong> instantly</p></div></div></div>
-  </div>
-</div>
 
-<!-- 4 INTELLIGENCE -->
-<div class="fc rv" id="intel" style="--fc:#a855f7">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(168,85,247,.1);--fi-bd:rgba(168,85,247,.25)">🔍</div>
-    <div>
-      <div class="ft">Niche Intelligence <span class="tg tg-fr" style="font-size:.55rem">Always Free</span></div>
-      <div class="fs">Live YouTube data + Google Trends for your niche. Content gaps, best posting times, competition levels — real data.</div>
-      <div class="fb-tags"><span class="tg tg-fr">Always Free</span><span class="tg tg-cr">Creators</span><span class="tg tg-ad">Advertisers</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#06b6d4,#0891b2)">
+      <span class="card-icon">🔍</span>
+      <span class="card-plan plan-free">Free · Unlimited</span>
+      <div class="card-title">Intelligence + Trends</div>
+      <div class="card-desc">See what's actually trending in your niche right now. YouTube data, Google Trends, and viral format tips — all free.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Live trending topics by niche</div>
+        <div class="card-output-item">YouTube + Google data</div>
+        <div class="card-output-item">Best viral format this week</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-pu">What you get</div><div class="bens"><div class="ben"><div class="bi">▶️</div><p><strong>YouTube trending videos</strong> in your niche with view counts</p></div><div class="ben"><div class="bi">🔍</div><p><strong>Google rising searches</strong> — what India is searching today</p></div><div class="ben"><div class="bi">🎯</div><p><strong>Content gaps</strong> — topics competitors haven't covered</p></div><div class="ben"><div class="bi">🕐</div><p><strong>Best posting times</strong> specific to Indian audiences</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Pro strategy</div><div class="bens"><div class="ben"><div class="bi">💡</div><p><strong>Open Intelligence first</strong> — note what's trending — then generate content around that topic. Ride an existing wave instead of creating one.</p></div></div></div>
-  </div>
-</div>
 
-<!-- 5 TRENDS -->
-<div class="fc rv" id="tr" style="--fc:#4ade80">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(74,222,128,.08);--fi-bd:rgba(74,222,128,.2)">📈</div>
-    <div>
-      <div class="ft">Live Trends Feed <span class="tg tg-fr" style="font-size:.55rem">Always Free</span></div>
-      <div class="fs">What's viral right now — filtered by your niche and platform. Updated continuously.</div>
-      <div class="fb-tags"><span class="tg tg-fr">Always Free</span><span class="tg tg-cr">Creators</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#8b5cf6,#7c3aed)">
+      <span class="card-icon">💾</span>
+      <span class="card-plan plan-free">Free · Unlimited</span>
+      <div class="card-title">My Library</div>
+      <div class="card-desc">Save your best hooks, captions and scripts. Search and reuse anytime. Your personal content bank.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Save any generated content</div>
+        <div class="card-output-item">Search by keyword or type</div>
+        <div class="card-output-item">Copy and reuse instantly</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-gr">Live sources</div><div class="bens"><div class="ben"><div class="bi">▶️</div><p><strong>YouTube most-viewed</strong> in your niche right now</p></div><div class="ben"><div class="bi">🔍</div><p><strong>Google trending searches</strong> — what people look for today</p></div><div class="ben"><div class="bi">🎛️</div><p><strong>Niche + platform filter</strong> — only your relevant data</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">Best use</div><div class="bens"><div class="ben"><div class="bi">🌅</div><p>Open Trends every morning — <strong>2 minutes decides what you post today.</strong> The wave is already moving. Jump in.</p></div></div></div>
-  </div>
-</div>
 
-<!-- 6 LIBRARY -->
-<div class="fc rv" id="lib" style="--fc:#22c55e">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(34,197,94,.08);--fi-bd:rgba(34,197,94,.22)">💾</div>
-    <div>
-      <div class="ft">My Content Library <span class="tg tg-fr" style="font-size:.55rem">Always Free</span></div>
-      <div class="fs">Save your best hooks, titles, captions and scripts. Filter, star favourites, copy instantly. Your content — always there.</div>
-      <div class="fb-tags"><span class="tg tg-fr">Always Free</span><span class="tg tg-cr">Creators</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#a855f7,#7c3aed)">
+      <span class="card-icon">📅</span>
+      <span class="card-plan plan-starter">Starter+</span>
+      <div class="card-title">Content Calendar</div>
+      <div class="card-desc">One keyword → 30-day content plan with specific hooks, themes and content types for each day. Never run out of ideas.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">30-day plan with daily hooks</div>
+        <div class="card-output-item">Mixed formats auto-scheduled</div>
+        <div class="card-output-item">Tips, Story, Tutorial, Q&A variety</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-gr">What you can save</div><div class="bens"><div class="ben"><div class="bi">🎣</div><p><strong>Hooks</strong> — any platform, any niche</p></div><div class="ben"><div class="bi">📝</div><p><strong>Titles</strong> — YouTube titles, ad headlines, post titles</p></div><div class="ben"><div class="bi">💬</div><p><strong>Captions</strong> — platform-labelled, ready to copy</p></div><div class="ben"><div class="bi">🎬</div><p><strong>Scripts</strong> — from Script Lab, access anytime</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p><strong>💾 Save button</strong> appears next to every generated item</p></div><div class="ben"><div class="bi">✦</div><p>Filter by type, <strong>⭐ star your best</strong>, copy instantly</p></div><div class="ben"><div class="bi">✦</div><p><strong>Never lose a good hook again</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 7 CALENDAR -->
-<div class="fc rv" id="cal" style="--fc:#22d3ee">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(34,211,238,.08);--fi-bd:rgba(34,211,238,.2)">📅</div>
-    <div>
-      <div class="ft">30-Day Content Calendar</div>
-      <div class="fs">One click plans your entire month — 30 platform-specific hooks with automatic content variety built in.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Starter+</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">6 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#f59e0b,#d97706)">
+      <span class="card-icon">📦</span>
+      <span class="card-plan plan-starter">Starter+</span>
+      <div class="card-title">Content Pack</div>
+      <div class="card-desc">28+ pieces from one keyword: 10 hooks, 8 titles, 5 captions, 5 full scripts, 15 hashtag sets. Instagram, YouTube or Ads mode.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">10 hooks + 8 titles</div>
+        <div class="card-output-item">5 complete scripts (unique)</div>
+        <div class="card-output-item">3 platform modes</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-cy">Auto-variety</div><div class="bens"><div class="ben"><div class="bi">📖</div><p><strong>Style rotation:</strong> Tutorial, Story, Comedy, POV, Before/After — mixed automatically</p></div><div class="ben"><div class="bi">📱</div><p><strong>Platform-specific:</strong> Instagram and LinkedIn calendars completely different output</p></div><div class="ben"><div class="bi">🖱️</div><p>Click any day → copy the hook → post. Done.</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Value</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>6 credits = 30 posts — <strong>human writer takes 2–3 days, VCI takes 30 seconds</strong></p></div><div class="ben"><div class="bi">✦</div><p><strong>"What do I post today"</strong> — gone permanently</p></div></div></div>
-  </div>
-</div>
 
-<!-- 8 CONTENT PACK -->
-<div class="fc rv" id="pk" style="--fc:#fbbf24">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(251,191,36,.08);--fi-bd:rgba(251,191,36,.2)">📦</div>
-    <div>
-      <div class="ft">Content Pack</div>
-      <div class="fs">One keyword → 50+ pieces of content. Choose Instagram, YouTube, or Ads bundle.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Starter+</span><span class="tg tg-cr">Creators</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">5 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#ec4899,#be185d)">
+      <span class="card-icon">🖼️</span>
+      <span class="card-plan plan-starter">Starter+</span>
+      <div class="card-title">Image AI</div>
+      <div class="card-desc">Upload any photo. AI reads what's in it and writes hooks and captions specifically about that image. No more blank captions for photos.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Works with any photo</div>
+        <div class="card-output-item">5 hooks based on image content</div>
+        <div class="card-output-item">Platform-specific captions</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-am">3 packs</div><div class="bens"><div class="ben"><div class="bi">📸</div><p><strong>Instagram Pack:</strong> 10 hooks + 8 titles + 5 captions + 15 hashtag sets</p></div><div class="ben"><div class="bi">▶️</div><p><strong>YouTube Pack:</strong> 8 SEO titles + 5 descriptions + tags + thumbnail text</p></div><div class="ben"><div class="bi">📢</div><p><strong>Ads Pack:</strong> Google headlines + Meta ad copy + CTAs + keywords</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Best for</div><div class="bens"><div class="ben"><div class="bi">✦</div><p><strong>Product launches:</strong> every platform covered simultaneously</p></div><div class="ben"><div class="bi">✦</div><p>5 credits = 50+ pieces — <strong>most value-dense feature in VCI</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 9 IMAGE AI -->
-<div class="fc rv" id="img" style="--fc:#2dd4bf">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(45,212,191,.08);--fi-bd:rgba(45,212,191,.2)">🖼️</div>
-    <div>
-      <div class="ft">Image AI</div>
-      <div class="fs">Upload a product photo — AI reads it and writes hooks and captions around that specific product.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Starter+</span><span class="tg tg-cr">Creators</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">6 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#7c3aed,#4f46e5)">
+      <span class="card-icon">🎬</span>
+      <span class="card-plan plan-starter">Starter+</span>
+      <div class="card-title">Script Lab</div>
+      <div class="card-desc">Word-for-word reel scripts with timing cues. Then generate an AI voiceover in Hindi, Tamil, Bengali and more. Add background music. Download.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Full script with [0-3s] timestamps</div>
+        <div class="card-output-item">AI voice in 7 Indian languages</div>
+        <div class="card-output-item">Music mixer + download MP3/WAV</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Live Example</div><div class="exc">Upload: <span class="hi">Red silk saree (product photo)</span><br>AI reads: fabric · color · occasion suitability<br><br><span class="out">Hook →</span> "Everyone at the wedding asked where it was from. I wasn't sharing."<br><span class="out">Caption →</span> "The weight of real silk. The kind you feel before you even wear it." + 20 hashtags</div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Built for e-commerce sellers</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>No product name required — <strong>the photo tells VCI everything</strong></p></div><div class="ben"><div class="bi">✦</div><p>New product → upload photo → <strong>content ready in 30 seconds</strong></p></div><div class="ben"><div class="bi">✦</div><p>Works with sarees, food, supplements, electronics — <strong>any category</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 10 SCRIPT LAB -->
-<div class="fc rv" id="sl" style="--fc:#a855f7;border-color:rgba(168,85,247,.3)">
-  <div class="fh" onclick="toggle(this.closest('.fc'))" style="background:linear-gradient(135deg,rgba(109,40,217,.07),transparent)">
-    <div class="fi" style="--fi-bg:rgba(168,85,247,.14);--fi-bd:rgba(168,85,247,.38)">🎬</div>
-    <div>
-      <div class="ft">Script Lab <span style="background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;font-size:.52rem;font-weight:800;padding:.1rem .45rem;border-radius:5px">⭐ Flagship</span><span class="tg tg-ex">India Exclusive</span></div>
-      <div class="fs">Keyword → Script → Thumbnail → AI Voice → Mix Studio → WAV. The complete reel pipeline in one tab.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Starter+</span><span class="tg tg-cr">Video Creators</span><span class="tg tg-cr2">8 + 5 + 3 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#06b6d4,#7c3aed)">
+      <span class="card-icon">🔄</span>
+      <span class="card-plan plan-pro">Pro+</span>
+      <div class="card-title">Repurpose Engine</div>
+      <div class="card-desc">Paste any content. Get 8 platform-native rewrites: Instagram, YouTube, LinkedIn, Twitter, WhatsApp, Facebook, TikTok, Pinterest.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">8 platform rewrites in one click</div>
+        <div class="card-output-item">Tone auto-adjusted per platform</div>
+        <div class="card-output-item">Write once, post everywhere</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="pipeline">
-      <div class="ps"><div class="ps-ic">⌨️</div><div class="ps-lb">Script</div><div class="ps-dt">Style + Duration → word-for-word</div></div>
-      <div class="ps"><div class="ps-ic">🖼️</div><div class="ps-lb">Thumbnail</div><div class="ps-dt">Auto-generated</div></div>
-      <div class="ps hl"><div class="ps-ic">🎙️</div><div class="ps-lb">AI Voice</div><div class="ps-dt">7 Indian languages</div></div>
-      <div class="ps hl"><div class="ps-ic">🎛️</div><div class="ps-lb">Mix Studio</div><div class="ps-dt">Voice + music + ducking</div></div>
-      <div class="ps"><div class="ps-ic">⬇️</div><div class="ps-lb">Download</div><div class="ps-dt">WAV + JPG + Script</div></div>
+
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#f97316,#ea580c)">
+      <span class="card-icon">🕵️</span>
+      <span class="card-plan plan-pro">Pro+</span>
+      <div class="card-title">Competitor Analyzer</div>
+      <div class="card-desc">Paste any competitor's viral content. VCI reveals exactly why it worked — the psychological triggers, hook technique, and platform fit.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Psychological triggers revealed</div>
+        <div class="card-output-item">Hook technique identified</div>
+        <div class="card-output-item">5 original versions for your niche</div>
+      </div>
     </div>
-    <div class="blk"><div class="blk-lbl lbl-pu">10 styles × 4 durations = 40 script types</div><div class="op-row" style="margin:0"><span class="op">Tutorial</span><span class="op">Story</span><span class="op">POV</span><span class="op">Challenge</span><span class="op">Comedy</span><span class="op">Motivation</span><span class="op">Before/After</span><span class="op">Review</span><span class="op">15 sec</span><span class="op">30 sec</span><span class="op">60 sec</span><span class="op">90 sec</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">AI Voiceover — 7 Indian Languages</div><div class="bens"><div class="ben"><div class="bi">🤖</div><p><strong>Azure Neural TTS</strong> — Hindi, Tamil, Telugu, Marathi, Gujarati, Bengali, English</p></div><div class="ben"><div class="bi">📁</div><p><strong>Upload your own voice</strong> — MP3 or WAV</p></div><div class="ben"><div class="bi">🎤</div><p><strong>Record in browser</strong> — no external app needed</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Professional Audio Ducking — India exclusive</div><div class="bens"><div class="ben"><div class="bi">🔊</div><p>Voice begins → music drops to <strong>18% in 12ms</strong></p></div><div class="ben"><div class="bi">🎚️</div><p>Voice pauses → music rises <strong>smoothly to 82% over 340ms</strong></p></div><div class="ben"><div class="bi">✦</div><p>Same algorithm used in <strong>YouTube productions and professional radio</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 11 REPURPOSE -->
-<div class="fc rv" id="rp" style="--fc:#7c3aed">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(124,58,237,.1);--fi-bd:rgba(124,58,237,.25)">🔄</div>
-    <div>
-      <div class="ft">Auto-Repurpose Engine</div>
-      <div class="fs">Paste any content → 8 platform-native rewrites. Not copy-paste — actually rewritten for each platform's tone.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Pro+</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">5 credits</span></div>
+  </div>
+
+  <!-- ADVERTISER FEATURES -->
+  <h3 style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.25rem;">
+    📢 Advertiser Tools — Advertiser Plan
+  </h3>
+  <div class="feature-grid" style="margin-bottom:2.5rem;">
+
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#f59e0b,#d97706)">
+      <span class="card-icon">📊</span>
+      <span class="card-plan plan-adv">Adv+ · Free</span>
+      <div class="card-title">ROI Calculator</div>
+      <div class="card-desc">Enter budget + platform + industry. Get estimated reach, clicks, leads, sales, and ROAS before spending a single rupee.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Estimated reach and clicks</div>
+        <div class="card-output-item">Cost per lead calculation</div>
+        <div class="card-output-item">Expected ROAS and revenue</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Same content — 8 different tones</div><div class="exc">Input: <span class="hi">"I lost 15kg in 6 months by changing one thing"</span><br><br><span class="out">Instagram →</span> "6 months. 15kg. One change. 🔥 Dropping it in the comments..."<br><span class="out">LinkedIn →</span> "Six months ago I made one dietary adjustment. The result was unexpected."<br><span class="out">WhatsApp →</span> "Hey, tried one thing 6 months back — down 15kg since then..."<br><span class="out">YouTube →</span> "I Lost 15KG in 6 Months (The ONE Thing That Actually Worked)"</div></div>
-    <div class="blk"><div class="blk-lbl lbl-pu">8 platforms</div><div class="op-row" style="margin:0"><span class="op">Instagram</span><span class="op">Twitter/X</span><span class="op">LinkedIn</span><span class="op">WhatsApp</span><span class="op">YouTube</span><span class="op">Pinterest</span><span class="op">Facebook</span><span class="op">TikTok</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p><strong>Same content, 8× the reach</strong> — write once, post everywhere</p></div><div class="ben"><div class="bi">✦</div><p>Best platform recommendation included</p></div></div></div>
-  </div>
-</div>
 
-<!-- 12 COMPETITOR -->
-<div class="fc rv" id="comp" style="--fc:#f87171">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(248,113,113,.08);--fi-bd:rgba(248,113,113,.22)">🕵️</div>
-    <div>
-      <div class="ft">Competitor Hook Analyzer</div>
-      <div class="fs">Paste any viral content → virality score /100 → psychology decoded → 3 original versions for your niche.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Pro+</span><span class="tg tg-cr">Creators</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">2 credits</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#06b6d4,#0891b2)">
+      <span class="card-icon">🧪</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">A/B Ad Copy</div>
+      <div class="card-desc">Two completely different ad angles — Google Ads or Meta — with exact character limits, compliance checks, and a testing strategy.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">2 variants with different psychology</div>
+        <div class="card-output-item">Live char counter — green/red</div>
+        <div class="card-output-item">Policy compliance built-in</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Decode + Replicate</div><div class="exc">Input: <span class="hi">"Doctor said I needed surgery. I did this one thing instead."</span><br><br><span class="out">Virality Score: 91/100</span><br>Triggers: Authority · Fear→hope · Personal override · Open loop<br><br><span class="out">Your version →</span> "Accountant said my tax bill was ₹3L. I found one thing."</div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p><strong>Use proven psychology</strong> — build on what's demonstrated to work</p></div><div class="ben"><div class="bi">✦</div><p>Inspired, not copied — <strong>zero copyright risk</strong></p></div><div class="ben"><div class="bi">✦</div><p>Only <strong>2 credits</strong> — highest ROI feature in VCI</p></div></div></div>
-  </div>
-</div>
 
-<!-- ADVERTISER DIVIDER -->
-<div class="sec-divider advertiser rv">
-  <div class="sec-divider-icon">📢</div>
-  <div><div class="sec-divider-title">Advertiser Tools — 7 features</div><div class="sec-divider-desc">For Google Ads, Meta Ads, WhatsApp marketing, e-commerce sellers</div></div>
-  <div class="sec-divider-badge">Advertiser Plan</div>
-</div>
-
-<!-- 13 ROI -->
-<div class="fc adv-card rv" id="roi" style="--fc:#f59e0b">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(245,158,11,.08);--fi-bd:rgba(245,158,11,.22)">📊</div>
-    <div>
-      <div class="ft">Ad ROI Calculator <span class="tg tg-fr" style="font-size:.55rem">Free to use</span></div>
-      <div class="fs">Budget + CPC + CVR + Order Value → ROAS, revenue, cost-per-lead instantly. Know before you spend.</div>
-      <div class="fb-tags"><span class="tg tg-fr">Free to use</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#a855f7,#7c3aed)">
+      <span class="card-icon">🎯</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Ad Angle Generator</div>
+      <div class="card-desc">10 completely different psychological angles for your product: Price, Pain, Speed, Social Proof, Comparison, Authority, Scarcity, Curiosity, Story, and Aspiration.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">10 angles with different triggers</div>
+        <div class="card-output-item">Google + Meta ready copy</div>
+        <div class="card-output-item">Which 3 to test first + budget split</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="ex"><div class="exl">Example</div><div class="exc">Budget: <span class="hi">₹20,000</span> · CPC: <span class="hi">₹12</span> · CVR: <span class="hi">2.5%</span> · Order: <span class="hi">₹2,500</span><br><br><span class="out">Clicks: 1,667 · Conversions: 42 · Revenue: ₹1,04,167</span><br><span class="out">ROAS: 5.2× ✅ Green — profitable</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-am">Color-coded ROAS</div><div class="bens"><div class="ben"><div class="bi">🟢</div><p><strong>Green 3×+</strong> — profitable, scale the campaign</p></div><div class="ben"><div class="bi">🟡</div><p><strong>Amber 1.5×–3×</strong> — optimize before scaling</p></div><div class="ben"><div class="bi">🔴</div><p><strong>Red below 1.5×</strong> — fix the ad first, don't spend more</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Most advertisers find out a campaign was unprofitable <strong>after spending ₹20,000</strong></p></div><div class="ben"><div class="bi">✦</div><p>Takes 30 seconds — <strong>completely free, no credits needed</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 14 AB -->
-<div class="fc adv-card rv" id="ab" style="--fc:#06b6d4">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(6,182,212,.08);--fi-bd:rgba(6,182,212,.2)">🧪</div>
-    <div>
-      <div class="ft">A/B Ad Copy Generator</div>
-      <div class="fs">One product → two completely different psychological angles for Meta or Google Ads. Run both, scale the winner.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">3 credits</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#22c55e,#16a34a)">
+      <span class="card-icon">👤</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Audience Builder</div>
+      <div class="card-desc">3 detailed customer avatars with daily pains, desires, top objections, buying triggers, platform preference, and ready-to-use ad copy for each.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">3 avatars with full psychology</div>
+        <div class="card-output-item">Objection + how to handle in ad</div>
+        <div class="card-output-item">Sample headline + video hook</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-cy">Psychology frameworks</div><div class="bens"><div class="ben"><div class="bi">😨</div><p><strong>Angle A — Fear:</strong> loss aversion, risk, urgency</p></div><div class="ben"><div class="bi">✨</div><p><strong>Angle B — Aspiration:</strong> dream outcome, transformation</p></div><div class="ben"><div class="bi">📊</div><p><strong>Angle C — Social Proof:</strong> FOMO, community, numbers</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Output</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Meta: Primary text + Headline + Description per angle</p></div><div class="ben"><div class="bi">✦</div><p>Google: 3 Headlines (30 char) + 2 Descriptions (90 char)</p></div><div class="ben"><div class="bi">✦</div><p>How-to-test guide — which metrics to watch</p></div></div></div>
-  </div>
-</div>
 
-<!-- 15 LANDING PAGE -->
-<div class="fc adv-card rv" id="lp" style="--fc:#22c55e">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(34,197,94,.08);--fi-bd:rgba(34,197,94,.2)">🖥️</div>
-    <div>
-      <div class="ft">Landing Page Copy Generator</div>
-      <div class="fs">Complete page copy matched to your ad — headline, benefits, social proof, urgency, trust elements.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">4 credits</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#f97316,#ea580c)">
+      <span class="card-icon">📋</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Ad Copy at Scale</div>
+      <div class="card-desc">Generate 10–15 completely different ad variations in one click. Google RSA supports 15 headlines — fill them all instantly. Filter by type and copy all.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">10/12/15 variations per click</div>
+        <div class="card-output-item">Filter: emotional/logical/urgency</div>
+        <div class="card-output-item">Copy All → paste in Ads Manager</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-gr">10 sections generated</div><div class="bens"><div class="ben"><div class="bi">1.</div><p><strong>Headline + Subheadline</strong> — matched to your ad</p></div><div class="ben"><div class="bi">2.</div><p><strong>Problem → Solution → 5 Benefits</strong></p></div><div class="ben"><div class="bi">3.</div><p><strong>Social Proof · Urgency · Trust elements · CTA</strong></p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">Why it matters</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Mismatched ad-to-page messaging is the <strong>#1 reason campaigns underperform</strong></p></div><div class="ben"><div class="bi">✦</div><p>Works with Shopify, WordPress, Wix, Webflow — <strong>paste anywhere</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 16 WA EMAIL -->
-<div class="fc adv-card rv" id="wa" style="--fc:#25d366">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(37,211,102,.08);--fi-bd:rgba(37,211,102,.2)">💬</div>
-    <div>
-      <div class="ft">WhatsApp & Email Copy</div>
-      <div class="fs">WhatsApp broadcasts, email campaigns, and cold DMs — India-specific, ready to send in seconds.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">2 credits</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#ec4899,#be185d)">
+      <span class="card-icon">🎬</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Video Ad Hooks</div>
+      <div class="card-desc">8 scroll-stopping hooks with complete scripts for Instagram, Facebook, YouTube Pre-roll and Shorts. First 3 seconds decide everything.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">8 hooks with different techniques</div>
+        <div class="card-output-item">Complete 15/30/60s script</div>
+        <div class="card-output-item">Skip rate estimate per hook</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-gr">3 modes</div><div class="bens"><div class="ben"><div class="bi">💬</div><p><strong>WhatsApp Broadcast:</strong> 3 messages under 160 chars, char counter</p></div><div class="ben"><div class="bi">📧</div><p><strong>Email Campaign:</strong> 3 subject lines + preview text + body + CTA</p></div><div class="ben"><div class="bi">📩</div><p><strong>Cold DM:</strong> 3 approaches — Compliment+Ask, Value First, Direct Ask</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-cy">India-specific</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Occasions: Diwali, New Year, Product Launch, Flash Sale, Weekend</p></div><div class="ben"><div class="bi">✦</div><p>Avoids WhatsApp spam triggers — <strong>no caps URGENT or FREE!!!</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 17 BIO -->
-<div class="fc adv-card rv" id="bio" style="--fc:#a855f7">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(168,85,247,.1);--fi-bd:rgba(168,85,247,.22)">✍️</div>
-    <div>
-      <div class="ft">Bio Writer</div>
-      <div class="fs">Professional bios for 6 platforms — character limits auto-enforced, 3 style variations, keyword suggestions.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">1 credit</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#8b5cf6,#6d28d9)">
+      <span class="card-icon">💎</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Offer & USP Builder</div>
+      <div class="card-desc">Find your real USP (not generic claims). Build an irresistible offer structure. Position yourself so competitors become irrelevant.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">3 USP options with proof strategy</div>
+        <div class="card-output-item">Offer: core + bonuses + guarantee</div>
+        <div class="card-output-item">Positioning vs competitors</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-pu">6 platforms</div><div class="op-row" style="margin:0"><span class="op-cy op">Instagram</span><span class="op-cy op">LinkedIn</span><span class="op-cy op">Twitter/X</span><span class="op-cy op">YouTube</span><span class="op-cy op">Facebook</span><span class="op-cy op">WhatsApp Business</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Output</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>3 variations: <strong>Professional, Casual, Bold</strong></p></div><div class="ben"><div class="bi">✦</div><p>Character counter — <strong>Instagram 150 chars enforced</strong></p></div><div class="ben"><div class="bi">✦</div><p>Keywords for <strong>searchability on that platform</strong></p></div></div></div>
-  </div>
-</div>
 
-<!-- 18 PRODUCT DESC -->
-<div class="fc adv-card rv" id="prod" style="--fc:#f97316">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(249,115,22,.08);--fi-bd:rgba(249,115,22,.22)">🛍️</div>
-    <div>
-      <div class="ft">Product Description Writer</div>
-      <div class="fs">Meesho, Amazon, Flipkart, Instagram Shop — SEO-optimized listings in English, Hindi, or Hinglish.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-ad">Advertisers</span><span class="tg tg-cr2">2 credits</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#7c3aed,#4f46e5)">
+      <span class="card-icon">🖥️</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Landing Page Copy</div>
+      <div class="card-desc">Complete landing page copy: headline, benefits, pain points, social proof, FAQ, urgency line, CTA, and SEO meta description.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">Hero headline + subheadline</div>
+        <div class="card-output-item">3 FAQs answering real objections</div>
+        <div class="card-output-item">SEO meta description (150–160 chars)</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-am">6 platforms</div><div class="bens"><div class="ben"><div class="bi">🛒</div><p><strong>Meesho:</strong> Short title + simple bullets + reseller-friendly</p></div><div class="ben"><div class="bi">📦</div><p><strong>Amazon India:</strong> SEO title (200 chars) + 5 bullets + description</p></div><div class="ben"><div class="bi">🛍️</div><p><strong>Flipkart:</strong> Title + key highlights + description</p></div><div class="ben"><div class="bi">📸</div><p><strong>Instagram Shop:</strong> Hook + description + 20 hashtags</p></div></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">Languages</div><div class="bens"><div class="ben"><div class="bi">✦</div><p>Title + Description + Bullet highlights + Hashtags + Keywords</p></div><div class="ben"><div class="bi">✦</div><p><strong>Hindi / English / Hinglish</strong> — choose your language</p></div></div></div>
-  </div>
-</div>
 
-<!-- 19 TEMPLATES -->
-<div class="fc adv-card rv" id="tpl" style="--fc:#06b6d4">
-  <div class="fh" onclick="toggle(this.closest('.fc'))">
-    <div class="fi" style="--fi-bg:rgba(6,182,212,.08);--fi-bd:rgba(6,182,212,.22)">🎯</div>
-    <div>
-      <div class="ft">Viral Post Templates</div>
-      <div class="fs">12 proven viral formats. Select one, enter your niche, get 5 ready-to-post variations.</div>
-      <div class="fb-tags"><span class="tg tg-pd">Advertiser+</span><span class="tg tg-cr">Creators</span><span class="tg tg-cr2">1 credit</span><span class="tg tg-new">NEW</span></div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#22c55e,#06b6d4)">
+      <span class="card-icon">💬</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">WhatsApp & Email Copy</div>
+      <div class="card-desc">8 email styles (Sales, Upsell, Renewal, Welcome, Nurture, Win-Back, Awareness, Event) + WhatsApp broadcasts + Cold DM scripts.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">8 professional email styles</div>
+        <div class="card-output-item">3 WA messages with best send time</div>
+        <div class="card-output-item">Cold DM scripts for Instagram + LinkedIn</div>
+      </div>
     </div>
-    <div class="tog">▾</div>
-  </div>
-  <div class="fb-body">
-    <div class="blk"><div class="blk-lbl lbl-cy">12 formats</div><div class="op-row" style="margin:0"><span class="op">X to Y Journey</span><span class="op">Nobody Talks About</span><span class="op">Stop/Start</span><span class="op">3 Things I Wish</span><span class="op">Unpopular Opinion</span><span class="op">Before/After</span><span class="op">How I [Result]</span><span class="op">Truth Nobody Tells</span><span class="op">Thread Starter</span><span class="op">Ask Me Anything</span><span class="op">Confession</span><span class="op">Data/Stats Hook</span></div></div>
-    <div class="blk"><div class="blk-lbl lbl-gr">How it works</div><div class="bens"><div class="ben"><div class="bi">1.</div><p><strong>Select template</strong> — formula + example shown</p></div><div class="ben"><div class="bi">2.</div><p><strong>Enter your niche</strong> — Fitness, Saree Business, Marketing...</p></div><div class="ben"><div class="bi">3.</div><p><strong>5 ready variations</strong> — each a different angle, copy individually</p></div></div></div>
-  </div>
-</div>
 
-</section>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#a855f7,#ec4899)">
+      <span class="card-icon">✍️</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Bio Writer</div>
+      <div class="card-desc">3 professional bios per platform with live character limit indicators. Instagram 150, Twitter 160, LinkedIn 220, YouTube 1000.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">3 angles: Professional, Story, Benefit</div>
+        <div class="card-output-item">Live char counter — red if over limit</div>
+        <div class="card-output-item">6 platforms supported</div>
+      </div>
+    </div>
 
-<!-- CREDITS TABLE -->
-<section class="section rv" style="padding-top:2rem">
-  <div class="sh">
-    <div class="sk">Credit Costs</div>
-    <div class="st">Simple. Transparent. No surprises.</div>
-    <div class="sd">4 features are always free — no credits ever. 25 free credits on signup.</div>
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#f59e0b,#f97316)">
+      <span class="card-icon">🛍️</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Product Description</div>
+      <div class="card-desc">SEO-optimized product listings for Amazon, Flipkart, Meesho, and Instagram Shop. Platform-specific format with keyword research.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">SEO title + 5 bullet points</div>
+        <div class="card-output-item">Full description 200–300 words</div>
+        <div class="card-output-item">4 platforms: Amazon/Flipkart/Meesho/IG</div>
+      </div>
+    </div>
+
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#06b6d4,#22c55e)">
+      <span class="card-icon">🎯</span>
+      <span class="card-plan plan-adv">Adv+</span>
+      <div class="card-title">Viral Templates</div>
+      <div class="card-desc">12 proven viral formats — X to Y Journey, Nobody Talks About, Stop/Start, Before/After, Unpopular Opinion, and more. Fill your niche, get 5 complete posts.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">12 proven viral structures</div>
+        <div class="card-output-item">Hook + Body + CTA per variation</div>
+        <div class="card-output-item">"Best used for" guide per template</div>
+      </div>
+    </div>
+
   </div>
-  <div class="cr-wrap">
-    <table class="cr-table">
-      <thead><tr><th>Feature</th><th>Credits</th><th>Free Tier</th><th>Plan</th></tr></thead>
-      <tbody>
-        <tr class="fr"><td>🔍 Niche Intelligence</td><td class="crn" style="color:var(--gr)">Free</td><td>✓ Always</td><td>All Plans</td></tr>
-        <tr class="fr"><td>📈 Live Trends Feed</td><td class="crn" style="color:var(--gr)">Free</td><td>✓ Always</td><td>All Plans</td></tr>
-        <tr class="fr"><td>📊 Ad ROI Calculator</td><td class="crn" style="color:var(--gr)">Free</td><td>✓ Always</td><td>All Plans</td></tr>
-        <tr class="fr"><td>💾 My Content Library</td><td class="crn" style="color:var(--gr)">Free</td><td>✓ Always</td><td>All Plans</td></tr>
-        <tr class="fr"><td>⚡ Viral Content Generator</td><td class="crn">1</td><td>✓ Free Tier</td><td>All Plans</td></tr>
-        <tr class="fr"><td>📊 Hook Score Analyzer</td><td class="crn">2</td><td>✓ Free Tier</td><td>All Plans</td></tr>
-        <tr class="fr"><td>📋 Caption & Hashtags</td><td class="crn">2</td><td>✓ Free Tier</td><td>All Plans</td></tr>
-        <tr class="cr-new"><td>✍️ Bio Writer</td><td class="crn">1</td><td>—</td><td>Advertiser+</td></tr>
-        <tr class="cr-new"><td>🎯 Viral Templates</td><td class="crn">1</td><td>—</td><td>Advertiser+</td></tr>
-        <tr class="cr-new"><td>💬 WA & Email Copy</td><td class="crn">2</td><td>—</td><td>Advertiser+</td></tr>
-        <tr class="cr-new"><td>🛍️ Product Description</td><td class="crn">2</td><td>—</td><td>Advertiser+</td></tr>
-        <tr><td>🕵️ Competitor Analyzer</td><td class="crn">2</td><td>—</td><td>Pro+</td></tr>
-        <tr><td>🔊 AI Voiceover</td><td class="crn">3</td><td>—</td><td>Starter+</td></tr>
-        <tr class="cr-new"><td>🧪 A/B Ad Copy</td><td class="crn">3</td><td>—</td><td>Advertiser+</td></tr>
-        <tr class="cr-new"><td>🖥️ Landing Page Copy</td><td class="crn">4</td><td>—</td><td>Advertiser+</td></tr>
-        <tr><td>🔄 Repurpose Engine</td><td class="crn">5</td><td>—</td><td>Pro+</td></tr>
-        <tr><td>📦 Content Pack</td><td class="crn">5</td><td>—</td><td>Starter+</td></tr>
-        <tr><td>📅 30-Day Calendar</td><td class="crn">6</td><td>—</td><td>Starter+</td></tr>
-        <tr><td>🖼️ Image AI</td><td class="crn">6</td><td>—</td><td>Starter+</td></tr>
-        <tr><td>🎬 Script Lab Generate</td><td class="crn">8</td><td>—</td><td>Starter+</td></tr>
-      </tbody>
-    </table>
+
+  <!-- AGENCY FEATURE -->
+  <h3 style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.25rem;">
+    🏪 Agency Exclusive
+  </h3>
+  <div class="feature-grid">
+    <div class="feature-card" style="--card-accent:linear-gradient(90deg,#ec4899,#a855f7);grid-column:span 1">
+      <span class="card-icon">🏪</span>
+      <span class="card-plan plan-agency">Agency</span>
+      <div class="card-title">Local Business Kit</div>
+      <div class="card-desc">Business name + city + category → complete Google Business optimization kit in 15 seconds. Bill ₹3,000–8,000 per client. Tool cost: ₹8,999/month.</div>
+      <div class="card-outputs">
+        <div class="card-output-item">750-char SEO Google description</div>
+        <div class="card-output-item">5 Google Posts + 10 FAQs</div>
+        <div class="card-output-item">Review templates + local keywords</div>
+        <div class="card-output-item">12-step setup checklist</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- PRICING -->
-<section class="section rv" style="padding-top:2rem">
-  <div class="sh">
-    <div class="sk">Plans</div>
-    <div class="st">Launch pricing — first 100 users only.</div>
-    <div class="sd">Original prices crossed out. Lock in your rate now.</div>
+<div class="section-divider"></div>
+
+<!-- CREATOR FLOW -->
+<section id="creator-flow">
+  <div class="section-header">
+    <div class="section-eyebrow">Step-by-Step Flows</div>
+    <h2 class="section-title">How each user type uses VCI</h2>
+    <p class="section-sub">Different users. Different goals. One platform.</p>
   </div>
-  <div class="price-grid">
-    <div class="price-card" style="--pc:#6b7280"><div class="pc-name">Free</div><div class="pc-price" style="color:#6b7280">₹0</div><div class="pc-period">forever</div><div class="pc-credits" style="background:rgba(107,114,128,.1);border:1px solid rgba(107,114,128,.2);color:#6b7280">⚡ 25 credits</div><div style="font-size:.7rem;color:var(--t4);margin-top:.5rem">Generate, Hook Score, Captions, Intelligence, Trends</div></div>
-    <div class="price-card" style="--pc:#22c55e"><div class="pc-badge" style="background:#22c55e">🔥 Popular</div><div class="pc-disc">20% OFF</div><div class="pc-name" style="margin-top:.5rem">Creator Starter</div><div class="pc-was">₹699/month</div><div class="pc-price" style="color:#22c55e">₹499</div><div class="pc-period">/month</div><div class="pc-credits" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#22c55e">⚡ 100 credits/month</div><div style="font-size:.7rem;color:var(--t4);margin-top:.5rem">Script Lab, Voiceover, Calendar, Pack, Image AI</div></div>
-    <div class="price-card" style="--pc:#a855f7"><div class="pc-badge" style="background:#a855f7">⚡ Best Value</div><div class="pc-disc">19% OFF</div><div class="pc-name" style="margin-top:.5rem">Creator Pro</div><div class="pc-was">₹1,799/month</div><div class="pc-price" style="color:#a855f7">₹1,299</div><div class="pc-period">/month</div><div class="pc-credits" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);color:#a855f7">⚡ 350 credits/month</div><div style="font-size:.7rem;color:var(--t4);margin-top:.5rem">Everything + Repurpose + Competitor Analyzer</div></div>
-    <div class="price-card" style="--pc:#06b6d4"><div class="pc-badge" style="background:#06b6d4">📢 Advertiser</div><div class="pc-disc">17% OFF</div><div class="pc-name" style="margin-top:.5rem">Advertiser</div><div class="pc-was">₹3,499/month</div><div class="pc-price" style="color:#06b6d4">₹2,499</div><div class="pc-period">/month</div><div class="pc-credits" style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:#06b6d4">⚡ 700 credits/month</div><div style="font-size:.7rem;color:var(--t4);margin-top:.5rem">All 18 tools · ROI Calc + A/B Ads + Landing Page + WA/Email + Bio + Product + Templates</div></div>
-    <div class="price-card" style="--pc:#f59e0b"><div class="pc-badge" style="background:#f59e0b">👑 All Access</div><div class="pc-disc">20% OFF</div><div class="pc-name" style="margin-top:.5rem">Agency</div><div class="pc-was">₹9,999/month</div><div class="pc-price" style="color:#f59e0b">₹8,999.99</div><div class="pc-period">/month</div><div class="pc-credits" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#f59e0b">⚡ 2,000 credits/month</div><div style="font-size:.7rem;color:var(--t4);margin-top:.5rem">Everything · Multiple clients · Priority support</div></div>
+
+  <div class="flow-tabs">
+    <button class="flow-tab active" onclick="showFlow('creator')">🎬 Creator</button>
+    <button class="flow-tab" onclick="showFlow('advertiser')">📢 Advertiser</button>
+    <button class="flow-tab" onclick="showFlow('agency')">🏪 Agency</button>
+  </div>
+
+  <!-- CREATOR FLOW -->
+  <div class="flow-section active" id="flow-creator">
+    <div class="flow-container">
+      <div class="flow-line"></div>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-tag">Research</div>
+          <div class="flow-title">Find what's trending in your niche</div>
+          <div class="flow-desc">Before creating anything, check what your audience actually wants to see. See real YouTube and Google data for your niche — Gaming, Fitness, Food, Finance, and 15+ more.</div>
+          <span class="flow-tool">🔍 Intelligence + Trends</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-tag">Ideation</div>
+          <div class="flow-title">Generate viral hooks, titles and captions</div>
+          <div class="flow-desc">Type the trending keyword. Get 5 hooks with viral scores (0–100), 5 titles, 5 captions and hashtags in 10 seconds. Compare two hooks side-by-side to pick the winner.</div>
+          <span class="flow-tool">⚡ Generate</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-tag">Quality Check</div>
+          <div class="flow-title">Score your hook before posting</div>
+          <div class="flow-desc">Paste your chosen hook or caption into Hook Score. Get a grade, line-by-line feedback, and 3 improved versions. Only post A or B grade content.</div>
+          <span class="flow-tool">📊 Hook Score</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <div class="flow-tag">Script</div>
+          <div class="flow-title">Write the full reel script</div>
+          <div class="flow-desc">Turn your hook into a complete word-for-word script with timing cues — [0-3s HOOK], [3-15s BODY], [25-30s CTA]. 15 to 90 seconds, your choice of style.</div>
+          <span class="flow-tool">🎬 Script Lab</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <div class="flow-tag">Production</div>
+          <div class="flow-title">Add AI voice and background music</div>
+          <div class="flow-desc">Generate an AI voiceover in Hindi, Tamil, Telugu, Bengali or English directly from your script. Mix it with background music and download as MP3 or WAV.</div>
+          <span class="flow-tool">🎬 Script Lab — Voice + Music</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <div class="flow-tag">Multiply</div>
+          <div class="flow-title">Repurpose for 8 platforms</div>
+          <div class="flow-desc">Paste your script or caption. Get 8 platform-native rewrites — Instagram, YouTube, LinkedIn, Twitter, WhatsApp, Facebook, TikTok, and Pinterest. Post everywhere in 10 minutes.</div>
+          <span class="flow-tool">🔄 Repurpose Engine</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">7</div>
+        <div class="flow-content">
+          <div class="flow-tag">Planning</div>
+          <div class="flow-title">Plan next 30 days</div>
+          <div class="flow-desc">Generate a 30-day content calendar from one keyword. Each day gets a specific hook, content type (Tips, Story, Tutorial, Q&A), and theme. Never wonder what to post.</div>
+          <span class="flow-tool">📅 Content Calendar</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ADVERTISER FLOW -->
+  <div class="flow-section" id="flow-advertiser">
+    <div class="flow-container">
+      <div class="flow-line"></div>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-tag">Foundation</div>
+          <div class="flow-title">Find your real USP and build the offer</div>
+          <div class="flow-desc">Before writing a single ad, know what makes you different. Build an irresistible offer: core value + bonuses + guarantee + urgency. Get your one-line positioning statement.</div>
+          <span class="flow-tool">💎 Offer & USP Builder</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-tag">Audience</div>
+          <div class="flow-title">Build 3 detailed customer avatars</div>
+          <div class="flow-desc">Know exactly who you're targeting before writing copy. Get daily pains, desires, top objections, buying triggers, platform preference, and a ready headline for each avatar.</div>
+          <span class="flow-tool">👤 Audience Builder</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-tag">Budget Planning</div>
+          <div class="flow-title">Calculate expected return before spending</div>
+          <div class="flow-desc">Enter your budget, platform and industry. Get estimated reach, clicks, leads, sales, and ROAS before committing a single rupee to the campaign.</div>
+          <span class="flow-tool">📊 ROI Calculator</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <div class="flow-tag">Creative Strategy</div>
+          <div class="flow-title">Generate 10 psychological angles</div>
+          <div class="flow-desc">Same product, 10 completely different approaches: Price, Pain, Speed, Social Proof, Convenience, Comparison, Authority, Scarcity, Curiosity, Story. Each with platform-ready copy and a testing recommendation.</div>
+          <span class="flow-tool">🎯 Ad Angle Generator</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <div class="flow-tag">Scale</div>
+          <div class="flow-title">Build your full variation library</div>
+          <div class="flow-desc">Generate 15 completely different ad variations in one click. Google RSA accepts 15 headlines per ad — fill them all at once. Filter by type, copy all, paste directly in Ads Manager.</div>
+          <span class="flow-tool">📋 Ad Copy at Scale</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <div class="flow-tag">Video Ads</div>
+          <div class="flow-title">Write scroll-stopping video hooks</div>
+          <div class="flow-desc">8 different video ad hooks with complete scripts for Instagram Reels, Facebook, YouTube Pre-roll and Shorts. Each hook uses a different technique — Bold Claim, Question, Pain, Story — with a skip rate estimate.</div>
+          <span class="flow-tool">🎬 Video Ad Hooks</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">7</div>
+        <div class="flow-content">
+          <div class="flow-tag">Split Test</div>
+          <div class="flow-title">Create 2 polished A/B variants</div>
+          <div class="flow-desc">Generate two completely different psychological angles — Fear vs Aspiration, Logic vs Emotion — with exact character limits enforced, compliance rules applied, and a structured 7-day testing plan.</div>
+          <span class="flow-tool">🧪 A/B Ad Copy</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">8</div>
+        <div class="flow-content">
+          <div class="flow-tag">Destination</div>
+          <div class="flow-title">Write the landing page that converts</div>
+          <div class="flow-desc">Every ad needs a landing page that matches its promise. Generate a complete page: headline, pain points, benefits, social proof, FAQ objections, urgency line, and SEO meta description.</div>
+          <span class="flow-tool">🖥️ Landing Page Copy</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">9</div>
+        <div class="flow-content">
+          <div class="flow-tag">Nurture</div>
+          <div class="flow-title">Follow up with email and WhatsApp</div>
+          <div class="flow-desc">Leads don't always buy immediately. Follow up with a professional email campaign (8 styles: Sales, Upsell, Renewal, Welcome, Nurture, Win-Back, Awareness, Event) or WhatsApp broadcast.</div>
+          <span class="flow-tool">💬 WhatsApp & Email Copy</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AGENCY FLOW -->
+  <div class="flow-section" id="flow-agency">
+    <div class="flow-container">
+      <div class="flow-line"></div>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-tag">Onboarding</div>
+          <div class="flow-title">Build the client's Google Business presence</div>
+          <div class="flow-desc">Enter business name, category, and city. Get a complete Google Business kit in 15 seconds: 750-char SEO description, 5 posts, 10 FAQs, 3 review templates, local keywords, and a 12-step setup checklist.</div>
+          <span class="flow-tool">🏪 Local Business Kit</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-tag">Content Production</div>
+          <div class="flow-title">Generate bulk content for each client</div>
+          <div class="flow-desc">Use Content Pack to generate 28+ pieces per client per month: hooks, titles, captions, scripts, and hashtags. Switch between clients in seconds — just change the keyword and niche.</div>
+          <span class="flow-tool">📦 Content Pack</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-tag">Strategy</div>
+          <div class="flow-title">Plan each client's month in advance</div>
+          <div class="flow-desc">Generate a 30-day content calendar per client. Present as a "Monthly Content Strategy" deliverable. Bill ₹5,000–15,000 for something VCI builds in 30 seconds.</div>
+          <span class="flow-tool">📅 Content Calendar</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <div class="flow-tag">Ad Campaigns</div>
+          <div class="flow-title">Build complete ad campaigns for clients</div>
+          <div class="flow-desc">For clients running paid ads: build audience profiles, generate 10 angles, create 15 variations, write video hooks, and build the landing page — all inside VCI. Full campaign creative in one sitting.</div>
+          <span class="flow-tool">🎯 Audience → Angles → Scale → Landing Page</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <div class="flow-tag">Client Communication</div>
+          <div class="flow-title">Write client-facing emails and reports</div>
+          <div class="flow-desc">Use Email Copy to write professional client onboarding emails, monthly reports, upsell proposals, and follow-ups. 8 email styles, ready in seconds.</div>
+          <span class="flow-tool">💬 WhatsApp & Email Copy</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <div class="flow-tag">Scale</div>
+          <div class="flow-title">Repeat for every client, every month</div>
+          <div class="flow-desc">10 clients × 5 minutes each = 50 minutes of content production per month. At ₹5,000 per client, that's ₹50,000 in revenue from a ₹8,999 tool. Every month.</div>
+          <span class="flow-tool">All 24 Tools</span>
+        </div>
+      </div>
+
+    </div>
   </div>
 </section>
 
-<div class="cta rv">
-  <h2>25 free credits.<br>No card required.</h2>
-  <p>Try every feature before you pay anything. If VCI saves you one hour on your first reel, it has already paid for itself.</p>
-  <a href="https://getvci.com" class="cta-btn">⚡ Start Free at getvci.com</a>
-  <div class="cta-sub">UPI · Cards · Instant setup · 7 Indian languages · Built in India 🇮🇳</div>
-  <div class="cta-links">Questions? <a href="https://wa.me/919315133390">WhatsApp +91 9315133390</a> · <a href="https://t.me/GetvciOfficial">@GetvciOfficial</a></div>
+<div class="section-divider"></div>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="section-header">
+    <div class="section-eyebrow">Why VCI</div>
+    <h2 class="section-title">One tool. Everything you were using separately.</h2>
+    <p class="section-sub">Stop paying for 6 tools that don't talk to each other.</p>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th class="vci-col">⚡ VCI</th>
+        <th>ChatGPT</th>
+        <th>Jasper</th>
+        <th>Murf</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Hindi / Regional language output</td><td class="vci-col">✅ Native</td><td>⚠️ Translated feel</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Platform-specific content (Instagram ≠ YouTube)</td><td class="vci-col">✅</td><td>❌ Manual prompting</td><td>⚠️ Limited</td><td>❌</td></tr>
+      <tr><td>AI Voiceover in Indian languages</td><td class="vci-col">✅ 7 languages</td><td>❌</td><td>❌</td><td>✅ Separate tool</td></tr>
+      <tr><td>Google Ads with character limit enforcement</td><td class="vci-col">✅ Live counter</td><td>❌ Manual</td><td>⚠️ Basic</td><td>❌</td></tr>
+      <tr><td>10 psychological ad angles</td><td class="vci-col">✅</td><td>❌ Manual</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Customer avatar with psychology</td><td class="vci-col">✅ 3 avatars</td><td>❌ Manual</td><td>⚠️ Basic</td><td>❌</td></tr>
+      <tr><td>30-day content calendar</td><td class="vci-col">✅</td><td>❌</td><td>⚠️</td><td>❌</td></tr>
+      <tr><td>Google Business optimization kit</td><td class="vci-col">✅ Full kit</td><td>❌</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Monthly price (INR)</td><td class="vci-col">₹499–₹8,999</td><td>₹1,700</td><td>₹4,000+</td><td>₹2,000+</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- PLANS -->
+<section id="plans">
+  <div class="section-header">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 class="section-title">Start free. Scale when you're ready.</h2>
+    <p class="section-sub">No contracts. No lock-in. Cancel anytime.</p>
+  </div>
+  <div class="plan-grid">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">₹0<span>/month</span></div>
+      <div class="plan-credits">25 credits/month</div>
+      <ul class="plan-features">
+        <li>Generate hooks, titles, captions</li>
+        <li>Hook Score</li>
+        <li>Captions & Hashtags</li>
+        <li>Intelligence + Trends</li>
+        <li>My Library</li>
+        <li>30+ languages</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Creator Starter</div>
+      <div class="plan-price">₹499<span>/month</span></div>
+      <div class="plan-credits">100 credits/month</div>
+      <ul class="plan-features">
+        <li>All Free features</li>
+        <li>Content Calendar</li>
+        <li>Content Pack</li>
+        <li>Image AI</li>
+        <li>Script Lab + Voice + Music</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Creator Pro</div>
+      <div class="plan-price">₹1,299<span>/month</span></div>
+      <div class="plan-credits">350 credits/month</div>
+      <ul class="plan-features">
+        <li>All Starter features</li>
+        <li>Repurpose Engine</li>
+        <li>Competitor Analyzer</li>
+      </ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">Most Value</div>
+      <div class="plan-name">Advertiser</div>
+      <div class="plan-price">₹2,499<span>/month</span></div>
+      <div class="plan-credits">700 credits/month</div>
+      <ul class="plan-features">
+        <li>All Pro features</li>
+        <li>ROI Calculator</li>
+        <li>A/B Ad Copy</li>
+        <li>Ad Angle Generator</li>
+        <li>Audience Builder</li>
+        <li>Ad Copy at Scale</li>
+        <li>Video Ad Hooks</li>
+        <li>Offer & USP Builder</li>
+        <li>Landing Page Copy</li>
+        <li>WA & Email (8 styles)</li>
+        <li>Bio Writer</li>
+        <li>Product Description</li>
+        <li>Viral Templates</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Agency</div>
+      <div class="plan-price">₹8,999<span>/month</span></div>
+      <div class="plan-credits">2,000 credits/month</div>
+      <ul class="plan-features">
+        <li>All Advertiser features</li>
+        <li>Local Business Kit</li>
+        <li>Claude Sonnet AI</li>
+        <li>Priority support</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>24 tools. One subscription.<br>Start free today.</h2>
+  <p>No credit card required. 25 free credits every month. Cancel anytime.</p>
+  <a href="https://getvci.com" class="btn-primary" style="font-size:1rem;padding:.9rem 2.25rem">
+    Start Free on getvci.com →
+  </a>
 </div>
-</div>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom:.4rem">
+    <a href="https://getvci.com">getvci.com</a> &nbsp;·&nbsp;
+    <a href="https://getvci.com/policies.html#terms">Terms</a> &nbsp;·&nbsp;
+    <a href="https://getvci.com/policies.html#privacy">Privacy</a> &nbsp;·&nbsp;
+    <a href="https://getvci.com/policies.html#refund">Refund</a>
+  </p>
+  <p>© 2026 VCI — Viral Content Intelligence. Made in India 🇮🇳</p>
+</footer>
 
 <script>
-function toggle(card){if(event.target.closest('.fb-body'))return;card.classList.toggle('open')}
-const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('vis');io.unobserve(x.target)}})},{threshold:.06});
-document.querySelectorAll('.rv').forEach(el=>io.observe(el));
-const secs=document.querySelectorAll('.fc[id]');
-const pills=document.querySelectorAll('.np');
-window.addEventListener('scroll',()=>{let cur='';secs.forEach(s=>{if(window.scrollY>=s.offsetTop-130)cur=s.id});pills.forEach(p=>p.classList.toggle('act',p.getAttribute('href')==='#'+cur))},{passive:true});
+  // Flow tab switcher
+  function showFlow(type) {
+    document.querySelectorAll('.flow-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.flow-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('flow-' + type).classList.add('active');
+    event.target.classList.add('active');
+  }
 </script>
+
 </body>
 </html>
