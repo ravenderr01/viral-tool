@@ -921,7 +921,7 @@ Return ONLY valid JSON:
     </div>
   );
 
-  const types = result?.variations ? [...new Set(result.variations.map((v:any) => v.type))] as string[] : [];
+  const types = result?.variations ? Array.from(new Set(result.variations.map((v:any) => v.type))) as string[] : [];
   const filtered = result?.variations ? (filter === "all" ? result.variations : result.variations.filter((v:any) => v.type === filter)) : [];
 
   return (
