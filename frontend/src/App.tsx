@@ -263,6 +263,1210 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
     </div>
   );
 }
+// ── AD ANGLE GENERATOR ─────────────────────────────────────────────────────
+function AdAngleGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]     = useState("");
+  const [price, setPrice]         = useState("");
+  const [audience, setAudience]   = useState("");
+  const [platform, setPlatform]   = useState("Meta Ads");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<any>(null);
+  const [copied, setCopied]       = useState("");
+  const [activeAngle, setActiveAngle] = useState<number | null>(null);
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => {
+      const ta = document.createElement("textarea"); ta.value = text;
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    });
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null); setActiveAngle(null);
+    const isGoogle = platform === "Google Ads";
+    const prompt = `You are a senior performance marketing strategist with 10+ years running Google Ads and Meta Ads for Indian businesses. Generate 10 completely different ad angles for this product.
+
+Product/Service: ${product}
+${price ? `Price: ${price}` : ""}
+${audience ? `Target Audience: ${audience}` : "Target: Indian consumers"}
+Platform: ${platform}
+
+CRITICAL: Each angle must use a COMPLETELY DIFFERENT psychological trigger. No two angles should feel similar.
+
+The 10 angles are:
+1. Price/Value Angle — make price feel like a bargain
+2. Pain Angle — lead with the problem they feel daily
+3. Speed/Result Angle — how fast they see results
+4. Social Proof Angle — others are doing it
+5. Convenience Angle — easier than alternatives
+6. Comparison Angle — vs competitor or old method
+7. Authority Angle — credentials and expertise
+8. Scarcity/Urgency Angle — limited time or spots
+9. Curiosity Angle — make them want to know more
+10. Story/Transformation Angle — before and after
+
+For each angle provide:
+- Complete ${isGoogle ? "Google Ads" : "Meta Ads"} ready copy
+- ${isGoogle ? "Headline (max 30 chars STRICT), Description (max 90 chars STRICT)" : "Headline (max 40 chars), Primary Text (first 125 chars most important)"}
+- Which audience segment this angle works best for
+- Best time to use this angle in campaign
+
+Return ONLY valid JSON:
+{
+  "angles": [
+    {
+      "number": 1,
+      "name": "Price/Value Angle",
+      "trigger": "One word psychological trigger",
+      "headline": "${isGoogle ? "max 30 chars" : "max 40 chars"}",
+      "body": "${isGoogle ? "max 90 chars description" : "125 char primary text — first line must stop scroll"}",
+      "cta": "3-5 word CTA",
+      "best_for": "Which audience segment responds best",
+      "when_to_use": "Specific campaign scenario",
+      "why_it_works": "One sentence — specific to this product"
+    }
+  ],
+  "recommendation": "Which 3 angles to test first and why",
+  "budget_strategy": "How to split test budget across angles"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{role:"user", content:prompt}], max_tokens:3000 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const start = text.indexOf("{"); const end = text.lastIndexOf("}");
+      if (start === -1 || end === -1) throw new Error("No JSON");
+      const parsed = JSON.parse(text.slice(start, end+1));
+      setResult(parsed);
+      setActiveAngle(0);
+      onCreditUsed?.();
+      onSaveHistory?.("abtest", { inputSummary: `Ad Angles: ${product}`, resultData: parsed });
+    } catch { setResult({ _error: true }); }
+    setLoading(false);
+  };
+
+  const ANGLE_COLORS = ["#f59e0b","#ef4444","#22c55e","#3b82f6","#a855f7","#06b6d4","#f97316","#ec4899","#8b5cf6","#14b8a6"];
+
+  if (!isUnlocked) return (
+    <div style={{ textAlign:"center" as const, padding:"2.5rem 1rem" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>🎯</div>
+      <h3 style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .5rem" }}>Ad Angle Generator</h3>
+      <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem" }}>10 different psychological angles for your ads. Advertiser plan required.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
+        Unlock — Advertiser Plan
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🎯 Ad Angle Generator</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>10 completely different psychological angles for your product. Each angle targets a different customer mindset — test them to find your winner.</p>
+
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Product / Service</label>
+          <input value={product} onChange={e => setProduct(e.target.value)}
+            placeholder="e.g. Online yoga classes, Digital marketing agency, Saree shop, Fitness app..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".65rem" }}>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Price (optional)</label>
+            <input value={price} onChange={e => setPrice(e.target.value)}
+              placeholder="e.g. ₹999/month, ₹2,499 one-time"
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+              onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Platform</label>
+            <select value={platform} onChange={e => setPlatform(e.target.value)}
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}>
+              <option>Meta Ads</option>
+              <option>Google Ads</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Target Audience (optional)</label>
+          <input value={audience} onChange={e => setAudience(e.target.value)}
+            placeholder="e.g. Working women 25-40 Mumbai, Small business owners, College students..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading || !product.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating 10 angles...</> : "🎯 Generate 10 Ad Angles — 3 credits"}
+      </button>
+
+      {result?._error && (
+        <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}>
+          <p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again with more specific product details.</p>
+        </div>
+      )}
+
+      {result?.angles && (
+        <div style={{ animation:"slideUp .3s ease" }}>
+          {/* Angle selector pills */}
+          <div style={{ display:"flex", gap:".35rem", flexWrap:"wrap" as const, marginBottom:"1rem" }}>
+            {result.angles.map((a: any, i: number) => (
+              <button key={i} onClick={() => setActiveAngle(i)}
+                style={{ padding:".3rem .65rem", borderRadius:"20px", border:`1px solid ${activeAngle===i ? ANGLE_COLORS[i] : "#1a1a2e"}`, background:activeAngle===i ? `${ANGLE_COLORS[i]}15` : "transparent", color:activeAngle===i ? ANGLE_COLORS[i] : "#52525b", fontSize:".62rem", fontWeight:800, cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}>
+                {i+1}. {a.name?.replace(" Angle","") || `Angle ${i+1}`}
+              </button>
+            ))}
+          </div>
+
+          {/* Active angle detail */}
+          {activeAngle !== null && result.angles[activeAngle] && (() => {
+            const a = result.angles[activeAngle];
+            const color = ANGLE_COLORS[activeAngle];
+            const isGoogle = platform === "Google Ads";
+            return (
+              <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"14px", padding:"1.25rem", marginBottom:"1rem" }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"1rem" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:".6rem" }}>
+                    <div style={{ background:`${color}15`, border:`1px solid ${color}30`, borderRadius:"8px", padding:".2rem .6rem" }}>
+                      <span style={{ color, fontSize:".65rem", fontWeight:900 }}>{a.trigger || `ANGLE ${activeAngle+1}`}</span>
+                    </div>
+                    <span style={{ color:"#fff", fontWeight:800, fontSize:".88rem" }}>{a.name}</span>
+                  </div>
+                  <div style={{ display:"flex", gap:".35rem" }}>
+                    {activeAngle > 0 && <button onClick={() => setActiveAngle(activeAngle-1)} style={{ background:"#0d0d18", border:"1px solid #1a1a2e", color:"#52525b", padding:".15rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".7rem", fontFamily:"inherit" }}>← Prev</button>}
+                    {activeAngle < result.angles.length-1 && <button onClick={() => setActiveAngle(activeAngle+1)} style={{ background:"#0d0d18", border:"1px solid #1a1a2e", color:"#52525b", padding:".15rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".7rem", fontFamily:"inherit" }}>Next →</button>}
+                  </div>
+                </div>
+
+                {/* Ad preview */}
+                <div style={{ background:"#0a0a18", border:`1px solid ${color}20`, borderRadius:"10px", padding:"1rem", marginBottom:"1rem" }}>
+                  {isGoogle ? (
+                    <>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>HEADLINE</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.headline?.length||0)>30?"#ef4444":"#22c55e" }}>{a.headline?.length||0}/30</span>
+                      </div>
+                      <p style={{ color:"#60a5fa", fontSize:".9rem", fontWeight:700, margin:"0 0 .75rem", lineHeight:1.5 }}>{a.headline}</p>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>DESCRIPTION</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.body?.length||0)>90?"#ef4444":"#22c55e" }}>{a.body?.length||0}/90</span>
+                      </div>
+                      <p style={{ color:"#94a3b8", fontSize:".82rem", margin:0, lineHeight:1.6 }}>{a.body}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>HEADLINE</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.headline?.length||0)>40?"#ef4444":"#22c55e" }}>{a.headline?.length||0}/40</span>
+                      </div>
+                      <p style={{ color:"#fff", fontSize:".9rem", fontWeight:800, margin:"0 0 .75rem" }}>{a.headline}</p>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>PRIMARY TEXT</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.body?.length||0)>125?"#f59e0b":"#22c55e" }}>{a.body?.length||0}/125 preview</span>
+                      </div>
+                      <p style={{ color:"#94a3b8", fontSize:".82rem", margin:0, lineHeight:1.7 }}>{a.body}</p>
+                    </>
+                  )}
+                  <div style={{ marginTop:".75rem", display:"inline-flex", background:`${color}15`, border:`1px solid ${color}30`, borderRadius:"6px", padding:".25rem .75rem" }}>
+                    <span style={{ color, fontSize:".75rem", fontWeight:700 }}>{a.cta} →</span>
+                  </div>
+                </div>
+
+                {/* Insights */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".5rem", marginBottom:".75rem" }}>
+                  <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.12)", borderRadius:"8px", padding:".6rem .75rem" }}>
+                    <p style={{ margin:"0 0 .2rem", fontSize:".58rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>Best For</p>
+                    <p style={{ margin:0, color:"#86efac", fontSize:".72rem", lineHeight:1.5 }}>{a.best_for}</p>
+                  </div>
+                  <div style={{ background:"rgba(245,158,11,.04)", border:"1px solid rgba(245,158,11,.12)", borderRadius:"8px", padding:".6rem .75rem" }}>
+                    <p style={{ margin:"0 0 .2rem", fontSize:".58rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase" as const }}>When to Use</p>
+                    <p style={{ margin:0, color:"#fcd34d", fontSize:".72rem", lineHeight:1.5 }}>{a.when_to_use}</p>
+                  </div>
+                </div>
+                {a.why_it_works && (
+                  <div style={{ background:"rgba(109,40,217,.05)", border:"1px solid rgba(109,40,217,.15)", borderRadius:"8px", padding:".6rem .85rem", marginBottom:".75rem" }}>
+                    <p style={{ margin:0, color:"#a78bfa", fontSize:".75rem", lineHeight:1.6 }}>💡 {a.why_it_works}</p>
+                  </div>
+                )}
+
+                {/* Copy buttons */}
+                <div style={{ display:"flex", gap:".4rem" }}>
+                  <button onClick={() => copy(`${a.headline}\n${a.body}\n${a.cta}`, `angle${activeAngle}`)}
+                    style={{ flex:1, padding:".45rem", borderRadius:"8px", background:copied===`angle${activeAngle}`?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${copied===`angle${activeAngle}`?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied===`angle${activeAngle}`?"#22c55e":"#a855f7", fontWeight:700, fontSize:".72rem", cursor:"pointer", fontFamily:"inherit" }}>
+                    {copied===`angle${activeAngle}` ? "✓ Copied!" : "📋 Copy This Angle"}
+                  </button>
+                  <button onClick={() => copy(a.headline, `hl${activeAngle}`)}
+                    style={{ padding:".45rem .75rem", borderRadius:"8px", background:"transparent", border:"1px solid #1a1a2e", color:"#52525b", fontWeight:700, fontSize:".72rem", cursor:"pointer", fontFamily:"inherit" }}>
+                    {copied===`hl${activeAngle}` ? "✓" : "Headline"}
+                  </button>
+                  <button onClick={() => copy(a.body, `bd${activeAngle}`)}
+                    style={{ padding:".45rem .75rem", borderRadius:"8px", background:"transparent", border:"1px solid #1a1a2e", color:"#52525b", fontWeight:700, fontSize:".72rem", cursor:"pointer", fontFamily:"inherit" }}>
+                    {copied===`bd${activeAngle}` ? "✓" : "Body"}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Strategy */}
+          {result.recommendation && (
+            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"10px", padding:".85rem 1rem", marginBottom:".65rem" }}>
+              <p style={{ margin:"0 0 .35rem", fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const, letterSpacing:".06em" }}>📈 Which 3 to Test First</p>
+              <p style={{ margin:0, color:"#94a3b8", fontSize:".78rem", lineHeight:1.65 }}>{result.recommendation}</p>
+            </div>
+          )}
+          {result.budget_strategy && (
+            <div style={{ background:"rgba(34,197,94,.05)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <p style={{ margin:"0 0 .35rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const, letterSpacing:".06em" }}>💰 Budget Split Strategy</p>
+              <p style={{ margin:0, color:"#94a3b8", fontSize:".78rem", lineHeight:1.65 }}>{result.budget_strategy}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AUDIENCE BUILDER ────────────────────────────────────────────────────────
+function AudienceBuilder({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]     = useState("");
+  const [category, setCategory]   = useState("B2C");
+  const [pricePoint, setPricePoint] = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<any>(null);
+  const [activeAvatar, setActiveAvatar] = useState(0);
+  const [copied, setCopied]       = useState("");
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => {
+      const ta = document.createElement("textarea"); ta.value = text;
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    });
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are a consumer psychology expert and media planner specializing in Indian market advertising. Build detailed customer avatar profiles for this product.
+
+Product/Service: ${product}
+${pricePoint ? `Price: ${pricePoint}` : ""}
+Type: ${category}
+
+Create 3 distinct customer avatars — each a different buyer type who would purchase this product for completely different reasons.
+
+For each avatar provide deep, specific, actionable insights that a copywriter can use to write ads that convert.
+
+Return ONLY valid JSON:
+{
+  "avatars": [
+    {
+      "persona_name": "Fictional Indian name",
+      "segment": "Primary/Secondary/Tertiary",
+      "age_range": "e.g. 25-32",
+      "occupation": "Specific job title",
+      "location": "Indian city tier",
+      "income": "Monthly income range in INR",
+      "daily_pain": ["Specific pain 1 they feel every day", "Pain 2", "Pain 3"],
+      "desires": ["What they deeply want", "Desire 2", "Desire 3"],
+      "top_objection": "The #1 reason they won't buy",
+      "objection_answer": "How to overcome it in ad copy",
+      "buying_trigger": "The exact moment/situation when they decide to buy",
+      "ad_message": "The one sentence that will stop their scroll",
+      "best_platform": "Instagram/Facebook/Google/YouTube",
+      "best_time": "When to show them ads",
+      "best_format": "Video/Image/Carousel/Story/Search",
+      "content_they_trust": "What type of content influences their decisions",
+      "words_that_work": ["Power words for this avatar", "Word 2", "Word 3"],
+      "words_to_avoid": ["Words that feel wrong", "Word 2"],
+      "sample_headline": "Ad headline written specifically for this avatar",
+      "sample_hook": "Video ad opening line for this avatar"
+    }
+  ],
+  "combined_insight": "One insight that applies to all 3 avatars",
+  "campaign_structure": "How to structure campaigns targeting all 3 avatars efficiently"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{role:"user", content:prompt}], max_tokens:3000 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const start = text.indexOf("{"); const end = text.lastIndexOf("}");
+      if (start === -1 || end === -1) throw new Error("No JSON");
+      const parsed = JSON.parse(text.slice(start, end+1));
+      setResult(parsed);
+      setActiveAvatar(0);
+      onCreditUsed?.();
+      onSaveHistory?.("audience", { inputSummary: `Audience: ${product}`, resultData: parsed });
+    } catch { setResult({ _error: true }); }
+    setLoading(false);
+  };
+
+  const AVATAR_COLORS = ["#a855f7","#06b6d4","#22c55e"];
+  const AVATAR_LABELS = ["Primary Avatar", "Secondary Avatar", "Tertiary Avatar"];
+
+  if (!isUnlocked) return (
+    <div style={{ textAlign:"center" as const, padding:"2.5rem 1rem" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>👤</div>
+      <h3 style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .5rem" }}>Audience Builder</h3>
+      <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem" }}>Build 3 detailed customer avatars with psychology, pain points, and ad copy guidance.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
+        Unlock — Advertiser Plan
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>👤 Audience Builder</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>Know your buyer before you write the ad. Build 3 detailed customer personas with psychology, pain points, objections, and ready-to-use ad guidance.</p>
+
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Product / Service</label>
+          <input value={product} onChange={e => setProduct(e.target.value)}
+            placeholder="e.g. Online yoga classes, D2C skincare brand, Digital marketing course..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".65rem" }}>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Type</label>
+            <select value={category} onChange={e => setCategory(e.target.value)}
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}>
+              <option>B2C</option>
+              <option>B2B</option>
+              <option>Local Business</option>
+              <option>E-commerce</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Price Point</label>
+            <input value={pricePoint} onChange={e => setPricePoint(e.target.value)}
+              placeholder="e.g. ₹499/month, ₹2,499"
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+              onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+          </div>
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading || !product.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building 3 customer avatars...</> : "👤 Build Audience Profiles — 3 credits"}
+      </button>
+
+      {result?._error && (
+        <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}>
+          <p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p>
+        </div>
+      )}
+
+      {result?.avatars && (
+        <div style={{ animation:"slideUp .3s ease" }}>
+          {/* Avatar tabs */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:".4rem", marginBottom:"1rem" }}>
+            {result.avatars.map((a: any, i: number) => (
+              <button key={i} onClick={() => setActiveAvatar(i)}
+                style={{ padding:".55rem .5rem", borderRadius:"10px", border:`1px solid ${activeAvatar===i?AVATAR_COLORS[i]+"60":"#1a1a2e"}`, background:activeAvatar===i?`${AVATAR_COLORS[i]}12`:"transparent", cursor:"pointer", fontFamily:"inherit", transition:"all .15s", textAlign:"center" as const }}>
+                <p style={{ margin:"0 0 .1rem", fontSize:".72rem", fontWeight:800, color:activeAvatar===i?AVATAR_COLORS[i]:"#e2e8f0" }}>{a.persona_name || `Avatar ${i+1}`}</p>
+                <p style={{ margin:0, fontSize:".58rem", color:activeAvatar===i?AVATAR_COLORS[i]:"#3f3f46" }}>{AVATAR_LABELS[i]}</p>
+              </button>
+            ))}
+          </div>
+
+          {(() => {
+            const a = result.avatars[activeAvatar];
+            const color = AVATAR_COLORS[activeAvatar];
+            if (!a) return null;
+            return (
+              <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem" }}>
+                {/* Profile header */}
+                <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"14px", padding:"1rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:".85rem" }}>
+                    <div>
+                      <p style={{ margin:"0 0 .2rem", fontWeight:900, color:"#fff", fontSize:"1rem" }}>{a.persona_name}</p>
+                      <p style={{ margin:0, color:"#52525b", fontSize:".75rem" }}>{a.occupation} · {a.location} · {a.age_range}</p>
+                    </div>
+                    <span style={{ background:`${color}15`, border:`1px solid ${color}30`, color, fontSize:".62rem", fontWeight:800, padding:".2rem .55rem", borderRadius:"6px" }}>{a.segment}</span>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".5rem" }}>
+                    {[
+                      {l:"Income", v:a.income},
+                      {l:"Best Platform", v:a.best_platform},
+                      {l:"Best Time", v:a.best_time},
+                      {l:"Best Format", v:a.best_format},
+                    ].map(({l,v}) => (
+                      <div key={l} style={{ background:"#0a0a18", borderRadius:"7px", padding:".45rem .65rem" }}>
+                        <p style={{ margin:"0 0 .1rem", fontSize:".55rem", color:"#3f3f46", fontWeight:700, textTransform:"uppercase" as const }}>{l}</p>
+                        <p style={{ margin:0, color:"#94a3b8", fontSize:".72rem", fontWeight:600 }}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pain + Desires */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".5rem" }}>
+                  <div style={{ background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.12)", borderRadius:"10px", padding:".75rem" }}>
+                    <p style={{ margin:"0 0 .5rem", fontSize:".6rem", fontWeight:800, color:"#f87171", textTransform:"uppercase" as const }}>😤 Daily Pains</p>
+                    {(a.daily_pain || []).map((p: string, i: number) => (
+                      <p key={i} style={{ margin:"0 0 .3rem", color:"#fca5a5", fontSize:".72rem", lineHeight:1.5 }}>• {p}</p>
+                    ))}
+                  </div>
+                  <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.12)", borderRadius:"10px", padding:".75rem" }}>
+                    <p style={{ margin:"0 0 .5rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>✨ Desires</p>
+                    {(a.desires || []).map((d: string, i: number) => (
+                      <p key={i} style={{ margin:"0 0 .3rem", color:"#86efac", fontSize:".72rem", lineHeight:1.5 }}>• {d}</p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Objection handler */}
+                <div style={{ background:"rgba(245,158,11,.04)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"10px", padding:".85rem 1rem" }}>
+                  <p style={{ margin:"0 0 .3rem", fontSize:".6rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase" as const }}>🚧 #1 Objection</p>
+                  <p style={{ margin:"0 0 .5rem", color:"#fbbf24", fontSize:".8rem", fontWeight:600 }}>"{a.top_objection}"</p>
+                  <p style={{ margin:"0 0 .2rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>✅ How to Handle in Ad</p>
+                  <p style={{ margin:0, color:"#86efac", fontSize:".78rem", lineHeight:1.6 }}>{a.objection_answer}</p>
+                </div>
+
+                {/* Buying trigger */}
+                <div style={{ background:`${color}08`, border:`1px solid ${color}20`, borderRadius:"10px", padding:".85rem 1rem" }}>
+                  <p style={{ margin:"0 0 .25rem", fontSize:".6rem", fontWeight:800, color, textTransform:"uppercase" as const }}>⚡ Buying Trigger</p>
+                  <p style={{ margin:0, color:"#e2e8f0", fontSize:".82rem", lineHeight:1.65 }}>{a.buying_trigger}</p>
+                </div>
+
+                {/* Words */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".5rem" }}>
+                  <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".75rem" }}>
+                    <p style={{ margin:"0 0 .45rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>✅ Words That Work</p>
+                    <div style={{ display:"flex", flexWrap:"wrap" as const, gap:".3rem" }}>
+                      {(a.words_that_work || []).map((w: string, i: number) => (
+                        <span key={i} style={{ background:"rgba(34,197,94,.08)", border:"1px solid rgba(34,197,94,.2)", color:"#86efac", fontSize:".65rem", fontWeight:700, padding:".12rem .45rem", borderRadius:"5px" }}>{w}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".75rem" }}>
+                    <p style={{ margin:"0 0 .45rem", fontSize:".6rem", fontWeight:800, color:"#ef4444", textTransform:"uppercase" as const }}>❌ Words to Avoid</p>
+                    <div style={{ display:"flex", flexWrap:"wrap" as const, gap:".3rem" }}>
+                      {(a.words_to_avoid || []).map((w: string, i: number) => (
+                        <span key={i} style={{ background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", color:"#fca5a5", fontSize:".65rem", fontWeight:700, padding:".12rem .45rem", borderRadius:"5px" }}>{w}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sample ad copy */}
+                <div style={{ background:"#050508", border:`1px solid ${color}25`, borderRadius:"12px", padding:"1rem" }}>
+                  <p style={{ margin:"0 0 .65rem", fontSize:".6rem", fontWeight:800, color, textTransform:"uppercase" as const }}>🎯 Ready-to-Use Ad Copy for {a.persona_name}</p>
+                  {a.sample_headline && (
+                    <div style={{ marginBottom:".65rem" }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".2rem" }}>
+                        <span style={{ fontSize:".58rem", fontWeight:700, color:"#3f3f46" }}>AD HEADLINE</span>
+                        <button onClick={() => copy(a.sample_headline, `sh${activeAvatar}`)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`sh${activeAvatar}`?"#22c55e":"#52525b", padding:".08rem .35rem", borderRadius:"4px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`sh${activeAvatar}`?"✓":"Copy"}</button>
+                      </div>
+                      <p style={{ color:"#e2e8f0", fontSize:".84rem", fontWeight:700, margin:0 }}>{a.sample_headline}</p>
+                    </div>
+                  )}
+                  {a.sample_hook && (
+                    <div>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".2rem" }}>
+                        <span style={{ fontSize:".58rem", fontWeight:700, color:"#3f3f46" }}>VIDEO AD HOOK (first line)</span>
+                        <button onClick={() => copy(a.sample_hook, `hook${activeAvatar}`)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`hook${activeAvatar}`?"#22c55e":"#52525b", padding:".08rem .35rem", borderRadius:"4px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`hook${activeAvatar}`?"✓":"Copy"}</button>
+                      </div>
+                      <p style={{ color:"#a78bfa", fontSize:".82rem", fontStyle:"italic", margin:0, lineHeight:1.65 }}>"{a.sample_hook}"</p>
+                    </div>
+                  )}
+                </div>
+
+                {a.content_they_trust && (
+                  <div style={{ background:"rgba(6,182,212,.04)", border:"1px solid rgba(6,182,212,.12)", borderRadius:"9px", padding:".65rem .85rem" }}>
+                    <p style={{ margin:"0 0 .2rem", fontSize:".58rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const }}>📱 Content They Trust</p>
+                    <p style={{ margin:0, color:"#67e8f9", fontSize:".75rem" }}>{a.content_they_trust}</p>
+                  </div>
+                )}
+
+                {a.ad_message && (
+                  <div style={{ background:`${color}08`, border:`1px solid ${color}20`, borderRadius:"10px", padding:".85rem 1rem", display:"flex", justifyContent:"space-between", alignItems:"center", gap:".75rem" }}>
+                    <div>
+                      <p style={{ margin:"0 0 .2rem", fontSize:".58rem", fontWeight:800, color, textTransform:"uppercase" as const }}>💬 The One Line That Stops Their Scroll</p>
+                      <p style={{ margin:0, color:"#fff", fontSize:".85rem", fontWeight:700, lineHeight:1.6 }}>"{a.ad_message}"</p>
+                    </div>
+                    <button onClick={() => copy(a.ad_message, `msg${activeAvatar}`)}
+                      style={{ background:copied===`msg${activeAvatar}`?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${copied===`msg${activeAvatar}`?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied===`msg${activeAvatar}`?"#22c55e":"#a855f7", padding:".35rem .65rem", borderRadius:"8px", cursor:"pointer", fontSize:".65rem", fontWeight:800, fontFamily:"inherit", flexShrink:0 }}>
+                      {copied===`msg${activeAvatar}` ? "✓" : "Copy"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Combined insights */}
+          {result.combined_insight && (
+            <div style={{ background:"rgba(109,40,217,.05)", border:"1px solid rgba(109,40,217,.15)", borderRadius:"10px", padding:".85rem 1rem", marginTop:".65rem" }}>
+              <p style={{ margin:"0 0 .3rem", fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase" as const }}>🔑 Insight Across All 3 Avatars</p>
+              <p style={{ margin:0, color:"#c4b5fd", fontSize:".8rem", lineHeight:1.65 }}>{result.combined_insight}</p>
+            </div>
+          )}
+          {result.campaign_structure && (
+            <div style={{ background:"rgba(34,197,94,.05)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".85rem 1rem", marginTop:".5rem" }}>
+              <p style={{ margin:"0 0 .3rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>📊 Campaign Structure for All 3</p>
+              <p style={{ margin:0, color:"#86efac", fontSize:".8rem", lineHeight:1.65 }}>{result.campaign_structure}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AD COPY VARIATIONS (Bulk Scale) ────────────────────────────────────────
+function AdCopyVariations({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct] = useState("");
+  const [platform, setPlatform] = useState("Google Ads");
+  const [goal, setGoal] = useState("Clicks");
+  const [count, setCount] = useState("15");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [copied, setCopied] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); });
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
+
+  const copyAll = () => {
+    if (!result?.variations) return;
+    const filtered = filter === "all" ? result.variations : result.variations.filter((v: any) => v.type === filter);
+    const text = filtered.map((v: any, i: number) => `${i+1}. [${v.type}]\nHeadline: ${v.headline}\nBody: ${v.body}\nCTA: ${v.cta}`).join("\n\n");
+    copy(text, "all");
+  };
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const isGoogle = platform === "Google Ads";
+    const prompt = `You are a performance marketing expert. Generate ${count} completely different ad copy variations for ${platform}.
+
+Product/Service: ${product}
+Campaign Goal: ${goal}
+Platform: ${platform}
+
+RULES:
+- Every variation must use a DIFFERENT hook/angle/approach
+- ${isGoogle ? `Headlines: STRICT max 30 characters each (count spaces). Descriptions: STRICT max 90 characters.` : `Headlines: max 40 chars. Primary text: first line must stop scroll in feed.`}
+- No two variations should sound similar
+- Mix these types across variations: emotional, logical, curiosity, social proof, fear, aspiration, urgency, story, comparison, question
+- All copy must be ${platform} policy compliant
+
+Return ONLY valid JSON:
+{
+  "variations": [
+    {
+      "number": 1,
+      "type": "emotional/logical/curiosity/social_proof/fear/aspiration/urgency/story/comparison/question",
+      "headline": "${isGoogle ? "max 30 chars STRICT" : "max 40 chars"}",
+      "body": "${isGoogle ? "max 90 chars description" : "primary text, strong first line"}",
+      "cta": "3-5 word CTA",
+      "strength": "Why this variation could win"
+    }
+  ],
+  "top_3_picks": "Which 3 to launch first and why",
+  "testing_plan": "Systematic testing approach for all ${count} variations"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{role:"user", content:prompt}], max_tokens:3000 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
+      if (s === -1) throw new Error("No JSON");
+      const parsed = JSON.parse(text.slice(s, e+1));
+      setResult(parsed);
+      onCreditUsed?.();
+      onSaveHistory?.("abtest", { inputSummary: `Bulk Variations: ${product}`, resultData: parsed });
+    } catch { setResult({ _error: true }); }
+    setLoading(false);
+  };
+
+  const TYPE_COLORS: Record<string,string> = {
+    emotional:"#ef4444", logical:"#3b82f6", curiosity:"#f59e0b",
+    social_proof:"#22c55e", fear:"#dc2626", aspiration:"#a855f7",
+    urgency:"#f97316", story:"#06b6d4", comparison:"#8b5cf6", question:"#ec4899"
+  };
+
+  if (!isUnlocked) return (
+    <div style={{ textAlign:"center" as const, padding:"2.5rem 1rem" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>📋</div>
+      <h3 style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .5rem" }}>Ad Copy at Scale</h3>
+      <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem" }}>Generate 10-15 ad variations in one click. Build your complete test library fast.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>Unlock — Advertiser Plan</button>
+    </div>
+  );
+
+  const types = result?.variations ? [...new Set(result.variations.map((v:any) => v.type))] as string[] : [];
+  const filtered = result?.variations ? (filter === "all" ? result.variations : result.variations.filter((v:any) => v.type === filter)) : [];
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>📋 Ad Copy at Scale</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>Generate 10-15 completely different ad variations in one click. Build your full test library — Google allows 15 headlines in one RSA campaign.</p>
+
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Product / Service</label>
+          <input value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. Digital marketing course, Weight loss app, Saree boutique..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:".5rem" }}>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Platform</label>
+            <select value={platform} onChange={e => setPlatform(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option>Google Ads</option><option>Meta Ads</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Goal</label>
+            <select value={goal} onChange={e => setGoal(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option>Clicks</option><option>Conversions</option><option>Leads</option><option>Awareness</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Count</label>
+            <select value={count} onChange={e => setCount(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option value="10">10 variations</option><option value="12">12 variations</option><option value="15">15 variations</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading||!product.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Generating {count} variations...</> : `📋 Generate ${count} Ad Variations — 3 credits`}
+      </button>
+
+      {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
+
+      {result?.variations && (
+        <div style={{ animation:"slideUp .3s ease" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:".75rem" }}>
+            <div style={{ display:"flex", gap:".3rem", flexWrap:"wrap" as const }}>
+              <button onClick={() => setFilter("all")} style={{ padding:".2rem .55rem", borderRadius:"6px", border:`1px solid ${filter==="all"?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:filter==="all"?"rgba(109,40,217,.12)":"transparent", color:filter==="all"?"#a855f7":"#52525b", fontSize:".6rem", fontWeight:800, cursor:"pointer", fontFamily:"inherit" }}>All ({result.variations.length})</button>
+              {types.map((t: string) => (
+                <button key={t} onClick={() => setFilter(t)} style={{ padding:".2rem .55rem", borderRadius:"6px", border:`1px solid ${filter===t?(TYPE_COLORS[t]||"#6d28d9")+"60":"#1a1a2e"}`, background:filter===t?`${(TYPE_COLORS[t]||"#6d28d9")}15`:"transparent", color:filter===t?(TYPE_COLORS[t]||"#a855f7"):"#52525b", fontSize:".6rem", fontWeight:800, cursor:"pointer", fontFamily:"inherit" }}>{t.replace("_"," ")}</button>
+              ))}
+            </div>
+            <button onClick={copyAll} style={{ background: copied==="all"?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${copied==="all"?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied==="all"?"#22c55e":"#a855f7", padding:".3rem .7rem", borderRadius:"7px", cursor:"pointer", fontSize:".65rem", fontWeight:800, fontFamily:"inherit" }}>
+              {copied==="all" ? "✓ All Copied!" : "📋 Copy All"}
+            </button>
+          </div>
+
+          <div style={{ display:"flex", flexDirection:"column" as const, gap:".5rem", marginBottom:"1rem" }}>
+            {filtered.map((v: any, i: number) => {
+              const color = TYPE_COLORS[v.type] || "#a855f7";
+              const isGoogle = platform === "Google Ads";
+              return (
+              <div key={i} style={{ background:"#050508", border:`1px solid ${color}20`, borderRadius:"10px", padding:".85rem" }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:".5rem" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:".4rem" }}>
+                    <span style={{ fontSize:".58rem", fontWeight:900, color:"#3f3f46" }}>#{v.number || i+1}</span>
+                    <span style={{ background:`${color}15`, border:`1px solid ${color}30`, color, fontSize:".58rem", fontWeight:800, padding:".07rem .4rem", borderRadius:"5px", textTransform:"capitalize" as const }}>{v.type?.replace("_"," ")}</span>
+                  </div>
+                  <div style={{ display:"flex", gap:".3rem" }}>
+                    <button onClick={() => copy(v.headline, `vh${i}`)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`vh${i}`?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".58rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`vh${i}`?"✓":"HL"}</button>
+                    <button onClick={() => copy(`${v.headline}\n${v.body}\n${v.cta}`, `vf${i}`)} style={{ background: copied===`vf${i}`?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${copied===`vf${i}`?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied===`vf${i}`?"#22c55e":"#a855f7", padding:".1rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit" }}>{copied===`vf${i}`?"✓":"Copy"}</button>
+                  </div>
+                </div>
+                <p style={{ color:"#fff", fontWeight:700, fontSize:".84rem", margin:"0 0 .3rem" }}>{v.headline}
+                  <span style={{ fontSize:".58rem", fontWeight:700, color:(v.headline?.length||0) > (isGoogle?30:40)?"#ef4444":"#22c55e", marginLeft:".4rem" }}>{v.headline?.length||0}/{isGoogle?30:40}</span>
+                </p>
+                <p style={{ color:"#94a3b8", fontSize:".78rem", margin:"0 0 .35rem", lineHeight:1.55 }}>{v.body}</p>
+                <p style={{ color:"#52525b", fontSize:".7rem", margin:0 }}>→ <span style={{ color:"#3f3f46" }}>{v.cta}</span> {v.strength && <span style={{ color:"#27272a" }}>· {v.strength}</span>}</p>
+              </div>
+            );})}
+          </div>
+
+          {result.top_3_picks && (
+            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"10px", padding:".85rem 1rem", marginBottom:".5rem" }}>
+              <p style={{ margin:"0 0 .3rem", fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const }}>🏆 Top 3 to Launch First</p>
+              <p style={{ margin:0, color:"#94a3b8", fontSize:".78rem", lineHeight:1.65 }}>{result.top_3_picks}</p>
+            </div>
+          )}
+          {result.testing_plan && (
+            <div style={{ background:"rgba(34,197,94,.05)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <p style={{ margin:"0 0 .3rem", fontSize:".6rem", fontWeight:800, color:"#22c55e", textTransform:"uppercase" as const }}>📊 Testing Plan</p>
+              <p style={{ margin:0, color:"#94a3b8", fontSize:".78rem", lineHeight:1.65 }}>{result.testing_plan}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── VIDEO AD HOOK GENERATOR ─────────────────────────────────────────────────
+function VideoAdHookGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]   = useState("");
+  const [platform, setPlatform] = useState("Instagram Reels Ad");
+  const [duration, setDuration] = useState("30");
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<any>(null);
+  const [copied, setCopied]     = useState("");
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); });
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are a video advertising expert specializing in high-retention paid video ads for Indian market on ${platform}.
+
+Product/Service: ${product}
+Platform: ${platform}
+Ad Duration: ${duration} seconds
+
+The #1 rule of video ads: if someone doesn't stop scrolling in the FIRST 3 SECONDS, the rest doesn't matter.
+
+Generate 8 completely different video ad hooks (first 3-5 seconds) for this product. Each hook must STOP the scroll instantly using a different technique.
+
+Then for each hook, provide the complete ${duration}-second ad structure.
+
+Hook techniques to use (one per hook):
+1. Bold Claim — state the biggest result upfront
+2. Question Hook — ask something they desperately want to know
+3. Controversy — say something they disagree with
+4. Pattern Interrupt — start with something completely unexpected
+5. Story Hook — "I was [relatable situation]..."
+6. Pain Agitation — name their worst daily problem
+7. Social Proof Hook — "X people did this and..."
+8. Curiosity Hook — "The [niche] secret nobody talks about"
+
+Return ONLY valid JSON:
+{
+  "hooks": [
+    {
+      "number": 1,
+      "technique": "Bold Claim",
+      "hook_line": "Exact first 1-2 sentences (3 seconds max)",
+      "hook_visual": "What the viewer should SEE on screen during hook",
+      "hook_text_overlay": "Text to show on screen (5 words max)",
+      "full_script": {
+        "hook": "0-3 seconds: exact words",
+        "problem": "3-8 seconds: expand the pain or desire",
+        "solution": "8-20 seconds: introduce product naturally",
+        "proof": "20-25 seconds: social proof or result",
+        "cta": "25-${duration} seconds: clear next step"
+      },
+      "skip_rate": "Estimated skip rate — Low/Medium/High retention",
+      "best_audience": "Who responds best to this hook"
+    }
+  ],
+  "production_tips": ["Tip 1 for filming", "Tip 2", "Tip 3"],
+  "platform_specific": "Key rule for ${platform} video ads"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{role:"user", content:prompt}], max_tokens:3000 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
+      if (s === -1) throw new Error("No JSON");
+      const parsed = JSON.parse(text.slice(s, e+1));
+      setResult(parsed);
+      onCreditUsed?.();
+      onSaveHistory?.("scriptlab", { inputSummary: `Video Ad Hooks: ${product}`, resultData: parsed });
+    } catch { setResult({ _error: true }); }
+    setLoading(false);
+  };
+
+  const SKIP_COLORS: Record<string,string> = { Low:"#22c55e", Medium:"#f59e0b", High:"#ef4444" };
+  const [activeHook, setActiveHook] = useState(0);
+
+  if (!isUnlocked) return (
+    <div style={{ textAlign:"center" as const, padding:"2.5rem 1rem" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>🎬</div>
+      <h3 style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .5rem" }}>Video Ad Hook Generator</h3>
+      <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem" }}>8 scroll-stopping hooks with complete video ad scripts. For Instagram, YouTube, Facebook video ads.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>Unlock — Advertiser Plan</button>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>🎬 Video Ad Hook Generator</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>8 scroll-stopping hooks + complete video scripts. The first 3 seconds decide if your ad runs or burns budget.</p>
+
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Product / Service</label>
+          <input value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. Fitness app, Online course, Skincare brand, Restaurant..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".65rem" }}>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Platform</label>
+            <select value={platform} onChange={e => setPlatform(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option>Instagram Reels Ad</option>
+              <option>Facebook Video Ad</option>
+              <option>YouTube Pre-roll</option>
+              <option>YouTube Shorts Ad</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Duration</label>
+            <select value={duration} onChange={e => setDuration(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading||!product.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Writing 8 video hooks + scripts...</> : "🎬 Generate Video Ad Hooks — 3 credits"}
+      </button>
+
+      {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
+
+      {result?.hooks && (
+        <div style={{ animation:"slideUp .3s ease" }}>
+          <div style={{ display:"flex", gap:".35rem", flexWrap:"wrap" as const, marginBottom:"1rem" }}>
+            {result.hooks.map((h: any, i: number) => (
+              <button key={i} onClick={() => setActiveHook(i)}
+                style={{ padding:".28rem .65rem", borderRadius:"6px", border:`1px solid ${activeHook===i?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:activeHook===i?"rgba(109,40,217,.12)":"transparent", color:activeHook===i?"#a855f7":"#52525b", fontSize:".62rem", fontWeight:800, cursor:"pointer", fontFamily:"inherit" }}>
+                {i+1}. {h.technique?.split(" ")[0] || `Hook ${i+1}`}
+              </button>
+            ))}
+          </div>
+
+          {(() => {
+            const h = result.hooks[activeHook];
+            if (!h) return null;
+            const skipColor = SKIP_COLORS[h.skip_rate] || "#52525b";
+            return (
+              <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem" }}>
+                <div style={{ background:"#050508", border:"1px solid rgba(109,40,217,.2)", borderRadius:"14px", padding:"1.25rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
+                    <div>
+                      <span style={{ background:"rgba(109,40,217,.12)", border:"1px solid rgba(109,40,217,.3)", color:"#a855f7", fontSize:".65rem", fontWeight:800, padding:".12rem .5rem", borderRadius:"6px" }}>{h.technique}</span>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:".4rem" }}>
+                      <span style={{ fontSize:".6rem", color:"#3f3f46" }}>Skip risk:</span>
+                      <span style={{ background:`${skipColor}15`, border:`1px solid ${skipColor}30`, color:skipColor, fontSize:".62rem", fontWeight:800, padding:".1rem .4rem", borderRadius:"5px" }}>{h.skip_rate}</span>
+                    </div>
+                  </div>
+
+                  {/* Hook line — most important */}
+                  <div style={{ background:"linear-gradient(135deg,rgba(109,40,217,.08),rgba(109,40,217,.02))", border:"1px solid rgba(109,40,217,.2)", borderRadius:"10px", padding:"1rem", marginBottom:"1rem" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".4rem" }}>
+                      <span style={{ fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase" as const }}>⚡ First 3 Seconds — The Hook</span>
+                      <button onClick={() => copy(h.hook_line, `hookline${activeHook}`)} style={{ background: copied===`hookline${activeHook}`?"rgba(34,197,94,.1)":"transparent", border:`1px solid ${copied===`hookline${activeHook}`?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied===`hookline${activeHook}`?"#22c55e":"#a855f7", padding:".1rem .45rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:800, fontFamily:"inherit" }}>{copied===`hookline${activeHook}`?"✓":"Copy"}</button>
+                    </div>
+                    <p style={{ color:"#fff", fontWeight:800, fontSize:".92rem", margin:"0 0 .5rem", lineHeight:1.5 }}>"{h.hook_line}"</p>
+                    {h.hook_visual && <p style={{ margin:"0 0 .3rem", color:"#52525b", fontSize:".72rem" }}>📷 Visual: <span style={{ color:"#3f3f46" }}>{h.hook_visual}</span></p>}
+                    {h.hook_text_overlay && <p style={{ margin:0, color:"#52525b", fontSize:".72rem" }}>📝 Text overlay: <span style={{ color:"#3f3f46", fontWeight:700 }}>"{h.hook_text_overlay}"</span></p>}
+                  </div>
+
+                  {/* Full script */}
+                  {h.full_script && (
+                    <div>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".65rem" }}>
+                        <p style={{ fontSize:".6rem", fontWeight:800, color:"#3f3f46", margin:0, textTransform:"uppercase" as const }}>Complete {duration}s Script</p>
+                        <button onClick={() => copy(Object.values(h.full_script).join("\n\n"), `fullscript${activeHook}`)} style={{ background: copied===`fullscript${activeHook}`?"rgba(34,197,94,.1)":"rgba(109,40,217,.08)", border:`1px solid ${copied===`fullscript${activeHook}`?"rgba(34,197,94,.3)":"rgba(109,40,217,.2)"}`, color:copied===`fullscript${activeHook}`?"#22c55e":"#a855f7", padding:".12rem .5rem", borderRadius:"6px", cursor:"pointer", fontSize:".65rem", fontWeight:800, fontFamily:"inherit" }}>{copied===`fullscript${activeHook}`?"✓ Copied":"📋 Copy Script"}</button>
+                      </div>
+                      {Object.entries(h.full_script).map(([key, val]) => (
+                        <div key={key} style={{ marginBottom:".5rem", paddingBottom:".5rem", borderBottom:"1px solid #0d0d18" }}>
+                          <span style={{ fontSize:".58rem", fontWeight:800, color:"#3f3f46", textTransform:"uppercase" as const }}>{key}</span>
+                          <p style={{ color:"#94a3b8", fontSize:".78rem", margin:".15rem 0 0", lineHeight:1.6 }}>{val as string}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {h.best_audience && (
+                    <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.12)", borderRadius:"7px", padding:".5rem .75rem", marginTop:".5rem" }}>
+                      <p style={{ margin:0, color:"#86efac", fontSize:".72rem" }}>👥 Best audience: {h.best_audience}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display:"flex", gap:".4rem" }}>
+                  {activeHook > 0 && <button onClick={() => setActiveHook(activeHook-1)} style={{ flex:1, padding:".45rem", borderRadius:"8px", background:"#050508", border:"1px solid #1a1a2e", color:"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer", fontFamily:"inherit" }}>← Previous Hook</button>}
+                  {activeHook < result.hooks.length-1 && <button onClick={() => setActiveHook(activeHook+1)} style={{ flex:1, padding:".45rem", borderRadius:"8px", background:"rgba(109,40,217,.08)", border:"1px solid rgba(109,40,217,.2)", color:"#a855f7", fontWeight:700, fontSize:".75rem", cursor:"pointer", fontFamily:"inherit" }}>Next Hook →</button>}
+                </div>
+              </div>
+            );
+          })()}
+
+          {result.platform_specific && (
+            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"10px", padding:".85rem 1rem", marginTop:".65rem" }}>
+              <p style={{ margin:"0 0 .25rem", fontSize:".6rem", fontWeight:800, color:"#06b6d4", textTransform:"uppercase" as const }}>📱 {platform} Key Rule</p>
+              <p style={{ margin:0, color:"#67e8f9", fontSize:".78rem", lineHeight:1.6 }}>{result.platform_specific}</p>
+            </div>
+          )}
+          {result.production_tips && (
+            <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"10px", padding:".85rem 1rem", marginTop:".5rem" }}>
+              <p style={{ margin:"0 0 .45rem", fontSize:".6rem", fontWeight:800, color:"#f59e0b", textTransform:"uppercase" as const }}>🎥 Production Tips</p>
+              {result.production_tips.map((t: string, i: number) => (
+                <p key={i} style={{ margin:"0 0 .25rem", color:"#fcd34d", fontSize:".75rem" }}>• {t}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── OFFER / USP BUILDER ─────────────────────────────────────────────────────
+function OfferUSPBuilder({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any) {
+  const isUnlocked = ["advertiser","agency"].includes(plan);
+  const [product, setProduct]     = useState("");
+  const [category, setCategory]   = useState("Service");
+  const [price, setPrice]         = useState("");
+  const [competitors, setCompetitors] = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<any>(null);
+  const [copied, setCopied]       = useState("");
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); });
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
+
+  const generate = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setResult(null);
+    const prompt = `You are a strategic marketing consultant and offer architect specializing in Indian market positioning. Help build the strongest possible offer and USP for this business.
+
+Product/Service: ${product}
+Category: ${category}
+${price ? `Current Price: ${price}` : ""}
+${competitors ? `Main Competitors: ${competitors}` : ""}
+
+Your job is to help them:
+1. Find their REAL unique selling proposition (not generic ones)
+2. Build an irresistible offer structure
+3. Create positioning that makes competitors irrelevant
+
+Return ONLY valid JSON:
+{
+  "usp_options": [
+    {
+      "usp": "The actual USP statement (one powerful sentence)",
+      "why_unique": "Why competitors cannot easily copy this",
+      "proof_needed": "What proof/evidence to show in ads",
+      "headline_version": "This USP as an ad headline (max 40 chars)"
+    }
+  ],
+  "offer_structure": {
+    "core_offer": "What they're actually buying",
+    "value_stack": ["Bonus 1 to add", "Bonus 2", "Bonus 3"],
+    "guarantee": "Best guarantee to offer to remove risk",
+    "urgency": "Genuine scarcity or deadline to create",
+    "price_framing": "How to present the price to feel like a bargain",
+    "best_offer_line": "Complete offer in one sentence"
+  },
+  "positioning": {
+    "category_creation": "New category name they can own",
+    "vs_competitors": "How to position against main alternatives",
+    "one_liner": "Company/product one-liner (elevator pitch)"
+  },
+  "weak_usps_to_avoid": ["Generic claim 1 to avoid", "Generic 2", "Generic 3"],
+  "ad_ready_usp": "Final USP ready to use in ad headline right now"
+}`;
+
+    try {
+      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ messages:[{role:"user", content:prompt}], max_tokens:2500 })
+      });
+      const d = await res.json();
+      const text = d.content?.[0]?.text || "";
+      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
+      if (s === -1) throw new Error("No JSON");
+      const parsed = JSON.parse(text.slice(s, e+1));
+      setResult(parsed);
+      onCreditUsed?.();
+      onSaveHistory?.("landingpage", { inputSummary: `USP Builder: ${product}`, resultData: parsed });
+    } catch { setResult({ _error: true }); }
+    setLoading(false);
+  };
+
+  if (!isUnlocked) return (
+    <div style={{ textAlign:"center" as const, padding:"2.5rem 1rem" }}>
+      <div style={{ fontSize:"2.5rem", marginBottom:".75rem" }}>💎</div>
+      <h3 style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .5rem" }}>Offer & USP Builder</h3>
+      <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem" }}>Find your real USP, build an irresistible offer, and create positioning that makes competitors irrelevant.</p>
+      <button onClick={onUpgrade} style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>Unlock — Advertiser Plan</button>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"slideUp .4s ease" }}>
+      <h2 style={{ fontFamily:"'Inter',sans-serif", fontWeight:900, fontSize:"1.05rem", color:"#fff", margin:"0 0 .25rem" }}>💎 Offer & USP Builder</h2>
+      <p style={{ color:"#52525b", fontSize:".78rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>The offer wins before the ad runs. Build your USP, irresistible offer, and competitive positioning — then write ads that practically sell themselves.</p>
+
+      <div style={{ display:"flex", flexDirection:"column" as const, gap:".65rem", marginBottom:".85rem" }}>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Your Product / Service</label>
+          <input value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. Digital marketing agency, Organic skincare brand, Coding bootcamp..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:".65rem" }}>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Category</label>
+            <select value={category} onChange={e => setCategory(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
+              <option>Service</option><option>Product</option><option>Course/Education</option>
+              <option>SaaS</option><option>E-commerce</option><option>Local Business</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Your Price</label>
+            <input value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. ₹15,000/month"
+              style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}
+              onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+          </div>
+        </div>
+        <div>
+          <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Main Competitors <span style={{ color:"#27272a", fontWeight:400 }}>(optional)</span></label>
+          <input value={competitors} onChange={e => setCompetitors(e.target.value)} placeholder="e.g. Other local agencies, Freelancers, Bigger brands..."
+            style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .85rem", color:"#fff", fontSize:".82rem", fontFamily:"inherit", outline:"none" }}
+            onFocus={e => e.target.style.borderColor="#6d28d9"} onBlur={e => e.target.style.borderColor="#1a1a2e"} />
+        </div>
+      </div>
+
+      <button onClick={generate} disabled={loading||!product.trim()}
+        style={{ width:"100%", padding:".85rem", borderRadius:"11px", background:!product.trim()?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:!product.trim()?"#3f3f46":"#fff", fontWeight:800, fontSize:".9rem", cursor:!product.trim()?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", marginBottom:"1.25rem", boxShadow:!product.trim()?"none":"0 6px 24px rgba(109,40,217,.3)" }}>
+        {loading ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite" }} /> Building your USP & offer...</> : "💎 Build USP & Offer — 2 credits"}
+      </button>
+
+      {result?._error && <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.2)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:".75rem" }}><p style={{ margin:0, color:"#f87171", fontSize:".8rem" }}>⚠️ Something went wrong. Please try again.</p></div>}
+
+      {result && !result._error && (
+        <div style={{ display:"flex", flexDirection:"column" as const, gap:".75rem", animation:"slideUp .3s ease" }}>
+
+          {/* Ad-ready USP — Most important */}
+          {result.ad_ready_usp && (
+            <div style={{ background:"linear-gradient(135deg,rgba(109,40,217,.12),rgba(109,40,217,.04))", border:"1px solid rgba(109,40,217,.35)", borderRadius:"14px", padding:"1.25rem" }}>
+              <p style={{ margin:"0 0 .35rem", fontSize:".6rem", fontWeight:800, color:"#a855f7", textTransform:"uppercase" as const, letterSpacing:".06em" }}>🏆 Your Ad-Ready USP</p>
+              <p style={{ color:"#fff", fontWeight:900, fontSize:"1rem", margin:"0 0 .75rem", lineHeight:1.5 }}>{result.ad_ready_usp}</p>
+              <button onClick={() => copy(result.ad_ready_usp, "adready")} style={{ background:copied==="adready"?"rgba(34,197,94,.1)":"rgba(109,40,217,.1)", border:`1px solid ${copied==="adready"?"rgba(34,197,94,.3)":"rgba(109,40,217,.3)"}`, color:copied==="adready"?"#22c55e":"#a855f7", padding:".35rem .85rem", borderRadius:"8px", cursor:"pointer", fontSize:".72rem", fontWeight:800, fontFamily:"inherit" }}>
+                {copied==="adready" ? "✓ Copied!" : "📋 Copy USP"}
+              </button>
+            </div>
+          )}
+
+          {/* USP Options */}
+          {result.usp_options?.length > 0 && (
+            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#6d28d9", margin:"0 0 .75rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>💡 USP Options</p>
+              {result.usp_options.map((u: any, i: number) => (
+                <div key={i} style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".75rem", marginBottom:".5rem" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:".3rem" }}>
+                    <p style={{ color:"#e2e8f0", fontWeight:700, fontSize:".84rem", margin:0, flex:1 }}>{u.usp}</p>
+                    <button onClick={() => copy(u.usp, `usp${i}`)} style={{ background:"transparent", border:"1px solid #1a1a2e", color:copied===`usp${i}`?"#22c55e":"#52525b", padding:".1rem .4rem", borderRadius:"5px", cursor:"pointer", fontSize:".62rem", fontWeight:700, fontFamily:"inherit", flexShrink:0, marginLeft:".5rem" }}>{copied===`usp${i}`?"✓":"Copy"}</button>
+                  </div>
+                  {u.why_unique && <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".7rem" }}>✅ {u.why_unique}</p>}
+                  {u.proof_needed && <p style={{ margin:"0 0 .2rem", color:"#52525b", fontSize:".7rem" }}>📸 Proof: {u.proof_needed}</p>}
+                  {u.headline_version && <p style={{ margin:0, color:"#a855f7", fontSize:".7rem", fontWeight:700 }}>Headline: "{u.headline_version}"</p>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Offer Structure */}
+          {result.offer_structure && (
+            <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"12px", padding:"1rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#22c55e", margin:"0 0 .75rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>🎁 Irresistible Offer Structure</p>
+              {[
+                {l:"Core Offer", v:result.offer_structure.core_offer, c:"#e2e8f0"},
+                {l:"Guarantee", v:result.offer_structure.guarantee, c:"#86efac"},
+                {l:"Urgency/Scarcity", v:result.offer_structure.urgency, c:"#fcd34d"},
+                {l:"Price Framing", v:result.offer_structure.price_framing, c:"#a78bfa"},
+              ].filter(r => r.v).map(({l,v,c}) => (
+                <div key={l} style={{ marginBottom:".6rem", paddingBottom:".6rem", borderBottom:"1px solid #0d0d18" }}>
+                  <p style={{ margin:"0 0 .15rem", fontSize:".58rem", fontWeight:800, color:"#3f3f46", textTransform:"uppercase" as const }}>{l}</p>
+                  <p style={{ margin:0, color:c, fontSize:".8rem", lineHeight:1.6 }}>{v}</p>
+                </div>
+              ))}
+              {result.offer_structure.value_stack?.length > 0 && (
+                <div style={{ marginBottom:".6rem" }}>
+                  <p style={{ margin:"0 0 .35rem", fontSize:".58rem", fontWeight:800, color:"#3f3f46", textTransform:"uppercase" as const }}>Value Stack / Bonuses</p>
+                  {result.offer_structure.value_stack.map((b: string, i: number) => (
+                    <p key={i} style={{ margin:"0 0 .2rem", color:"#06b6d4", fontSize:".78rem" }}>+ {b}</p>
+                  ))}
+                </div>
+              )}
+              {result.offer_structure.best_offer_line && (
+                <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.2)", borderRadius:"8px", padding:".65rem .85rem", display:"flex", justifyContent:"space-between", alignItems:"center", gap:".5rem" }}>
+                  <p style={{ margin:0, color:"#22c55e", fontSize:".82rem", fontWeight:700 }}>"{result.offer_structure.best_offer_line}"</p>
+                  <button onClick={() => copy(result.offer_structure.best_offer_line, "offerline")} style={{ background:"transparent", border:"1px solid rgba(34,197,94,.3)", color:copied==="offerline"?"#22c55e":"#86efac", padding:".15rem .45rem", borderRadius:"6px", cursor:"pointer", fontSize:".62rem", fontWeight:800, fontFamily:"inherit", flexShrink:0 }}>{copied==="offerline"?"✓":"Copy"}</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Positioning */}
+          {result.positioning && (
+            <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.15)", borderRadius:"12px", padding:"1rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#06b6d4", margin:"0 0 .75rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>🎯 Positioning Strategy</p>
+              {[
+                {l:"Category You Own", v:result.positioning.category_creation},
+                {l:"vs Competitors", v:result.positioning.vs_competitors},
+                {l:"One-Liner", v:result.positioning.one_liner},
+              ].filter(r => r.v).map(({l,v}) => (
+                <div key={l} style={{ marginBottom:".6rem" }}>
+                  <p style={{ margin:"0 0 .15rem", fontSize:".58rem", fontWeight:800, color:"#3f3f46", textTransform:"uppercase" as const }}>{l}</p>
+                  <p style={{ margin:0, color:"#67e8f9", fontSize:".8rem", lineHeight:1.6 }}>{v}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Weak USPs to avoid */}
+          {result.weak_usps_to_avoid?.length > 0 && (
+            <div style={{ background:"rgba(239,68,68,.04)", border:"1px solid rgba(239,68,68,.15)", borderRadius:"10px", padding:".85rem 1rem" }}>
+              <p style={{ fontSize:".6rem", fontWeight:800, color:"#f87171", margin:"0 0 .45rem", textTransform:"uppercase" as const }}>❌ Generic Claims to Avoid</p>
+              {result.weak_usps_to_avoid.map((w: string, i: number) => (
+                <p key={i} style={{ margin:"0 0 .2rem", color:"#fca5a5", fontSize:".75rem" }}>• {w}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── AD ROI CALCULATOR (Advertiser Exclusive) ────────────────────────────────
 function AdROICalculator({ plan, onUpgrade }: any) {
   const isUnlocked = ["advertiser","agency"].includes(plan);
@@ -7544,6 +8748,11 @@ Respond ONLY in valid JSON:
                 {[
                   { id:"roi",           label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
                   { id:"abtest",        label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
+                  { id:"adangles",      label:"Ad Angles",    icon:"🎯", color:"#a855f7" },
+                  { id:"audiencebuild", label:"Audience",     icon:"👤", color:"#22c55e" },
+                  { id:"adscale",       label:"Bulk Copy",    icon:"📋", color:"#f97316" },
+                  { id:"videohooks",    label:"Video Hooks",  icon:"🎬", color:"#ec4899" },
+                  { id:"uspbuilder",    label:"USP Builder",  icon:"💎", color:"#8b5cf6" },
                   { id:"landingpage",   label:"Landing Page",  icon:"🖥️", color:"#22c55e" },
                   { id:"whatsapp",      label:"WA & Email",    icon:"💬", color:"#25d366" },
                   { id:"bio",           label:"Bio Writer",    icon:"✍️", color:"#a855f7" },
@@ -8004,6 +9213,46 @@ Respond ONLY in valid JSON:
           )}
           {activeTab === "abtest" && (
             <ABAdCopyGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "adangles" && (
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="🎯" title="Ad Angle Generator"
+                  tagline="10 different psychological angles for your product. Price, Pain, Speed, Social Proof, Curiosity, Story and more — each with ready-to-run ad copy."
+                  previewItems={["🎯 10 unique psychological angles", "📋 Google & Meta ready copy", "📈 Which 3 to test first + budget split"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <AdAngleGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "audiencebuild" && (
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="👤" title="Audience Builder"
+                  tagline="Build 3 detailed customer personas — daily pains, desires, objections, buying triggers, and ready-to-use ad copy for each avatar."
+                  previewItems={["👤 3 detailed customer avatars", "🚧 Top objection + how to handle", "🎯 Ready ad copy per avatar"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <AudienceBuilder plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "adscale" && (
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="📋" title="Ad Copy at Scale"
+                  tagline="Generate 10-15 completely different ad variations in one click. Build your full test library for Google RSA or Meta campaigns."
+                  previewItems={["📋 10-15 unique variations", "🔍 Filter by type (emotional/logical/urgency)", "📋 Copy all with one click"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <AdCopyVariations plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "videohooks" && (
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="🎬" title="Video Ad Hook Generator"
+                  tagline="8 scroll-stopping video ad hooks with complete scripts. First 3 seconds decide if your ad converts or burns budget."
+                  previewItems={["🎬 8 hooks with different techniques", "📝 Complete script per hook", "⚡ Skip-rate estimate per hook"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <VideoAdHookGenerator plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "uspbuilder" && (
+            !["advertiser","agency"].includes(plan)
+              ? <LockedFeaturePreview emoji="💎" title="Offer & USP Builder"
+                  tagline="Find your real USP, build an irresistible offer, and position yourself so competitors become irrelevant."
+                  previewItems={["💎 3 USP options with proof strategy", "🎁 Irresistible offer structure", "🎯 Competitive positioning"]}
+                  onUpgrade={() => setShowPaywall(true)} />
+              : <OfferUSPBuilder plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
           )}
           {activeTab === "landingpage" && (
             <LandingPageCopy plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
