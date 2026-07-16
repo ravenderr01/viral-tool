@@ -6912,11 +6912,10 @@ Respond ONLY in valid JSON:
   const tabs = [
     { id: "generate",     label: "Generate",    Icon: Zap },
     { id: "score",        label: "Hook Score",  Icon: BarChart2 },
-    // Caption tab merged into Generate — removed
+    { id: "caption",      label: "Captions",    Icon: FileText },
     { id: "intelligence", label: "Intelligence", Icon: Search },
     { id: "calendar",     label: "Calendar",    Icon: CalendarDays },
     { id: "pack",         label: "Pack",        Icon: Package },
-    // Trends tab merged into Intelligence — removed
     { id: "image",        label: "Image AI",    Icon: Image },
     { id: "scriptlab",    label: "Script Lab",  Icon: Film },
     { id: "repurpose",    label: "Repurpose",   Icon: Layers },
@@ -7501,9 +7500,8 @@ Respond ONLY in valid JSON:
                 {[
                   { id:"generate",     label:"Generate",    icon:"⚡" },
                   { id:"score",        label:"Hook Score",  icon:"📊" },
-                  // Caption merged into Generate
+                  { id:"caption",      label:"Captions",    icon:"📋" },
                   { id:"intelligence", label:"Intelligence", icon:"🔍" },
-                  // Trends merged into Intelligence
                   { id:"library",      label:"My Library",  icon:"💾" },
                   { id:"calendar",     label:"Calendar",    icon:"📅", locked: plan === "free" },
                   { id:"pack",         label:"Pack",        icon:"📦", locked: plan === "free" },
@@ -8025,18 +8023,7 @@ Respond ONLY in valid JSON:
 
           {/* TAB: CAPTION & HASHTAGS */}
           {activeTab === "caption" && (
-            // Caption merged into Generate tab — redirect
-            <div style={{ textAlign:"center", padding:"2rem 1rem", animation:"slideUp .3s ease" }}>
-              <div style={{ fontSize:"2.5rem", marginBottom:"1rem" }}>📋</div>
-              <h3 style={{ color:"#fff", fontWeight:800, fontSize:"1rem", margin:"0 0 .5rem" }}>Captions are now in Generate ⚡</h3>
-              <p style={{ color:"#52525b", fontSize:".82rem", margin:"0 0 1.25rem", lineHeight:1.6 }}>
-                All hooks, titles, captions and hashtags are now in the Generate tab — all in one place.
-              </p>
-              <button onClick={() => setActiveTab("generate")}
-                style={{ background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", padding:".75rem 2rem", borderRadius:"12px", cursor:"pointer", fontWeight:800, fontSize:".9rem", fontFamily:"inherit" }}>
-                ⚡ Go to Generate
-              </button>
-            </div>
+            <CaptionHashtags plan={plan} usageCount={usageCount} limit={limit} onUpgrade={() => setShowPaywall(true)} keyword={keyword} niche={niche} langStrict={langStrict} onCreditUsed={() => incrementUsage("caption")} onSaveHistory={saveToHistory} userType={userType} />
           )}
 
           {/* TAB: NICHE INTELLIGENCE — FREE for everyone! */}
