@@ -329,7 +329,25 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
       if (data.user) {
-        await supabase.from("users").update({ first_name: firstName, last_name: lastName, phone }).eq("id", data.user.id);
+        // Use upsert — creates row if not exists, updates if exists
+        const { error: dbError } = await supabase.from("users").upsert({
+          id: data.user.id,
+          email: data.user.email,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          plan: "free",
+          credits_remaining: 25,
+          credits_total: 25,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "id" });
+        if (dbError) {
+          console.error("DB error saving user:", dbError.message);
+          setError("Account created but profile save failed. Please contact support.");
+          setLoading(false);
+          return;
+        }
       }
       setMessage("✅ Account created! Please login.");
       setMode("login");
@@ -582,8 +600,8 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                   {(mode === "signup"
-                    ? ["25 free credits to start", "Viral hooks & title ideas", "Hook scoring (A–F grade)", "Instagram, YouTube & more"]
-                    : ["All your generated content", "Hook scores & analytics", "30-day content calendar", "Paid plans from ₹499/mo"]
+                    ? ["10 free credits to start", "Viral hooks & title ideas", "Hook scoring (A–F grade)", "Instagram, YouTube & more"]
+                    : ["All your generated content", "Hook scores & analytics", "30-day content calendar", "Pro plans from ₹299/mo"]
                   ).map(f => (
                     <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#6d28d9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
