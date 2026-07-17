@@ -326,6 +326,47 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
     if (mode === "signup") {
       if (!firstName || !lastName || !phone) { setError("Please fill all fields."); setLoading(false); return; }
       if (password.length < 6) { setError("Password must be at least 6 characters."); setLoading(false); return; }
+
+      // ── Disposable email block ──────────────────────────────────────────
+      const disposableDomains = [
+        "mailinator.com","guerrillamail.com","10minutemail.com","tempmail.com",
+        "throwam.com","yopmail.com","sharklasers.com","guerrillamailblock.com",
+        "grr.la","guerrillamail.info","guerrillamail.biz","guerrillamail.de",
+        "guerrillamail.net","guerrillamail.org","spam4.me","trashmail.com",
+        "trashmail.me","trashmail.net","dispostable.com","mailnull.com",
+        "maildrop.cc","spamgourmet.com","spamgourmet.net","spamgourmet.org",
+        "spamhereplease.com","getairmail.com","filzmail.com","throwam.com",
+        "tempr.email","discard.email","mailnesia.com","mailnull.com",
+        "spamevader.com","spamfree24.org","spammotel.com","spamspot.com",
+        "spamthisplease.com","supergreatmail.com","suremail.info",
+        "sweetxxx.de","tafmail.com","temporaryemail.net","throwam.com",
+        "trbvm.com","trillianpro.com","trsh.me","twinmail.de",
+        "tyldd.com","uggsrock.com","umail.net","upliftnow.com",
+        "uplipht.com","uroid.com","venompen.com","veryrealemail.com",
+        "vidchart.com","viditag.com","viewcastmedia.com","viroleni.com",
+        "vomoto.com","vpn.st","vsimcard.com","vubby.com","wakingupesther.com",
+        "wegas.ru","wegwerf-email.de","wetrainbayarea.com","wilemail.com",
+        "willselfdestruct.com","wmail.cf","wolfsmail.tk","worldspace.link",
+        "wuzup.net","wuzupmail.net","www.e4ward.com","xagloo.com",
+        "xemaps.com","xents.com","xmaily.com","xoxy.net","xsecurity.org",
+        "xyzfree.net","yapped.net","ycare.de","yellowsmail.com",
+        "ypmail.webarnak.fr.eu.org","yroid.com","z1p.biz","za.com",
+        "zehnminuten.de","zehnminutenmail.de","zippymail.info","zoemail.net",
+        "zoemail.org","zomg.info","fakeinbox.com","trashmail.at",
+        "throwaway.email","spambox.us","diskardsmail.com","emailondeck.com",
+        "tempinbox.com","temp-mail.org","tmpmail.net","tmpmail.org",
+        "gettempemail.com","burnermail.io","mailtemp.net","dispostable.com",
+        "jetable.fr.nf","moakt.cc","mintemail.com","email-temp.com",
+        "mohmal.com","spamwc.de","sofort-mail.de","sogetthis.com",
+        "sendspamhere.com","selfdestructingmail.com","s0ny.net","safetymail.info",
+      ];
+      const emailDomain = email.split("@")[1]?.toLowerCase();
+      if (!emailDomain || disposableDomains.includes(emailDomain)) {
+        setError("Disposable or temporary email addresses are not allowed. Please use a real email address (Gmail, Outlook, Yahoo, etc.).");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
       if (data.user) {
