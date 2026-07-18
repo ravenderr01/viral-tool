@@ -104,6 +104,17 @@ async function callAI(options) {
   }
 
   // Both failed — try Groq with smaller model as last resort
+  // NOTE: llama-3.1-8b-instant is TEXT-ONLY (no vision support).
+  // If the original request contained an image, skip this fallback —
+  // sending image content to a text-only model returns a 400 invalid_request_error.
+  const hasImageContent = options.messages?.some((m) =>
+    Array.isArray(m.content) && m.content.some((c) => c.type === "image_url")
+  );
+
+  if (hasImageContent) {
+    throw new Error("AI temporarily busy. Please try again in a few seconds.");
+  }
+
   try {
     console.log("🔄 Trying Groq 8B model...");
     const text = await callGroq({ ...options, model: "llama-3.1-8b-instant" });
@@ -113,6 +124,7 @@ async function callAI(options) {
     throw new Error("AI temporarily busy. Please try again in a few seconds.");
   }
 }
+
 async function callClaude({ system, messages, max_tokens = 1500, model = "claude-haiku-4-5" }) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -194,12 +206,15 @@ app.post("/api/generate", async (req, res) => {
           return m;
         });
 
+        // FIX (July 2026): meta-llama/llama-4-scout-17b-16e-instruct was
+        // deprecated by Groq on June 17, 2026. Replaced with Groq's current
+        // vision-capable model, qwen/qwen3.6-27b (accepts text + images).
         const text = await callAI({
           system: req.body.system,
           messages: groqMessages,
           max_tokens: req.body.max_tokens || 1500,
           temperature: 0.8,
-          model: "meta-llama/llama-4-scout-17b-16e-instruct"
+          model: "qwen/qwen3.6-27b"
         });
         return res.json({ content: [{ type: "text", text }] });
       }
