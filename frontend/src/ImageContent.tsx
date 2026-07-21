@@ -158,6 +158,11 @@ export default function ImageContent({
 
   const isLocked = false; // Unlocked for all plans during testing phase
 
+  // 🛠️ TEMPORARY: Image AI is offline while we switch this feature's vision
+  // engine over to Claude (Groq discontinued their vision-capable model).
+  // Flip this back to `false` once the backend is wired up to Claude vision.
+  const isTemporarilyDisabled = true;
+
   const handleFile = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setError("Image size must be under 5MB");
@@ -321,6 +326,85 @@ Respond ONLY in this exact JSON (no markdown):
         <button onClick={onUpgrade} style={{ background: "linear-gradient(135deg,#a855f7,#c084fc)", border: "none", color: "#fff", padding: "0.85rem 2rem", borderRadius: "12px", fontWeight: 800, cursor: "pointer", fontFamily: "'Syne',sans-serif", fontSize: "0.9rem" }}>
           🚀 Upgrade to Pro
         </button>
+      </div>
+    );
+  }
+
+  // 🛠️ TEMPORARY "Coming Soon" screen — shown while Image AI's vision engine
+  // is being migrated from Groq (discontinued) to Claude.
+  if (isTemporarilyDisabled) {
+    return (
+      <div style={{ animation: "slideUp 0.4s ease" }}>
+        <div style={{
+          background: "linear-gradient(135deg,#0d0d0d,#111)",
+          border: "1px solid rgba(168,85,247,0.2)",
+          borderRadius: "18px",
+          padding: "2.5rem 1.5rem",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Decorative glow */}
+          <div style={{
+            position: "absolute", top: "-40%", left: "50%", transform: "translateX(-50%)",
+            width: "260px", height: "260px",
+            background: "radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%)",
+            pointerEvents: "none",
+          }} />
+
+          <div style={{ position: "relative" }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 64, height: 64, borderRadius: "18px",
+              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+              fontSize: "1.8rem", marginBottom: "1.1rem",
+              boxShadow: "0 8px 28px rgba(168,85,247,0.35)",
+            }}>
+              🖼️
+            </div>
+
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: "0.4rem",
+              background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)",
+              borderRadius: "20px", padding: "0.25rem 0.85rem", marginBottom: "0.85rem",
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", animation: "pulse 1.5s infinite" }} />
+              <span style={{ color: "#a855f7", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em" }}>
+                UPGRADING
+              </span>
+            </div>
+
+            <h3 style={{
+              margin: "0 0 0.5rem", fontFamily: "'Syne',sans-serif",
+              color: "#fff", fontSize: "1.15rem", fontWeight: 800,
+            }}>
+              Image AI — Coming Back Soon
+            </h3>
+
+            <p style={{
+              margin: "0 auto 1.5rem", color: "#71717a", fontSize: "0.85rem",
+              lineHeight: 1.7, maxWidth: "360px",
+            }}>
+              We're upgrading Image AI to a more powerful vision engine for sharper,
+              more accurate results. This feature will be back online shortly —
+              thanks for your patience!
+            </p>
+
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center",
+            }}>
+              {["Better accuracy", "Faster results", "Richer captions"].map((label) => (
+                <span key={label} style={{
+                  background: "#0a0a0a", border: "1px solid #1e1e1e",
+                  color: "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px",
+                  fontSize: "0.7rem", fontWeight: 600,
+                }}>
+                  ✓ {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
