@@ -4689,15 +4689,20 @@ Respond ONLY in JSON:
     setImproveLoading(false);
   };
 
-
-  const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
-    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN", styles: ["Default", "Cheerful", "Newscast", "Empathetic"] },
-    "Tamil":    { Female: "ta-IN-PallaviNeural",  Male: "ta-IN-ValluvarNeural",  code: "ta-IN" },
-    "Telugu":   { Female: "te-IN-ShrutiNeural",   Male: "te-IN-MohanNeural",     code: "te-IN" },
-    "Marathi":  { Female: "mr-IN-AarohiNeural",   Male: "mr-IN-ManoharNeural",   code: "mr-IN" },
-    "Gujarati": { Female: "gu-IN-DhwaniNeural",   Male: "gu-IN-NiranjanNeural",  code: "gu-IN" },
-    "Bengali":  { Female: "bn-IN-TanishaaNeural", Male: "bn-IN-BashkarNeural",   code: "bn-IN" },
-    "English":  { Female: "en-US-AvaNeural",      Male: "en-US-AndrewNeural",    code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
+   const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
+    "Hindi":     { Female: "hi-IN-SwaraNeural",     Male: "hi-IN-MadhurNeural",     code: "hi-IN", styles: ["Default", "Cheerful", "Newscast",     "Empathetic"] },
+    "Tamil":     { Female: "ta-IN-PallaviNeural",   Male: "ta-IN-ValluvarNeural",   code: "ta-IN" },
+    "Telugu":    { Female: "te-IN-ShrutiNeural",    Male: "te-IN-MohanNeural",      code: "te-IN" },
+    "Marathi":   { Female: "mr-IN-AarohiNeural",    Male: "mr-IN-ManoharNeural",    code: "mr-IN" },
+    "Gujarati":  { Female: "gu-IN-DhwaniNeural",    Male: "gu-IN-NiranjanNeural",   code: "gu-IN" },
+    "Bengali":   { Female: "bn-IN-TanishaaNeural",  Male: "bn-IN-BashkarNeural",    code: "bn-IN" },
+    "Kannada":   { Female: "kn-IN-SapnaNeural",     Male: "kn-IN-GaganNeural",      code: "kn-IN" },
+    "Malayalam": { Female: "ml-IN-SobhanaNeural",   Male: "ml-IN-MidhunNeural",     code: "ml-IN" },
+    "Punjabi":   { Female: "pa-IN-VaaniNeural",     Male: "pa-IN-OjasNeural",       code: "pa-IN" },
+    "Odia":      { Female: "or-IN-SubhasiniNeural", Male: "or-IN-SukantNeural",     code: "or-IN" },
+    "Assamese":  { Female: "as-IN-YashicaNeural",   Male: "as-IN-PriyomNeural",     code: "as-IN" },
+    "Urdu":      { Female: "ur-IN-GulNeural",       Male: "ur-IN-SalmanNeural",     code: "ur-IN" },
+    "English":   { Female: "en-US-AvaNeural",       Male: "en-US-AndrewNeural",     code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
   };
 
   // Auto-select the voice language to match whatever language the script was generated in,
