@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Legal from "./Legal";
+
+const BACKEND = "https://viral-tool-1.onrender.com";
 
 const DEFAULT_REVIEWS = [
   { name: "Rahul S.", role: "Instagram Creator", review: "Generated 20 viral hooks in 10 seconds. My reel hit 100K views!", stars: 5 },
@@ -13,295 +15,393 @@ const DEFAULT_REVIEWS = [
   { name: "Deepak N.", role: "LinkedIn Consultant", review: "Best tool for LinkedIn content. Professional hooks every time.", stars: 5 },
 ];
 
-const DEMO_CASES = [
-  {
-    platform: "Instagram",
-    emoji: "📸",
-    color: "#e1306c",
-    before: {
-      hook: "5 weight loss tips that work",
-      views: 234,
-      grade: "D",
-      score: 28,
-      issues: ["Too generic", "No emotion", "Boring opener"],
-    },
-    after: {
-      hook: "I lost 10kg without the gym — here's exactly what I did 🔥",
-      views: 47200,
-      grade: "A",
-      score: 91,
-      wins: ["Emotional & personal", "Curiosity gap", "Platform-perfect"],
-    },
-  },
-  {
-    platform: "YouTube",
-    emoji: "▶️",
-    color: "#ef4444",
-    before: {
-      hook: "How to make money online in 2024",
-      views: 412,
-      grade: "D",
-      score: 31,
-      issues: ["Overused title", "No specificity", "Zero intrigue"],
-    },
-    after: {
-      hook: "I made ₹1.2L in 30 days with zero investment (Full breakdown)",
-      views: 89400,
-      grade: "A",
-      score: 94,
-      wins: ["Specific numbers", "Personal proof", "Promise of value"],
-    },
-  },
-  {
-    platform: "LinkedIn",
-    emoji: "💼",
-    color: "#0077b5",
-    before: {
-      hook: "Here are some tips for productivity",
-      views: 89,
-      grade: "F",
-      score: 19,
-      issues: ["Vague opener", "No hook", "Forgettable"],
-    },
-    after: {
-      hook: "I work 4 hours a day and out-earn most people working 12. Here's the system:",
-      views: 34700,
-      grade: "A",
-      score: 96,
-      wins: ["Bold claim", "Creates curiosity", "Professional tone"],
-    },
-  },
+// ─────────────────────────────────────────────────────────────────────────
+// HERO FLOW ANIMATION — 15-20 sec auto loop
+// Keyword → Generate → Hook Score → Script → Voice → Caption → Ready to Post
+// ─────────────────────────────────────────────────────────────────────────
+const FLOW_STEPS = [
+  { id: "keyword",  icon: "⌨️", label: "Keyword",      color: "#8b5cf6" },
+  { id: "generate", icon: "⚡", label: "Generate",      color: "#a855f7" },
+  { id: "score",    icon: "📊", label: "Hook Score",   color: "#22c55e" },
+  { id: "script",   icon: "🎬", label: "Script",       color: "#f59e0b" },
+  { id: "voice",    icon: "🔊", label: "AI Voice",     color: "#06b6d4" },
+  { id: "caption",  icon: "💬", label: "Caption",      color: "#ec4899" },
+  { id: "ready",    icon: "✅", label: "Ready to Post", color: "#22c55e" },
 ];
+const STEP_DURATION = 2400; // ms per step → 7 * 2.4s ≈ 16.8s full loop
 
-function BeforeAfterDemo() {
-  const [demoIndex, setDemoIndex] = useState(0);
-  const [phase, setPhase] = useState<"before" | "transforming" | "after" | "counting">("before");
-  const [displayViews, setDisplayViews] = useState(0);
-  const [progress, setProgress] = useState(0);
-
-  const demo = DEMO_CASES[demoIndex];
+function HeroFlowAnimation() {
+  const [active, setActive] = useState(0);
+  const [typedKeyword, setTypedKeyword] = useState("");
 
   useEffect(() => {
-    let t1: any, t2: any, t3: any, t4: any;
+    const timer = setInterval(() => {
+      setActive(a => (a + 1) % FLOW_STEPS.length);
+    }, STEP_DURATION);
+    return () => clearInterval(timer);
+  }, []);
 
-    if (phase === "before") {
-      setDisplayViews(demo.before.views);
-      setProgress(0);
-      t1 = setTimeout(() => setPhase("transforming"), 2500);
-    }
+  // Typing effect for the keyword step
+  useEffect(() => {
+    if (active !== 0) { setTypedKeyword(""); return; }
+    const word = "weight loss";
+    let i = 0;
+    setTypedKeyword("");
+    const t = setInterval(() => {
+      i++;
+      setTypedKeyword(word.slice(0, i));
+      if (i >= word.length) clearInterval(t);
+    }, 90);
+    return () => clearInterval(t);
+  }, [active]);
 
-    if (phase === "transforming") {
-      // Progress bar animation
-      let p = 0;
-      const pInterval = setInterval(() => {
-        p += 2;
-        setProgress(p);
-        if (p >= 100) {
-          clearInterval(pInterval);
-          setPhase("after");
-        }
-      }, 30);
-      return () => clearInterval(pInterval);
-    }
-
-    if (phase === "after") {
-      setDisplayViews(0);
-      t2 = setTimeout(() => setPhase("counting"), 300);
-    }
-
-    if (phase === "counting") {
-      const target = demo.after.views;
-      const duration = 1800;
-      const steps = 60;
-      const increment = target / steps;
-      let current = demo.before.views;
-      const countInterval = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          current = target;
-          clearInterval(countInterval);
-          t3 = setTimeout(() => {
-            setPhase("before");
-            t4 = setTimeout(() => setDemoIndex(i => (i + 1) % DEMO_CASES.length), 100);
-          }, 2800);
-        }
-        setDisplayViews(Math.floor(current));
-      }, duration / steps);
-      return () => clearInterval(countInterval);
-    }
-
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
-  }, [phase, demoIndex]);
-
-  const formatViews = (n: number) => {
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return n.toString();
-  };
-
-  const gradeColor = (g: string) => ({
-    A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444"
-  }[g] || "#71717a");
-
-  const isAfter = phase === "after" || phase === "counting";
+  const step = FLOW_STEPS[active];
 
   return (
-    <div style={{ width: "100%", maxWidth: 420 }}>
+    <div style={{ width: "100%", maxWidth: 440 }}>
 
-      {/* Platform indicator */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-        <div style={{ display: "flex", gap: "0.4rem" }}>
-          {DEMO_CASES.map((d, i) => (
-            <div key={i} style={{
-              width: i === demoIndex ? 20 : 6, height: 6,
-              borderRadius: "3px",
-              background: i === demoIndex ? demo.color : "#1f1f1f",
-              transition: "all 0.4s",
-            }} />
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.75rem" }}>{demo.emoji}</span>
-          <span style={{ color: demo.color, fontSize: "0.7rem", fontWeight: 700 }}>{demo.platform}</span>
-        </div>
-      </div>
-
-      {/* Main demo card */}
-      <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "16px", overflow: "hidden" }}>
-
-        {/* Card header */}
-        <div style={{ background: "#0d0d0d", borderBottom: "1px solid #111", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div style={{ display: "flex", gap: "0.3rem" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", opacity: 0.6 }} />
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", opacity: 0.6 }} />
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", opacity: 0.6 }} />
-          </div>
-          <span style={{ color: "#3f3f46", fontSize: "0.62rem", fontFamily: "monospace", flex: 1, textAlign: "center" }}>getvci.com</span>
-          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s infinite" }} />
-        </div>
-
-        <div style={{ padding: "1.1rem" }}>
-
-          {/* BEFORE section */}
-          <div style={{ marginBottom: "0.85rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
-              <span style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "0.58rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "4px", letterSpacing: "0.04em" }}>BEFORE VCI</span>
-              <div style={{ flex: 1, height: 1, background: "#111" }} />
+      {/* Step tracker */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "1rem", position: "relative" }}>
+        {FLOW_STEPS.map((s, i) => (
+          <div key={s.id} style={{ display: "flex", alignItems: "center", flex: i < FLOW_STEPS.length - 1 ? 1 : "none" }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.8rem",
+              background: i === active ? s.color + "22" : i < active ? "#111" : "#0a0a0a",
+              border: `1.5px solid ${i === active ? s.color : i < active ? "#2a2a2a" : "#1a1a1a"}`,
+              transition: "all 0.35s ease",
+              boxShadow: i === active ? `0 0 14px ${s.color}55` : "none",
+            }}>
+              {s.icon}
             </div>
-
-            <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: "10px", padding: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", color: "#71717a", fontSize: "0.8rem", lineHeight: 1.5, fontStyle: "italic" }}>"{demo.before.hook}"</p>
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ color: gradeColor(demo.before.grade), fontWeight: 900, fontSize: "1.2rem", lineHeight: 1 }}>{demo.before.grade}</div>
-                    <div style={{ color: "#2a2a2a", fontSize: "0.55rem", fontWeight: 600 }}>GRADE</div>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ color: "#ef4444", fontWeight: 800, fontSize: "0.9rem" }}>{demo.before.score}/100</div>
-                    <div style={{ color: "#2a2a2a", fontSize: "0.55rem", fontWeight: 600 }}>SCORE</div>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ color: "#ef4444", fontWeight: 800, fontSize: "1rem" }}>
-                    {formatViews(demo.before.views)}
-                  </div>
-                  <div style={{ color: "#2a2a2a", fontSize: "0.6rem" }}>views 😢</div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
-                {demo.before.issues.map((issue, i) => (
-                  <span key={i} style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: "0.58rem", padding: "0.1rem 0.45rem", borderRadius: "4px", fontWeight: 500 }}>✗ {issue}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Transform section */}
-          <div style={{ marginBottom: "0.85rem" }}>
-            {phase === "transforming" ? (
-              <div style={{ background: "rgba(109,40,217,0.08)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "10px", padding: "0.75rem 1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
-                  <div style={{ width: 14, height: 14, border: "2px solid #3f3f46", borderTopColor: "#6d28d9", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
-                  <span style={{ color: "#8b5cf6", fontSize: "0.75rem", fontWeight: 600 }}>VCI is analyzing & rewriting...</span>
-                </div>
-                <div style={{ background: "#0a0a0a", borderRadius: "4px", height: 4, overflow: "hidden" }}>
-                  <div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg, #6d28d9, #8b5cf6)", borderRadius: "4px", transition: "width 0.05s linear" }} />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
-                  <span style={{ color: "#3f3f46", fontSize: "0.58rem" }}>Real trend data injected</span>
-                  <span style={{ color: "#6d28d9", fontSize: "0.6rem", fontWeight: 700 }}>{progress}%</span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                <div style={{ flex: 1, height: 1, background: "#111" }} />
-                <div style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "20px", padding: "0.2rem 0.75rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <span style={{ fontSize: "0.6rem" }}>⚡</span>
-                  <span style={{ color: "#8b5cf6", fontSize: "0.62rem", fontWeight: 600 }}>VCI transformed</span>
-                </div>
-                <div style={{ flex: 1, height: 1, background: "#111" }} />
+            {i < FLOW_STEPS.length - 1 && (
+              <div style={{ flex: 1, height: 2, margin: "0 3px", borderRadius: 2, background: i < active ? "#2a2a2a" : "#141414", position: "relative", overflow: "hidden" }}>
+                <div style={{
+                  position: "absolute", inset: 0, background: step.color,
+                  width: i < active ? "100%" : i === active ? "50%" : "0%",
+                  transition: "width 0.35s ease", opacity: 0.6,
+                }} />
               </div>
             )}
           </div>
+        ))}
+      </div>
 
-          {/* AFTER section */}
-          {isAfter && (
-            <div style={{ animation: "slideUp 0.4s ease" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
-                <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", fontSize: "0.58rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "4px", letterSpacing: "0.04em" }}>AFTER VCI</span>
-                <div style={{ flex: 1, height: 1, background: "#111" }} />
+      {/* Active step label */}
+      <div style={{ textAlign: "center" as const, marginBottom: "0.85rem" }}>
+        <span style={{ color: step.color, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace" }}>
+          STEP {active + 1}/7 — {step.label.toUpperCase()}
+        </span>
+      </div>
+
+      {/* Preview panel */}
+      <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "16px", overflow: "hidden", minHeight: 190 }}>
+        <div style={{ background: "#0d0d0d", borderBottom: "1px solid #111", padding: "0.55rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.3rem" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", opacity: 0.6 }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#f59e0b", opacity: 0.6 }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", opacity: 0.6 }} />
+          </div>
+          <span style={{ color: "#3f3f46", fontSize: "0.6rem", fontFamily: "monospace", flex: 1, textAlign: "center" as const }}>getvci.com</span>
+        </div>
+
+        <div style={{ padding: "1.25rem", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 150 }}>
+          <div key={active} style={{ width: "100%", animation: "slideUp 0.3s ease" }}>
+
+            {active === 0 && (
+              <div>
+                <p style={{ color: "#52525b", fontSize: "0.65rem", fontWeight: 600, marginBottom: "0.5rem", letterSpacing: "0.04em" }}>ENTER YOUR KEYWORD</p>
+                <div style={{ background: "#0a0a0a", border: "1px solid #6d28d9", borderRadius: "10px", padding: "0.75rem 1rem", display: "flex", alignItems: "center" }}>
+                  <span style={{ color: "#e4e4e7", fontSize: "0.9rem" }}>{typedKeyword}</span>
+                  <span style={{ width: 2, height: 16, background: "#8b5cf6", marginLeft: 2, animation: "pulse 0.8s infinite" }} />
+                </div>
               </div>
+            )}
 
-              <div style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "10px", padding: "0.75rem" }}>
-                <p style={{ margin: "0 0 0.6rem", color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.5, fontWeight: 500 }}>"{demo.after.hook}"</p>
+            {active === 1 && (
+              <div style={{ textAlign: "center" as const }}>
+                <div style={{ width: 42, height: 42, border: "3px solid #222", borderTopColor: "#a855f7", borderRadius: "50%", margin: "0 auto 0.85rem", animation: "spin 0.8s linear infinite" }} />
+                <p style={{ color: "#a855f7", fontSize: "0.82rem", fontWeight: 700 }}>Generating viral content...</p>
+                <p style={{ color: "#3f3f46", fontSize: "0.65rem", marginTop: "0.3rem" }}>Analyzing trends & platform data</p>
+              </div>
+            )}
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ color: gradeColor(demo.after.grade), fontWeight: 900, fontSize: "1.2rem", lineHeight: 1 }}>{demo.after.grade}</div>
-                      <div style={{ color: "#3f3f46", fontSize: "0.55rem", fontWeight: 600 }}>GRADE</div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.9rem" }}>{demo.after.score}/100</div>
-                      <div style={{ color: "#3f3f46", fontSize: "0.55rem", fontWeight: 600 }}>SCORE</div>
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#22c55e", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em", transition: "all 0.1s" }}>
-                      {formatViews(displayViews)}
-                    </div>
-                    <div style={{ color: "#3f3f46", fontSize: "0.6rem" }}>views 🔥</div>
+            {active === 2 && (
+              <div style={{ textAlign: "center" as const }}>
+                <div style={{ position: "relative", width: 88, height: 88, margin: "0 auto 0.6rem" }}>
+                  <svg width="88" height="88" style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx={44} cy={44} r={38} fill="none" stroke="#1a1a1a" strokeWidth={6} />
+                    <circle cx={44} cy={44} r={38} fill="none" stroke="#22c55e" strokeWidth={6}
+                      strokeDasharray={`${2 * Math.PI * 38 * 0.92} ${2 * Math.PI * 38}`} strokeLinecap="round"
+                      style={{ transition: "stroke-dasharray 1s ease" }} />
+                  </svg>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" as const }}>
+                    <span style={{ color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>92</span>
                   </div>
                 </div>
+                <p style={{ color: "#22c55e", fontSize: "0.78rem", fontWeight: 700 }}>Grade A — Viral Ready 🔥</p>
+              </div>
+            )}
 
-                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
-                  {demo.after.wins.map((win, i) => (
-                    <span key={i} style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: "0.58rem", padding: "0.1rem 0.45rem", borderRadius: "4px", fontWeight: 500 }}>✓ {win}</span>
+            {active === 3 && (
+              <div>
+                <p style={{ color: "#f59e0b", fontSize: "0.65rem", fontWeight: 700, marginBottom: "0.5rem", letterSpacing: "0.04em" }}>🎬 SCRIPT GENERATED</p>
+                {["HOOK: Lost 10kg without the gym...", "PROBLEM: Diets never worked for me...", "SOLUTION: Here's what changed it all..."].map((l, i) => (
+                  <p key={i} style={{ color: "#a1a1aa", fontSize: "0.74rem", lineHeight: 1.7, margin: "0 0 0.25rem" }}>{l}</p>
+                ))}
+              </div>
+            )}
+
+            {active === 4 && (
+              <div style={{ textAlign: "center" as const }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "3px", height: 40, marginBottom: "0.6rem" }}>
+                  {[8, 20, 14, 28, 10, 24, 16, 30, 12, 22, 9].map((h, i) => (
+                    <div key={i} style={{ width: 3, height: h, background: "#06b6d4", borderRadius: 2, animation: `pulse ${0.6 + (i % 4) * 0.15}s ease-in-out infinite alternate` }} />
                   ))}
                 </div>
-
-                {/* Growth badge */}
-                {phase === "counting" && displayViews > demo.before.views * 5 && (
-                  <div style={{ marginTop: "0.6rem", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "8px", padding: "0.4rem 0.65rem", display: "flex", justifyContent: "space-between", alignItems: "center", animation: "slideUp 0.3s ease" }}>
-                    <span style={{ color: "#52525b", fontSize: "0.65rem" }}>Growth vs before</span>
-                    <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "0.82rem" }}>
-                      +{Math.round((demo.after.views / demo.before.views - 1) * 100).toLocaleString()}%
-                    </span>
-                  </div>
-                )}
+                <p style={{ color: "#06b6d4", fontSize: "0.78rem", fontWeight: 700 }}>AI Voiceover — Hindi 🇮🇳</p>
+                <p style={{ color: "#3f3f46", fontSize: "0.65rem", marginTop: "0.2rem" }}>12 Indian languages supported</p>
               </div>
-            </div>
-          )}
+            )}
+
+            {active === 5 && (
+              <div>
+                <p style={{ color: "#ec4899", fontSize: "0.65rem", fontWeight: 700, marginBottom: "0.5rem", letterSpacing: "0.04em" }}>💬 CAPTION READY</p>
+                <p style={{ color: "#e4e4e7", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "0.5rem" }}>
+                  "Lost 10kg without the gym — here's exactly what I did 🔥"
+                </p>
+                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" as const }}>
+                  {["#weightloss", "#fitness", "#transformation"].map(t => (
+                    <span key={t} style={{ background: "rgba(236,72,153,0.08)", color: "#ec4899", fontSize: "0.62rem", padding: "0.15rem 0.5rem", borderRadius: "10px" }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {active === 6 && (
+              <div style={{ textAlign: "center" as const }}>
+                <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>✅</div>
+                <p style={{ color: "#22c55e", fontSize: "0.85rem", fontWeight: 800 }}>Ready to Post!</p>
+                <p style={{ color: "#3f3f46", fontSize: "0.68rem", marginTop: "0.3rem" }}>Hook + Script + Caption + Hashtags + Voice</p>
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// LIVE EXAMPLE OUTPUT CARD
+// ─────────────────────────────────────────────────────────────────────────
+function LiveExampleCard() {
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    let s = 0;
+    const t = setInterval(() => {
+      s += 4;
+      if (s >= 92) { s = 92; clearInterval(t); }
+      setScore(s);
+    }, 25);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{ background: "#080808", border: "1px solid rgba(34,197,94,0.18)", borderRadius: "16px", padding: "1.1rem", width: "100%", maxWidth: 440 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+        <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace" }}>LIVE EXAMPLE</span>
+        <span style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", fontSize: "0.6rem", fontWeight: 700, padding: "0.12rem 0.5rem", borderRadius: "20px" }}>Real output</span>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.85rem" }}>
+        <span style={{ color: "#3f3f46", fontSize: "0.72rem" }}>Input:</span>
+        <span style={{ background: "#0d0d0d", border: "1px solid #1f1f1f", color: "#e4e4e7", fontSize: "0.75rem", fontWeight: 600, padding: "0.2rem 0.65rem", borderRadius: "8px" }}>"weight loss"</span>
+      </div>
+
+      <div style={{ display: "flex", gap: "0.85rem", alignItems: "center", marginBottom: "0.85rem", background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.12)", borderRadius: "10px", padding: "0.7rem 0.85rem" }}>
+        <div style={{ position: "relative", width: 46, height: 46, flexShrink: 0 }}>
+          <svg width="46" height="46" style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={23} cy={23} r={19} fill="none" stroke="#1a1a1a" strokeWidth={4} />
+            <circle cx={23} cy={23} r={19} fill="none" stroke="#22c55e" strokeWidth={4}
+              strokeDasharray={`${2 * Math.PI * 19 * (score / 100)} ${2 * Math.PI * 19}`} strokeLinecap="round" />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#22c55e", fontWeight: 900, fontSize: "0.85rem" }}>{score}</span>
+          </div>
+        </div>
+        <div>
+          <p style={{ margin: 0, color: "#22c55e", fontWeight: 800, fontSize: "0.85rem" }}>Hook Score: Grade A</p>
+          <p style={{ margin: "0.1rem 0 0", color: "#52525b", fontSize: "0.68rem" }}>Viral-ready in one generation</p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column" as const, gap: "0.55rem" }}>
+        {[
+          { label: "🎣 Hook", text: "I lost 10kg without the gym — here's exactly what I did 🔥", color: "#a855f7" },
+          { label: "🎬 Script", text: "HOOK → PROBLEM → SOLUTION → CTA, fully written, 30-sec reel ready", color: "#f59e0b" },
+          { label: "💬 Caption", text: "Losing weight isn't about willpower, it's about the right system...", color: "#ec4899" },
+          { label: "#️⃣ Hashtags", text: "#weightloss #fitness #transformation #healthylifestyle +11 more", color: "#06b6d4" },
+        ].map(item => (
+          <div key={item.label} style={{ borderLeft: `2px solid ${item.color}`, paddingLeft: "0.6rem" }}>
+            <p style={{ margin: "0 0 0.1rem", color: item.color, fontSize: "0.62rem", fontWeight: 700 }}>{item.label}</p>
+            <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.72rem", lineHeight: 1.5 }}>{item.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SOCIAL PROOF STATS
+// ─────────────────────────────────────────────────────────────────────────
+const SOCIAL_PROOF_STATS = [
+  { icon: "🧰", stat: "20+", label: "AI Tools" },
+  { icon: "⚡", stat: "10–30 sec", label: "Result Time" },
+  { icon: "🇮🇳", stat: "12", label: "Indian Languages" },
+  { icon: "👥", stat: "Creator + Advertiser + Agency", label: "Built for everyone" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────
+// PLAN CARDS
+// ─────────────────────────────────────────────────────────────────────────
+const PLAN_CARDS = [
+  { icon: "🎨", name: "Creator", price: "From ₹499/mo", desc: "Hooks, scripts, captions, calendar, voiceover", color: "#8b5cf6" },
+  { icon: "📢", name: "Advertiser", price: "From ₹2,499/mo", desc: "Ad copy, ROI calculator, landing pages", color: "#06b6d4" },
+  { icon: "👑", name: "Agency", price: "₹8,999/mo", desc: "Everything unlocked + client management", color: "#f59e0b" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────
+// VIRA — AI ASSISTANT WIDGET (floating, bottom corner)
+// ─────────────────────────────────────────────────────────────────────────
+function ViraAssistant() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: "user" | "vira"; text: string }[]>([
+    { role: "vira", text: "Hi! I'm VIRA 👋 Ask me anything about VCI before you sign up — pricing, features, languages, anything." },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+
+  const ask = async () => {
+    const q = input.trim();
+    if (!q || loading) return;
+    setMessages(m => [...m, { role: "user", text: q }]);
+    setInput("");
+    setLoading(true);
+
+    const prompt = `You are VIRA, the friendly AI assistant for VCI (Viral Content Intelligence) — an AI platform that generates viral hooks, scripts, captions, hashtags, ad copy, landing pages and AI voiceovers in 12 Indian languages, for Creators, Advertisers and Agencies. VCI has 20+ AI tools and gives results in 10-30 seconds. Plans start at ₹499/mo (Creator), ₹2,499/mo (Advertiser), and ₹8,999/mo (Agency), with a free plan (25 credits) requiring no credit card.
+
+Answer this visitor's question about VCI in 2-4 short, friendly sentences. Be concise, helpful and encourage them to sign up if relevant. Do not use markdown formatting.
+
+Visitor's question: "${q}"`;
+
+    try {
+      const res = await fetch(`${BACKEND}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 300, messages: [{ role: "user", content: prompt }] }),
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "Sorry, I couldn't fetch an answer right now — feel free to sign up and explore VCI directly!";
+      setMessages(m => [...m, { role: "vira", text: text.trim() }]);
+    } catch {
+      setMessages(m => [...m, { role: "vira", text: "I'm having trouble connecting right now. Try signing up free — no credit card needed!" }]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ position: "fixed", bottom: "1.25rem", right: "1.25rem", zIndex: 500, fontFamily: "'Inter',sans-serif" }}>
+
+      {open && (
+        <div style={{
+          width: "min(340px, 88vw)", height: "min(440px, 70vh)",
+          background: "#0a0a0a", border: "1px solid rgba(139,92,246,0.25)", borderRadius: "18px",
+          marginBottom: "0.75rem", display: "flex", flexDirection: "column" as const,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", animation: "slideUp 0.25s ease",
+        }}>
+          {/* Header */}
+          <div style={{ background: "linear-gradient(135deg,#6d28d9,#7c3aed)", padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", flexShrink: 0 }}>🤖</div>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>VIRA</p>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.65rem" }}>AI Assistant · Ask anything</p>
+            </div>
+            <button onClick={() => setOpen(false)} style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 26, height: 26, borderRadius: "50%", cursor: "pointer", fontSize: "0.8rem" }}>✕</button>
+          </div>
+
+          {/* Messages */}
+          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "0.85rem", display: "flex", flexDirection: "column" as const, gap: "0.6rem" }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
+                <div style={{
+                  background: m.role === "user" ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "#141414",
+                  color: m.role === "user" ? "#fff" : "#d4d4d8",
+                  border: m.role === "vira" ? "1px solid #1f1f1f" : "none",
+                  borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                  padding: "0.55rem 0.75rem", fontSize: "0.78rem", lineHeight: 1.55,
+                }}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ alignSelf: "flex-start", background: "#141414", border: "1px solid #1f1f1f", borderRadius: "12px 12px 12px 2px", padding: "0.55rem 0.75rem", display: "flex", gap: "3px" }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#71717a", animation: `pulse 1s ${i * 0.15}s infinite` }} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: "0.65rem", borderTop: "1px solid #141414", display: "flex", gap: "0.4rem" }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && ask()}
+              placeholder="Ask about pricing, features..."
+              style={{ flex: 1, background: "#141414", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.55rem 0.75rem", color: "#f5f5f5", fontSize: "0.78rem", outline: "none", fontFamily: "'Inter',sans-serif" }}
+            />
+            <button onClick={ask} disabled={loading || !input.trim()}
+              style={{ background: !input.trim() ? "#1a1a1a" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: !input.trim() ? "#444" : "#fff", borderRadius: "10px", padding: "0 0.9rem", cursor: !input.trim() ? "not-allowed" : "pointer", fontSize: "0.8rem", fontWeight: 700 }}>
+              →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Trigger button */}
+      <button onClick={() => setOpen(!open)}
+        style={{
+          display: "flex", alignItems: "center", gap: "0.55rem",
+          background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none",
+          borderRadius: "50px", padding: open ? "0.7rem" : "0.7rem 1.1rem 0.7rem 0.7rem",
+          cursor: "pointer", boxShadow: "0 8px 28px rgba(109,40,217,0.4)",
+          marginLeft: "auto", float: "right" as const,
+        }}>
+        <span style={{ position: "relative", width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", flexShrink: 0 }}>
+          🤖
+          <span style={{ position: "absolute", top: -2, right: -2, width: 9, height: 9, borderRadius: "50%", background: "#22c55e", border: "2px solid #6d28d9", animation: "pulse 2s infinite" }} />
+        </span>
+        {!open && <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.78rem", whiteSpace: "nowrap" as const }}>Meet VIRA — Ask anything</span>}
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MAIN AUTH COMPONENT
+// ─────────────────────────────────────────────────────────────────────────
 export default function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [reviews, setReviews] = useState<any[]>([]);
@@ -420,6 +520,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         .mode-link:hover { opacity: 0.75; }
         .marquee-track { display: flex; animation: marquee 40s linear infinite; width: max-content; }
         .marquee-track:hover { animation-play-state: paused; }
+        .hero-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(109,40,217,0.35) !important; }
         @media (max-width: 900px) { .auth-left { display: none !important; } .auth-right { width: 100% !important; min-height: 100vh; padding: 1.75rem 1.25rem !important; justify-content: flex-start !important; padding-top: 2.5rem !important; } .auth-right > div { max-width: 100% !important; width: 100% !important; } .auth-input { font-size: 1rem !important; padding: 0.9rem 1rem !important; -webkit-appearance: none; } .submit-btn { padding: 1rem !important; font-size: 0.95rem !important; } } @media (max-width: 400px) { .auth-right { padding: 1.5rem 1rem !important; } }
       `}</style>
 
@@ -433,53 +534,88 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%", padding: "2.5rem 3rem", overflowY: "auto" }}>
 
             {/* Logo */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "2.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "2rem" }}>
               <div style={{ width: 30, height: 30, background: "#6d28d9", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>⚡</div>
               <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em" }}>VCI</span>
               <span style={{ color: "#3f3f46", fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.06em" }}>VIRAL CONTENT INTELLIGENCE</span>
             </div>
 
             {/* Headline */}
-            <div style={{ marginBottom: "2rem" }}>
+            <div style={{ marginBottom: "1.75rem" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "0.2rem 0.7rem", marginBottom: "1rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 2s infinite" }} />
-                <span style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 500 }}>500+ creators & agencies use VCI</span>
+                <span style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 500 }}>500+ creators, advertisers & agencies use VCI</span>
               </div>
-              <h1 style={{ fontSize: "clamp(1.8rem,2.8vw,2.5rem)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.03em", marginBottom: "0.75rem", color: "#fff" }}>
-                Stop guessing.<br />
-                <span style={{ color: "#6d28d9" }}>Start going viral.</span>
+              <h1 style={{ fontSize: "clamp(1.7rem,2.6vw,2.35rem)", fontWeight: 800, lineHeight: 1.18, letterSpacing: "-0.03em", marginBottom: "0.85rem", color: "#fff" }}>
+                India's First <span style={{ color: "#6d28d9" }}>AI Growth Platform</span><br />
+                for Creators &amp; Advertisers
               </h1>
-              <p style={{ color: "#71717a", fontSize: "0.88rem", lineHeight: 1.8, maxWidth: 380 }}>
-                See exactly how VCI transforms weak content into viral posts — backed by real YouTube & Google trend data.
+              <p style={{ color: "#71717a", fontSize: "0.87rem", lineHeight: 1.85, maxWidth: 420, marginBottom: "1.25rem" }}>
+                Generate viral hooks, scripts, captions, hashtags, ad copies, landing pages
+                and AI voiceovers in <strong style={{ color: "#a1a1aa" }}>12 Indian languages</strong> —
+                all from one dashboard.
               </p>
+
+              {/* Hero CTA */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flexWrap: "wrap" as const }}>
+                <button className="hero-cta-btn" onClick={() => setMode("signup")}
+                  style={{ background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: "#fff", padding: "0.75rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'Inter',sans-serif", boxShadow: "0 6px 20px rgba(109,40,217,0.28)", transition: "all 0.2s", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  Get Started Free →
+                </button>
+                <span style={{ color: "#52525b", fontSize: "0.72rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  No credit card required
+                </span>
+              </div>
             </div>
 
-            {/* Before/After Demo */}
-            <div style={{ marginBottom: "2rem" }}>
+            {/* Hero flow animation */}
+            <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
                 <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 1.5s infinite" }} />
-                <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace" }}>LIVE BEFORE / AFTER DEMO</span>
+                <span style={{ color: "#52525b", fontSize: "0.62rem", fontWeight: 600, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace" }}>SEE THE FULL FLOW — LIVE</span>
               </div>
-              <BeforeAfterDemo />
+              <HeroFlowAnimation />
             </div>
 
-            {/* Stats */}
-            <div style={{ display: "flex", gap: "2rem", marginBottom: "2rem" }}>
-              {[
-                { num: "10x", label: "Faster than manual" },
-                { num: "15+", label: "Platforms" },
-                { num: "30+", label: "Languages" },
-              ].map((s, i) => (
-                <div key={i}>
-                  <div style={{ color: "#fff", fontWeight: 800, fontSize: "1.3rem", letterSpacing: "-0.03em" }}>{s.num}</div>
-                  <div style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 500, marginTop: "0.1rem" }}>{s.label}</div>
+            {/* Live example output card */}
+            <div style={{ marginBottom: "1.75rem" }}>
+              <LiveExampleCard />
+            </div>
+
+            {/* Social proof stats grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem", marginBottom: "1.75rem" }}>
+              {SOCIAL_PROOF_STATS.map((s, i) => (
+                <div key={i} style={{ background: "#080808", border: "1px solid #141414", borderRadius: "12px", padding: "0.75rem 0.85rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.15rem" }}>
+                    <span style={{ fontSize: "0.85rem" }}>{s.icon}</span>
+                    <span style={{ color: "#fff", fontWeight: 800, fontSize: s.stat.length > 6 ? "0.78rem" : "1rem", letterSpacing: "-0.02em", lineHeight: 1.2 }}>{s.stat}</span>
+                  </div>
+                  <div style={{ color: "#52525b", fontSize: "0.65rem", fontWeight: 500 }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
+            {/* Plan cards */}
+            <div style={{ marginBottom: "1.75rem" }}>
+              <div style={{ color: "#3f3f46", fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.65rem", fontFamily: "'DM Mono', monospace" }}>PLANS FOR EVERY GOAL</div>
+              <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" as const }}>
+                {PLAN_CARDS.map(p => (
+                  <div key={p.name} style={{ flex: "1 1 140px", background: "#080808", border: `1px solid ${p.color}22`, borderRadius: "12px", padding: "0.85rem 0.9rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem" }}>
+                      <span style={{ fontSize: "1rem" }}>{p.icon}</span>
+                      <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>{p.name}</span>
+                    </div>
+                    <p style={{ color: p.color, fontWeight: 700, fontSize: "0.72rem", marginBottom: "0.35rem" }}>{p.price}</p>
+                    <p style={{ color: "#52525b", fontSize: "0.65rem", lineHeight: 1.5 }}>{p.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Reviews marquee */}
             <div style={{ overflow: "hidden" }}>
-              <div style={{ color: "#3f3f46", fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.65rem", fontFamily: "'DM Mono', monospace" }}>CREATOR REVIEWS</div>
+              <div style={{ color: "#3f3f46", fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.06em", marginBottom: "0.65rem", fontFamily: "'DM Mono', monospace" }}>CREATOR &amp; ADVERTISER REVIEWS</div>
               <div className="marquee-track">
                 {[...allReviews, ...allReviews].map((r, i) => (
                   <div key={i} style={{ background: "#080808", border: "1px solid #111", borderRadius: "8px", padding: "0.65rem 0.85rem", minWidth: "190px", maxWidth: "190px", marginRight: "0.5rem", flexShrink: 0 }}>
@@ -515,7 +651,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                 {mode === "login" ? "Welcome back" : mode === "signup" ? "Get started for free" : "Reset your password"}
               </h2>
               <p style={{ color: "#52525b", fontSize: "0.84rem", lineHeight: 1.6 }}>
-                {mode === "login" ? "Sign in to your VCI account to continue" : mode === "signup" ? "Join 500+ creators already using VCI" : "Enter your email and we'll send a reset link"}
+                {mode === "login" ? "Sign in to your VCI account to continue" : mode === "signup" ? "Join 500+ creators, advertisers & agencies using VCI" : "Enter your email and we'll send a reset link"}
               </p>
             </div>
 
@@ -598,9 +734,15 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                       <span style={{ width: 14, height: 14, border: "2px solid #333", borderTopColor: "#6d28d9", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
                       Please wait...
                     </span>
-                  : mode === "login" ? "Sign in" : mode === "signup" ? "Create free account" : "Send reset link"
+                  : mode === "login" ? "Sign in" : mode === "signup" ? "Get Started Free" : "Send reset link"
                 }
               </button>
+
+              {mode === "signup" && (
+                <p style={{ textAlign: "center" as const, color: "#3f3f46", fontSize: "0.7rem", marginTop: "-0.3rem" }}>
+                  No credit card required · Cancel anytime
+                </p>
+              )}
             </div>
 
             {/* Back to login for forgot */}
@@ -618,12 +760,12 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
                   <span style={{ color: "#3f3f46", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.04em" }}>
                     {mode === "signup" ? "FREE PLAN INCLUDES" : "WHAT YOU GET"}
                   </span>
-                  <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", color: "#8b5cf6", fontSize: "0.62rem", fontWeight: 600, padding: "0.1rem 0.5rem", borderRadius: "4px" }}>No card required</span>
+                  <span style={{ background: "rgba(109,40,217,0.1)", border: "1px solid rgba(109,40,217,0.2)", color: "#8b5cf6", fontSize: "0.62rem", fontWeight: 600, padding: "0.1rem 0.5rem", borderRadius: "4px" }}>No credit card required</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                   {(mode === "signup"
-                    ? ["10 free credits to start", "Viral hooks & title ideas", "Hook scoring (A–F grade)", "Instagram, YouTube & more"]
-                    : ["All your generated content", "Hook scores & analytics", "30-day content calendar", "Pro plans from ₹299/mo"]
+                    ? ["25 free credits to start", "Viral hooks, scripts & captions", "Hook scoring (A–F grade)", "12 Indian languages + English"]
+                    : ["All your generated content", "Hook scores & analytics", "30-day content calendar", "Creator, Advertiser & Agency plans"]
                   ).map(f => (
                     <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#6d28d9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -648,6 +790,9 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* VIRA AI Assistant — floating widget, all screens */}
+      <ViraAssistant />
     </>
   );
 }
