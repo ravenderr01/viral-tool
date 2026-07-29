@@ -4331,13 +4331,42 @@ function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: numb
   }
   return buf;
 }
+// ══════════════════════════════════════════════════════════════════════════
+// HOW TO USE THIS FILE:
+// 1. Open your App.tsx
+// 2. Find where "function BackgroundMusicMixer(" starts — select from there
+//    down to the closing "}" right before "function ScriptLab(" starts
+// 3. Delete that whole selected block, paste everything below in its place
+//    (both functions together, exactly as they appear here)
+// 4. Also add this small block ABOVE "function AnimatedScore(" in App.tsx
+//    (right after the CONTENT_TYPES line) if you haven't already:
+//
+//    const STYLE_ACCENTS: Record<string, { accent: string; icon: string }> = {
+//      "Tutorial":     { accent: "#06b6d4", icon: "🎓" },
+//      "Story":        { accent: "#f59e0b", icon: "📖" },
+//      "POV":          { accent: "#ec4899", icon: "👁️" },
+//      "Challenge":    { accent: "#ef4444", icon: "🔥" },
+//      "Before/After": { accent: "#22c55e", icon: "⚡" },
+//      "Motivation":   { accent: "#a855f7", icon: "🚀" },
+//      "Tips":         { accent: "#f59e0b", icon: "💡" },
+//      "Review":       { accent: "#3b82f6", icon: "⭐" },
+//      "Day in Life":  { accent: "#14b8a6", icon: "☀️" },
+//      "Comedy":       { accent: "#f97316", icon: "😂" },
+//      "Awareness":    { accent: "#0ea5e9", icon: "📢" },
+//      "Listicle":     { accent: "#8b5cf6", icon: "📋" },
+//      "Interview":    { accent: "#10b981", icon: "🎙️" },
+//    };
+//
+// 5. Save. That's it — no find/replace needed, just a full swap of the two
+//    functions plus adding the small STYLE_ACCENTS constant above.
+// ══════════════════════════════════════════════════════════════════════════
 
-function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle }: { audioUrl: string; scriptStyle: string }) {
+function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string; scriptStyle: string; aiDisabled?: boolean }) {
   const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
   const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
 
   // Voice source
-  const [voiceMode,     setVoiceMode]     = useState<"ai"|"upload"|"record">("ai");
+  const [voiceMode,     setVoiceMode]     = useState<"ai"|"upload"|"record">(aiDisabled ? "record" : "ai");
   const [userVoiceUrl,  setUserVoiceUrl]  = useState<string|null>(null);
   const [userVoiceName, setUserVoiceName] = useState("");
   const [recording,     setRecording]     = useState(false);
@@ -4560,15 +4589,26 @@ function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle }: { audioUrl:
       <div style={sBox}>
         <p style={{ ...sLbl, color:"#06b6d4" }}>🎙️ VOICE / VOICEOVER</p>
         <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
-          {([["ai","🤖 AI Voice"],["upload","📁 Upload File"],["record","🎤 Record"]] as const).map(([m,l])=>(
-            <button key={m} onClick={()=>{setVoiceMode(m);setError("");}} style={mBtn(voiceMode===m,"#06b6d4")}>{l}</button>
+          {([["ai", aiDisabled ? "🤖 AI Voice (Soon)" : "🤖 AI Voice"],["upload","📁 Upload File"],["record","🎤 Record"]] as const).map(([m,l])=>(
+            <button key={m} disabled={aiDisabled && m==="ai"}
+              onClick={()=>{ if (aiDisabled && m==="ai") return; setVoiceMode(m as any); setError(""); }}
+              style={{ ...mBtn(voiceMode===m,"#06b6d4"), opacity: (aiDisabled && m==="ai") ? 0.35 : 1, cursor: (aiDisabled && m==="ai") ? "not-allowed" : "pointer" }}>
+              {l}
+            </button>
           ))}
         </div>
         {voiceMode==="ai" && (
-          <div style={{ background:"#050508", border:"1px solid rgba(6,182,212,0.15)", borderRadius:"8px", padding:"0.6rem" }}>
-            <p style={{ margin:"0 0 0.3rem", color:"#3f3f46", fontSize:"0.62rem" }}>AI-generated voiceover</p>
-            <audio controls src={aiAudioUrl} style={{ width:"100%", height:"32px" }} />
-          </div>
+          aiAudioUrl ? (
+            <div style={{ background:"#050508", border:"1px solid rgba(6,182,212,0.15)", borderRadius:"8px", padding:"0.6rem" }}>
+              <p style={{ margin:"0 0 0.3rem", color:"#3f3f46", fontSize:"0.62rem" }}>AI-generated voiceover</p>
+              <audio controls src={aiAudioUrl} style={{ width:"100%", height:"32px" }} />
+            </div>
+          ) : (
+            <div style={{ background:"#050508", border:"1px dashed rgba(6,182,212,0.25)", borderRadius:"8px", padding:"0.85rem", textAlign:"center" }}>
+              <p style={{ margin:0, color:"#06b6d4", fontSize:"0.7rem", fontWeight:700 }}>🔊 AI Voice — Coming Soon</p>
+              <p style={{ margin:".3rem 0 0", color:"#52525b", fontSize:"0.65rem" }}>Use Upload or Record instead for now.</p>
+            </div>
+          )
         )}
         {voiceMode==="upload" && (
           <div>
@@ -4752,7 +4792,7 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   ];
   const PLATFORMS = userType === "business" ? ALL_ADS_PLATFORMS : ALL_SOCIAL_PLATFORMS;
 
-  const STYLES = ["Tutorial", "Story", "POV", "Challenge", "Before/After", "Motivation", "Tips", "Review", "Day in Life", "Comedy"];
+  const STYLES = ["Tutorial", "Story", "POV", "Challenge", "Before/After", "Motivation", "Tips", "Review", "Day in Life", "Comedy", "Awareness", "Listicle", "Interview"];
   const DURATIONS = ["15 sec", "30 sec", "60 sec", "90 sec"];
 
   const copyText = (text: string, key: string) => {
@@ -4836,13 +4876,19 @@ Respond ONLY in JSON:
 
 
   const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
-    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN", styles: ["Default", "Cheerful", "Newscast", "Empathetic"] },
-    "Tamil":    { Female: "ta-IN-PallaviNeural",  Male: "ta-IN-ValluvarNeural",  code: "ta-IN" },
-    "Telugu":   { Female: "te-IN-ShrutiNeural",   Male: "te-IN-MohanNeural",     code: "te-IN" },
-    "Marathi":  { Female: "mr-IN-AarohiNeural",   Male: "mr-IN-ManoharNeural",   code: "mr-IN" },
-    "Gujarati": { Female: "gu-IN-DhwaniNeural",   Male: "gu-IN-NiranjanNeural",  code: "gu-IN" },
-    "Bengali":  { Female: "bn-IN-TanishaaNeural", Male: "bn-IN-BashkarNeural",   code: "bn-IN" },
-    "English":  { Female: "en-US-AvaNeural",      Male: "en-US-AndrewNeural",    code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
+    "Hindi":     { Female: "hi-IN-SwaraNeural",     Male: "hi-IN-MadhurNeural",     code: "hi-IN", styles: ["Default", "Cheerful", "Newscast", "Empathetic"] },
+    "Tamil":     { Female: "ta-IN-PallaviNeural",   Male: "ta-IN-ValluvarNeural",   code: "ta-IN" },
+    "Telugu":    { Female: "te-IN-ShrutiNeural",    Male: "te-IN-MohanNeural",      code: "te-IN" },
+    "Marathi":   { Female: "mr-IN-AarohiNeural",    Male: "mr-IN-ManoharNeural",    code: "mr-IN" },
+    "Gujarati":  { Female: "gu-IN-DhwaniNeural",    Male: "gu-IN-NiranjanNeural",   code: "gu-IN" },
+    "Bengali":   { Female: "bn-IN-TanishaaNeural",  Male: "bn-IN-BashkarNeural",    code: "bn-IN" },
+    "Kannada":   { Female: "kn-IN-SapnaNeural",     Male: "kn-IN-GaganNeural",      code: "kn-IN" },
+    "Malayalam": { Female: "ml-IN-SobhanaNeural",   Male: "ml-IN-MidhunNeural",     code: "ml-IN" },
+    "Punjabi":   { Female: "pa-IN-VaaniNeural",     Male: "pa-IN-OjasNeural",       code: "pa-IN" },
+    "Odia":      { Female: "or-IN-SubhasiniNeural", Male: "or-IN-SukantNeural",     code: "or-IN" },
+    "Assamese":  { Female: "as-IN-YashicaNeural",   Male: "as-IN-PriyomNeural",     code: "as-IN" },
+    "Urdu":      { Female: "ur-IN-GulNeural",       Male: "ur-IN-SalmanNeural",     code: "ur-IN" },
+    "English":   { Female: "en-US-AvaNeural",       Male: "en-US-AndrewNeural",     code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
   };
 
   // Auto-select the voice language to match whatever language the script was generated in,
@@ -4958,6 +5004,8 @@ Respond ONLY in JSON:
       "Facebook":   { bg:["#001848","#0d2261"], accent:"#1877f2", badge:"#1877f2", badgeFg:"#fff", label:"f Facebook" },
     };
     const cfg = CONFIGS[plt] || { bg:["#050010","#1a0a3a"], accent:"#7c3aed", badge:"#6d28d9", badgeFg:"#fff", label:plt };
+    const styleTheme = STYLE_ACCENTS[sty] || { accent: cfg.accent, icon: "✨" };
+    cfg.accent = styleTheme.accent; // thumbnail ka poora color-theme ab script ki style pe based hai
 
     // ── BACKGROUND ───────────────────────────────────────────────────────────
     // Base gradient
@@ -4997,15 +5045,34 @@ Respond ONLY in JSON:
     ctx.fillStyle = cfg.accent;
     ctx.fillRect(0, 0, isVertical ? 8 : 6, H);
 
-    // ── PLATFORM BADGE (top) — minimal, no style/duration text ──────────────
+    // ── STYLE ICON BADGE + KEYWORD PILL (top) ────────────────────────────────
     const pad = isVertical ? 70 : 48;
 
-    // Just a small accent corner mark — no text badges that look generic
-    ctx.fillStyle = cfg.accent;
-    ctx.globalAlpha = 0.9;
-    // Small decorative accent pill top-left (no text — clean look)
-    roundRect(pad, isVertical ? 80 : 48, isVertical ? 8 : 6, isVertical ? 80 : 60, 4);
-    ctx.globalAlpha = 1;
+    // Style icon badge — top-left, shows what type of content this is
+    const badgeR = isVertical ? 30 : 22;
+    const badgeCx = pad + badgeR, badgeCy = (isVertical ? 80 : 48) + badgeR;
+    ctx.fillStyle = styleTheme.accent + "22";
+    ctx.beginPath(); ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = styleTheme.accent; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); ctx.stroke();
+    ctx.font = `${badgeR}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(styleTheme.icon, badgeCx, badgeCy + 2);
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
+
+    // Topic pill — the keyword the script was built from
+    if (keyword && keyword.trim()) {
+      const pillY = badgeCy + badgeR + (isVertical ? 18 : 12);
+      ctx.font = `700 ${isVertical ? 22 : 16}px Arial`;
+      const pillText = `#${keyword.trim().toUpperCase().replace(/\s+/g, "")}`;
+      const pillPad = isVertical ? 16 : 12;
+      const pillW = ctx.measureText(pillText).width + pillPad * 2;
+      const pillH = isVertical ? 38 : 28;
+      ctx.fillStyle = styleTheme.accent + "20";
+      roundRect(pad, pillY, pillW, pillH, pillH / 2);
+      ctx.fillStyle = styleTheme.accent;
+      ctx.fillText(pillText, pad + pillPad, pillY + pillH / 2 + (isVertical ? 7 : 5));
+    }
 
     // ── TITLE (large, center of canvas) ──────────────────────────────────────
     const titleFS  = isVertical ? Math.min(96, Math.max(72, Math.floor(1800 / title.length))) : Math.min(80, Math.max(52, Math.floor(1400 / title.length)));
@@ -5121,6 +5188,18 @@ Write with this exact level of specificity and escalation, in whatever language 
       "Comedy": {
         instruction: `Build toward a clear punchline or comedic twist — use specific, relatable absurdity rather than generic jokes. Timing matters: set up the premise quickly, then land the punch.`,
         sectionLabels: ["HOOK", "SETUP", "ESCALATION", "PUNCHLINE"],
+      },
+      "Awareness": {
+        instruction: `Write this as an AWARENESS/EDUCATIONAL script — the goal is to inform and shift perspective, not just entertain. Open with a surprising fact or misconception the audience likely believes. Present the real information clearly and simply, using concrete numbers or examples wherever possible (never vague claims like "many people don't know this"). End with a clear, actionable takeaway — what should the viewer do or think differently now. Tone: credible, calm, non-alarmist — like a well-informed friend explaining something important, not a lecture.`,
+        sectionLabels: ["HOOK", "THE MISCONCEPTION", "THE REAL FACTS", "TAKEAWAY"],
+      },
+      "Listicle": {
+        instruction: `Structure as a clear numbered list — each point must be genuinely distinct (no overlapping ideas) and independently useful even if the viewer only remembers one. Rank points from good to best, or most to least surprising, for a satisfying build. Each item needs a specific example, number, or mini-story — never a vague one-liner.`,
+        sectionLabels: ["HOOK", "POINTS 1-2", "POINTS 3-4", "FINAL POINT + CTA"],
+      },
+      "Interview": {
+        instruction: `Write as a Q&A / interview-style script — either the creator asking themselves a common audience question, or a simulated back-and-forth. Each answer should be direct and specific, avoiding generic advice. Include at least one unexpected or counter-intuitive answer that makes the viewer want to keep watching. Tone: conversational, authentic, unscripted-sounding — like a real conversation, not a rehearsed monologue.`,
+        sectionLabels: ["HOOK", "QUESTION 1", "QUESTION 2", "FINAL INSIGHT"],
       },
     };
 
@@ -5412,7 +5491,7 @@ Respond ONLY in JSON:
             </div>
           )}
 
-          {/* AI Voice — Convert script to spoken audio */}
+          {/* AI Voice — Convert script to spoken audio (Coming Soon — buttons disabled, Mix Studio below handles voice) */}
           <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
               <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT TO AI VOICE</p>
@@ -5473,9 +5552,9 @@ Respond ONLY in JSON:
 
             {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
 
-            <button onClick={() => convertToVoice(generateResult.script)} disabled={voiceLoading}
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.84rem", cursor: voiceLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-              {voiceLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating voice...</> : "🎙️ Generate Voiceover"}
+            <button disabled
+              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: "#111", border: "1px dashed rgba(6,182,212,0.3)", color: "#52525b", fontWeight: 700, fontSize: "0.84rem", cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              🔒 AI Voiceover — Coming Soon (use Mix Studio below)
             </button>
 
             {audioUrl && (
@@ -5496,10 +5575,8 @@ Respond ONLY in JSON:
             )}
           </div>
 
-          {/* Audio */}
-          {/* 🎵 BACKGROUND MUSIC */}
-          {/* 🎵 BACKGROUND MUSIC — auto-mixes on voiceover generation */}
-          {audioUrl && <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} />}
+          {/* 🎛️ MIX STUDIO — record/upload voice + upload/built-in music — always available */}
+          <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} aiDisabled={true} />
 
           {/* Pro Tips */}
           {generateResult.pro_tips && (
@@ -5623,7 +5700,7 @@ Respond ONLY in JSON:
             <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{improveResult.after?.script}</p>
           </div>
 
-          {/* AI Voice — Convert the IMPROVED script to spoken audio */}
+          {/* AI Voice — Convert the IMPROVED script to spoken audio (Coming Soon) */}
           <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
               <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT IMPROVED SCRIPT TO AI VOICE</p>
@@ -5682,9 +5759,9 @@ Respond ONLY in JSON:
 
             {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
 
-            <button onClick={() => convertToVoice(improveResult.after?.script || "")} disabled={voiceLoading}
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: voiceLoading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: voiceLoading ? "#444" : "#000", fontWeight: 700, fontSize: "0.84rem", cursor: voiceLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-              {voiceLoading ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating voice...</> : "🎙️ Generate Voiceover for Improved Script"}
+            <button disabled
+              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: "#111", border: "1px dashed rgba(6,182,212,0.3)", color: "#52525b", fontWeight: 700, fontSize: "0.84rem", cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              🔒 AI Voiceover — Coming Soon (use Mix Studio below)
             </button>
 
             {audioUrl && (
@@ -5702,6 +5779,9 @@ Respond ONLY in JSON:
               </div>
             )}
           </div>
+
+          {/* 🎛️ MIX STUDIO — always available for the improved script too */}
+          <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} aiDisabled={true} />
 
           {/* Improvements + Tips */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
