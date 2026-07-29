@@ -369,6 +369,21 @@ function getUPIQR(upiId: string, amount: number) {
 }
 
 const CONTENT_TYPES = ["Tips","Story","Mistakes","Behind the Scenes","Q&A","Tutorial","Motivation","Trend","Case Study","Poll","Review","Challenge"];
+const STYLE_ACCENTS: Record<string, { accent: string; icon: string }> = {
+  "Tutorial":     { accent: "#06b6d4", icon: "🎓" },
+  "Story":        { accent: "#f59e0b", icon: "📖" },
+  "POV":          { accent: "#ec4899", icon: "👁️" },
+  "Challenge":    { accent: "#ef4444", icon: "🔥" },
+  "Before/After": { accent: "#22c55e", icon: "⚡" },
+  "Motivation":   { accent: "#a855f7", icon: "🚀" },
+  "Tips":         { accent: "#f59e0b", icon: "💡" },
+  "Review":       { accent: "#3b82f6", icon: "⭐" },
+  "Day in Life":  { accent: "#14b8a6", icon: "☀️" },
+  "Comedy":       { accent: "#f97316", icon: "😂" },
+  "Awareness":    { accent: "#0ea5e9", icon: "📢" },
+  "Listicle":     { accent: "#8b5cf6", icon: "📋" },
+  "Interview":    { accent: "#10b981", icon: "🎙️" },
+};
 
 function AnimatedScore({ target, color }: { target: number; color: string }) {
   const [val, setVal] = useState(0);
