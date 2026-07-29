@@ -521,13 +521,15 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         .marquee-track { display: flex; animation: marquee 40s linear infinite; width: max-content; }
         .marquee-track:hover { animation-play-state: paused; }
         .hero-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(109,40,217,0.35) !important; }
-        @media (max-width: 900px) { .auth-left { display: none !important; } .auth-right { width: 100% !important; min-height: 100vh; padding: 1.75rem 1.25rem !important; justify-content: flex-start !important; padding-top: 2.5rem !important; } .auth-right > div { max-width: 100% !important; width: 100% !important; } .auth-input { font-size: 1rem !important; padding: 0.9rem 1rem !important; -webkit-appearance: none; } .submit-btn { padding: 1rem !important; font-size: 0.95rem !important; } } @media (max-width: 400px) { .auth-right { padding: 1.5rem 1rem !important; } }
+        .auth-shell { height: 100vh; overflow: hidden; }
+        @supports (height: 100dvh) { .auth-shell { height: 100dvh; } }
+        @media (max-width: 900px) { .auth-left { display: none !important; } .auth-right { width: 100% !important; height: 100% !important; padding: 1.75rem 1.25rem !important; justify-content: flex-start !important; padding-top: 2.5rem !important; } .auth-right > div { max-width: 100% !important; width: 100% !important; } .auth-input { font-size: 1rem !important; padding: 0.9rem 1rem !important; -webkit-appearance: none; } .submit-btn { padding: 1rem !important; font-size: 0.95rem !important; } } @media (max-width: 400px) { .auth-right { padding: 1.5rem 1rem !important; } }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#000000", display: "flex", fontFamily: "'Inter', sans-serif" }}>
+      <div className="auth-shell" style={{ background: "#000000", display: "flex", fontFamily: "'Inter', sans-serif" }}>
 
         {/* ── LEFT PANEL ── */}
-        <div className="auth-left" style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", position: "relative", overflow: "hidden" }}>
+        <div className="auth-left" style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(#0f0f0f 1px, transparent 1px), linear-gradient(90deg, #0f0f0f 1px, transparent 1px)", backgroundSize: "44px 44px", opacity: 0.5 }} />
           <div style={{ position: "absolute", top: -80, left: "20%", width: 350, height: 350, background: "radial-gradient(circle, rgba(109,40,217,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
 
@@ -633,7 +635,7 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="auth-right" style={{ width: 500, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 3rem", background: "#000", overflowY: "auto", borderLeft: "1px solid #111", boxSizing: "border-box" }}>
+        <div className="auth-right" style={{ width: 500, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2.5rem 3rem", background: "#000", overflowY: "auto", borderLeft: "1px solid #111", boxSizing: "border-box" }}>
 
           <div style={{ width: "100%", maxWidth: 400, animation: "slideUp 0.4s ease" }}>
 
