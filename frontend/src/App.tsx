@@ -4375,8 +4375,7 @@ function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: numb
 // 5. Save. That's it — no find/replace needed, just a full swap of the two
 //    functions plus adding the small STYLE_ACCENTS constant above.
 // ══════════════════════════════════════════════════════════════════════════
-
-function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string; scriptStyle: string; aiDisabled?: boolean }) {
+function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string | null; scriptStyle: string; aiDisabled?: boolean }) {
   const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
   const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
 
