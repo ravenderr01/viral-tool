@@ -48,71 +48,216 @@ const fireCopySignal = (feature: string, contentType: string, text: string, extr
 
 const detectNiche = (keyword: string, currentNiche: string): string => {
   const kw = keyword.toLowerCase();
-  if (kw.match(/weight|gym|fitness|workout|diet|protein|fat|muscle|exercise|yoga|zumba|cardio|abs|bicep|squat|deadlift|bench press|gains|cut|bulk|shred/)) return "Fitness";
-  if (kw.match(/money|income|invest|business|startup|freelanc|passive|earn|profit|revenue|entrepreneur|side hustle|self employed|b2b|b2c|sales|client|agency|dropship/)) return "Business";
-  if (kw.match(/\bai\b|tech|code|app|software|chatgpt|programming|developer|crypto|saas|python|javascript|web dev|machine learning|data science|automation|no code/)) return "Tech";
-  if (kw.match(/food|recipe|cook|eat|meal|biryani|street food|restaurant|bake|chef|snack|breakfast|lunch|dinner|thali|curry|dal|roti|dessert|sweet|chaat/)) return "Food";
-  if (kw.match(/travel|trip|tour|vacation|hotel|flight|destination|backpack|explore|road trip|himalaya|goa|manali|kashmir|rajasthan|kerala|hills|beach|visa/)) return "Travel";
-  if (kw.match(/fashion|style|outfit|clothes|wear|dress|skincare|beauty|makeup|glow|ootd|haul|thrift|ethnic|saree|kurta|western|accessori/)) return "Fashion & Style";
-  if (kw.match(/cricket|football|sport|match|player|team|ipl|fifa|basketball|badminton|kabaddi|hockey|virat|rohit|dhoni|messi|ronaldo|nba|isl/)) return "Sports";
-  if (kw.match(/motivation|mindset|success|hustle|inspire|goal|discipline|growth|grind|winner|champion|believe|attitude|positive|consistency/)) return "Motivational";
-  if (kw.match(/meditation|spiritual|manifest|chakra|astrology|mindful|universe|zodiac|tarot|numerology|awakening|consciousness|divine|karma/)) return "Spirituality";
-  if (kw.match(/mental|anxiety|stress|depression|therapy|self care|emotion|healing|overthink|burnout|loneliness|confidence|self love|self worth/)) return "Mental Health";
-  if (kw.match(/real estate|property|house|rent|flat|plot|home buying|apartment|builder|construction|interior|vastu|bhk|society|gated community/)) return "Real Estate";
-  if (kw.match(/study|learn|education|course|exam|college|school|skill|tutorial|upsc|jee|neet|gate|mba|ielts|online learning|degree|scholarship/)) return "Education";
-  if (kw.match(/facebook ads|google ads|marketing|campaign|funnel|conversion|copywriting|meta ads|digital marketing|seo|email marketing|influencer/)) return "Ads & Marketing";
-  if (kw.match(/gaming|pubg|bgmi|battleground|free fire|freefire|esport|minecraft|stream|gamer|valorant|cod|call of duty|fortnite|roblox|gta|league|mobile legend|clash|gameplay|squad|rank push|clutch|headshot|pochinki|noobs/)) return "Gaming";
-  if (kw.match(/vlog|day in my life|daily routine|morning routine|night routine|lifestyle vlog|a day|24 hours|week in my life/)) return "Daily Vlog";
-  if (kw.match(/comedy|funny|meme|joke|prank|skit|humor|roast|troll|viral video|react|cringe|relatable/)) return "Comedy & Entertainment";
-  if (kw.match(/budget|save money|tax|mutual fund|sip|loan|personal finance|stock market|demat|zerodha|groww|fd|ppf|insurance|emi|credit card/)) return "Personal Finance";
-  if (kw.match(/lifestyle|minimalism|productivity|habit|self improvement|declutter|morning|routine|journal|notion|planner|life hack|work life/)) return "Lifestyle";
-  if (kw.match(/health|wellness|immune|vitamin|nutrition|sleep|detox|ayurveda|gut|digestion|diabetes|thyroid|bp|sugar|natural remedy|home remedy/)) return "Health & Wellness";
-  // E-commerce / product-selling categories (for advertisers selling physical products)
-  if (kw.match(/\bbag|handbag|backpack|purse|luggage|wallet\b/)) return "Bags & Accessories";
-  if (kw.match(/shoe|sneaker|sandal|footwear|boots|heels/)) return "Footwear";
-  if (kw.match(/jewelry|jewellery|necklace|earring|bracelet|ring\b/)) return "Jewelry";
-  if (kw.match(/furniture|sofa|table|chair|decor|home decor|interior/)) return "Home & Furniture";
-  if (kw.match(/electronics|gadget|laptop|mobile|phone|headphone|camera|smartwatch/)) return "Electronics";
-  if (kw.match(/toy|kids product|baby product|stroller|playset/)) return "Toys & Kids";
-  if (kw.match(/pet|dog food|cat food|pet accessories|pet care/)) return "Pet Products";
-  if (kw.match(/supplement|vitamin tablets|protein powder|herbal product/)) return "Supplements";
-  if (kw.match(/jewelry|watch|sunglasses|accessories|cosmetics product/)) return "Fashion Accessories";
-  if (kw.match(/sell|product|ecommerce|e-commerce|online store|shop|dropship|amazon|flipkart/)) return "E-commerce";
+
+  // SPORTS — most specific first to avoid overlap
+  if (kw.match(/boxing|pro boxing|mma|ufc|wwe|wrestling|martial arts|fighter|knockout|punch|judo|karate|taekwondo|bjj|muay thai|kickboxing/)) return "Sports";
+  if (kw.match(/cricket|ipl|t20|virat|rohit|dhoni|bumrah|test match|odi|world cup cricket/)) return "Sports";
+  if (kw.match(/football|fifa|messi|ronaldo|premier league|la liga|champions league|worldcup football|penalty|striker/)) return "Sports";
+  if (kw.match(/basketball|nba|lebron|curry|slam dunk|nba finals/)) return "Sports";
+  if (kw.match(/badminton|pv sindhu|saina|shuttlecock|smash badminton/)) return "Sports";
+  if (kw.match(/kabaddi|pro kabaddi|pkl|raider kabaddi/)) return "Sports";
+  if (kw.match(/\bf1\b|formula 1|motogp|verstappen|hamilton|ferrari f1/)) return "Sports";
+  if (kw.match(/olympics|commonwealth games|asian games|gold medal|athlete|sprint|marathon|javelin|shot put/)) return "Sports";
+  if (kw.match(/tennis|wimbledon|us open|djokovic|federer|nadal|serena/)) return "Sports";
+  if (kw.match(/hockey|swimming|cycling sport|golf|volleyball|kho kho|archery|shooting sport|weightlifting sport/)) return "Sports";
+  if (kw.match(/\bsport\b|sportsman|tournament|championship|league|stadium|coach sport|referee/)) return "Sports";
+
+  // GAMING
+  if (kw.match(/bgmi|battleground|pubg mobile|erangel|pochinki|conqueror bgmi|chicken dinner/)) return "Gaming";
+  if (kw.match(/free fire|freefire|ff tips|ff tricks|garena ff|booyah|bermuda ff|ff rank|ff headshot/)) return "Gaming";
+  if (kw.match(/valorant|radiant|immortal|phantom valorant|spike valorant/)) return "Gaming";
+  if (kw.match(/cod|call of duty|warzone|modern warfare/)) return "Gaming";
+  if (kw.match(/fortnite|epic games battle royale/)) return "Gaming";
+  if (kw.match(/minecraft|creeper|survival minecraft|redstone/)) return "Gaming";
+  if (kw.match(/\bgta\b|grand theft auto|gta 5|gta online/)) return "Gaming";
+  if (kw.match(/roblox|robux|obby/)) return "Gaming";
+  if (kw.match(/clash of clans|\bcoc\b|clash royale|brawl stars/)) return "Gaming";
+  if (kw.match(/gaming|gamer|esport|streamer|gameplay|pc gaming|console|playstation|xbox|fps|rpg|battle royale|gaming setup|rgb gaming/)) return "Gaming";
+
+  // FOOD — before fitness (vegan/diet overlap)
+  if (kw.match(/vegan|vegetarian|plant based|dairy free|gluten free/)) return "Food";
+  if (kw.match(/biryani|butter chicken|paneer|tikka masala|tandoor|naan|paratha|dosa|idli|sambar|pav bhaji|vada pav|pani puri|chaat|samosa|chole|rajma/)) return "Food";
+  if (kw.match(/recipe|cooking|kitchen|chef|bake|baking|homemade food|meal prep|food vlog|food review|mukbang|asmr food/)) return "Food";
+  if (kw.match(/restaurant|cafe|dhaba|street food|food tour|food walk|best food|hidden restaurant/)) return "Food";
+  if (kw.match(/breakfast|lunch|dinner|snack|dessert|cake|cookie|bread|pizza|pasta|burger|sandwich|salad|soup|smoothie|juice|chai|coffee|tea/)) return "Food";
+  if (kw.match(/keto meal|diet food|low carb food|high protein food|calorie count|macro food/)) return "Food";
+  if (kw.match(/\bfood\b|\beat\b|eating|meal|dish|cuisine|spice|ingredient|grocery/)) return "Food";
+
+  // FITNESS
+  if (kw.match(/gym|workout|exercise|weight loss|fat loss|muscle gain|bodybuilding|powerlifting|strength training/)) return "Fitness";
+  if (kw.match(/yoga|asana|pranayama|surya namaskar|hot yoga|kundalini yoga/)) return "Fitness";
+  if (kw.match(/crossfit|hiit|calisthenics|pull up|push up|squat|deadlift|bench press|barbell|dumbbell/)) return "Fitness";
+  if (kw.match(/cardio|running|jogging|treadmill|zumba|dance fitness|aerobics|jump rope/)) return "Fitness";
+  if (kw.match(/protein shake|creatine|bcaa|pre workout|whey|mass gainer|supplement gym/)) return "Fitness";
+  if (kw.match(/abs|six pack|core|bicep|tricep|chest workout|leg day|glutes|shoulder workout/)) return "Fitness";
+  if (kw.match(/pilates|stretching|flexibility|mobility|foam roller|recovery fitness/)) return "Fitness";
+  if (kw.match(/\bfitness\b|fit|transformation body|bulk|cut|shred|gains|physique|body fat|lean body/)) return "Fitness";
+
+  // TECH
+  if (kw.match(/\bai\b|artificial intelligence|chatgpt|gpt-4|claude ai|gemini ai|llm|machine learning|deep learning|data science/)) return "Tech";
+  if (kw.match(/programming|coding|developer|python|javascript|react|nodejs|html|css|typescript|rust|golang|swift|kotlin/)) return "Tech";
+  if (kw.match(/crypto|bitcoin|ethereum|blockchain|defi|web3|solana|binance|altcoin|trading crypto/)) return "Tech";
+  if (kw.match(/saas|app development|mobile app|web app|tech startup|product hunt|vc funding/)) return "Tech";
+  if (kw.match(/cybersecurity|ethical hacking|penetration testing|malware|vpn|bug bounty/)) return "Tech";
+  if (kw.match(/cloud|aws|azure|google cloud|devops|docker|kubernetes|api|backend|frontend|fullstack/)) return "Tech";
+  if (kw.match(/\btech\b|technology|software|hardware|innovation|digital|computer|code/)) return "Tech";
+
+  // BUSINESS
+  if (kw.match(/startup|entrepreneur|founder|pitch deck|business plan|mvp|series a|vc/)) return "Business";
+  if (kw.match(/freelanc|upwork|fiverr|solopreneur|remote work business|work from home business/)) return "Business";
+  if (kw.match(/dropshipping|amazon fba|shopify|ecommerce business|online store business|product sourcing/)) return "Business";
+  if (kw.match(/sales|b2b|b2c|lead generation|cold email|revenue|profit business|margin/)) return "Business";
+  if (kw.match(/agency|smma|digital agency|marketing agency|client acquisition|retainer/)) return "Business";
+  if (kw.match(/passive income|side hustle|make money online|earn online|multiple income/)) return "Business";
+  if (kw.match(/\bbusiness\b|company|corporate|management|leadership|strategy business|growth business/)) return "Business";
+
+  // TRAVEL
+  if (kw.match(/goa|manali|kashmir|kerala|rajasthan|himachal|ladakh|spiti|meghalaya|sikkim|andaman|coorg|ooty|munnar/)) return "Travel";
+  if (kw.match(/dubai|bangkok|bali|singapore|paris|london|tokyo|maldives|europe travel|usa travel|thailand|vietnam|japan travel/)) return "Travel";
+  if (kw.match(/travel vlog|travel tips|budget travel|solo travel|backpacking|road trip|travel itinerary|travel guide|hidden gems/)) return "Travel";
+  if (kw.match(/hotel|resort|hostel|airbnb|flight booking|visa|passport|airport travel/)) return "Travel";
+  if (kw.match(/\btravel\b|trip|vacation|holiday|explore|adventure|destination|wanderlust/)) return "Travel";
+
+  // FASHION & STYLE
+  if (kw.match(/saree|lehenga|kurta|salwar|ethnic wear|anarkali|dupatta|sherwani/)) return "Fashion & Style";
+  if (kw.match(/skincare|serum|moisturizer|sunscreen|toner|cleanser|retinol|niacinamide|hyaluronic|aha bha/)) return "Fashion & Style";
+  if (kw.match(/makeup|foundation|lipstick|kajal|eyeliner|mascara|blush|eyeshadow|beauty routine|glam/)) return "Fashion & Style";
+  if (kw.match(/haircare|hair oil|shampoo|conditioner|hair growth|hair fall|keratin|hair color|hairstyle/)) return "Fashion & Style";
+  if (kw.match(/ootd|outfit|lookbook|fashion tips|thrift|streetwear|aesthetic fashion|capsule wardrobe/)) return "Fashion & Style";
+  if (kw.match(/fashion|style|clothes|clothing|dress|jeans|jacket|blazer|grooming|accessori/)) return "Fashion & Style";
+
+  // PERSONAL FINANCE
+  if (kw.match(/stock market|sensex|nifty|share market|equity|swing trading|day trading|technical analysis|fundamental analysis/)) return "Personal Finance";
+  if (kw.match(/mutual fund|sip|index fund|elss|nav|systematic investment|lumpsum investment/)) return "Personal Finance";
+  if (kw.match(/zerodha|groww|upstox|angel broking|demat account|trading account/)) return "Personal Finance";
+  if (kw.match(/\bfd\b|ppf|nps|epf|provident fund|fixed deposit|sukanya samriddhi/)) return "Personal Finance";
+  if (kw.match(/insurance|term plan|life insurance|health insurance|premium|cover insurance/)) return "Personal Finance";
+  if (kw.match(/tax|income tax|itr|gst|tds|80c|tax saving|tax return|chartered accountant/)) return "Personal Finance";
+  if (kw.match(/budget|save money|savings|debt free|loan|emi|financial planning|retirement planning|wealth/)) return "Personal Finance";
+  if (kw.match(/\bfinance\b|money|financial|rich|millionaire|investment|invest|portfolio/)) return "Personal Finance";
+
+  // EDUCATION
+  if (kw.match(/upsc|ias|ips|civil services|mains prelims|drishti ias|vision ias|lbsnaa/)) return "Education";
+  if (kw.match(/jee|iit|jee main|jee advanced|engineering entrance/)) return "Education";
+  if (kw.match(/neet|mbbs|aiims|medical entrance/)) return "Education";
+  if (kw.match(/\bgate\b|ese|psu|engineering services/)) return "Education";
+  if (kw.match(/ssc|cgl|chsl|staff selection|combined graduate/)) return "Education";
+  if (kw.match(/bank exam|ibps|sbi po|sbi clerk|rbi grade|banking exam/)) return "Education";
+  if (kw.match(/\bcat\b|mba|iim|gmat|xat|management entrance/)) return "Education";
+  if (kw.match(/ielts|toefl|spoken english|english speaking|grammar|vocabulary/)) return "Education";
+  if (kw.match(/class 10|class 12|board exam|cbse|icse|10th board|12th board/)) return "Education";
+  if (kw.match(/study|learn|education|course|exam|college|school|tutorial|lecture|revision|scholarship|degree|university/)) return "Education";
+
+  // MOTIVATIONAL
+  if (kw.match(/motivation|motivational|inspire|inspiration|success mindset|winning mindset|tony robbins|napoleon hill/)) return "Motivational";
+  if (kw.match(/hustle|grind|never give up|discipline|consistency|dedication|persistence|resilience|perseverance/)) return "Motivational";
+  if (kw.match(/goal setting|vision board|affirmation|positive thinking|abundance mindset/)) return "Motivational";
+  if (kw.match(/self improvement|personal development|growth mindset|level up|glow up|best version|be better/)) return "Motivational";
+  if (kw.match(/\bmotivat|\binspir|\bwinner\b|\bhustle\b|\bgrind\b/)) return "Motivational";
+
+  // MENTAL HEALTH
+  if (kw.match(/anxiety|panic attack|social anxiety|ocd|phobia/)) return "Mental Health";
+  if (kw.match(/depression|sadness|hopeless|worthless|empty feeling|emotional pain/)) return "Mental Health";
+  if (kw.match(/stress|burnout|work stress|overwhelmed|mental fatigue/)) return "Mental Health";
+  if (kw.match(/therapy|therapist|psychologist|psychiatrist|counseling|cbt|dbt/)) return "Mental Health";
+  if (kw.match(/self care|self love|self worth|self esteem|boundaries|toxic relationship|narcissist|gaslighting/)) return "Mental Health";
+  if (kw.match(/trauma|ptsd|childhood trauma|emotional healing|inner child|shadow work/)) return "Mental Health";
+  if (kw.match(/mental health|mental illness|psychology|emotional wellbeing|overthink|loneliness/)) return "Mental Health";
+
+  // SPIRITUALITY
+  if (kw.match(/astrology|kundali|horoscope|zodiac|rashi|nakshatra|numerology|lal kitab/)) return "Spirituality";
+  if (kw.match(/tarot|oracle card|tarot reading|angel card|divination/)) return "Spirituality";
+  if (kw.match(/chakra|aura|third eye|kundalini energy|energy healing|reiki/)) return "Spirituality";
+  if (kw.match(/manifest|manifestation|369 method|scripting|subliminal|law of attraction/)) return "Spirituality";
+  if (kw.match(/meditation|vipassana|zen|buddhism|breathwork|mindfulness meditation/)) return "Spirituality";
+  if (kw.match(/spiritual|spirituality|soul|divine|universe|awakening|enlightenment|karma|dharma/)) return "Spirituality";
+
+  // HEALTH & WELLNESS
+  if (kw.match(/diabetes|blood sugar|insulin|type 2 diabetes|diabetic diet|glycemic/)) return "Health & Wellness";
+  if (kw.match(/thyroid|hypothyroid|hyperthyroid|tsh level|thyroid diet/)) return "Health & Wellness";
+  if (kw.match(/blood pressure|hypertension|high bp|heart health|cholesterol|ldl|hdl/)) return "Health & Wellness";
+  if (kw.match(/ayurveda|ayurvedic|ashwagandha|turmeric|neem|tulsi|triphala|herbal remedy|home remedy/)) return "Health & Wellness";
+  if (kw.match(/gut health|digestion|ibs|bloating|constipation|probiotics|microbiome|liver health/)) return "Health & Wellness";
+  if (kw.match(/immunity|immune system|vitamin d|zinc|iron deficiency|anemia/)) return "Health & Wellness";
+  if (kw.match(/sleep|insomnia|sleep deprivation|melatonin|deep sleep|sleep hygiene/)) return "Health & Wellness";
+  if (kw.match(/pcos|pcod|hormonal imbalance|fertility|periods|menstrual|menopause|women health/)) return "Health & Wellness";
+  if (kw.match(/health|wellness|wellbeing|healthy living|detox|cleanse|holistic|naturopath|nutrition/)) return "Health & Wellness";
+
+  // REAL ESTATE
+  if (kw.match(/real estate|property investment|rental income|landlord|tenant|rent agreement/)) return "Real Estate";
+  if (kw.match(/home buying|home loan|registry|stamp duty|rera|builder|under construction|possession/)) return "Real Estate";
+  if (kw.match(/flat|apartment|villa|plot|land|\bbhk\b|2bhk|3bhk|gated community|township|co-living/)) return "Real Estate";
+  if (kw.match(/interior design|home makeover|renovation|vastu|room decor|home tour/)) return "Real Estate";
+
+  // ADS & MARKETING
+  if (kw.match(/facebook ads|meta ads|instagram ads|google ads|youtube ads|paid ads|ad campaign/)) return "Ads & Marketing";
+  if (kw.match(/digital marketing|seo|sem|ppc|roas|cpa|funnel|conversion rate/)) return "Ads & Marketing";
+  if (kw.match(/email marketing|affiliate marketing|influencer marketing|social media marketing|content marketing/)) return "Ads & Marketing";
+  if (kw.match(/copywriting|ad copy|usp|a\/b test|split test|conversion optimization/)) return "Ads & Marketing";
+  if (kw.match(/branding|brand identity|brand strategy|positioning marketing|target audience/)) return "Ads & Marketing";
+  if (kw.match(/marketing|advertis|promotion|campaign|growth hack|viral marketing/)) return "Ads & Marketing";
+
+  // DAILY VLOG
+  if (kw.match(/daily vlog|day in my life|diml|week in my life|morning routine|night routine|grwm|get ready with me/)) return "Daily Vlog";
+  if (kw.match(/room tour|house tour|setup tour|desk setup|college vlog|hostel life/)) return "Daily Vlog";
+  if (kw.match(/\bvlog\b|a day in|24 hours my|my daily life|productive day/)) return "Daily Vlog";
+
+  // COMEDY & ENTERTAINMENT
+  if (kw.match(/comedy|funny|humor|joke|prank|meme|roast|troll|skit|stand up|satire|parody|spoof/)) return "Comedy & Entertainment";
+  if (kw.match(/react|reaction video|commentary|cringe|relatable|story time|confession/)) return "Comedy & Entertainment";
+  if (kw.match(/entertainment|fun|laugh|trending video|viral funny|shorts comedy/)) return "Comedy & Entertainment";
+
+  // LIFESTYLE
+  if (kw.match(/minimalism|minimalist|declutter|intentional living|simple living/)) return "Lifestyle";
+  if (kw.match(/productivity|notion|second brain|time blocking|pomodoro|deep work/)) return "Lifestyle";
+  if (kw.match(/adulting|apartment living|city life|bachelor life|quarter life crisis/)) return "Lifestyle";
+  if (kw.match(/lifestyle|habit|journaling|morning ritual|evening routine|self discipline/)) return "Lifestyle";
+
+  // E-COMMERCE PRODUCTS
+  if (kw.match(/\bbag\b|handbag|backpack|purse|luggage|wallet/)) return "Bags & Accessories";
+  if (kw.match(/shoe|sneaker|sandal|footwear|boots|heels|nike|adidas|puma|reebok/)) return "Footwear";
+  if (kw.match(/jewelry|jewellery|necklace|earring|bracelet|\bring\b|pendant|gold chain/)) return "Jewelry";
+  if (kw.match(/furniture|sofa|table|chair|home decor product|mattress|pillow|curtain/)) return "Home & Furniture";
+  if (kw.match(/electronics|gadget|laptop|smartphone|headphone|earphone|speaker|camera|smartwatch|tablet/)) return "Electronics";
+  if (kw.match(/toy|kids product|baby product|stroller|playset|infant|toddler toy/)) return "Toys & Kids";
+  if (kw.match(/pet food|dog training|cat care|aquarium|bird pet|hamster|pet accessories/)) return "Pet Products";
+  if (kw.match(/protein powder|mass gainer|creatine pill|supplement capsule|fish oil|omega 3 capsule/)) return "Supplements";
+  if (kw.match(/sell online|ecommerce|online store|dropship|amazon seller|flipkart seller|meesho seller|reselling/)) return "E-commerce";
+
   return currentNiche;
 };
 
 const NICHE_EXAMPLES: Record<string, string[]> = {
-  Fitness:              ["weight loss", "gym motivation", "protein diet", "HIIT workout"],
-  Business:             ["passive income", "side hustle", "startup tips", "freelancing"],
-  Tech:                 ["AI tools", "ChatGPT hacks", "coding tips", "app development"],
-  Lifestyle:            ["morning routine", "productivity hacks", "minimalism", "self care"],
-  Food:                 ["meal prep", "healthy recipes", "street food", "viral recipes"],
-  "Daily Vlog":         ["day in my life", "vlog ideas", "daily routine", "life update"],
-  "Comedy & Entertainment": ["funny skits", "comedy reels", "meme content", "trending jokes"],
-  "Sports":             ["cricket tips", "football highlights", "sports motivation", "fitness training"],
-  "Spirituality":       ["meditation tips", "manifestation", "spiritual growth", "mindfulness"],
-  "AI & Automation":    ["AI tools", "automation hacks", "ChatGPT tips", "AI side hustle"],
-  "Personal Finance":   ["invest money", "save money fast", "passive income", "budget tips"],
-  "Mental Health":      ["anxiety tips", "self care routine", "mindfulness", "stress relief"],
-  "Beauty & Skincare":  ["skincare routine", "glow up tips", "makeup hacks", "anti aging"],
-  "Ads & Marketing":    ["facebook ads", "google ads", "ad copywriting", "marketing strategy"],
-  Education:            ["online course", "study tips", "e-learning", "skill development"],
-  Travel:               ["travel tips", "budget travel", "solo travel", "travel vlog"],
-  "Fashion & Style":    ["outfit ideas", "fashion tips", "style guide", "trendy outfits"],
-  "Real Estate":        ["property investment", "home buying tips", "real estate India", "rental income"],
-  Motivational:         ["success mindset", "morning motivation", "self improvement", "hustle tips"],
-  "Health & Wellness":  ["healthy lifestyle", "nutrition tips", "yoga benefits", "sleep tips"],
-  Gaming:               ["gaming tips", "game review", "gaming setup", "mobile gaming"],
-  "Bags & Accessories": ["leather handbags", "travel backpacks", "designer wallets", "gym bags"],
-  "Footwear":           ["running shoes", "casual sneakers", "formal shoes", "sandals for women"],
-  "Jewelry":            ["gold necklace set", "silver earrings", "diamond rings", "fashion bracelets"],
-  "Home & Furniture":   ["modern sofa sets", "dining table sets", "home decor ideas", "wall art"],
-  "Electronics":        ["wireless earbuds", "smartwatch deals", "laptop accessories", "phone cases"],
-  "Toys & Kids":        ["educational toys", "baby strollers", "kids playsets", "newborn essentials"],
-  "Pet Products":       ["dog food brands", "cat toys", "pet grooming kit", "pet carriers"],
-  "Supplements":        ["whey protein", "multivitamin tablets", "ayurvedic supplements", "weight gain powder"],
-  "Fashion Accessories": ["sunglasses for men", "designer watches", "scarves for women", "belts for men"],
-  "E-commerce":         ["dropshipping products", "online store ideas", "best selling products", "ecommerce marketing"],
+  // CREATOR NICHES
+  "Fitness":              ["weight loss", "gym motivation", "HIIT workout", "protein diet"],
+  "Food":                 ["biryani recipe", "street food", "vegan meals", "meal prep"],
+  "Travel":               ["Goa trip", "budget travel", "solo travel", "hidden gems India"],
+  "Fashion & Style":      ["skincare routine", "OOTD outfit", "makeup tips", "hair care"],
+  "Sports":               ["cricket tips", "pro boxing", "MMA training", "football highlights"],
+  "Gaming":               ["BGMI tips", "Free Fire tricks", "Valorant tips", "gaming setup"],
+  "Tech":                 ["AI tools", "ChatGPT hacks", "coding tips", "crypto news"],
+  "Business":             ["startup tips", "freelancing", "side hustle", "agency growth"],
+  "Education":            ["UPSC tips", "JEE preparation", "NEET strategy", "study hacks"],
+  "Personal Finance":     ["stock market", "SIP investing", "tax saving", "mutual funds"],
+  "Motivational":         ["success mindset", "morning motivation", "discipline habits", "hustle tips"],
+  "Mental Health":        ["anxiety tips", "stress relief", "self care routine", "burnout recovery"],
+  "Spirituality":         ["manifestation", "meditation tips", "astrology", "tarot reading"],
+  "Health & Wellness":    ["diabetes diet", "thyroid tips", "immunity boost", "Ayurveda remedies"],
+  "Real Estate":          ["home buying India", "property investment", "rental income", "interior design"],
+  "Ads & Marketing":      ["Facebook ads", "Google ads tips", "copywriting", "digital marketing"],
+  "Daily Vlog":           ["day in my life", "morning routine", "college vlog", "hostel life"],
+  "Comedy & Entertainment": ["funny reels", "prank videos", "meme content", "trending comedy"],
+  "Lifestyle":            ["minimalism", "productivity hacks", "journaling", "adulting tips"],
+  // PRODUCT NICHES
+  "Bags & Accessories":   ["leather handbag", "travel backpack", "designer wallet", "gym bag"],
+  "Footwear":             ["running shoes", "sneaker review", "formal shoes", "sandals"],
+  "Jewelry":              ["gold necklace", "silver earrings", "diamond ring", "fashion bracelet"],
+  "Home & Furniture":     ["modern sofa", "dining table", "home decor", "wall art ideas"],
+  "Electronics":          ["wireless earbuds", "smartwatch", "laptop accessories", "phone review"],
+  "Toys & Kids":          ["educational toys", "baby stroller", "kids games", "infant essentials"],
+  "Pet Products":         ["dog food", "cat toys", "pet grooming", "pet carrier"],
+  "Supplements":          ["whey protein", "multivitamins", "Ayurvedic supplements", "creatine"],
+  "E-commerce":           ["dropshipping", "Amazon seller tips", "Meesho reselling", "online store"],
 };
 
 // Cross-selling: jo niche hai uske related niches suggest karo
@@ -4689,20 +4834,15 @@ Respond ONLY in JSON:
     setImproveLoading(false);
   };
 
-   const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
-    "Hindi":     { Female: "hi-IN-SwaraNeural",     Male: "hi-IN-MadhurNeural",     code: "hi-IN", styles: ["Default", "Cheerful", "Newscast",     "Empathetic"] },
-    "Tamil":     { Female: "ta-IN-PallaviNeural",   Male: "ta-IN-ValluvarNeural",   code: "ta-IN" },
-    "Telugu":    { Female: "te-IN-ShrutiNeural",    Male: "te-IN-MohanNeural",      code: "te-IN" },
-    "Marathi":   { Female: "mr-IN-AarohiNeural",    Male: "mr-IN-ManoharNeural",    code: "mr-IN" },
-    "Gujarati":  { Female: "gu-IN-DhwaniNeural",    Male: "gu-IN-NiranjanNeural",   code: "gu-IN" },
-    "Bengali":   { Female: "bn-IN-TanishaaNeural",  Male: "bn-IN-BashkarNeural",    code: "bn-IN" },
-    "Kannada":   { Female: "kn-IN-SapnaNeural",     Male: "kn-IN-GaganNeural",      code: "kn-IN" },
-    "Malayalam": { Female: "ml-IN-SobhanaNeural",   Male: "ml-IN-MidhunNeural",     code: "ml-IN" },
-    "Punjabi":   { Female: "pa-IN-VaaniNeural",     Male: "pa-IN-OjasNeural",       code: "pa-IN" },
-    "Odia":      { Female: "or-IN-SubhasiniNeural", Male: "or-IN-SukantNeural",     code: "or-IN" },
-    "Assamese":  { Female: "as-IN-YashicaNeural",   Male: "as-IN-PriyomNeural",     code: "as-IN" },
-    "Urdu":      { Female: "ur-IN-GulNeural",       Male: "ur-IN-SalmanNeural",     code: "ur-IN" },
-    "English":   { Female: "en-US-AvaNeural",       Male: "en-US-AndrewNeural",     code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
+
+  const AZURE_VOICES: Record<string, { Female: string; Male: string; code: string; styles?: string[] }> = {
+    "Hindi":    { Female: "hi-IN-SwaraNeural",    Male: "hi-IN-MadhurNeural",    code: "hi-IN", styles: ["Default", "Cheerful", "Newscast", "Empathetic"] },
+    "Tamil":    { Female: "ta-IN-PallaviNeural",  Male: "ta-IN-ValluvarNeural",  code: "ta-IN" },
+    "Telugu":   { Female: "te-IN-ShrutiNeural",   Male: "te-IN-MohanNeural",     code: "te-IN" },
+    "Marathi":  { Female: "mr-IN-AarohiNeural",   Male: "mr-IN-ManoharNeural",   code: "mr-IN" },
+    "Gujarati": { Female: "gu-IN-DhwaniNeural",   Male: "gu-IN-NiranjanNeural",  code: "gu-IN" },
+    "Bengali":  { Female: "bn-IN-TanishaaNeural", Male: "bn-IN-BashkarNeural",   code: "bn-IN" },
+    "English":  { Female: "en-US-AvaNeural",      Male: "en-US-AndrewNeural",    code: "en-US", styles: ["Default", "Cheerful", "Friendly", "Excited"] },
   };
 
   // Auto-select the voice language to match whatever language the script was generated in,
@@ -8843,7 +8983,40 @@ Respond ONLY in valid JSON:
                   </button>
                 </div>
                 {showNiche && (
-                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" as const, marginBottom: "0.5rem" }}>
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    {/* Manual niche input */}
+                    <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.65rem" }}>
+                      <input
+                        placeholder="Type your own niche (e.g. Cricket, Cooking, Astrology)..."
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                            const custom = (e.target as HTMLInputElement).value.trim();
+                            setNiche(custom);
+                            setShowNiche(false);
+                            try { localStorage.setItem("vci_niche", custom); } catch {}
+                            (e.target as HTMLInputElement).value = "";
+                          }
+                        }}
+                        style={{ flex: 1, background: "#050508", border: "1px solid #1a1a2e", borderRadius: "8px", padding: "0.45rem 0.75rem", color: "#fff", fontSize: "0.75rem", fontFamily: "inherit", outline: "none" }}
+                        onFocus={e => e.target.style.borderColor = "#6d28d9"}
+                        onBlur={e => e.target.style.borderColor = "#1a1a2e"}
+                      />
+                      <button
+                        onClick={e => {
+                          const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                          if (input.value.trim()) {
+                            setNiche(input.value.trim());
+                            setShowNiche(false);
+                            try { localStorage.setItem("vci_niche", input.value.trim()); } catch {}
+                            input.value = "";
+                          }
+                        }}
+                        style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#a855f7", padding: "0.45rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700, fontFamily: "inherit" }}>
+                        Set
+                      </button>
+                    </div>
+                    <p style={{ color: "#3f3f46", fontSize: "0.6rem", margin: "0 0 0.5rem" }}>Or pick from list ↓</p>
+                    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" as const }}>
                     {Object.keys(NICHE_EXAMPLES).map(n => (
                       <button key={n} className="tbtn" onClick={() => {
                         setNiche(n);
@@ -8854,6 +9027,7 @@ Respond ONLY in valid JSON:
                         {n}
                       </button>
                     ))}
+                    </div>
                   </div>
                 )}
               </div>
