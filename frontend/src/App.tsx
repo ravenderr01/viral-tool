@@ -5105,7 +5105,7 @@ Respond ONLY in JSON:
     ctx.beginPath(); ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = styleTheme.accent; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); ctx.stroke();
-    ctx.font = `${badgeR}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `${badgeR}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(styleTheme.icon, badgeCx, badgeCy + 2);
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
