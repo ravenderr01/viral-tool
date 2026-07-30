@@ -5506,7 +5506,8 @@ ${sectionsSchema}
             <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎙️ SCRIPT BREAKDOWN</p>
             {(generateResult.sections || []).map((sec: any, i: number) => {
               const sectionColors: Record<string, string> = { HOOK: "#8b5cf6", PROBLEM: "#ef4444", SOLUTION: "#22c55e", CTA: "#f59e0b", INTRO: "#8b5cf6", TIPS: "#06b6d4", STORY: "#f59e0b", BODY: "#22c55e" };
-              const color = sectionColors[sec.label] || "#8b5cf6";
+              const colorKey = Object.keys(sectionColors).find(k => sec.label?.toUpperCase().startsWith(k));
+              const color = (colorKey ? sectionColors[colorKey] : null) || "#8b5cf6";
               return (
                 <div key={i} style={{ background: `${color}08`, border: `1px solid ${color}20`, borderLeft: `3px solid ${color}`, borderRadius: "8px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
