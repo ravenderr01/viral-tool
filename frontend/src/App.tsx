@@ -9037,7 +9037,7 @@ Respond ONLY in valid JSON:
                   { id:"localbusiness", label:"Local Biz",     icon:"🏪", color:"#f59e0b" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
-                  const isLocked = !["advertiser","agency"].includes(plan);
+                  const isLocked = t.id === "generate" ? false : !["advertiser","agency"].includes(plan);
                   return (
                     <button key={t.id}
                       className="tab-btn"
