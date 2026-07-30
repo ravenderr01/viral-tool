@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 const YOUR_UPI_ID      = "9315133390@ptyes";
+const PEXELS_API_KEY = "BXRYqhSyorCFyj31s0i09emw3hbEU2Si45W8mUavDElTD77k23UESNMh";
 const YOUR_PAYPAL_ME   = "https://paypal.me/yourname";
 const SUPPORT_PHONE    = "+91 9315133390";
 const RAZORPAY_KEY_ID  = "rzp_live_OHQHt6nXnBolPG";
@@ -4949,13 +4950,35 @@ Respond ONLY in JSON:
     setVoiceLoading(false);
   };
 
-  const generateThumbnail = (title: string, hook: string, plt: string, sty: string, dur: string): string => {
+  const fetchTopicImage = async (topic: string): Promise<HTMLImageElement | null> => {
+    if (!PEXELS_API_KEY || PEXELS_API_KEY.includes("YAHAN")) return null;
+    try {
+      const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(topic)}&per_page=1&orientation=portrait`, {
+        headers: { Authorization: PEXELS_API_KEY },
+      });
+      const data = await res.json();
+      const photoUrl = data?.photos?.[0]?.src?.large2x || data?.photos?.[0]?.src?.large;
+      if (!photoUrl) return null;
+      return await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = photoUrl;
+      });
+    } catch { return null; }
+  };
+
+  const generateThumbnail = async (title: string, hook: string, plt: string, sty: string, dur: string): Promise<string> => {
     const canvas = document.createElement("canvas");
     const isVertical = ["Instagram","TikTok"].includes(plt);
     canvas.width  = isVertical ? 1080 : 1280;
     canvas.height = isVertical ? 1920 : 720;
     const W = canvas.width, H = canvas.height;
     const ctx = canvas.getContext("2d")!;
+
+    // Try to fetch a real, topic-relevant photo — falls back to gradient design if unavailable
+    const topicImg = await fetchTopicImage(keyword || title);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     // Smart text wrap — returns final Y position
@@ -5022,10 +5045,23 @@ Respond ONLY in JSON:
     cfg.accent = styleTheme.accent; // thumbnail ka poora color-theme ab script ki style pe based hai
 
     // ── BACKGROUND ───────────────────────────────────────────────────────────
-    // Base gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, W * 0.4, H);
-    bgGrad.addColorStop(0, cfg.bg[0]); bgGrad.addColorStop(1, cfg.bg[1]);
-    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+    if (topicImg) {
+      // Real topic photo — cover-fit, then dark tint so text stays readable
+      const imgRatio = topicImg.width / topicImg.height, canvasRatio = W / H;
+      let dw = W, dh = H, dx = 0, dy = 0;
+      if (imgRatio > canvasRatio) { dh = H; dw = H * imgRatio; dx = (W - dw) / 2; }
+      else { dw = W; dh = W / imgRatio; dy = (H - dh) / 2; }
+      ctx.drawImage(topicImg, dx, dy, dw, dh);
+      ctx.fillStyle = "rgba(5,0,15,0.42)"; ctx.fillRect(0, 0, W, H);
+      const tint = ctx.createLinearGradient(0, 0, W * 0.4, H);
+      tint.addColorStop(0, cfg.bg[0] + "55"); tint.addColorStop(1, cfg.bg[1] + "22");
+      ctx.fillStyle = tint; ctx.fillRect(0, 0, W, H);
+    } else {
+      // Base gradient (fallback when no photo match found)
+      const bgGrad = ctx.createLinearGradient(0, 0, W * 0.4, H);
+      bgGrad.addColorStop(0, cfg.bg[0]); bgGrad.addColorStop(1, cfg.bg[1]);
+      ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+    }
 
     // Diagonal light streak (top-left to center)
     const streak = ctx.createLinearGradient(0, 0, W * 0.65, H * 0.55);
@@ -5306,7 +5342,7 @@ Respond ONLY in JSON:
       try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setGenerateResult(parsed);
-      const thumb = generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
+      const thumb = await generateThumbnail(parsed.title || keyword, parsed.hook || "", platform, style, duration);
       setThumbnailUrl(thumb);
       if (onCreditUsedGenerate) onCreditUsedGenerate();
       if (onSaveHistory) onSaveHistory("scriptlab", { platform, keyword, inputSummary: `${keyword} (${style}, ${duration})`, resultData: parsed });
