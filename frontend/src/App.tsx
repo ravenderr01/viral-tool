@@ -385,6 +385,48 @@ const STYLE_ACCENTS: Record<string, { accent: string; icon: string }> = {
   "Listicle":     { accent: "#8b5cf6", icon: "📋" },
   "Interview":    { accent: "#10b981", icon: "🎙️" },
 };
+
+// Exact second-by-second beat timeline per duration — this is what makes the script
+// output feel professionally paced instead of just 4 vague chunks regardless of length.
+const DURATION_TIMELINES: Record<string, string[]> = {
+  "15 sec": ["0-3s", "3-11s", "11-15s"],
+  "30 sec": ["0-3s", "3-8s", "8-25s", "25-30s"],
+  "60 sec": ["0-5s", "5-15s", "15-30s", "30-45s", "45-55s", "55-60s"],
+  "90 sec": ["0-5s", "5-15s", "15-30s", "30-45s", "45-60s", "60-75s", "75-85s", "85-90s"],
+  "3 min":  ["0-10s", "10-30s", "30-60s", "60-90s", "90-120s", "120-150s", "150-165s", "165-180s"],
+};
+
+// Takes a style's section labels (e.g. HOOK/PROBLEM/SOLUTION/CTA) and stretches or
+// compresses them to match however many timed beats the chosen duration needs —
+// so a 90-second script gets 8 real beats, not the same 4 a 15-second script gets.
+function buildScriptTimeline(duration: string, styleLabels: string[]): { time: string; label: string }[] {
+  const segments = DURATION_TIMELINES[duration] || DURATION_TIMELINES["30 sec"];
+  const n = segments.length;
+  const first = styleLabels[0];
+  const last = styleLabels[styleLabels.length - 1];
+  const middleSource = styleLabels.slice(1, -1);
+  const middleNeeded = Math.max(0, n - 2);
+
+  let middleLabels: string[] = [];
+  if (middleNeeded === 0) {
+    middleLabels = [];
+  } else if (middleSource.length === 0) {
+    middleLabels = Array.from({ length: middleNeeded }, (_, i) => `BEAT ${i + 1}`);
+  } else if (middleNeeded <= middleSource.length) {
+    middleLabels = Array.from({ length: middleNeeded }, (_, i) => middleSource[Math.floor((i * middleSource.length) / middleNeeded)]);
+  } else {
+    const counts: Record<string, number> = {};
+    const perLabel = Math.ceil(middleNeeded / middleSource.length);
+    middleLabels = Array.from({ length: middleNeeded }, (_, i) => {
+      const base = middleSource[i % middleSource.length];
+      counts[base] = (counts[base] || 0) + 1;
+      return perLabel > 1 ? `${base} ${counts[base]}` : base;
+    });
+  }
+
+  const labels = [first, ...middleLabels, last];
+  return segments.map((time, i) => ({ time, label: labels[i] || `BEAT ${i + 1}` }));
+}
 function AnimatedScore({ target, color }: { target: number; color: string }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -5254,6 +5296,8 @@ Write with this exact level of specificity and escalation, in whatever language 
     };
 
     const currentStyleGuide = styleGuide[style] || styleGuide["Tutorial"];
+    const timeline = buildScriptTimeline(duration, currentStyleGuide.sectionLabels);
+    const sectionsSchema = timeline.map(t => `    {"time": "${t.time}", "label": "${t.label}", "content": "exact words to say for this beat — fully written, not a placeholder", "direction": "what to show/do on screen"}`).join(",\n");
 
     const platformGuide: Record<string, string> = {
       "Instagram": `Write this for an Instagram Reel specifically:
@@ -5309,6 +5353,8 @@ ${platformGuide[platform] || platformGuide["Instagram"]}
 STYLE-SPECIFIC WRITING RULES FOR "${style}" (follow these closely — this is what makes the script feel professional rather than generic):
 ${currentStyleGuide.instruction}
 
+TIMING PRECISION: The script has exactly ${timeline.length} timed beats for this ${duration} duration (see the "sections" schema below) — each beat's spoken "content" must be written in full, sized to naturally fit its exact time window (roughly 2-3 words per second of spoken content). Do not write placeholder or thin content for any beat — a fresher creator should be able to read it word-for-word with zero editing, and an experienced creator should find every beat detailed enough to shoot directly.
+
 CRITICAL: The craft quality above (specificity, escalation, sensory detail, avoiding generic/labeled emotion) applies with FULL FORCE regardless of the output language. Writing in Hindi, Tamil, or any other language is NOT an excuse to simplify the storytelling craft — translate the technique fully, not just produce a simpler version because it's in another language. A native speaker reading this should feel genuine craft, not a watered-down translation.
 
 Create a script that will go VIRAL. Be specific, emotional, and platform-perfect. Avoid vague, generic filler sentences — every line should earn its place.
@@ -5319,10 +5365,7 @@ Respond ONLY in JSON:
   "hook": "First 3 seconds — attention grabbing opener",
   "script": "Complete word-for-word script with [PAUSE], [SHOW X], [CUT TO] stage directions, written fully in the ${style} style described above",
   "sections": [
-    {"time": "0-3s", "label": "${currentStyleGuide.sectionLabels[0]}", "content": "exact words to say", "direction": "what to show/do"},
-    {"time": "appropriate timing", "label": "${currentStyleGuide.sectionLabels[1]}", "content": "exact words", "direction": "visual direction"},
-    {"time": "appropriate timing", "label": "${currentStyleGuide.sectionLabels[2]}", "content": "exact words", "direction": "visual direction"},
-    {"time": "final timing", "label": "${currentStyleGuide.sectionLabels[3] || currentStyleGuide.sectionLabels[2]}", "content": "exact words", "direction": "visual direction"}
+${sectionsSchema}
   ],
   "caption": "Ready-to-post caption with emojis",
   "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
@@ -5920,10 +5963,16 @@ ${SCORE_PLATFORM_GUIDE[platform] || SCORE_PLATFORM_GUIDE["Instagram"]}
 LANGUAGE RULE: Detect the language of the content and respond in the SAME language. Hindi content = Hindi response. English = English.
 
 ANALYSIS RULES:
-- Score out of 100 (not 10). Be strict — average content scores 40-60.
+- Score out of 100. Use this exact rubric — do not be arbitrarily conservative or arbitrarily generous:
+  - 85-100 (Grade A): Genuinely excellent — strong curiosity gap OR sharp emotional trigger, specific concrete detail (number/result/timeframe), zero generic filler, would stop a scroll. Award this honestly when content earns it — don't withhold A out of general caution.
+  - 70-84 (Grade B): Solid and usable — has a real hook mechanism but is missing one element of A-tier (e.g. good curiosity but vague specifics, or strong specifics but a flat opening).
+  - 50-69 (Grade C): Average — technically fine but generic, forgettable, or missing a genuine attention-grabbing mechanism. Most unedited first-draft content lands here.
+  - 30-49 (Grade D): Weak — clichéd opener, no specific detail, or reads like generic AI/marketing filler.
+  - 0-29 (Grade F): Broken — off-platform, confusing, or actively repels attention.
+- Judge what's ACTUALLY on the page, not what's typical for AI-generated content in general — a genuinely strong hook deserves an A even if most content doesn't reach that bar.
 - Analyze the FULL content, not just first line
 - Give LINE-BY-LINE feedback on weak parts
-- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites
+- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites — and these 3 versions should themselves be written to hit the A-tier bar above
 - Identify exactly what's strong and what's weak
 
 Respond ONLY in this exact JSON (no markdown, no extra text):
