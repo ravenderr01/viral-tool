@@ -384,7 +384,6 @@ const STYLE_ACCENTS: Record<string, { accent: string; icon: string }> = {
   "Listicle":     { accent: "#8b5cf6", icon: "📋" },
   "Interview":    { accent: "#10b981", icon: "🎙️" },
 };
-
 function AnimatedScore({ target, color }: { target: number; color: string }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -4375,6 +4374,7 @@ function makeMusicBuffer(sampleRate: number, durationSec: number, trackIdx: numb
 // 5. Save. That's it — no find/replace needed, just a full swap of the two
 //    functions plus adding the small STYLE_ACCENTS constant above.
 // ══════════════════════════════════════════════════════════════════════════
+
 function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string | null; scriptStyle: string; aiDisabled?: boolean }) {
   const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
   const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
@@ -8961,6 +8961,8 @@ Respond ONLY in valid JSON:
           {/* ── TAB NAVIGATION ── */}
           <div className="tab-wrap">
 
+            {userType !== "business" && (
+            <>
             {/* Creator label */}
             <div className="tab-section-label">
               <span style={{ color:"#3f3f46" }}>📱 Creator Tools</span>
@@ -8999,7 +9001,11 @@ Respond ONLY in valid JSON:
                 })}
               </div>
             </div>
+            </>
+            )}
 
+            {userType !== "creator" && (
+            <>
             {/* Advertiser label */}
             <div className="tab-section-label" style={{ marginTop:".15rem" }}>
               <span style={{ color:"rgba(6,182,212,.65)" }}>📢 Advertiser</span>
@@ -9015,6 +9021,7 @@ Respond ONLY in valid JSON:
             <div className="tab-box tab-box-advertiser">
               <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:".3rem" }}>
                 {[
+                  ...(userType === "business" ? [{ id:"generate", label:"Generate", icon:"⚡", color:"#6d28d9" }] : []),
                   { id:"roi",           label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
                   { id:"abtest",        label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
                   { id:"adangles",      label:"Ad Angles",    icon:"🎯", color:"#a855f7" },
@@ -9050,6 +9057,8 @@ Respond ONLY in valid JSON:
                 })}
               </div>
             </div>
+            </>
+            )}
 
           </div>
         </div>
