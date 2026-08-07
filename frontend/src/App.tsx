@@ -1,5 +1,6 @@
 import Onboarding from "./Onboarding";
 import AdminDashboard from "./AdminDashboard";
+import ClientWorkspace from "./ClientWorkspace";
 import ImageContent from "./ImageContent";
 import { useState, useEffect, useRef } from "react";
 import VCIAssistant from "./VCIAssistant";
@@ -7921,6 +7922,7 @@ export default function ViralContentTool() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeClient, setActiveClient] = useState<any>(null);
   const [reviewText, setReviewText] = useState("");
 
   // ── Streak System ─────────────────────────────────────────────────────────
@@ -9108,6 +9110,7 @@ Respond ONLY in valid JSON:
               <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:".3rem" }}>
                 {[
                   ...(userType === "business" ? [{ id:"generate", label:"Generate", icon:"⚡", color:"#6d28d9" }] : []),
+                  ...(userType === "agency" ? [{ id:"clients", label:"Clients", icon:"👥", color:"#f59e0b" }] : []),
                   { id:"roi",           label:"ROI Calc",     icon:"📊", color:"#f59e0b" },
                   { id:"abtest",        label:"A/B Ads",      icon:"🧪", color:"#06b6d4" },
                   { id:"adangles",      label:"Ad Angles",    icon:"🎯", color:"#a855f7" },
@@ -9123,7 +9126,7 @@ Respond ONLY in valid JSON:
                   { id:"localbusiness", label:"Local Biz",     icon:"🏪", color:"#f59e0b" },
                 ].map(t => {
                   const isActive = activeTab === t.id;
-                  const isLocked = t.id === "generate" ? false : !["advertiser","agency"].includes(plan);
+                  const isLocked = (t.id === "generate" || t.id === "clients") ? false : !["advertiser","agency"].includes(plan);
                   return (
                     <button key={t.id}
                       className="tab-btn"
@@ -9602,6 +9605,12 @@ Respond ONLY in valid JSON:
           )}
           {activeTab === "templates" && (
             <ViralTemplates niche={niche} platform={platform} onCreditUsed={() => incrementUsage("generate")} onSaveHistory={saveToHistory} />
+          )}
+          {activeTab === "clients" && user?.id && (
+            <ClientWorkspace userId={user.id} activeClientId={activeClient?.id || null} onSelectClient={setActiveClient} />
+          )}
+          {activeTab === "clients" && userId && (
+            <ClientWorkspace userId={userId} activeClientId={activeClient?.id || null} onSelectClient={setActiveClient} />
           )}
           {activeTab === "localbusiness" && (
             <LocalBusinessKit plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
