@@ -9609,9 +9609,6 @@ Respond ONLY in valid JSON:
           {activeTab === "clients" && user?.id && (
             <ClientWorkspace userId={user.id} activeClientId={activeClient?.id || null} onSelectClient={setActiveClient} />
           )}
-          {activeTab === "clients" && userId && (
-            <ClientWorkspace userId={userId} activeClientId={activeClient?.id || null} onSelectClient={setActiveClient} />
-          )}
           {activeTab === "localbusiness" && (
             <LocalBusinessKit plan={plan} onUpgrade={() => setShowPaywall(true)} onCreditUsed={() => incrementUsage("generate")} />
           )}
