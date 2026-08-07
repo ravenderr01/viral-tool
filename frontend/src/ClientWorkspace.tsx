@@ -20,6 +20,7 @@ export default function ClientWorkspace({
   onSelectClient: (client: Client | null) => void;
 }) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [contentCounts, setContentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState("");
@@ -35,7 +36,21 @@ export default function ClientWorkspace({
       .select("*")
       .eq("agency_user_id", userId)
       .order("created_at", { ascending: false });
-    if (!error && data) setClients(data as Client[]);
+    if (!error && data) {
+      setClients(data as Client[]);
+      // Fetch how many saved pieces of content exist for each client — gives
+      // agency users a quick sense of activity without opening every workspace.
+      const { data: countsData } = await supabase
+        .from("user_history")
+        .select("client_id")
+        .eq("user_id", userId)
+        .not("client_id", "is", null);
+      if (countsData) {
+        const counts: Record<string, number> = {};
+        countsData.forEach((row: any) => { counts[row.client_id] = (counts[row.client_id] || 0) + 1; });
+        setContentCounts(counts);
+      }
+    }
     setLoading(false);
   };
 
@@ -122,6 +137,7 @@ export default function ClientWorkspace({
                   <p style={{ margin: "0 0 0.15rem", color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>{client.client_name}</p>
                   <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>
                     {cfg.label}{client.niche ? ` · ${client.niche}` : ""}
+                    {contentCounts[client.id] > 0 && ` · ${contentCounts[client.id]} pieces saved`}
                   </p>
                 </div>
                 <button onClick={() => onSelectClient(isActive ? null : client)}
