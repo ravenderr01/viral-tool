@@ -51,6 +51,14 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
     "LinkedIn Ads": "Professional, B2B-credible tone — no consumer-style hype or emojis. Lead with a business outcome or insight, not an entertainment hook. Headline should state a clear professional benefit (ROI, efficiency, growth). Body can be slightly longer, data/credibility-oriented. CTA should be professional (Request Demo, Download Report, Book a Call).",
   };
 
+  const CHAR_LIMITS: Record<string, { headline: number; body: number; headlineCount?: number; descCount?: number }> = {
+    "Google Ads":    { headline: 30, body: 90, headlineCount: 15, descCount: 4 }, // Responsive Search Ads spec
+    "Meta Ads":      { headline: 40, body: 125 },
+    "Instagram Ads": { headline: 40, body: 125 },
+    "LinkedIn Ads":  { headline: 70, body: 150 },
+  };
+  const isGoogleRSA = platform === "Google Ads";
+
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -68,6 +76,32 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
+    const limits = CHAR_LIMITS[platform];
+
+    const outputSchema = isGoogleRSA
+      ? `{
+  "audience_avatar": "2-3 sentence persona description",
+  "ad_angles": ["angle 1", "angle 2", "angle 3"],
+  "headlines": ["h1", "h2", ... exactly 15 headlines, EACH 30 characters or fewer],
+  "descriptions": ["d1", "d2", "d3", "d4" — exactly 4 descriptions, EACH 90 characters or fewer],
+  "usp": "one sentence USP",
+  "landing_page_headline": "...",
+  "roi_note": "1-2 honest sentences about what to expect"
+}`
+      : `{
+  "audience_avatar": "2-3 sentence persona description",
+  "ad_angles": ["angle 1", "angle 2", "angle 3"],
+  "ad_copy_a": {"headline": "max ${limits.headline} characters", "body": "max ${limits.body} characters", "cta": "..."},
+  "ad_copy_b": {"headline": "max ${limits.headline} characters", "body": "max ${limits.body} characters", "cta": "..."},
+  "usp": "one sentence USP",
+  "landing_page_headline": "...",
+  "roi_note": "1-2 honest sentences about what to expect"
+}`;
+
+    const formatInstruction = isGoogleRSA
+      ? `OUTPUT FORMAT — Google Responsive Search Ads: Generate EXACTLY 15 distinct headlines, each STRICTLY 30 characters or fewer (count characters carefully — this is a hard platform limit, not a suggestion). Generate EXACTLY 4 distinct descriptions, each STRICTLY 90 characters or fewer. Headlines must cover a mix of angles (benefit, keyword-match, CTA-led, social proof, urgency-if-real) so Google's ad rotation has real variety — no near-duplicate headlines.`
+      : `OUTPUT FORMAT — ${platform}: Generate 2 ad copy variations (A/B test). Each headline must be STRICTLY ${limits.headline} characters or fewer. Each body must be STRICTLY ${limits.body} characters or fewer. Count characters carefully — these are real platform limits, not suggestions. If a draft runs long, tighten the wording rather than exceeding the limit.`;
+
     const prompt = `You are an expert performance marketing strategist who writes ad copy that passes Google Ads and Meta Ads policy review on the first submission. Build a complete ad campaign package specifically for ${platform}.
 
 GOAL: ${goal}
@@ -82,6 +116,8 @@ PLATFORM: ${platform}
 PLATFORM-SPECIFIC WRITING RULES (the ad copy must feel native to ${platform}, not generic — follow this closely):
 ${PLATFORM_GUIDE[platform]}
 
+${formatInstruction}
+
 PLATFORM COMPLIANCE RULES — the ad copy MUST follow these, no exceptions:
 - No unverifiable superlative or absolute claims ("best", "#1", "guaranteed", "cure", "instant results") — Google Ads rejects these without third-party proof
 - Never imply knowledge of the reader's personal attributes, health conditions, financial situation, or body — no "Struggling with X?" style personal call-outs. This is a hard Meta Ads and Google Ads policy violation (personalized attribute targeting/insinuation)
@@ -94,26 +130,17 @@ PLATFORM COMPLIANCE RULES — the ad copy MUST follow these, no exceptions:
 Generate a complete, ready-to-launch, policy-safe campaign package:
 - One detailed audience avatar (name, daily pain points, desires, buying triggers) — this is for internal targeting reference only, never copied into ad text
 - 3 distinct ad angles (different policy-safe psychological approaches: e.g. concrete benefit, social proof, real limited-time offer)
-- 2 complete ad copy variations for A/B testing on ${platform} — each with a headline, body text, and CTA button text, using DIFFERENT angles from each other, both written natively for ${platform} and fully compliant with the rules above
 - One clear USP (unique selling point) statement, stated as a specific fact/feature, not a superlative
 - One landing page headline suggestion
 - A brief, honest ROI expectation note (qualitative, not a fake guaranteed number)
 
 Respond ONLY in JSON:
-{
-  "audience_avatar": "2-3 sentence persona description",
-  "ad_angles": ["angle 1", "angle 2", "angle 3"],
-  "ad_copy_a": {"headline": "...", "body": "...", "cta": "..."},
-  "ad_copy_b": {"headline": "...", "body": "...", "cta": "..."},
-  "usp": "one sentence USP",
-  "landing_page_headline": "...",
-  "roi_note": "1-2 honest sentences about what to expect"
-}`;
+${outputSchema}`;
 
     try {
       const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1800, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2400, messages: [{ role: "user", content: prompt }] })
       });
       const data = await res.json();
       const text = data.content?.map((i: any) => i.text || "").join("") || "";
@@ -327,13 +354,49 @@ Respond ONLY in JSON:
           </div>
 
           <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
-            🧪 A/B AD COPY FOR {platform.toUpperCase()}
+            {isGoogleRSA ? "🧪 15 HEADLINES + 4 DESCRIPTIONS FOR GOOGLE ADS" : `🧪 A/B AD COPY FOR ${platform.toUpperCase()}`}
             <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "10px", letterSpacing: "normal" }}>✓ Google & Meta policy-safe</span>
           </p>
+
+          {isGoogleRSA ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "0.75rem" }}>
+              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ color: "#4285f4", fontWeight: 800, fontSize: "0.78rem" }}>Headlines ({(result.headlines || []).length}/15 · max 30 chars)</span>
+                  <button onClick={() => copyText((result.headlines || []).join("\n"), "allheadlines")}
+                    style={{ background: copiedKey === "allheadlines" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allheadlines" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allheadlines" ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
+                    {copiedKey === "allheadlines" ? "✓ Copied!" : "Copy All"}
+                  </button>
+                </div>
+                {(result.headlines || []).map((h: string, i: number) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.35rem 0", borderBottom: i < result.headlines.length - 1 ? "1px solid #141414" : "none" }}>
+                    <span style={{ color: "#d4d4d8", fontSize: "0.8rem" }}>{h}</span>
+                    <span style={{ color: h.length > 30 ? "#ef4444" : "#3f3f46", fontSize: "0.62rem", fontWeight: 700, flexShrink: 0, marginLeft: "0.5rem" }}>{h.length}/30</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ color: "#4285f4", fontWeight: 800, fontSize: "0.78rem" }}>Descriptions ({(result.descriptions || []).length}/4 · max 90 chars)</span>
+                  <button onClick={() => copyText((result.descriptions || []).join("\n"), "alldescs")}
+                    style={{ background: copiedKey === "alldescs" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "alldescs" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "alldescs" ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
+                    {copiedKey === "alldescs" ? "✓ Copied!" : "Copy All"}
+                  </button>
+                </div>
+                {(result.descriptions || []).map((d: string, i: number) => (
+                  <div key={i} style={{ padding: "0.35rem 0", borderBottom: i < result.descriptions.length - 1 ? "1px solid #141414" : "none" }}>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.5 }}>{d}</p>
+                    <span style={{ color: d.length > 90 ? "#ef4444" : "#3f3f46", fontSize: "0.62rem", fontWeight: 700 }}>{d.length}/90</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginBottom: "0.75rem" }}>
             {(["A", "B"] as const).map(v => {
               const ad = v === "A" ? result.ad_copy_a : result.ad_copy_b;
               const isSel = selectedAd === v;
+              const lim = CHAR_LIMITS[platform];
               return (
                 <div key={v} onClick={() => setSelectedAd(v)}
                   style={{ background: isSel ? "rgba(6,182,212,0.08)" : "#0f0f0f", border: `1.5px solid ${isSel ? "#06b6d4" : "#1f1f1f"}`, borderRadius: "12px", padding: "0.85rem", cursor: "pointer" }}>
@@ -341,13 +404,16 @@ Respond ONLY in JSON:
                     <span style={{ color: isSel ? "#06b6d4" : "#71717a", fontWeight: 800, fontSize: "0.78rem" }}>Ad Copy {v}</span>
                     {isSel && <span style={{ color: "#06b6d4", fontSize: "0.68rem" }}>✓ Selected</span>}
                   </div>
-                  <p style={{ margin: "0 0 0.35rem", color: "#fff", fontSize: "0.85rem", fontWeight: 700 }}>{ad?.headline}</p>
-                  <p style={{ margin: "0 0 0.5rem", color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{ad?.body}</p>
+                  <p style={{ margin: "0 0 0.15rem", color: "#fff", fontSize: "0.85rem", fontWeight: 700 }}>{ad?.headline}</p>
+                  <p style={{ margin: "0 0 0.35rem", color: (ad?.headline?.length || 0) > lim.headline ? "#ef4444" : "#3f3f46", fontSize: "0.62rem", fontWeight: 700 }}>{ad?.headline?.length || 0}/{lim.headline} chars</p>
+                  <p style={{ margin: "0 0 0.15rem", color: "#a1a1aa", fontSize: "0.75rem", lineHeight: 1.5 }}>{ad?.body}</p>
+                  <p style={{ margin: "0 0 0.5rem", color: (ad?.body?.length || 0) > lim.body ? "#ef4444" : "#3f3f46", fontSize: "0.62rem", fontWeight: 700 }}>{ad?.body?.length || 0}/{lim.body} chars</p>
                   <span style={{ background: "rgba(6,182,212,0.1)", color: "#06b6d4", fontSize: "0.68rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: "6px" }}>{ad?.cta} →</span>
                 </div>
               );
             })}
           </div>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginBottom: "1rem" }}>
             <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
@@ -392,11 +458,15 @@ Respond ONLY in JSON:
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1rem" }}>
-            {[
+            {(isGoogleRSA ? [
+              { k: "headline", label: "📝 Copy All 15 Headlines", text: (result.headlines || []).join("\n") },
+              { k: "body", label: "💬 Copy All 4 Descriptions", text: (result.descriptions || []).join("\n") },
+              { k: "landing", label: "🖥️ Copy Landing Page Headline", text: result.landing_page_headline },
+            ] : [
               { k: "headline", label: "📝 Copy Selected Ad Headline", text: (selectedAd === "A" ? result.ad_copy_a : result.ad_copy_b)?.headline },
               { k: "body", label: "💬 Copy Selected Ad Body", text: (selectedAd === "A" ? result.ad_copy_a : result.ad_copy_b)?.body },
               { k: "landing", label: "🖥️ Copy Landing Page Headline", text: result.landing_page_headline },
-            ].map(row => (
+            ]).map(row => (
               <button key={row.k} onClick={() => copyText(row.text || "", row.k)}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", cursor: "pointer", color: "#fff" }}>
                 <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>{row.label}</span>
