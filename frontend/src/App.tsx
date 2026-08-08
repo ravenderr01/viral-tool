@@ -4834,391 +4834,6 @@ function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = 
 //    functions plus adding the small STYLE_ACCENTS constant above.
 // ══════════════════════════════════════════════════════════════════════════
 
-function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string; scriptStyle: string; aiDisabled?: boolean }) {
-  const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
-  const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
-
-  // Voice source
-  const [voiceMode,     setVoiceMode]     = useState<"ai"|"upload"|"record">(aiDisabled ? "record" : "ai");
-  const [userVoiceUrl,  setUserVoiceUrl]  = useState<string|null>(null);
-  const [userVoiceName, setUserVoiceName] = useState("");
-  const [recording,     setRecording]     = useState(false);
-  const [recSeconds,    setRecSeconds]    = useState(0);
-  const mediaRecRef  = useRef<MediaRecorder|null>(null);
-  const recChunksRef = useRef<Blob[]>([]);
-  const recTimerRef  = useRef<any>(null);
-
-  // Music source
-  const [musicMode,     setMusicMode]     = useState<"synth"|"upload">("synth");
-  const [userMusicUrl,  setUserMusicUrl]  = useState<string|null>(null);
-  const [userMusicName, setUserMusicName] = useState("");
-
-  // Built-in track
-  const [selected,   setSelected]   = useState<number>(defaultIdx);
-  const [volume,     setVolume]     = useState(28);
-  const [previewing, setPreviewing] = useState(false);
-  const [mixing,     setMixing]     = useState(false);
-  const [mixStatus,  setMixStatus]  = useState("");
-  const [mixedUrl,   setMixedUrl]   = useState<string|null>(null);
-  const [error,      setError]      = useState("");
-  const previewCtxRef = useRef<AudioContext|null>(null);
-  const abortRef      = useRef(false);
-
-  const activeVoiceUrl = voiceMode === "ai" ? aiAudioUrl : userVoiceUrl;
-
-  const stopPreview = () => {
-    try { previewCtxRef.current?.close(); } catch {}
-    previewCtxRef.current = null;
-    setPreviewing(false);
-  };
-
-  // Preview — uses makeMusicBuffer directly (no network, always works)
-  const preview = async (idx: number) => {
-    stopPreview(); setError("");
-    try {
-      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx  = new ACtx() as AudioContext;
-      previewCtxRef.current = ctx;
-      setPreviewing(true);
-      const buf  = makeMusicBuffer(ctx.sampleRate, 10, idx, Math.max(volume, 50));
-      const src  = ctx.createBufferSource();
-      const gain = ctx.createGain();
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -10; comp.knee.value = 6;
-      comp.ratio.value = 4; comp.attack.value = 0.001; comp.release.value = 0.15;
-      gain.gain.value = 1.5;
-      src.buffer = buf;
-      src.connect(gain); gain.connect(comp); comp.connect(ctx.destination);
-      src.start(0); src.onended = stopPreview;
-      setTimeout(stopPreview, 11000);
-    } catch(e) { console.error(e); setError("Preview failed."); setPreviewing(false); }
-  };
-
-  const previewUserMusic = () => {
-    if (!userMusicUrl) return;
-    const audio = new Audio(userMusicUrl);
-    audio.volume = Math.min(volume / 50, 1);
-    audio.play().catch(() => setError("Could not play file."));
-    setTimeout(() => audio.pause(), 10000);
-  };
-
-  // Record voice
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      mediaRecRef.current = rec; recChunksRef.current = [];
-      rec.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
-      rec.onstop = () => {
-        const blob = new Blob(recChunksRef.current, { type: "audio/webm" });
-        setUserVoiceUrl(URL.createObjectURL(blob));
-        setUserVoiceName("Recorded voice");
-        stream.getTracks().forEach(t => t.stop());
-      };
-      rec.start();
-      setRecording(true); setRecSeconds(0);
-      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
-    } catch { setError("Microphone access denied."); }
-  };
-
-  const stopRecording = () => {
-    mediaRecRef.current?.stop();
-    clearInterval(recTimerRef.current);
-    setRecording(false);
-  };
-
-  const handleVoiceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
-    setUserVoiceUrl(URL.createObjectURL(file));
-    setUserVoiceName(file.name); setError("");
-  };
-
-  const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
-    setUserMusicUrl(URL.createObjectURL(file));
-    setUserMusicName(file.name); setMusicMode("upload"); setError("");
-  };
-
-  // Mix
-  const doMix = async (): Promise<string|null> => {
-    if (!activeVoiceUrl) { setError("Please add a voiceover first."); return null; }
-    try {
-      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
-      setMixStatus("Loading voiceover...");
-      const voiceRaw = await fetch(activeVoiceUrl).then(r => r.arrayBuffer()).catch(() => null);
-      if (!voiceRaw) throw new Error("Voiceover could not be loaded.");
-      const vCtx = new ACtx() as AudioContext;
-      let voiceDec: AudioBuffer;
-      try { voiceDec = await vCtx.decodeAudioData(voiceRaw); }
-      catch { await vCtx.close(); throw new Error("Voiceover format not supported. Use MP3 or WAV."); }
-      await vCtx.close();
-      if (abortRef.current) return null;
-
-      const sr = voiceDec.sampleRate;
-      const totalDur = voiceDec.duration + 2.5;
-      const totalSamples = Math.ceil(sr * totalDur);
-
-      setMixStatus("Loading music...");
-      let musicBuf: AudioBuffer;
-      if (musicMode === "upload" && userMusicUrl) {
-        const mRaw = await fetch(userMusicUrl).then(r => r.arrayBuffer()).catch(() => null);
-        if (!mRaw) throw new Error("Could not load music file.");
-        const mCtx = new ACtx() as AudioContext;
-        try {
-          const mDec = await mCtx.decodeAudioData(mRaw);
-          const vol  = Math.min((volume / 100) * 0.72, 0.82);
-          const outM: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
-          for (let ch = 0; ch < 2; ch++) {
-            const src = mDec.getChannelData(Math.min(ch, mDec.numberOfChannels - 1));
-            const out = outM.getChannelData(ch);
-            for (let i = 0; i < totalSamples; i++) {
-              const fi = Math.min(i / (0.6 * sr), 1);
-              const fo = Math.min((totalSamples - i) / (2.5 * sr), 1);
-              out[i]   = src[i % mDec.length] * vol * fi * fo;
-            }
-          }
-          musicBuf = outM; await mCtx.close();
-        } catch { await mCtx.close(); throw new Error("Music format not supported. Use MP3 or WAV."); }
-      } else {
-        musicBuf = makeMusicBuffer(sr, totalDur, selected, volume);
-      }
-      if (abortRef.current) return null;
-
-      setMixStatus("Applying ducking...");
-      const WIN    = Math.max(1, Math.ceil(0.008 * sr));
-      const voiceL = voiceDec.getChannelData(0);
-      const voiceR = voiceDec.numberOfChannels > 1 ? voiceDec.getChannelData(1) : voiceL;
-      const env    = new Float32Array(totalSamples);
-      for (let i = 0; i < totalSamples; i++) {
-        const s = Math.max(0, i - (WIN >> 1)), e = Math.min(voiceDec.length, i + (WIN >> 1));
-        let rms = 0;
-        for (let j = s; j < e; j++) rms += ((Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5) ** 2;
-        env[i] = e > s ? Math.sqrt(rms / (e - s)) : 0;
-      }
-      const FLOOR = 0.18, CEIL = 0.82, THR = 0.013;
-      const ATK = Math.ceil(0.012 * sr), REL = Math.ceil(0.340 * sr);
-      const duck = new Float32Array(totalSamples);
-      let g = CEIL;
-      for (let i = 0; i < totalSamples; i++) {
-        const t = env[i] > THR ? FLOOR : CEIL;
-        g += (t - g) / (t < g ? ATK : REL);
-        duck[i] = g;
-      }
-
-      setMixStatus("Mixing...");
-      const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
-      for (let ch = 0; ch < 2; ch++) {
-        const out   = outBuf.getChannelData(ch);
-        const vData = ch === 0 ? voiceL : voiceR;
-        const mData = musicBuf.getChannelData(Math.min(ch, musicBuf.numberOfChannels - 1));
-        for (let i = 0; i < totalSamples; i++) {
-          const v = i < voiceDec.length ? vData[i] : 0;
-          const m = i < mData.length    ? mData[i] * duck[i] : 0;
-          out[i]  = Math.tanh((v * 0.91 + m) * 0.87);
-        }
-      }
-
-      setMixStatus("Encoding WAV...");
-      const nCh = 2, nS = totalSamples;
-      const wav = new ArrayBuffer(44 + nS * nCh * 2);
-      const dv  = new DataView(wav);
-      const ws  = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o+i, s.charCodeAt(i)); };
-      ws(0,"RIFF"); dv.setUint32(4,36+nS*nCh*2,true);
-      ws(8,"WAVE"); ws(12,"fmt "); dv.setUint32(16,16,true);
-      dv.setUint16(20,1,true); dv.setUint16(22,nCh,true);
-      dv.setUint32(24,sr,true); dv.setUint32(28,sr*nCh*2,true);
-      dv.setUint16(32,nCh*2,true); dv.setUint16(34,16,true);
-      ws(36,"data"); dv.setUint32(40,nS*nCh*2,true);
-      let off = 44;
-      for (let i = 0; i < nS; i++) for (let ch = 0; ch < nCh; ch++) {
-        const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
-        dv.setInt16(off, s < 0 ? s*0x8000 : s*0x7fff, true); off += 2;
-      }
-      return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
-    } catch(err: any) { setError(err?.message || "Mix failed."); return null; }
-  };
-
-  const runMix = async () => {
-    abortRef.current = false;
-    setMixing(true); setError(""); setMixedUrl(null);
-    const url = await doMix();
-    if (!abortRef.current && url) setMixedUrl(url);
-    setMixing(false); setMixStatus("");
-  };
-
-  const sBox  = { background:"#080810", border:"1px solid #1a1a2a", borderRadius:"12px", padding:"1rem", marginBottom:"0.75rem" } as const;
-  const sLbl  = { margin:"0 0 0.6rem", fontSize:"0.65rem", fontWeight:700, letterSpacing:"0.06em" } as const;
-  const mBtn  = (active: boolean, col = "#a855f7") => ({ flex:1, padding:"0.5rem 0.5rem", borderRadius:"8px", border:`1px solid ${active?col:"#1a1a2a"}`, background:active?`${col}15`:"transparent", color:active?col:"#52525b", fontWeight:700, fontSize:"0.7rem", cursor:"pointer", fontFamily:"'Inter',sans-serif" } as const);
-
-  return (
-    <div style={{ border:"1px solid rgba(168,85,247,0.3)", borderRadius:"16px", padding:"1.1rem", marginBottom:"0.75rem", background:"linear-gradient(135deg,rgba(168,85,247,0.06),rgba(168,85,247,0.02))", animation:"slideUp 0.4s ease" }}>
-      <p style={{ margin:"0 0 1rem", fontSize:"0.7rem", color:"#a855f7", fontWeight:800, letterSpacing:"0.06em" }}>🎛️ MIX STUDIO</p>
-
-      {/* ── VOICE ── */}
-      <div style={sBox}>
-        <p style={{ ...sLbl, color:"#06b6d4" }}>🎙️ VOICE / VOICEOVER</p>
-        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
-          {([["ai", aiDisabled ? "🤖 AI Voice (Soon)" : "🤖 AI Voice"],["upload","📁 Upload File"],["record","🎤 Record"]] as const).map(([m,l])=>(
-            <button key={m} disabled={aiDisabled && m==="ai"}
-              onClick={()=>{ if (aiDisabled && m==="ai") return; setVoiceMode(m as any); setError(""); }}
-              style={{ ...mBtn(voiceMode===m,"#06b6d4"), opacity: (aiDisabled && m==="ai") ? 0.35 : 1, cursor: (aiDisabled && m==="ai") ? "not-allowed" : "pointer" }}>
-              {l}
-            </button>
-          ))}
-        </div>
-        {voiceMode==="ai" && (
-          aiAudioUrl ? (
-            <div style={{ background:"#050508", border:"1px solid rgba(6,182,212,0.15)", borderRadius:"8px", padding:"0.6rem" }}>
-              <p style={{ margin:"0 0 0.3rem", color:"#3f3f46", fontSize:"0.62rem" }}>AI-generated voiceover</p>
-              <audio controls src={aiAudioUrl} style={{ width:"100%", height:"32px" }} />
-            </div>
-          ) : (
-            <div style={{ background:"#050508", border:"1px dashed rgba(6,182,212,0.25)", borderRadius:"8px", padding:"0.85rem", textAlign:"center" }}>
-              <p style={{ margin:0, color:"#06b6d4", fontSize:"0.7rem", fontWeight:700 }}>🔊 AI Voice — Coming Soon</p>
-              <p style={{ margin:".3rem 0 0", color:"#52525b", fontSize:"0.65rem" }}>Use Upload or Record instead for now.</p>
-            </div>
-          )
-        )}
-        {voiceMode==="upload" && (
-          <div>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(6,182,212,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#06b6d4", fontSize:"0.78rem", fontWeight:700 }}>
-              📁 Click to upload (MP3, WAV, M4A)
-              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleVoiceUpload} />
-            </label>
-            {userVoiceUrl && (
-              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(6,182,212,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
-                <p style={{ margin:"0 0 0.3rem", color:"#06b6d4", fontSize:"0.65rem", fontWeight:700 }}>✓ {userVoiceName}</p>
-                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
-              </div>
-            )}
-          </div>
-        )}
-        {voiceMode==="record" && (
-          <div>
-            {!recording ? (
-              <button onClick={startRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"linear-gradient(135deg,#06b6d4,#0891b2)", border:"none", color:"#000", fontWeight:800, fontSize:"0.85rem", cursor:"pointer" }}>
-                🔴 Start Recording
-              </button>
-            ) : (
-              <button onClick={stopRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"rgba(239,68,68,0.12)", border:"2px solid #ef4444", color:"#ef4444", fontWeight:800, fontSize:"0.85rem", cursor:"pointer", animation:"pulse 1s infinite" }}>
-                ⏹ Stop · {recSeconds}s recorded
-              </button>
-            )}
-            {userVoiceUrl && !recording && (
-              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(34,197,94,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
-                <p style={{ margin:"0 0 0.3rem", color:"#22c55e", fontSize:"0.65rem", fontWeight:700 }}>✓ Recording ready ({recSeconds}s)</p>
-                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── MUSIC ── */}
-      <div style={sBox}>
-        <p style={{ ...sLbl, color:"#a855f7" }}>🎵 BACKGROUND MUSIC</p>
-        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
-          <button onClick={()=>{setMusicMode("synth");setError("");}} style={mBtn(musicMode==="synth")}>🎹 Built-in</button>
-          <button onClick={()=>{setMusicMode("upload");setError("");}} style={mBtn(musicMode==="upload")}>📁 Upload My Music</button>
-        </div>
-        {musicMode==="synth" && (
-          <div style={{ display:"flex", flexDirection:"column", gap:"0.3rem", marginBottom:"0.6rem" }}>
-            {BG_TRACKS.map((track,i)=>{
-              const isSel=selected===i, isSugg=suggestedIdx===i, isPrev=previewing&&selected===i;
-              return (
-                <div key={i} onClick={()=>{setSelected(i);setMixedUrl(null);setError("");}}
-                  style={{ background:isSel?"rgba(168,85,247,0.1)":"#050508", border:`1px solid ${isSel?"#a855f7":"#1a1a2a"}`, borderRadius:"10px", padding:"0.5rem 0.75rem", display:"flex", alignItems:"center", gap:"0.6rem", cursor:"pointer", transition:"all 0.2s" }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:"0.4rem" }}>
-                      <span style={{ color:isSel?"#a855f7":"#e4e4e7", fontSize:"0.8rem", fontWeight:isSel?700:500 }}>{track.name}</span>
-                      {isSugg&&<span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:"0.55rem", fontWeight:700, padding:"0.05rem 0.3rem", borderRadius:"5px" }}>Best match</span>}
-                    </div>
-                    <span style={{ color:"#52525b", fontSize:"0.62rem" }}>{track.mood} · {track.genre}</span>
-                  </div>
-                  <button onClick={e=>{e.stopPropagation(); isPrev?stopPreview():preview(i);}}
-                    style={{ background:isPrev?"rgba(168,85,247,0.2)":"#111", border:`1px solid ${isPrev?"#a855f7":"#222"}`, color:isPrev?"#a855f7":"#666", padding:"0.25rem 0.55rem", borderRadius:"7px", cursor:"pointer", fontSize:"0.7rem", fontWeight:700, flexShrink:0 }}>
-                    {isPrev?"⏹ Stop":"▶ Preview"}
-                  </button>
-                  <div style={{ width:16, height:16, borderRadius:"50%", border:`2px solid ${isSel?"#a855f7":"#2a2a2a"}`, background:isSel?"#a855f7":"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                    {isSel&&<span style={{ color:"#fff", fontSize:"0.55rem" }}>✓</span>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {musicMode==="upload" && (
-          <div>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(168,85,247,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#a855f7", fontSize:"0.78rem", fontWeight:700 }}>
-              📁 Click to upload music (MP3, WAV, M4A)
-              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleMusicUpload} />
-            </label>
-            {userMusicUrl && (
-              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <p style={{ margin:0, color:"#a855f7", fontSize:"0.65rem", fontWeight:700 }}>✓ {userMusicName}</p>
-                  <button onClick={previewUserMusic} style={{ background:"none", border:"none", color:"#a855f7", cursor:"pointer", fontSize:"0.7rem", fontWeight:700 }}>▶ Preview</button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <div style={{ marginTop:"0.6rem" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"0.2rem" }}>
-            <label style={{ color:"#52525b", fontSize:"0.6rem", fontWeight:700 }}>MUSIC VOLUME</label>
-            <span style={{ color:"#a855f7", fontSize:"0.6rem", fontWeight:700 }}>{volume}%</span>
-          </div>
-          <input type="range" min={10} max={55} value={volume} onChange={e=>setVolume(Number(e.target.value))} style={{ width:"100%", accentColor:"#a855f7", cursor:"pointer" }} />
-        </div>
-      </div>
-
-      {/* ── MIX BUTTON ── */}
-      {error&&<p style={{ color:"#ef4444", fontSize:"0.72rem", margin:"0 0 0.6rem", textAlign:"center" }}>{error}</p>}
-
-      {!mixedUrl&&!mixing&&(
-        <button onClick={runMix} disabled={!activeVoiceUrl}
-          style={{ width:"100%", padding:"0.9rem", borderRadius:"12px", background:!activeVoiceUrl?"#111":"linear-gradient(135deg,#a855f7,#7c3aed)", border:"none", color:!activeVoiceUrl?"#444":"#fff", fontWeight:800, fontSize:"0.9rem", cursor:!activeVoiceUrl?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", boxShadow:activeVoiceUrl?"0 4px 20px rgba(168,85,247,0.3)":"none" }}>
-          🎛️ Mix Voice + Music
-        </button>
-      )}
-
-      {mixing&&(
-        <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"10px", padding:"0.85rem" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", color:"#a855f7", fontSize:"0.78rem", marginBottom:"0.5rem" }}>
-            <RefreshCw size={13} style={{ animation:"spin 1s linear infinite", flexShrink:0 }} />
-            <span style={{ fontWeight:600 }}>{mixStatus||"Mixing..."}</span>
-          </div>
-          <div style={{ background:"#1a1a2a", borderRadius:"4px", height:"3px", overflow:"hidden" }}>
-            <div style={{ height:"100%", background:"linear-gradient(90deg,#7c3aed,#a855f7)", borderRadius:"4px", animation:"progressBar 15s linear forwards" }} />
-          </div>
-        </div>
-      )}
-
-      {mixedUrl&&!mixing&&(
-        <div style={{ animation:"slideUp 0.3s ease" }}>
-          <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"12px", padding:"0.75rem", marginBottom:"0.6rem" }}>
-            <p style={{ margin:"0 0 0.4rem", fontSize:"0.65rem", color:"#a855f7", fontWeight:700 }}>🎧 FINAL MIX PREVIEW</p>
-            <audio controls src={mixedUrl} style={{ width:"100%" }} />
-          </div>
-          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-final-mix.wav`}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"linear-gradient(135deg,#a855f7,#7c3aed)", color:"#fff", padding:"0.85rem", borderRadius:"12px", fontSize:"0.88rem", fontWeight:800, textDecoration:"none", boxShadow:"0 4px 20px rgba(168,85,247,0.3)", marginBottom:"0.5rem" }}>
-            ⬇ Download Final Mix (WAV)
-          </a>
-          <button onClick={()=>{abortRef.current=true; setTimeout(runMix,80);}}
-            style={{ width:"100%", padding:"0.6rem", borderRadius:"10px", background:"transparent", border:"1px solid rgba(168,85,247,0.3)", color:"#a855f7", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>
-            🔄 Remix Again
-          </button>
-          <p style={{ margin:"0.4rem 0 0", color:"#3f3f46", fontSize:"0.6rem", textAlign:"center" }}>WAV · 16-bit Stereo · Professional Ducking</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice, userType }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
@@ -6482,7 +6097,19 @@ ${sectionsSchema}
       )}
     </div>
   );
-}        "📊 Hook Score Analyzer",
+}
+
+function PaywallModal({ onClose, onSelectPlan, currency }: any) {
+  const [selected, setSelected] = useState<string>("creator_starter");
+  const isUSD = currency === "USD";
+  const selectedPlan = (PLANS as any)[selected];
+
+  const PLAN_FEATURES: Record<string, any> = {
+  creator_starter: {
+    section: "creator",
+    highlight: "🔥 Popular",
+    features: [
+      "📊 Hook Score Analyzer",
         "📋 Caption & Hashtag Generator",
         "🎬 Script Lab — Full Reel Pipeline",
         "🖼️ Auto Thumbnail Generator",
@@ -6689,6 +6316,242 @@ ${sectionsSchema}
           Maybe later
         </button>
       </div>
+    </div>
+  );
+}
+
+// Hook Score Analyzer — paste any hook/caption/script and get a strict, honest
+// score (0-100) + grade (A-F), line-level fixes, and 3 platform-tuned rewrites.
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
+  const [contentInput, setContentInput] = useState("");
+  const [platform, setPlatform] = useState("Instagram");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const ALL_SCORE_PLATFORMS = [
+    { id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" },
+    { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" },
+    { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" },
+  ];
+  const ADS_SCORE_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
+    { id: "YouTube Ads", emoji: "▶️" }, { id: "Native Ads", emoji: "📰" },
+  ];
+  const SCORE_PLATFORMS = userType === "business" ? ADS_SCORE_PLATFORMS : ALL_SCORE_PLATFORMS;
+
+  useEffect(() => {
+    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
+  }, [userType]);
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("hookscore", key, text, { platform });
+  };
+
+  const SCORE_PLATFORM_GUIDE: Record<string, string> = {
+    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
+    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
+    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing.",
+    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
+    "Facebook": "Warm, community/family-oriented tone for a slightly older audience.",
+    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
+    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits (headlines max 30 chars), no fluff.",
+    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
+  };
+
+  const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
+
+  const analyze = async () => {
+    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const prompt = `You are an expert viral content analyst and coach who deeply understands how content actually performs on ${platform} specifically. Analyze this content for ${platform}:
+
+CONTENT TO ANALYZE:
+"""${contentInput}"""
+
+PLATFORM: ${platform}
+PLATFORM CONTEXT: ${SCORE_PLATFORM_GUIDE[platform] || SCORE_PLATFORM_GUIDE["Instagram"]}
+LANGUAGE: ${langStrict}
+
+ANALYSIS RULES:
+- Score out of 100. Use this exact rubric — do not be arbitrarily conservative or arbitrarily generous:
+  - 85-100 (Grade A): Genuinely excellent — strong curiosity gap OR sharp emotional trigger, specific concrete detail (number/result/timeframe), zero generic filler, would stop a scroll. Award this honestly when content earns it — don't withhold A out of general caution.
+  - 70-84 (Grade B): Solid and usable — has a real hook mechanism but is missing one element of A-tier (e.g. good curiosity but vague specifics, or strong specifics but a flat opening).
+  - 50-69 (Grade C): Average — technically fine but generic, forgettable, or missing a genuine attention-grabbing mechanism. Most unedited first-draft content lands here.
+  - 30-49 (Grade D): Weak — clichéd opener, no specific detail, or reads like generic AI/marketing filler.
+  - 0-29 (Grade F): Broken — off-platform, confusing, or actively repels attention.
+- Judge what's ACTUALLY on the page, not what's typical for AI-generated content in general — a genuinely strong hook deserves an A even if most content doesn't reach that bar.
+- Analyze the FULL content, not just first line
+- Give LINE-BY-LINE feedback on weak parts
+- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites — and these 3 versions should themselves be written to hit the A-tier bar above
+- Identify exactly what's strong and what's weak
+
+Respond ONLY in JSON:
+{
+  "score": 0,
+  "grade": "C",
+  "verdict": "one honest sentence summarizing why it scored this way",
+  "strengths": ["specific strength 1", "specific strength 2"],
+  "fixes": [
+    {"problem": "specific weak line or issue, quoted or described exactly", "fixed": "the improved version of that specific part"}
+  ],
+  "platform_versions": {
+    "v1": {"label": "Curiosity-led", "content": "full rewritten version"},
+    "v2": {"label": "Bold Claim", "content": "full rewritten version"},
+    "v3": {"label": "Story Opener", "content": "full rewritten version"}
+  },
+  "pro_tips": ["tip 1", "tip 2", "tip 3"]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2200, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("hookscore", { platform, inputSummary: contentInput.slice(0, 80), resultData: parsed });
+    } catch {
+      setError("Analysis failed. Try again.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+
+      {/* Platform Selector */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+        <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.5rem" }}>SELECT PLATFORM</label>
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+          {SCORE_PLATFORMS.map(p => (
+            <button key={p.id} onClick={() => setPlatform(p.id)}
+              style={{ background: platform === p.id ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: platform === p.id ? "#8b5cf6" : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
+              {p.emoji} {p.id}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Input */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>📊</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Hook Score Analyzer</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste any hook, caption, or script — get an honest score + fixes</p>
+          </div>
+        </div>
+
+        <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
+          placeholder={`Paste your ${platform} hook, caption, or opening line here...`}
+          rows={6}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#6d28d9"}
+          onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={analyze} disabled={loading}
+          style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "📊 Analyzing..." : `📊 Score My ${platform} Content`}
+        </button>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+
+          {/* Score + Verdict */}
+          <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.1),rgba(109,40,217,0.03))", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "16px", padding: "1.25rem", marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "1.25rem" }}>
+            <ScoreRing score={result.score || 0} label={`Grade ${result.grade || "-"}`} color={gradeColor(result.grade)} />
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 0.3rem", color: gradeColor(result.grade), fontWeight: 900, fontSize: "1.1rem" }}>
+                {result.score}/100 — Grade {result.grade}
+              </p>
+              <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.6 }}>{result.verdict}</p>
+            </div>
+          </div>
+
+          {/* Strengths */}
+          {result.strengths && result.strengths.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✅ WHAT'S WORKING</p>
+              {result.strengths.map((s: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.35rem" }}>
+                  <span style={{ color: "#22c55e", fontSize: "0.72rem", flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{s}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fixes */}
+          {result.fixes && result.fixes.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 SUGGESTED FIXES</p>
+              {result.fixes.map((fix: any, i: number) => (
+                <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem", marginBottom: "0.4rem" }}>
+                    <span style={{ color: "#f59e0b", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>
+                      ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Suggested improvements for your content"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
+                    <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
+                    <span style={{ color: "#22c55e", fontSize: "0.78rem", lineHeight: 1.5 }}>{fix.fixed}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 3 Platform Versions */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#6d28d9", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
+            {result.platform_versions && Object.entries(result.platform_versions).map(([key, ver]: any, i) => {
+              const colors = ["#6d28d9", "#06b6d4", "#22c55e"];
+              const color = colors[i] || "#6d28d9";
+              return (
+                <div key={key} style={{ background: `${color}08`, border: `1px solid ${color}25`, borderRadius: "10px", padding: "0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <span style={{ color, fontSize: "0.7rem", fontWeight: 700 }}>✨ {ver.label}</span>
+                    <button onClick={() => copyText(ver.content, key)}
+                      style={{ background: copiedKey === key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === key ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === key ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
+                      {copiedKey === key ? "✓ Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <p style={{ margin: 0, color: "#ddd", fontSize: "0.83rem", lineHeight: 1.6 }}>{ver.content}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pro Tips */}
+          {result.pro_tips && result.pro_tips.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #8b8cf830", borderRadius: "14px", padding: "1rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b8cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
+              {result.pro_tips.map((tip: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                  <span style={{ color: "#8b8cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
