@@ -16,7 +16,7 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
 
   // Step 2 — Audience
   const [targetLocation, setTargetLocation] = useState("India");
-  const [ageGroup, setAgeGroup] = useState("");
+  const [ageGroup, setAgeGroup] = useState<string[]>([]);
   const [interest, setInterest] = useState("");
 
   // Step 3 — Generate
@@ -99,8 +99,15 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
 }`;
 
     const formatInstruction = isGoogleRSA
-      ? `OUTPUT FORMAT — Google Responsive Search Ads: Generate EXACTLY 15 distinct headlines, each STRICTLY 30 characters or fewer (count characters carefully — this is a hard platform limit, not a suggestion). Generate EXACTLY 4 distinct descriptions, each STRICTLY 90 characters or fewer. Headlines must cover a mix of angles (benefit, keyword-match, CTA-led, social proof, urgency-if-real) so Google's ad rotation has real variety — no near-duplicate headlines.`
-      : `OUTPUT FORMAT — ${platform}: Generate 2 ad copy variations (A/B test). Each headline must be STRICTLY ${limits.headline} characters or fewer. Each body must be STRICTLY ${limits.body} characters or fewer. Count characters carefully — these are real platform limits, not suggestions. If a draft runs long, tighten the wording rather than exceeding the limit.`;
+      ? `OUTPUT FORMAT — Google Responsive Search Ads: Generate EXACTLY 15 distinct headlines, each STRICTLY 30 characters or fewer (count characters carefully — this is a hard platform limit, not a suggestion). Generate EXACTLY 4 distinct descriptions, each STRICTLY 90 characters or fewer.
+
+HEADLINE QUALITY BAR — this is critical: headlines must be genuinely persuasive ad copy, NOT generic category labels or store-directory-style tags. 
+BANNED style: plain nouns or category names with no benefit or hook ("Women's Kurtas", "Men's Shirts", "Clothing Store", "Fashion Sale", "Shop Now" alone) — these are directory listings, not ads.
+REQUIRED style: each headline should do ONE of — state a specific concrete benefit ("Save 2Hrs Every Week"), a real number/stat/offer specific to THIS business (not invented), a sharp question, a clear differentiator, or a strong CTA paired with a benefit ("Get 20% Off Today"). Use the business/product, goal, and interest details given below to make headlines SPECIFIC to this business — a stranger reading them should learn something concrete, not just the product category.
+Cover a genuine mix of angles across the 15: some benefit-led, some offer/urgency-led (only if real), some question-led, some social-proof-led, some CTA-led. No near-duplicate headlines, no two headlines saying the same thing in different words.`
+      : `OUTPUT FORMAT — ${platform}: Generate 2 ad copy variations (A/B test). Each headline must be STRICTLY ${limits.headline} characters or fewer. Each body must be STRICTLY ${limits.body} characters or fewer. Count characters carefully — these are real platform limits, not suggestions. If a draft runs long, tighten the wording rather than exceeding the limit.
+
+HEADLINE QUALITY BAR: headlines must be specific and persuasive — a concrete benefit, number, question, or differentiator tied to THIS business — never a generic category label like "Clothing Store" or "Shop Now" with nothing else. Use the business/product and goal details below to make it specific, not generic template copy.`;
 
     const prompt = `You are an expert performance marketing strategist who writes ad copy that passes Google Ads and Meta Ads policy review on the first submission. Build a complete ad campaign package specifically for ${platform}.
 
@@ -108,7 +115,7 @@ GOAL: ${goal}
 BUSINESS/PRODUCT: ${businessType || "not specified"}
 MONTHLY BUDGET: ${monthlyBudget || "not specified"}
 TARGET LOCATION: ${targetLocation}
-AGE GROUP: ${ageGroup || "broad"}
+AGE GROUP(S): ${ageGroup.length ? ageGroup.join(", ") : "broad"}
 INTEREST/NICHE: ${interest || "general"}
 LANGUAGE: ${langStrict}
 
@@ -157,7 +164,7 @@ ${outputSchema}`;
 
   const reset = () => {
     setStep(1); setGoal(""); setBusinessType(""); setMonthlyBudget("");
-    setTargetLocation("India"); setAgeGroup(""); setInterest("");
+    setTargetLocation("India"); setAgeGroup([]); setInterest("");
     setResult(null); setError("");
   };
 
@@ -260,10 +267,12 @@ ${outputSchema}`;
           </div>
 
           <div style={{ marginBottom: "0.85rem" }}>
-            <label style={label}>AGE GROUP</label>
+            <label style={label}>AGE GROUP (select all that apply)</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {AGE_GROUPS.map(a => (
-                <button key={a} onClick={() => setAgeGroup(a)} style={chip(ageGroup === a, "#8b5cf6")}>{a}</button>
+                <button key={a}
+                  onClick={() => setAgeGroup(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])}
+                  style={chip(ageGroup.includes(a), "#8b5cf6")}>{a}</button>
               ))}
             </div>
           </div>
@@ -329,7 +338,7 @@ ${outputSchema}`;
               { icon: "🎯", val: goal },
               { icon: (PLATFORMS.find(p => p.id === platform)?.emoji || "📢"), val: platform },
               { icon: "📍", val: targetLocation },
-              ...(ageGroup ? [{ icon: "👤", val: ageGroup }] : []),
+              ...(ageGroup.length ? [{ icon: "👤", val: ageGroup.join(", ") }] : []),
               ...(monthlyBudget ? [{ icon: "💰", val: monthlyBudget }] : []),
             ].map((tag, i) => (
               <span key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "0.3rem 0.7rem", fontSize: "0.72rem", color: "#a1a1aa", fontWeight: 600 }}>
