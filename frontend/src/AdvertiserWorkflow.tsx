@@ -44,6 +44,13 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
     { id: "LinkedIn Ads", emoji: "💼", color: "#0077b5" },
   ];
 
+  const PLATFORM_GUIDE: Record<string, string> = {
+    "Google Ads": "Search-intent driven — the reader is actively searching, not scrolling passively. Headline must be tight (~30 characters), lead with the exact benefit or keyword match. Description (~90 characters) should add a supporting detail + CTA. No fluff, no scroll-stopping tricks — clarity wins on search.",
+    "Meta Ads": "Scroll-stopping for a passive social feed — the reader wasn't looking for this. Headline should create curiosity or state a clear benefit fast. Body can be slightly longer and more conversational, native to a Facebook/Instagram feed tone. Avoid anything that reads like traditional 'ad language'.",
+    "Instagram Ads": "Visual-first, aesthetic, aspirational or relatable tone — this runs in Instagram feed/Reels/Stories. Short, punchy copy that works even if the reader only reads the first line. Emoji use is natural here. CTA should feel like a natural next step, not a hard sell.",
+    "LinkedIn Ads": "Professional, B2B-credible tone — no consumer-style hype or emojis. Lead with a business outcome or insight, not an entertainment hook. Headline should state a clear professional benefit (ROI, efficiency, growth). Body can be slightly longer, data/credibility-oriented. CTA should be professional (Request Demo, Download Report, Book a Call).",
+  };
+
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -61,7 +68,7 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null);
 
-    const prompt = `You are an expert performance marketing strategist. Build a complete ad campaign package.
+    const prompt = `You are an expert performance marketing strategist who writes ad copy that passes Google Ads and Meta Ads policy review on the first submission. Build a complete ad campaign package specifically for ${platform}.
 
 GOAL: ${goal}
 BUSINESS/PRODUCT: ${businessType || "not specified"}
@@ -71,11 +78,24 @@ AGE GROUP: ${ageGroup || "broad"}
 INTEREST/NICHE: ${interest || "general"}
 LANGUAGE: ${langStrict}
 
-Generate a complete, ready-to-launch campaign package:
-- One detailed audience avatar (name, daily pain points, desires, buying triggers)
-- 3 distinct ad angles (different psychological approaches: e.g. price, social proof, urgency)
-- 2 complete ad copy variations for A/B testing — each with a headline, body text, and CTA button text, using DIFFERENT angles from each other
-- One clear USP (unique selling point) statement
+PLATFORM: ${platform}
+PLATFORM-SPECIFIC WRITING RULES (the ad copy must feel native to ${platform}, not generic — follow this closely):
+${PLATFORM_GUIDE[platform]}
+
+PLATFORM COMPLIANCE RULES — the ad copy MUST follow these, no exceptions:
+- No unverifiable superlative or absolute claims ("best", "#1", "guaranteed", "cure", "instant results") — Google Ads rejects these without third-party proof
+- Never imply knowledge of the reader's personal attributes, health conditions, financial situation, or body — no "Struggling with X?" style personal call-outs. This is a hard Meta Ads and Google Ads policy violation (personalized attribute targeting/insinuation)
+- No before/after body image framing, no shock or fear-based hooks, no discriminatory or exclusionary language
+- No fake urgency or fake scarcity ("only 3 left", "offer ends in 1 hour") unless it is a real, verifiable fact about this specific business
+- Google Ads headline should work within a ~30 character feel (short, punchy) and description within a ~90 character feel — write concisely even though this isn't a strict platform character-count field
+- Claims must be specific and honest — a real benefit or feature, not a vague promise
+- CTA text should be a standard, platform-recognized action (Learn More, Shop Now, Sign Up, Book Now, Get Quote, Contact Us) rather than an invented phrase
+
+Generate a complete, ready-to-launch, policy-safe campaign package:
+- One detailed audience avatar (name, daily pain points, desires, buying triggers) — this is for internal targeting reference only, never copied into ad text
+- 3 distinct ad angles (different policy-safe psychological approaches: e.g. concrete benefit, social proof, real limited-time offer)
+- 2 complete ad copy variations for A/B testing on ${platform} — each with a headline, body text, and CTA button text, using DIFFERENT angles from each other, both written natively for ${platform} and fully compliant with the rules above
+- One clear USP (unique selling point) statement, stated as a specific fact/feature, not a superlative
 - One landing page headline suggestion
 - A brief, honest ROI expectation note (qualitative, not a fake guaranteed number)
 
@@ -167,6 +187,18 @@ Respond ONLY in JSON:
           <div style={{ marginBottom: "0.85rem" }}>
             <label style={label}>BUSINESS / PRODUCT</label>
             <input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Real Estate, Fashion Store, SaaS..." style={input} />
+          </div>
+
+          <div style={{ marginBottom: "0.85rem" }}>
+            <label style={label}>PLATFORM</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {PLATFORMS.map(p => (
+                <button key={p.id} onClick={() => setPlatform(p.id)}
+                  style={{ background: platform === p.id ? `${p.color}18` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.4rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>
+                  {p.emoji} {p.id}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{ marginBottom: "0.5rem" }}>
@@ -264,6 +296,21 @@ Respond ONLY in JSON:
       {/* STEP 4 — REVIEW */}
       {step === 4 && result && (
         <div>
+          {/* Campaign parameters summary — so budget/age/platform aren't lost after generation */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "0.85rem 1rem", marginBottom: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {[
+              { icon: "🎯", val: goal },
+              { icon: (PLATFORMS.find(p => p.id === platform)?.emoji || "📢"), val: platform },
+              { icon: "📍", val: targetLocation },
+              ...(ageGroup ? [{ icon: "👤", val: ageGroup }] : []),
+              ...(monthlyBudget ? [{ icon: "💰", val: monthlyBudget }] : []),
+            ].map((tag, i) => (
+              <span key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "0.3rem 0.7rem", fontSize: "0.72rem", color: "#a1a1aa", fontWeight: 600 }}>
+                {tag.icon} {tag.val}
+              </span>
+            ))}
+          </div>
+
           <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
             <p style={{ margin: "0 0 0.4rem", fontSize: "0.65rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>👤 AUDIENCE AVATAR</p>
             <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.82rem", lineHeight: 1.6 }}>{result.audience_avatar}</p>
@@ -279,7 +326,10 @@ Respond ONLY in JSON:
             ))}
           </div>
 
-          <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🧪 A/B AD COPY — pick your favorite</p>
+          <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+            🧪 A/B AD COPY FOR {platform.toUpperCase()}
+            <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "10px", letterSpacing: "normal" }}>✓ Google & Meta policy-safe</span>
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginBottom: "0.75rem" }}>
             {(["A", "B"] as const).map(v => {
               const ad = v === "A" ? result.ad_copy_a : result.ad_copy_b;
@@ -333,15 +383,12 @@ Respond ONLY in JSON:
           </div>
 
           <div style={{ marginBottom: "1rem" }}>
-            <label style={label}>CHOOSE PLATFORM</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-              {PLATFORMS.map(p => (
-                <button key={p.id} onClick={() => setPlatform(p.id)}
-                  style={{ background: platform === p.id ? `${p.color}18` : "#0f0f0f", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.5rem 1rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.82rem", fontWeight: 700 }}>
-                  {p.emoji} {p.id}
-                </button>
-              ))}
-            </div>
+            <label style={label}>PLATFORM (selected in Step 1)</label>
+            {(() => { const p = PLATFORMS.find(pl => pl.id === platform); return (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: `${p?.color}18`, border: `1px solid ${p?.color}`, color: p?.color, padding: "0.5rem 1rem", borderRadius: "10px", fontSize: "0.82rem", fontWeight: 700 }}>
+                {p?.emoji} {p?.id}
+              </span>
+            ); })()}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1rem" }}>
