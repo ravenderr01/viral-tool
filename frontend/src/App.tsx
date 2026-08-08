@@ -6104,7 +6104,7 @@ function PaywallModal({ onClose, onSelectPlan, currency }: any) {
   const isUSD = currency === "USD";
   const selectedPlan = (PLANS as any)[selected];
 
-  const PLAN_FEATURES: Record<string, any> = {
+  const PLAN_FEATURES = {
   creator_starter: {
     section: "creator",
     highlight: "🔥 Popular",
