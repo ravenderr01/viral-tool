@@ -3179,6 +3179,7 @@ function LocalBusinessKit({ plan, onUpgrade }: any) {
   const [loading,     setLoading]     = useState(false);
   const [result,      setResult]      = useState<any>(null);
   const [copied,      setCopied]      = useState("");
+  const [bizInfo,      setBizInfo]    = useState<any>(null);
   const [openSec,     setOpenSec]     = useState("description");
   const [catSearch,   setCatSearch]   = useState("");
   const [showCatDrop, setShowCatDrop] = useState(false);
@@ -3245,6 +3246,7 @@ function LocalBusinessKit({ plan, onUpgrade }: any) {
 
     if (!bizName || !subCat || !city) return;
 
+    setBizInfo({ bizName, city, area, zipCode, phone, website, hours });
     setLoading(true); setResult(null);
     const locationStr = [area, city, zipCode].filter(Boolean).join(", ");
 
@@ -3304,6 +3306,12 @@ Return ONLY valid JSON:
   ],
   "pro_tips": ["3 tips specific to ${subCat} in ${city}"]
 }
+CHECKLIST RULE — this is critical: Google's own platform requires manual listing creation and verification (this cannot be automated by any tool). So the checklist's FIRST 3 steps must specifically be:
+1. "Go to business.google.com and search if ${bizName} already has a listing" (detail: explain checking for duplicates first)
+2. "Claim (if it exists) or create a new listing with the exact business name, category and address given" (detail: mention entering the category "${subCat}" and full address)
+3. "Complete Google's verification step" (detail: explain that Google will offer phone, email, video, or postcard verification depending on the business — this step cannot be skipped or automated)
+Steps 4-12 should then cover profile optimization AFTER verification is complete: adding the description, uploading photos, setting hours, enabling attributes, publishing the first post, and requesting reviews.
+
 Generate exactly 10 FAQs and 12 checklist steps.`;
 
     try {
@@ -3514,6 +3522,40 @@ Generate exactly 10 FAQs and 12 checklist steps.`;
             <button onClick={() => { setStep(1); setResult(null); }}
               style={{ background:"transparent", border:"1px solid #1a1a2e", color:"#52525b", padding:".28rem .7rem", borderRadius:"7px", cursor:"pointer", fontSize:".7rem", fontWeight:600, fontFamily:"inherit" }}>← Edit</button>
           </div>
+
+          {/* Honest expectation-setting banner */}
+          <div style={{ background:"rgba(6,182,212,.05)", border:"1px solid rgba(6,182,212,.2)", borderRadius:"12px", padding:".85rem 1.1rem", marginBottom:"1rem" }}>
+            <p style={{ color:"#06b6d4", fontWeight:800, fontSize:".78rem", margin:"0 0 .3rem" }}>ℹ️ How this works</p>
+            <p style={{ color:"#94a3b8", fontSize:".74rem", lineHeight:1.6, margin:0 }}>
+              We've generated everything you need below. Google requires the actual listing to be created and verified directly on their platform (no tool can bypass this) — follow the checklist below, which walks you through claiming/creating your listing first, then pasting in this content.
+            </p>
+          </div>
+
+          {/* Quick Setup Summary — copy-paste ready for Google's signup form */}
+          {bizInfo && (
+            <Section id="quicksetup" label="Quick Setup Summary" emoji="🚀" badge="Start here">
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".6rem" }}>
+                <span style={{ fontSize:".62rem", color:"#3f3f46" }}>Everything Google will ask for, in one place</span>
+                <CopyBtn value={`Business Name: ${bizInfo.bizName}\nCategory: ${subCat}\nAddress: ${[bizInfo.area, bizInfo.city, bizInfo.zipCode].filter(Boolean).join(", ")}\nPhone: ${bizInfo.phone || "—"}\nWebsite: ${bizInfo.website || "—"}\nHours: ${bizInfo.hours}`} keyName="quicksetup" />
+              </div>
+              <div style={{ background:"#050508", border:"1px solid #141426", borderRadius:"10px", padding:".85rem 1rem", marginBottom:".75rem" }}>
+                {[
+                  ["Business Name", bizInfo.bizName], ["Category", subCat],
+                  ["Address", [bizInfo.area, bizInfo.city, bizInfo.zipCode].filter(Boolean).join(", ")],
+                  ["Phone", bizInfo.phone || "—"], ["Website", bizInfo.website || "—"], ["Hours", bizInfo.hours],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display:"flex", gap:".6rem", padding:".25rem 0" }}>
+                    <span style={{ color:"#3f3f46", fontSize:".72rem", width:90, flexShrink:0 }}>{k}</span>
+                    <span style={{ color:"#e2e8f0", fontSize:".78rem", fontWeight:600 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="https://business.google.com" target="_blank" rel="noopener noreferrer"
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem", width:"100%", padding:".85rem", borderRadius:"10px", background:"linear-gradient(135deg,#f59e0b,#d97706)", color:"#000", fontWeight:800, fontSize:".85rem", textDecoration:"none" }}>
+                🌐 Open business.google.com to Claim/Create Your Listing →
+              </a>
+            </Section>
+          )}
 
           {/* Description */}
           <Section id="description" label="Google Business Description" emoji="📝" badge={`${result.description?.length||0}/750`}>
