@@ -4804,6 +4804,421 @@ function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = 
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// HOW TO USE THIS FILE:
+// 1. Open your App.tsx
+// 2. Find where "function BackgroundMusicMixer(" starts — select from there
+//    down to the closing "}" right before "function ScriptLab(" starts
+// 3. Delete that whole selected block, paste everything below in its place
+//    (both functions together, exactly as they appear here)
+// 4. Also add this small block ABOVE "function AnimatedScore(" in App.tsx
+//    (right after the CONTENT_TYPES line) if you haven't already:
+//
+//    const STYLE_ACCENTS: Record<string, { accent: string; icon: string }> = {
+//      "Tutorial":     { accent: "#06b6d4", icon: "🎓" },
+//      "Story":        { accent: "#f59e0b", icon: "📖" },
+//      "POV":          { accent: "#ec4899", icon: "👁️" },
+//      "Challenge":    { accent: "#ef4444", icon: "🔥" },
+//      "Before/After": { accent: "#22c55e", icon: "⚡" },
+//      "Motivation":   { accent: "#a855f7", icon: "🚀" },
+//      "Tips":         { accent: "#f59e0b", icon: "💡" },
+//      "Review":       { accent: "#3b82f6", icon: "⭐" },
+//      "Day in Life":  { accent: "#14b8a6", icon: "☀️" },
+//      "Comedy":       { accent: "#f97316", icon: "😂" },
+//      "Awareness":    { accent: "#0ea5e9", icon: "📢" },
+//      "Listicle":     { accent: "#8b5cf6", icon: "📋" },
+//      "Interview":    { accent: "#10b981", icon: "🎙️" },
+//    };
+//
+// 5. Save. That's it — no find/replace needed, just a full swap of the two
+//    functions plus adding the small STYLE_ACCENTS constant above.
+// ══════════════════════════════════════════════════════════════════════════
+
+function BackgroundMusicMixer({ audioUrl: aiAudioUrl, scriptStyle, aiDisabled = true }: { audioUrl: string; scriptStyle: string; aiDisabled?: boolean }) {
+  const suggestedIdx = BG_TRACKS.findIndex(t => t.styles.includes(scriptStyle));
+  const defaultIdx   = suggestedIdx >= 0 ? suggestedIdx : 0;
+
+  // Voice source
+  const [voiceMode,     setVoiceMode]     = useState<"ai"|"upload"|"record">(aiDisabled ? "record" : "ai");
+  const [userVoiceUrl,  setUserVoiceUrl]  = useState<string|null>(null);
+  const [userVoiceName, setUserVoiceName] = useState("");
+  const [recording,     setRecording]     = useState(false);
+  const [recSeconds,    setRecSeconds]    = useState(0);
+  const mediaRecRef  = useRef<MediaRecorder|null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recTimerRef  = useRef<any>(null);
+
+  // Music source
+  const [musicMode,     setMusicMode]     = useState<"synth"|"upload">("synth");
+  const [userMusicUrl,  setUserMusicUrl]  = useState<string|null>(null);
+  const [userMusicName, setUserMusicName] = useState("");
+
+  // Built-in track
+  const [selected,   setSelected]   = useState<number>(defaultIdx);
+  const [volume,     setVolume]     = useState(28);
+  const [previewing, setPreviewing] = useState(false);
+  const [mixing,     setMixing]     = useState(false);
+  const [mixStatus,  setMixStatus]  = useState("");
+  const [mixedUrl,   setMixedUrl]   = useState<string|null>(null);
+  const [error,      setError]      = useState("");
+  const previewCtxRef = useRef<AudioContext|null>(null);
+  const abortRef      = useRef(false);
+
+  const activeVoiceUrl = voiceMode === "ai" ? aiAudioUrl : userVoiceUrl;
+
+  const stopPreview = () => {
+    try { previewCtxRef.current?.close(); } catch {}
+    previewCtxRef.current = null;
+    setPreviewing(false);
+  };
+
+  // Preview — uses makeMusicBuffer directly (no network, always works)
+  const preview = async (idx: number) => {
+    stopPreview(); setError("");
+    try {
+      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx  = new ACtx() as AudioContext;
+      previewCtxRef.current = ctx;
+      setPreviewing(true);
+      const buf  = makeMusicBuffer(ctx.sampleRate, 10, idx, Math.max(volume, 50));
+      const src  = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -10; comp.knee.value = 6;
+      comp.ratio.value = 4; comp.attack.value = 0.001; comp.release.value = 0.15;
+      gain.gain.value = 1.5;
+      src.buffer = buf;
+      src.connect(gain); gain.connect(comp); comp.connect(ctx.destination);
+      src.start(0); src.onended = stopPreview;
+      setTimeout(stopPreview, 11000);
+    } catch(e) { console.error(e); setError("Preview failed."); setPreviewing(false); }
+  };
+
+  const previewUserMusic = () => {
+    if (!userMusicUrl) return;
+    const audio = new Audio(userMusicUrl);
+    audio.volume = Math.min(volume / 50, 1);
+    audio.play().catch(() => setError("Could not play file."));
+    setTimeout(() => audio.pause(), 10000);
+  };
+
+  // Record voice
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      mediaRecRef.current = rec; recChunksRef.current = [];
+      rec.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      rec.onstop = () => {
+        const blob = new Blob(recChunksRef.current, { type: "audio/webm" });
+        setUserVoiceUrl(URL.createObjectURL(blob));
+        setUserVoiceName("Recorded voice");
+        stream.getTracks().forEach(t => t.stop());
+      };
+      rec.start();
+      setRecording(true); setRecSeconds(0);
+      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
+    } catch { setError("Microphone access denied."); }
+  };
+
+  const stopRecording = () => {
+    mediaRecRef.current?.stop();
+    clearInterval(recTimerRef.current);
+    setRecording(false);
+  };
+
+  const handleVoiceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
+    setUserVoiceUrl(URL.createObjectURL(file));
+    setUserVoiceName(file.name); setError("");
+  };
+
+  const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) { setError("Please upload an audio file."); return; }
+    setUserMusicUrl(URL.createObjectURL(file));
+    setUserMusicName(file.name); setMusicMode("upload"); setError("");
+  };
+
+  // Mix
+  const doMix = async (): Promise<string|null> => {
+    if (!activeVoiceUrl) { setError("Please add a voiceover first."); return null; }
+    try {
+      const ACtx = window.AudioContext || (window as any).webkitAudioContext;
+      setMixStatus("Loading voiceover...");
+      const voiceRaw = await fetch(activeVoiceUrl).then(r => r.arrayBuffer()).catch(() => null);
+      if (!voiceRaw) throw new Error("Voiceover could not be loaded.");
+      const vCtx = new ACtx() as AudioContext;
+      let voiceDec: AudioBuffer;
+      try { voiceDec = await vCtx.decodeAudioData(voiceRaw); }
+      catch { await vCtx.close(); throw new Error("Voiceover format not supported. Use MP3 or WAV."); }
+      await vCtx.close();
+      if (abortRef.current) return null;
+
+      const sr = voiceDec.sampleRate;
+      const totalDur = voiceDec.duration + 2.5;
+      const totalSamples = Math.ceil(sr * totalDur);
+
+      setMixStatus("Loading music...");
+      let musicBuf: AudioBuffer;
+      if (musicMode === "upload" && userMusicUrl) {
+        const mRaw = await fetch(userMusicUrl).then(r => r.arrayBuffer()).catch(() => null);
+        if (!mRaw) throw new Error("Could not load music file.");
+        const mCtx = new ACtx() as AudioContext;
+        try {
+          const mDec = await mCtx.decodeAudioData(mRaw);
+          const vol  = Math.min((volume / 100) * 0.72, 0.82);
+          const outM: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
+          for (let ch = 0; ch < 2; ch++) {
+            const src = mDec.getChannelData(Math.min(ch, mDec.numberOfChannels - 1));
+            const out = outM.getChannelData(ch);
+            for (let i = 0; i < totalSamples; i++) {
+              const fi = Math.min(i / (0.6 * sr), 1);
+              const fo = Math.min((totalSamples - i) / (2.5 * sr), 1);
+              out[i]   = src[i % mDec.length] * vol * fi * fo;
+            }
+          }
+          musicBuf = outM; await mCtx.close();
+        } catch { await mCtx.close(); throw new Error("Music format not supported. Use MP3 or WAV."); }
+      } else {
+        musicBuf = makeMusicBuffer(sr, totalDur, selected, volume);
+      }
+      if (abortRef.current) return null;
+
+      setMixStatus("Applying ducking...");
+      const WIN    = Math.max(1, Math.ceil(0.008 * sr));
+      const voiceL = voiceDec.getChannelData(0);
+      const voiceR = voiceDec.numberOfChannels > 1 ? voiceDec.getChannelData(1) : voiceL;
+      const env    = new Float32Array(totalSamples);
+      for (let i = 0; i < totalSamples; i++) {
+        const s = Math.max(0, i - (WIN >> 1)), e = Math.min(voiceDec.length, i + (WIN >> 1));
+        let rms = 0;
+        for (let j = s; j < e; j++) rms += ((Math.abs(voiceL[j]) + Math.abs(voiceR[j])) * 0.5) ** 2;
+        env[i] = e > s ? Math.sqrt(rms / (e - s)) : 0;
+      }
+      const FLOOR = 0.18, CEIL = 0.82, THR = 0.013;
+      const ATK = Math.ceil(0.012 * sr), REL = Math.ceil(0.340 * sr);
+      const duck = new Float32Array(totalSamples);
+      let g = CEIL;
+      for (let i = 0; i < totalSamples; i++) {
+        const t = env[i] > THR ? FLOOR : CEIL;
+        g += (t - g) / (t < g ? ATK : REL);
+        duck[i] = g;
+      }
+
+      setMixStatus("Mixing...");
+      const outBuf: AudioBuffer = new (window as any).AudioBuffer({ numberOfChannels: 2, length: totalSamples, sampleRate: sr });
+      for (let ch = 0; ch < 2; ch++) {
+        const out   = outBuf.getChannelData(ch);
+        const vData = ch === 0 ? voiceL : voiceR;
+        const mData = musicBuf.getChannelData(Math.min(ch, musicBuf.numberOfChannels - 1));
+        for (let i = 0; i < totalSamples; i++) {
+          const v = i < voiceDec.length ? vData[i] : 0;
+          const m = i < mData.length    ? mData[i] * duck[i] : 0;
+          out[i]  = Math.tanh((v * 0.91 + m) * 0.87);
+        }
+      }
+
+      setMixStatus("Encoding WAV...");
+      const nCh = 2, nS = totalSamples;
+      const wav = new ArrayBuffer(44 + nS * nCh * 2);
+      const dv  = new DataView(wav);
+      const ws  = (o: number, s: string) => { for (let i = 0; i < s.length; i++) dv.setUint8(o+i, s.charCodeAt(i)); };
+      ws(0,"RIFF"); dv.setUint32(4,36+nS*nCh*2,true);
+      ws(8,"WAVE"); ws(12,"fmt "); dv.setUint32(16,16,true);
+      dv.setUint16(20,1,true); dv.setUint16(22,nCh,true);
+      dv.setUint32(24,sr,true); dv.setUint32(28,sr*nCh*2,true);
+      dv.setUint16(32,nCh*2,true); dv.setUint16(34,16,true);
+      ws(36,"data"); dv.setUint32(40,nS*nCh*2,true);
+      let off = 44;
+      for (let i = 0; i < nS; i++) for (let ch = 0; ch < nCh; ch++) {
+        const s = Math.max(-1, Math.min(1, outBuf.getChannelData(ch)[i]));
+        dv.setInt16(off, s < 0 ? s*0x8000 : s*0x7fff, true); off += 2;
+      }
+      return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+    } catch(err: any) { setError(err?.message || "Mix failed."); return null; }
+  };
+
+  const runMix = async () => {
+    abortRef.current = false;
+    setMixing(true); setError(""); setMixedUrl(null);
+    const url = await doMix();
+    if (!abortRef.current && url) setMixedUrl(url);
+    setMixing(false); setMixStatus("");
+  };
+
+  const sBox  = { background:"#080810", border:"1px solid #1a1a2a", borderRadius:"12px", padding:"1rem", marginBottom:"0.75rem" } as const;
+  const sLbl  = { margin:"0 0 0.6rem", fontSize:"0.65rem", fontWeight:700, letterSpacing:"0.06em" } as const;
+  const mBtn  = (active: boolean, col = "#a855f7") => ({ flex:1, padding:"0.5rem 0.5rem", borderRadius:"8px", border:`1px solid ${active?col:"#1a1a2a"}`, background:active?`${col}15`:"transparent", color:active?col:"#52525b", fontWeight:700, fontSize:"0.7rem", cursor:"pointer", fontFamily:"'Inter',sans-serif" } as const);
+
+  return (
+    <div style={{ border:"1px solid rgba(168,85,247,0.3)", borderRadius:"16px", padding:"1.1rem", marginBottom:"0.75rem", background:"linear-gradient(135deg,rgba(168,85,247,0.06),rgba(168,85,247,0.02))", animation:"slideUp 0.4s ease" }}>
+      <p style={{ margin:"0 0 1rem", fontSize:"0.7rem", color:"#a855f7", fontWeight:800, letterSpacing:"0.06em" }}>🎛️ MIX STUDIO</p>
+
+      {/* ── VOICE ── */}
+      <div style={sBox}>
+        <p style={{ ...sLbl, color:"#06b6d4" }}>🎙️ VOICE / VOICEOVER</p>
+        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
+          {([["ai", aiDisabled ? "🤖 AI Voice (Soon)" : "🤖 AI Voice"],["upload","📁 Upload File"],["record","🎤 Record"]] as const).map(([m,l])=>(
+            <button key={m} disabled={aiDisabled && m==="ai"}
+              onClick={()=>{ if (aiDisabled && m==="ai") return; setVoiceMode(m as any); setError(""); }}
+              style={{ ...mBtn(voiceMode===m,"#06b6d4"), opacity: (aiDisabled && m==="ai") ? 0.35 : 1, cursor: (aiDisabled && m==="ai") ? "not-allowed" : "pointer" }}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {voiceMode==="ai" && (
+          aiAudioUrl ? (
+            <div style={{ background:"#050508", border:"1px solid rgba(6,182,212,0.15)", borderRadius:"8px", padding:"0.6rem" }}>
+              <p style={{ margin:"0 0 0.3rem", color:"#3f3f46", fontSize:"0.62rem" }}>AI-generated voiceover</p>
+              <audio controls src={aiAudioUrl} style={{ width:"100%", height:"32px" }} />
+            </div>
+          ) : (
+            <div style={{ background:"#050508", border:"1px dashed rgba(6,182,212,0.25)", borderRadius:"8px", padding:"0.85rem", textAlign:"center" }}>
+              <p style={{ margin:0, color:"#06b6d4", fontSize:"0.7rem", fontWeight:700 }}>🔊 AI Voice — Coming Soon</p>
+              <p style={{ margin:".3rem 0 0", color:"#52525b", fontSize:"0.65rem" }}>Use Upload or Record instead for now.</p>
+            </div>
+          )
+        )}
+        {voiceMode==="upload" && (
+          <div>
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(6,182,212,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#06b6d4", fontSize:"0.78rem", fontWeight:700 }}>
+              📁 Click to upload (MP3, WAV, M4A)
+              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleVoiceUpload} />
+            </label>
+            {userVoiceUrl && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(6,182,212,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <p style={{ margin:"0 0 0.3rem", color:"#06b6d4", fontSize:"0.65rem", fontWeight:700 }}>✓ {userVoiceName}</p>
+                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
+              </div>
+            )}
+          </div>
+        )}
+        {voiceMode==="record" && (
+          <div>
+            {!recording ? (
+              <button onClick={startRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"linear-gradient(135deg,#06b6d4,#0891b2)", border:"none", color:"#000", fontWeight:800, fontSize:"0.85rem", cursor:"pointer" }}>
+                🔴 Start Recording
+              </button>
+            ) : (
+              <button onClick={stopRecording} style={{ width:"100%", padding:"0.8rem", borderRadius:"10px", background:"rgba(239,68,68,0.12)", border:"2px solid #ef4444", color:"#ef4444", fontWeight:800, fontSize:"0.85rem", cursor:"pointer", animation:"pulse 1s infinite" }}>
+                ⏹ Stop · {recSeconds}s recorded
+              </button>
+            )}
+            {userVoiceUrl && !recording && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(34,197,94,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <p style={{ margin:"0 0 0.3rem", color:"#22c55e", fontSize:"0.65rem", fontWeight:700 }}>✓ Recording ready ({recSeconds}s)</p>
+                <audio controls src={userVoiceUrl} style={{ width:"100%", height:"32px" }} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── MUSIC ── */}
+      <div style={sBox}>
+        <p style={{ ...sLbl, color:"#a855f7" }}>🎵 BACKGROUND MUSIC</p>
+        <div style={{ display:"flex", gap:"0.4rem", marginBottom:"0.75rem" }}>
+          <button onClick={()=>{setMusicMode("synth");setError("");}} style={mBtn(musicMode==="synth")}>🎹 Built-in</button>
+          <button onClick={()=>{setMusicMode("upload");setError("");}} style={mBtn(musicMode==="upload")}>📁 Upload My Music</button>
+        </div>
+        {musicMode==="synth" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:"0.3rem", marginBottom:"0.6rem" }}>
+            {BG_TRACKS.map((track,i)=>{
+              const isSel=selected===i, isSugg=suggestedIdx===i, isPrev=previewing&&selected===i;
+              return (
+                <div key={i} onClick={()=>{setSelected(i);setMixedUrl(null);setError("");}}
+                  style={{ background:isSel?"rgba(168,85,247,0.1)":"#050508", border:`1px solid ${isSel?"#a855f7":"#1a1a2a"}`, borderRadius:"10px", padding:"0.5rem 0.75rem", display:"flex", alignItems:"center", gap:"0.6rem", cursor:"pointer", transition:"all 0.2s" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:"0.4rem" }}>
+                      <span style={{ color:isSel?"#a855f7":"#e4e4e7", fontSize:"0.8rem", fontWeight:isSel?700:500 }}>{track.name}</span>
+                      {isSugg&&<span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:"0.55rem", fontWeight:700, padding:"0.05rem 0.3rem", borderRadius:"5px" }}>Best match</span>}
+                    </div>
+                    <span style={{ color:"#52525b", fontSize:"0.62rem" }}>{track.mood} · {track.genre}</span>
+                  </div>
+                  <button onClick={e=>{e.stopPropagation(); isPrev?stopPreview():preview(i);}}
+                    style={{ background:isPrev?"rgba(168,85,247,0.2)":"#111", border:`1px solid ${isPrev?"#a855f7":"#222"}`, color:isPrev?"#a855f7":"#666", padding:"0.25rem 0.55rem", borderRadius:"7px", cursor:"pointer", fontSize:"0.7rem", fontWeight:700, flexShrink:0 }}>
+                    {isPrev?"⏹ Stop":"▶ Preview"}
+                  </button>
+                  <div style={{ width:16, height:16, borderRadius:"50%", border:`2px solid ${isSel?"#a855f7":"#2a2a2a"}`, background:isSel?"#a855f7":"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    {isSel&&<span style={{ color:"#fff", fontSize:"0.55rem" }}>✓</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {musicMode==="upload" && (
+          <div>
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"#050508", border:"2px dashed rgba(168,85,247,0.3)", borderRadius:"10px", padding:"1rem", cursor:"pointer", color:"#a855f7", fontSize:"0.78rem", fontWeight:700 }}>
+              📁 Click to upload music (MP3, WAV, M4A)
+              <input type="file" accept="audio/*" style={{ display:"none" }} onChange={handleMusicUpload} />
+            </label>
+            {userMusicUrl && (
+              <div style={{ marginTop:"0.5rem", background:"#050508", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"8px", padding:"0.6rem" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <p style={{ margin:0, color:"#a855f7", fontSize:"0.65rem", fontWeight:700 }}>✓ {userMusicName}</p>
+                  <button onClick={previewUserMusic} style={{ background:"none", border:"none", color:"#a855f7", cursor:"pointer", fontSize:"0.7rem", fontWeight:700 }}>▶ Preview</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ marginTop:"0.6rem" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"0.2rem" }}>
+            <label style={{ color:"#52525b", fontSize:"0.6rem", fontWeight:700 }}>MUSIC VOLUME</label>
+            <span style={{ color:"#a855f7", fontSize:"0.6rem", fontWeight:700 }}>{volume}%</span>
+          </div>
+          <input type="range" min={10} max={55} value={volume} onChange={e=>setVolume(Number(e.target.value))} style={{ width:"100%", accentColor:"#a855f7", cursor:"pointer" }} />
+        </div>
+      </div>
+
+      {/* ── MIX BUTTON ── */}
+      {error&&<p style={{ color:"#ef4444", fontSize:"0.72rem", margin:"0 0 0.6rem", textAlign:"center" }}>{error}</p>}
+
+      {!mixedUrl&&!mixing&&(
+        <button onClick={runMix} disabled={!activeVoiceUrl}
+          style={{ width:"100%", padding:"0.9rem", borderRadius:"12px", background:!activeVoiceUrl?"#111":"linear-gradient(135deg,#a855f7,#7c3aed)", border:"none", color:!activeVoiceUrl?"#444":"#fff", fontWeight:800, fontSize:"0.9rem", cursor:!activeVoiceUrl?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", boxShadow:activeVoiceUrl?"0 4px 20px rgba(168,85,247,0.3)":"none" }}>
+          🎛️ Mix Voice + Music
+        </button>
+      )}
+
+      {mixing&&(
+        <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"10px", padding:"0.85rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", color:"#a855f7", fontSize:"0.78rem", marginBottom:"0.5rem" }}>
+            <RefreshCw size={13} style={{ animation:"spin 1s linear infinite", flexShrink:0 }} />
+            <span style={{ fontWeight:600 }}>{mixStatus||"Mixing..."}</span>
+          </div>
+          <div style={{ background:"#1a1a2a", borderRadius:"4px", height:"3px", overflow:"hidden" }}>
+            <div style={{ height:"100%", background:"linear-gradient(90deg,#7c3aed,#a855f7)", borderRadius:"4px", animation:"progressBar 15s linear forwards" }} />
+          </div>
+        </div>
+      )}
+
+      {mixedUrl&&!mixing&&(
+        <div style={{ animation:"slideUp 0.3s ease" }}>
+          <div style={{ background:"#080810", border:"1px solid rgba(168,85,247,0.2)", borderRadius:"12px", padding:"0.75rem", marginBottom:"0.6rem" }}>
+            <p style={{ margin:"0 0 0.4rem", fontSize:"0.65rem", color:"#a855f7", fontWeight:700 }}>🎧 FINAL MIX PREVIEW</p>
+            <audio controls src={mixedUrl} style={{ width:"100%" }} />
+          </div>
+          <a href={mixedUrl} download={`vci-${scriptStyle.toLowerCase()}-final-mix.wav`}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem", background:"linear-gradient(135deg,#a855f7,#7c3aed)", color:"#fff", padding:"0.85rem", borderRadius:"12px", fontSize:"0.88rem", fontWeight:800, textDecoration:"none", boxShadow:"0 4px 20px rgba(168,85,247,0.3)", marginBottom:"0.5rem" }}>
+            ⬇ Download Final Mix (WAV)
+          </a>
+          <button onClick={()=>{abortRef.current=true; setTimeout(runMix,80);}}
+            style={{ width:"100%", padding:"0.6rem", borderRadius:"10px", background:"transparent", border:"1px solid rgba(168,85,247,0.3)", color:"#a855f7", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>
+            🔄 Remix Again
+          </button>
+          <p style={{ margin:"0.4rem 0 0", color:"#3f3f46", fontSize:"0.6rem", textAlign:"center" }}>WAV · 16-bit Stereo · Professional Ducking</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, onSaveHistory, onCreditUsedGenerate, onCreditUsedImprove, onCreditUsedVoice, userType }: any) {
   const [mode, setMode] = useState<"improve" | "generate">("improve");
 
@@ -4829,6 +5244,39 @@ function ScriptLab({ plan, usageCount, limit, onUpgrade, langStrict, langLabel, 
   const [platform, setPlatform] = useState("Instagram");
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Wizard (Generate mode only) — Topic/Idea → AI Generate → Customize → Preview → Export/Publish
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [customizeTab, setCustomizeTab] = useState<"script" | "caption" | "thumbnail" | "voice">("script");
+  const [genChecklistIdx, setGenChecklistIdx] = useState(0);
+  const GEN_CHECKLIST = ["Hook", "Title", "Script", "Thumbnail", "Caption", "Hashtags"];
+
+  // Animate the "AI is generating..." checklist while waiting on the API —
+  // purely cosmetic (doesn't reflect real backend progress) but gives fresher
+  // creators a sense of what's being built instead of a blank spinner.
+  useEffect(() => {
+    if (!generateLoading) { setGenChecklistIdx(0); return; }
+    const timer = setInterval(() => {
+      setGenChecklistIdx(i => (i < GEN_CHECKLIST.length - 1 ? i + 1 : i));
+    }, 550);
+    return () => clearInterval(timer);
+  }, [generateLoading]);
+
+  // Auto-advance to Customize once generation completes
+  useEffect(() => {
+    if (generateResult && wizardStep === 2) setWizardStep(3);
+  }, [generateResult]);
+
+  const startNewScript = () => {
+    setKeyword(""); setGenerateResult(null); setThumbnailUrl(null);
+    setAudioUrl(null); setError(""); setWizardStep(1); setCustomizeTab("script");
+  };
+
+  const regenerateThumbnail = async () => {
+    if (!generateResult) return;
+    const thumb = await generateThumbnail(generateResult.title || keyword, generateResult.hook || "", platform, style, duration);
+    setThumbnailUrl(thumb);
+  };
 
   useEffect(() => {
     if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
@@ -5411,280 +5859,411 @@ ${sectionsSchema}
         ))}
       </div>
 
-      {/* Platform Selector */}
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
-        <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.5rem" }}>SELECT PLATFORM</label>
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-          {PLATFORMS.map(p => (
-            <button key={p.id} onClick={() => setPlatform(p.id)}
-              style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
-              {p.emoji} {p.id}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* GENERATE MODE */}
-      {mode === "generate" && (
-        <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
-            <span style={{ fontSize: "1.3rem" }}>🎬</span>
-            <div>
-              <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Generate Reel Script</h3>
-              <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Enter a keyword → get a complete word-for-word script</p>
-            </div>
+      {/* Platform Selector — Improve mode only (Generate mode picks platform inside Step 1) */}
+      {mode === "improve" && (
+        <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.5rem" }}>SELECT PLATFORM</label>
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+            {PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
           </div>
-
-          {/* Keyword */}
-          <div style={{ marginBottom: "0.75rem" }}>
-            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
-            <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }}
-              placeholder={`e.g. weight loss, morning routine, AI tools...`}
-              style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
-              onFocus={e => e.target.style.borderColor = "#6d28d9"}
-              onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
-          </div>
-
-          {/* Style */}
-          <div style={{ marginBottom: "0.75rem" }}>
-            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SCRIPT STYLE</label>
-            <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-              {STYLES.map(s => (
-                <button key={s} onClick={() => setStyle(s)}
-                  style={{ background: style === s ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${style === s ? "#6d28d9" : "#1f1f1f"}`, color: style === s ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Duration */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>DURATION</label>
-            <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-              {DURATIONS.map(d => (
-                <button key={d} onClick={() => setDuration(d)}
-                  style={{ background: duration === d ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${duration === d ? "#6d28d9" : "#1f1f1f"}`, color: duration === d ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, transition: "all 0.2s" }}>
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-
-          <button onClick={generateScript} disabled={generateLoading}
-            style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: generateLoading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: generateLoading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: generateLoading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-            {generateLoading ? "🎬 Writing your script..." : `🎬 Generate ${duration} ${style} Script for ${platform}`}
-          </button>
         </div>
       )}
 
-      {/* GENERATE RESULT */}
-      {mode === "generate" && generateResult && (
-        <div style={{ animation: "slideUp 0.5s ease" }}>
+      {/* ══════════════════════════════════════════════════════════════════
+          GENERATE MODE — 5-STEP WIZARD
+          1. Topic/Idea  2. AI Generate  3. Customize  4. Preview  5. Export/Publish
+          ══════════════════════════════════════════════════════════════════ */}
+      {mode === "generate" && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
 
-          {/* Title + Hook */}
-          <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "14px", padding: "1.1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-              <div>
-                <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎬 SCRIPT TITLE</p>
-                <p style={{ margin: 0, color: "#fff", fontSize: "1rem", fontWeight: 800, fontFamily: "'Inter',sans-serif" }}>{generateResult.title}</p>
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-                <span style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", borderRadius: "20px", padding: "0.2rem 0.6rem", fontSize: "0.68rem", fontWeight: 700 }}>{platform}</span>
-                <span style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", borderRadius: "20px", padding: "0.2rem 0.6rem", fontSize: "0.68rem", fontWeight: 700 }}>{duration}</span>
-              </div>
-            </div>
-            <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "8px", padding: "0.6rem 0.85rem", marginTop: "0.5rem" }}>
-              <p style={{ margin: "0 0 0.2rem", fontSize: "0.62rem", color: "#8b5cf6", fontWeight: 700 }}>⚡ HOOK (First 3 seconds)</p>
-              <p style={{ margin: 0, color: "#f1f5f9", fontSize: "0.88rem", fontWeight: 600, lineHeight: 1.5 }}>{generateResult.hook}</p>
-            </div>
-          </div>
-
-          {/* Script Sections */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎙️ SCRIPT BREAKDOWN</p>
-            {(generateResult.sections || []).map((sec: any, i: number) => {
-              const sectionColors: Record<string, string> = { HOOK: "#8b5cf6", PROBLEM: "#ef4444", SOLUTION: "#22c55e", CTA: "#f59e0b", INTRO: "#8b5cf6", TIPS: "#06b6d4", STORY: "#f59e0b", BODY: "#22c55e" };
-              const colorKey = Object.keys(sectionColors).find(k => sec.label?.toUpperCase().startsWith(k));
-              const color = (colorKey ? sectionColors[colorKey] : null) || "#8b5cf6";
+          {/* ── Progress Stepper ── */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "1.25rem", overflowX: "auto", paddingBottom: "2px" }}>
+            {[
+              { n: 1, label: "Topic/Idea" },
+              { n: 2, label: "AI Generate" },
+              { n: 3, label: "Customize" },
+              { n: 4, label: "Preview" },
+              { n: 5, label: "Export/Publish" },
+            ].map((s, i, arr) => {
+              const done = wizardStep > s.n;
+              const active = wizardStep === s.n;
+              const reachable = s.n === 1 || !!generateResult || wizardStep >= s.n;
               return (
-                <div key={i} style={{ background: `${color}08`, border: `1px solid ${color}20`, borderLeft: `3px solid ${color}`, borderRadius: "8px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
-                    <span style={{ color, fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.06em" }}>{sec.label}</span>
-                    <span style={{ color: "#3f3f46", fontSize: "0.62rem" }}>{sec.time}</span>
-                  </div>
-                  <p style={{ margin: "0 0 0.3rem", color: "#f1f5f9", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 500 }}>{sec.content}</p>
-                  {sec.direction && <p style={{ margin: 0, color: "#52525b", fontSize: "0.68rem", lineHeight: 1.4 }}>📷 {sec.direction}</p>}
+                <div key={s.n} style={{ display: "flex", alignItems: "center", flex: i < arr.length - 1 ? 1 : "none", minWidth: "fit-content" }}>
+                  <button onClick={() => reachable && setWizardStep(s.n as any)} disabled={!reachable}
+                    style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", cursor: reachable ? "pointer" : "default", padding: 0 }}>
+                    <span style={{
+                      width: 26, height: 26, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.68rem", fontWeight: 800,
+                      background: done ? "#22c55e" : active ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "#0f0f0f",
+                      border: `1.5px solid ${done ? "#22c55e" : active ? "#a855f7" : "#1f1f1f"}`,
+                      color: done || active ? "#fff" : "#3f3f46",
+                    }}>
+                      {done ? "✓" : s.n}
+                    </span>
+                    <span style={{ fontSize: "0.72rem", fontWeight: active ? 800 : 600, color: active ? "#fff" : done ? "#22c55e" : "#3f3f46", whiteSpace: "nowrap" }}>{s.label}</span>
+                  </button>
+                  {i < arr.length - 1 && <div style={{ flex: 1, height: 1.5, minWidth: 16, margin: "0 0.5rem", background: done ? "#22c55e" : "#1a1a1a" }} />}
                 </div>
               );
             })}
           </div>
 
-          {/* Full Script */}
-          <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-              <p style={{ margin: 0, fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📝 COMPLETE WORD-FOR-WORD SCRIPT</p>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button onClick={() => copyText(generateResult.script, "fullscript")}
-                  style={{ background: copiedKey === "fullscript" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "fullscript" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "fullscript" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
-                  {copiedKey === "fullscript" ? "✓ Copied!" : "📋 Copy"}
-                </button>
-                <button onClick={() => { setScript(generateResult.script); setMode("improve"); window.scrollTo(0, 0); }}
-                  style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.4)", color: "#8b5cf6", padding: "0.2rem 0.75rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
-                  ✨ Send to Improve →
-                </button>
+          {/* ── STEP 1: TOPIC / IDEA ── */}
+          {wizardStep === 1 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                <span style={{ fontSize: "1.3rem" }}>💡</span>
+                <div>
+                  <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>What do you want to create?</h3>
+                  <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Give VCI a topic and platform — it'll write the rest</p>
+                </div>
               </div>
-            </div>
-            <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{generateResult.script}</p>
-          </div>
 
-          {/* Caption + Hashtags */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
-                <p style={{ margin: 0, fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💬 CAPTION</p>
-                <button onClick={() => copyText(generateResult.caption, "caption")} style={{ background: "none", border: "none", color: copiedKey === "caption" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "caption" ? "✓" : "Copy"}</button>
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                  {PLATFORMS.map(p => (
+                    <button key={p.id} onClick={() => setPlatform(p.id)}
+                      style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
+                      {p.emoji} {p.id}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.6 }}>{generateResult.caption}</p>
-            </div>
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
-                <p style={{ margin: 0, fontSize: "0.65rem", color: "#06b6d4", fontWeight: 700 }}>#️⃣ HASHTAGS</p>
-                <button onClick={() => copyText((generateResult.hashtags || []).join(" "), "hashtags")} style={{ background: "none", border: "none", color: copiedKey === "hashtags" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "hashtags" ? "✓" : "Copy"}</button>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                {(generateResult.hashtags || []).map((tag: string, i: number) => (
-                  <span key={i} style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", padding: "0.15rem 0.45rem", borderRadius: "20px", fontSize: "0.68rem", fontWeight: 600 }}>{tag}</span>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Thumbnail */}
-          {thumbnailUrl && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "0.9rem", marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-                <p style={{ margin: 0, fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🖼️ THUMBNAIL PREVIEW</p>
-                <button onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = thumbnailUrl!;
-                  link.download = `vci-thumbnail-${keyword.replace(/\s+/g,"-")}.jpg`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, fontFamily: "inherit" }}>
-                  ⬇ Download
-                </button>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
+                <input value={keyword} onChange={e => { setKeyword(e.target.value); setError(""); }}
+                  placeholder={`e.g. weight loss, morning routine, AI tools...`}
+                  onKeyDown={e => e.key === "Enter" && keyword.trim() && setWizardStep(2)}
+                  style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
+                  onFocus={e => e.target.style.borderColor = "#6d28d9"}
+                  onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+                <p style={{ margin: "0.4rem 0 0", color: "#3f3f46", fontSize: "0.65rem" }}>New here? Try something simple like "weight loss" or "morning routine" — VCI handles the rest.</p>
               </div>
-              <img src={thumbnailUrl!} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
-              {generateResult.thumbnail_idea && (
-                <p style={{ margin: "0.5rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight: 1.5 }}>💡 {generateResult.thumbnail_idea}</p>
+
+              {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0.75rem 0 0" }}>{error}</p>}
+
+              <button onClick={() => keyword.trim() ? setWizardStep(2) : setError("Please enter a keyword first.")}
+                style={{ width: "100%", marginTop: "1rem", padding: "0.95rem", borderRadius: "12px", background: keyword.trim() ? "linear-gradient(135deg,#6d28d9,#7c3aed)" : "#111111", border: "none", color: keyword.trim() ? "#fff" : "#404040", fontWeight: 800, fontSize: "0.92rem", cursor: keyword.trim() ? "pointer" : "not-allowed", fontFamily: "'Inter',sans-serif" }}>
+                Continue to AI Generate →
+              </button>
+            </div>
+          )}
+
+          {/* ── STEP 2: AI GENERATE ── */}
+          {wizardStep === 2 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem" }}>
+              {!generateLoading ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                    <span style={{ fontSize: "1.3rem" }}>🎬</span>
+                    <div>
+                      <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Style &amp; Duration</h3>
+                      <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Writing about "<strong style={{ color: "#a855f7" }}>{keyword}</strong>" for {platform}</p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SCRIPT STYLE</label>
+                    <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                      {STYLES.map(s => (
+                        <button key={s} onClick={() => setStyle(s)}
+                          style={{ background: style === s ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${style === s ? "#6d28d9" : "#1f1f1f"}`, color: style === s ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.7rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "1.25rem" }}>
+                    <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>DURATION</label>
+                    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {DURATIONS.map(d => (
+                        <button key={d} onClick={() => setDuration(d)}
+                          style={{ background: duration === d ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${duration === d ? "#6d28d9" : "#1f1f1f"}`, color: duration === d ? "#8b5cf6" : "#52525b", padding: "0.28rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, transition: "all 0.2s" }}>
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+                  <div style={{ display: "flex", gap: "0.6rem" }}>
+                    <button onClick={() => setWizardStep(1)}
+                      style={{ padding: "0.95rem 1.1rem", borderRadius: "12px", background: "transparent", border: "1px solid #1f1f1f", color: "#71717a", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>
+                      ← Back
+                    </button>
+                    <button onClick={generateScript}
+                      style={{ flex: 1, padding: "0.95rem", borderRadius: "12px", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}>
+                      🎬 Generate {duration} {style} Script
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
+                  <div style={{ width: 56, height: 56, border: "3px solid #1f1f1f", borderTopColor: "#a855f7", borderRadius: "50%", margin: "0 auto 1.25rem", animation: "spin 0.9s linear infinite" }} />
+                  <p style={{ color: "#a855f7", fontWeight: 800, fontSize: "0.95rem", margin: "0 0 0.3rem" }}>VCI is generating your script...</p>
+                  <p style={{ color: "#3f3f46", fontSize: "0.72rem", margin: "0 0 1.5rem" }}>Usually takes 10-15 seconds</p>
+                  <div style={{ display: "inline-flex", flexDirection: "column", gap: "0.5rem", textAlign: "left" }}>
+                    {GEN_CHECKLIST.map((item, i) => {
+                      const isDone = i < genChecklistIdx || (i === genChecklistIdx && i === GEN_CHECKLIST.length - 1);
+                      const isCurrent = i === genChecklistIdx && !isDone;
+                      return (
+                        <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <span style={{ width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", flexShrink: 0, background: isDone ? "#22c55e" : "#1a1a1a", color: isDone ? "#fff" : "#3f3f46", border: isCurrent ? "1.5px solid #a855f7" : "none" }}>
+                            {isDone ? "✓" : ""}
+                          </span>
+                          <span style={{ fontSize: "0.8rem", color: isDone ? "#e4e4e7" : isCurrent ? "#a855f7" : "#3f3f46", fontWeight: isCurrent ? 700 : 500 }}>{item}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           )}
 
-          {/* AI Voice — Convert script to spoken audio (Coming Soon — buttons disabled, Mix Studio below handles voice) */}
-          <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 CONVERT TO AI VOICE</p>
-              <span style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Neural TTS</span>
-            </div>
-
-            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.6rem", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "120px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>
-                  LANGUAGE
-                  {voiceLangAutoSet && AZURE_VOICES[langLabel] && <span style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", padding: "0.05rem 0.4rem", borderRadius: "8px", fontSize: "0.58rem", fontWeight: 700 }}>auto-matched</span>}
-                </label>
-                <select value={voiceLang} onChange={e => { setVoiceLang(e.target.value); setVoiceStyle("Default"); setVoiceLangAutoSet(false); }}
-                  style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "8px", padding: "0.5rem 0.6rem", color: "#fff", fontSize: "0.8rem", outline: "none" }}>
-                  {Object.keys(AZURE_VOICES).map(lang => <option key={lang} value={lang}>{lang}</option>)}
-                </select>
+          {/* ── STEP 3: CUSTOMIZE ── */}
+          {wizardStep === 3 && generateResult && (
+            <div>
+              <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "14px", padding: "1.1rem", marginBottom: "0.85rem" }}>
+                <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>🎬 {generateResult.title}</p>
+                <p style={{ margin: 0, color: "#f1f5f9", fontSize: "0.85rem", fontWeight: 600, lineHeight: 1.5 }}>"{generateResult.hook}"</p>
               </div>
-              <div style={{ flex: 1, minWidth: "120px" }}>
-                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>VOICE</label>
-                <div style={{ display: "flex", gap: "0.3rem" }}>
-                  {(["Female", "Male"] as const).map(g => (
-                    <button key={g} onClick={() => setVoiceGender(g)}
-                      style={{ flex: 1, background: voiceGender === g ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceGender === g ? "#06b6d4" : "#1f1f1f"}`, color: voiceGender === g ? "#06b6d4" : "#52525b", padding: "0.5rem 0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {/* Tone/Style — only shown when the selected voice supports it */}
-            {AZURE_VOICES[voiceLang]?.styles && (
-              <div style={{ marginBottom: "0.6rem" }}>
-                <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>TONE</label>
-                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-                  {AZURE_VOICES[voiceLang]!.styles!.map(s => (
-                    <button key={s} onClick={() => setVoiceStyle(s)}
-                      style={{ background: voiceStyle === s ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceStyle === s ? "#06b6d4" : "#1f1f1f"}`, color: voiceStyle === s ? "#06b6d4" : "#52525b", padding: "0.3rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Speaking speed */}
-            <div style={{ marginBottom: "0.7rem" }}>
-              <label style={{ display: "block", color: "#52525b", fontSize: "0.62rem", fontWeight: 600, marginBottom: "0.3rem" }}>SPEED</label>
-              <div style={{ display: "flex", gap: "0.3rem" }}>
-                {VOICE_SPEEDS.map(s => (
-                  <button key={s.value} onClick={() => setVoiceSpeed(s.value)}
-                    style={{ flex: 1, background: voiceSpeed === s.value ? "rgba(6,182,212,0.15)" : "#080808", border: `1px solid ${voiceSpeed === s.value ? "#06b6d4" : "#1f1f1f"}`, color: voiceSpeed === s.value ? "#06b6d4" : "#52525b", padding: "0.4rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: 600 }}>
-                    {s.label}
+              {/* Customize tabs */}
+              <div style={{ display: "flex", gap: "0.3rem", marginBottom: "0.85rem", overflowX: "auto" }}>
+                {[
+                  { id: "script", label: "🎙️ Script" },
+                  { id: "caption", label: "💬 Caption & Tags" },
+                  { id: "thumbnail", label: "🖼️ Thumbnail" },
+                  { id: "voice", label: "🎛️ Voice & Music" },
+                ].map(t => (
+                  <button key={t.id} onClick={() => setCustomizeTab(t.id as any)}
+                    style={{ background: customizeTab === t.id ? "rgba(109,40,217,0.15)" : "#0f0f0f", border: `1px solid ${customizeTab === t.id ? "#6d28d9" : "#1f1f1f"}`, color: customizeTab === t.id ? "#8b5cf6" : "#52525b", padding: "0.5rem 0.85rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    {t.label}
                   </button>
                 ))}
               </div>
-            </div>
 
-            {voiceError && <p style={{ color: "#ef4444", fontSize: "0.72rem", margin: "0 0 0.5rem" }}>{voiceError}</p>}
-
-            <button disabled
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: "#111", border: "1px dashed rgba(6,182,212,0.3)", color: "#52525b", fontWeight: 700, fontSize: "0.84rem", cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-              🔒 AI Voiceover — Coming Soon (use Mix Studio below)
-            </button>
-
-            {audioUrl && (
-              <div style={{ marginTop: "0.85rem", display: "flex", flexDirection: "column", gap: "0.5rem", animation: "slideUp 0.3s ease" }}>
-                <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.6rem" }}>
-                  <audio controls src={audioUrl} style={{ width: "100%" }} />
+              {customizeTab === "script" && (
+                <div>
+                  <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+                    <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>SCRIPT BREAKDOWN</p>
+                    {(generateResult.sections || []).map((sec: any, i: number) => {
+                      const sectionColors: Record<string, string> = { HOOK: "#8b5cf6", PROBLEM: "#ef4444", SOLUTION: "#22c55e", CTA: "#f59e0b", INTRO: "#8b5cf6", TIPS: "#06b6d4", STORY: "#f59e0b", BODY: "#22c55e" };
+                      const colorKey = Object.keys(sectionColors).find(k => sec.label?.toUpperCase().startsWith(k));
+                      const color = (colorKey ? sectionColors[colorKey] : null) || "#8b5cf6";
+                      return (
+                        <div key={i} style={{ background: `${color}08`, border: `1px solid ${color}20`, borderLeft: `3px solid ${color}`, borderRadius: "8px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                            <span style={{ color, fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.06em" }}>{sec.label}</span>
+                            <span style={{ color: "#3f3f46", fontSize: "0.62rem" }}>{sec.time}</span>
+                          </div>
+                          <p style={{ margin: "0 0 0.3rem", color: "#f1f5f9", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 500 }}>{sec.content}</p>
+                          {sec.direction && <p style={{ margin: 0, color: "#52525b", fontSize: "0.68rem", lineHeight: 1.4 }}>📷 {sec.direction}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ background: "linear-gradient(135deg,#080f08,#0a0f0a)", border: "1px solid #22c55e25", borderRadius: "14px", padding: "1rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                      <p style={{ margin: 0, fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📝 FULL SCRIPT</p>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button onClick={() => copyText(generateResult.script, "fullscript")}
+                          style={{ background: copiedKey === "fullscript" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "fullscript" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "fullscript" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                          {copiedKey === "fullscript" ? "✓ Copied!" : "📋 Copy"}
+                        </button>
+                        <button onClick={() => { setScript(generateResult.script); setMode("improve"); window.scrollTo(0, 0); }}
+                          style={{ background: "rgba(109,40,217,0.15)", border: "1px solid rgba(109,40,217,0.4)", color: "#8b5cf6", padding: "0.2rem 0.75rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                          ✨ Improve →
+                        </button>
+                      </div>
+                    </div>
+                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{generateResult.script}</p>
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  <span style={{ flex: 1, textAlign: "center", background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)", color: "#52525b", padding: "0.4rem", borderRadius: "8px", fontSize: "0.68rem" }}>
-                    {voiceLang} · {voiceGender}{voiceStyle !== "Default" ? ` · ${voiceStyle}` : ""}
-                  </span>
+              )}
+
+              {customizeTab === "caption" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                      <p style={{ margin: 0, fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>💬 CAPTION</p>
+                      <button onClick={() => copyText(generateResult.caption, "caption")} style={{ background: "none", border: "none", color: copiedKey === "caption" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "caption" ? "✓" : "Copy"}</button>
+                    </div>
+                    <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.6 }}>{generateResult.caption}</p>
+                  </div>
+                  <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.85rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                      <p style={{ margin: 0, fontSize: "0.65rem", color: "#06b6d4", fontWeight: 700 }}>#️⃣ HASHTAGS</p>
+                      <button onClick={() => copyText((generateResult.hashtags || []).join(" "), "hashtags")} style={{ background: "none", border: "none", color: copiedKey === "hashtags" ? "#22c55e" : "#555", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>{copiedKey === "hashtags" ? "✓" : "Copy"}</button>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                      {(generateResult.hashtags || []).map((tag: string, i: number) => (
+                        <span key={i} style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", padding: "0.15rem 0.45rem", borderRadius: "20px", fontSize: "0.68rem", fontWeight: 600 }}>{tag}</span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <a href={audioUrl} download={`vci-voiceover-${voiceLang}-${voiceGender}.mp3`}
-                  style={{ textAlign: "center", background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.6rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, textDecoration: "none" }}>
-                  ⬇ Download MP3
-                </a>
+              )}
+
+              {customizeTab === "thumbnail" && (
+                <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "14px", padding: "0.9rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                    <p style={{ margin: 0, fontSize: "0.65rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>🖼️ THUMBNAIL</p>
+                    <button onClick={regenerateThumbnail}
+                      style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "0.2rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, fontFamily: "inherit" }}>
+                      🔄 Try Different Version
+                    </button>
+                  </div>
+                  {thumbnailUrl
+                    ? <img src={thumbnailUrl} alt="Generated Thumbnail" style={{ width: "100%", borderRadius: "10px", display: "block", border: "1px solid #222" }} />
+                    : <p style={{ color: "#52525b", fontSize: "0.78rem", textAlign: "center", padding: "2rem 0" }}>Generating thumbnail...</p>}
+                  {generateResult.thumbnail_idea && (
+                    <p style={{ margin: "0.5rem 0 0", color: "#52525b", fontSize: "0.68rem", lineHeight: 1.5 }}>💡 {generateResult.thumbnail_idea}</p>
+                  )}
+                </div>
+              )}
+
+              {customizeTab === "voice" && (
+                <div>
+                  <div style={{ background: "linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.02))", border: "1px solid rgba(6,182,212,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                      <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>🔊 AI VOICE</p>
+                      <span style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.25)", color: "#06b6d4", fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.45rem", borderRadius: "10px" }}>Neural TTS</span>
+                    </div>
+                    <button disabled
+                      style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", background: "#111", border: "1px dashed rgba(6,182,212,0.3)", color: "#52525b", fontWeight: 700, fontSize: "0.84rem", cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                      🔒 AI Voiceover — Coming Soon (use Mix Studio below)
+                    </button>
+                  </div>
+                  {/* 🎛️ MIX STUDIO — record/upload voice + upload/built-in music — always available */}
+                  <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} aiDisabled={true} />
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
+                <button onClick={() => setWizardStep(2)}
+                  style={{ padding: "0.95rem 1.1rem", borderRadius: "12px", background: "transparent", border: "1px solid #1f1f1f", color: "#71717a", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>
+                  ← Back
+                </button>
+                <button onClick={() => setWizardStep(4)}
+                  style={{ flex: 1, padding: "0.95rem", borderRadius: "12px", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}>
+                  Continue to Preview →
+                </button>
               </div>
-            )}
-          </div>
-
-          {/* 🎛️ MIX STUDIO — record/upload voice + upload/built-in music — always available */}
-          <BackgroundMusicMixer audioUrl={audioUrl} scriptStyle={style} aiDisabled={true} />
-
-          {/* Pro Tips */}
-          {generateResult.pro_tips && (
-            <div style={{ background: "linear-gradient(135deg,#08080f,#0a0a14)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS</p>
-              {generateResult.pro_tips.map((tip: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}>
-                  <span style={{ color: "#8b5cf6", fontSize: "0.75rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
-                  <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
-                </div>
-              ))}
             </div>
           )}
+
+          {/* ── STEP 4: PREVIEW ── */}
+          {wizardStep === 4 && generateResult && (
+            <div>
+              <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+                <p style={{ margin: "0 0 1rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>👀 FULL PREVIEW — {platform} · {duration} · {style}</p>
+
+                {thumbnailUrl && (
+                  <img src={thumbnailUrl} alt="Thumbnail" style={{ width: "100%", maxWidth: 320, borderRadius: "12px", display: "block", margin: "0 auto 1rem", border: "1px solid #222" }} />
+                )}
+
+                <p style={{ margin: "0 0 0.3rem", color: "#fff", fontSize: "1rem", fontWeight: 800 }}>{generateResult.title}</p>
+                <p style={{ margin: "0 0 0.85rem", color: "#a855f7", fontSize: "0.85rem", fontStyle: "italic" }}>"{generateResult.hook}"</p>
+
+                <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem", marginBottom: "0.85rem" }}>
+                  <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{generateResult.script}</p>
+                </div>
+
+                <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem", marginBottom: "0.6rem" }}>
+                  <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.78rem", lineHeight: 1.6 }}>{generateResult.caption}</p>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                  {(generateResult.hashtags || []).map((tag: string, i: number) => (
+                    <span key={i} style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", padding: "0.15rem 0.45rem", borderRadius: "20px", fontSize: "0.68rem", fontWeight: 600 }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "0.6rem" }}>
+                <button onClick={() => setWizardStep(3)}
+                  style={{ padding: "0.95rem 1.1rem", borderRadius: "12px", background: "transparent", border: "1px solid #1f1f1f", color: "#71717a", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>
+                  ← Back to Customize
+                </button>
+                <button onClick={() => setWizardStep(5)}
+                  style={{ flex: 1, padding: "0.95rem", borderRadius: "12px", background: "linear-gradient(135deg,#22c55e,#16a34a)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}>
+                  Looks Good — Continue to Export →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 5: EXPORT / PUBLISH ── */}
+          {wizardStep === 5 && generateResult && (
+            <div>
+              <div style={{ background: "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.03))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem", textAlign: "center" }}>
+                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✅</div>
+                <p style={{ margin: "0 0 0.3rem", color: "#fff", fontWeight: 800, fontSize: "1rem" }}>Ready to post on {platform}!</p>
+                <p style={{ margin: 0, color: "#52525b", fontSize: "0.78rem" }}>Grab everything below and publish directly in the {platform} app.</p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1rem" }}>
+                <button onClick={() => copyText(generateResult.script, "export-script")}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", cursor: "pointer", color: "#fff" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>📝 Copy Full Script</span>
+                  <span style={{ color: copiedKey === "export-script" ? "#22c55e" : "#52525b", fontSize: "0.75rem", fontWeight: 700 }}>{copiedKey === "export-script" ? "✓ Copied" : "Copy"}</span>
+                </button>
+                <button onClick={() => copyText(`${generateResult.caption}\n\n${(generateResult.hashtags || []).join(" ")}`, "export-caption")}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", cursor: "pointer", color: "#fff" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>💬 Copy Caption + Hashtags</span>
+                  <span style={{ color: copiedKey === "export-caption" ? "#22c55e" : "#52525b", fontSize: "0.75rem", fontWeight: 700 }}>{copiedKey === "export-caption" ? "✓ Copied" : "Copy"}</span>
+                </button>
+                {thumbnailUrl && (
+                  <button onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = thumbnailUrl!;
+                    link.download = `vci-thumbnail-${keyword.replace(/\s+/g, "-")}.jpg`;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                  }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", cursor: "pointer", color: "#fff" }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>🖼️ Download Thumbnail</span>
+                    <span style={{ color: "#52525b", fontSize: "0.75rem", fontWeight: 700 }}>⬇ Download</span>
+                  </button>
+                )}
+              </div>
+
+              {generateResult.pro_tips && (
+                <div style={{ background: "linear-gradient(135deg,#08080f,#0a0a14)", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+                  <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS BEFORE YOU POST</p>
+                  {generateResult.pro_tips.map((tip: string, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}>
+                      <span style={{ color: "#8b5cf6", fontSize: "0.75rem", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                      <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.6rem" }}>
+                <button onClick={() => setWizardStep(4)}
+                  style={{ padding: "0.95rem 1.1rem", borderRadius: "12px", background: "transparent", border: "1px solid #1f1f1f", color: "#71717a", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>
+                  ← Back
+                </button>
+                <button onClick={startNewScript}
+                  style={{ flex: 1, padding: "0.95rem", borderRadius: "12px", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}>
+                  🎬 Create Another Script
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
@@ -5903,1236 +6482,7 @@ ${sectionsSchema}
       )}
     </div>
   );
-}
-function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
-  const [contentInput, setContentInput] = useState("");
-  const [platform, setPlatform] = useState("Instagram");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const ALL_SCORE_PLATFORMS = [
-    { id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" },
-    { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" },
-    { id: "Facebook", emoji: "📘" }, { id: "TikTok", emoji: "🎵" },
-  ];
-  const ADS_SCORE_PLATFORMS = [
-    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
-    { id: "YouTube Ads", emoji: "▶️" }, { id: "Native Ads", emoji: "📰" },
-  ];
-  const SCORE_PLATFORMS = userType === "business" ? ADS_SCORE_PLATFORMS : ALL_SCORE_PLATFORMS;
-
-  useEffect(() => {
-    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
-  }, [userType]);
-
-  const copyText = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-    fireCopySignal("hookscore", key, text, { platform });
-  };
-
-  const SCORE_PLATFORM_GUIDE: Record<string, string> = {
-    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
-    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
-    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing.",
-    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
-    "Facebook": "Warm, community/family-oriented tone for a slightly older audience.",
-    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
-    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits (headlines max 30 chars), no fluff.",
-    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
-  };
-
-  const analyze = async () => {
-    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setResult(null);
-
-    const prompt = `You are an expert viral content analyst and coach who deeply understands how content actually performs on ${platform} specifically. Analyze this content for ${platform}:
-
-CONTENT TO ANALYZE:
-"""
-${contentInput}
-"""
-
-PLATFORM: ${platform}
-
-PLATFORM-SPECIFIC TONE FOR "${platform}" (your 3 improved versions must genuinely sound native to this platform, not generic):
-${SCORE_PLATFORM_GUIDE[platform] || SCORE_PLATFORM_GUIDE["Instagram"]}
-
-LANGUAGE RULE: Detect the language of the content and respond in the SAME language. Hindi content = Hindi response. English = English.
-
-ANALYSIS RULES:
-- Score out of 100. Use this exact rubric — do not be arbitrarily conservative or arbitrarily generous:
-  - 85-100 (Grade A): Genuinely excellent — strong curiosity gap OR sharp emotional trigger, specific concrete detail (number/result/timeframe), zero generic filler, would stop a scroll. Award this honestly when content earns it — don't withhold A out of general caution.
-  - 70-84 (Grade B): Solid and usable — has a real hook mechanism but is missing one element of A-tier (e.g. good curiosity but vague specifics, or strong specifics but a flat opening).
-  - 50-69 (Grade C): Average — technically fine but generic, forgettable, or missing a genuine attention-grabbing mechanism. Most unedited first-draft content lands here.
-  - 30-49 (Grade D): Weak — clichéd opener, no specific detail, or reads like generic AI/marketing filler.
-  - 0-29 (Grade F): Broken — off-platform, confusing, or actively repels attention.
-- Judge what's ACTUALLY on the page, not what's typical for AI-generated content in general — a genuinely strong hook deserves an A even if most content doesn't reach that bar.
-- Analyze the FULL content, not just first line
-- Give LINE-BY-LINE feedback on weak parts
-- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites — and these 3 versions should themselves be written to hit the A-tier bar above
-- Identify exactly what's strong and what's weak
-
-Respond ONLY in this exact JSON (no markdown, no extra text):
-{
-  "scores": {
-    "curiosity": 0,
-    "emotion": 0,
-    "virality": 0,
-    "clarity": 0,
-    "overall": 0
-  },
-  "grade": "A/B/C/D/F",
-  "verdict": "2-3 line honest verdict",
-  "strengths": ["strength 1", "strength 2", "strength 3"],
-  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
-  "line_fixes": [
-    {"original": "exact weak line or phrase from content (never write 'none')", "problem": "specific reason why this line is weak", "fixed": "completely rewritten better version"}
-  ],
-  "platform_versions": {
-    "version1": {"label": "Curiosity Version", "content": "complete rewritten content"},
-    "version2": {"label": "Emotion Version", "content": "complete rewritten content"},
-    "version3": {"label": "Power Version", "content": "complete rewritten content"}
-  },
-  "pro_tips": ["tip 1 specific to ${platform}", "tip 2", "tip 3"]
-}`;
-
-    try {
-      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed;
-      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
-      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
-      setResult(parsed);
-      if (onCreditUsed) onCreditUsed();
-      if (onSaveHistory) onSaveHistory("hookscore", { platform, inputSummary: contentInput.slice(0, 80), resultData: parsed });
-    } catch { setError("Analysis failed. Try again."); }
-    setLoading(false);
-  };
-
-  const scoreColor = (s: number) => s >= 80 ? "#22c55e" : s >= 60 ? "#f59e0b" : s >= 40 ? "#f97316" : "#ef4444";
-  const gradeColor = (g: string) => g === "A" ? "#22c55e" : g === "B" ? "#06b6d4" : g === "C" ? "#f59e0b" : g === "D" ? "#f97316" : "#ef4444";
-  const gradeLabel = (g: string) => g === "A" ? "🔥 Viral Ready!" : g === "B" ? "⚡ Almost There" : g === "C" ? "📈 Needs Work" : g === "D" ? "⚠️ Weak Content" : "💀 Rewrite Needed";
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-
-      {/* Input Card */}
-      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.4rem" }}>📊</span>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Content Score Analyzer</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Paste your content → get detailed analysis, fixes, and 3 improved versions</p>
-          </div>
-        </div>
-
-        {/* Platform selector */}
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>SELECT PLATFORM</label>
-          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-            {SCORE_PLATFORMS.map(p => (
-              <button key={p.id} onClick={() => setPlatform(p.id)}
-                style={{ background: platform === p.id ? "rgba(124,58,237,0.1)" : "#0a0a0a", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1a1a1a"}`, color: platform === p.id ? "#6d28d9" : "#555", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600, transition: "all 0.2s" }}>
-                {p.emoji} {p.id}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Content textarea */}
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label style={{ color: "#333", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.35rem" }}>
-            PASTE YOUR CONTENT HERE
-            <span style={{ color: "#222", fontWeight: 400, marginLeft: "0.5rem" }}>
-              (caption, hook, script, ad copy — kuch bhi)
-            </span>
-          </label>
-          <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
-            placeholder={`Paste your ${platform} content here...\n\nFor example:\n"5 tips to lose weight fast without gym"\n\nYa poora caption/script bhi paste kar sakte ho!`}
-            rows={6}
-            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.6, transition: "border 0.2s" }}
-            onFocus={e => e.target.style.borderColor = "#6d28d9"}
-            onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.3rem" }}>
-            <span style={{ color: "#222", fontSize: "0.65rem" }}>Hook, caption, script, ad copy — sab analyze hoga</span>
-            <span style={{ color: "#52525b", fontSize: "0.68rem" }}>{contentInput.length} chars</span>
-          </div>
-        </div>
-
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-
-        <button onClick={analyze} disabled={loading}
-          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#8b8cf8,#6366f1)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif", transition: "all 0.3s" }}>
-          {loading ? "🔍 Analyzing your content..." : `🔍 Analyze for ${platform}`}
-        </button>
-      </div>
-
-      {/* Results */}
-      {result && (
-        <div style={{ animation: "slideUp 0.5s ease" }}>
-
-          {/* Overall Score Banner */}
-          <div style={{ background: `${gradeColor(result.grade)}15`, border: `2px solid ${gradeColor(result.grade)}40`, borderRadius: "16px", padding: "1.25rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <div>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1.1rem", color: "#fff" }}>{gradeLabel(result.grade)}</div>
-                <div style={{ color: "#666", fontSize: "0.75rem", marginTop: "0.2rem" }}>{result.verdict}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "3rem", color: gradeColor(result.grade), lineHeight: 1 }}>{result.grade}</div>
-                <div style={{ color: "#555", fontSize: "0.65rem", fontWeight: 700 }}>GRADE</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Score Bars — /100 */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1.25rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 1rem", fontSize: "0.7rem", color: "#444", fontWeight: 700, letterSpacing: "0.06em" }}>📊 DETAILED SCORES /100</p>
-            {[
-              ["Curiosity", result.scores?.curiosity, "#6d28d9"],
-              ["Emotion", result.scores?.emotion, "#ec4899"],
-              ["Virality", result.scores?.virality, "#f59e0b"],
-              ["Clarity", result.scores?.clarity, "#06b6d4"],
-              ["Overall", result.scores?.overall, "#22c55e"],
-            ].map(([label, score, color]: any) => (
-              <div key={label} style={{ marginBottom: "0.6rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.2rem" }}>
-                  <span style={{ color: "#888", fontSize: "0.72rem", fontWeight: 600 }}>{label}</span>
-                  <span style={{ color, fontWeight: 800, fontSize: "0.78rem" }}>{score}/100</span>
-                </div>
-                <div style={{ background: "#141414", borderRadius: "4px", height: "6px", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: "4px", background: color, width: `${score}%`, transition: "width 1s ease" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Strengths & Weaknesses */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <div style={{ background: "#081a08", border: "1px solid #22c55e30", borderRadius: "12px", padding: "0.85rem" }}>
-              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#22c55e", fontWeight: 700 }}>✅ STRONG POINTS</p>
-              {(result.strengths || []).map((s: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.3rem" }}>
-                  <span style={{ color: "#22c55e", fontSize: "0.7rem", flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#aaa", fontSize: "0.72rem", lineHeight: 1.4 }}>{s}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ background: "#1a0808", border: "1px solid #ef444430", borderRadius: "12px", padding: "0.85rem" }}>
-              <p style={{ margin: "0 0 0.5rem", fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>❌ WEAK POINTS</p>
-              {(result.weaknesses || []).map((w: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.3rem" }}>
-                  <span style={{ color: "#ef4444", fontSize: "0.7rem", flexShrink: 0 }}>✗</span>
-                  <span style={{ color: "#aaa", fontSize: "0.72rem", lineHeight: 1.4 }}>{w}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Line by Line Fixes */}
-          {result.line_fixes && result.line_fixes.length > 0 && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 LINE-BY-LINE FIXES</p>
-              {result.line_fixes.map((fix: any, i: number) => (
-                <div key={i} style={{ background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem", marginBottom: "0.5rem" }}>
-                  <div style={{ color: "#ef4444", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "0.25rem" }}>
-                    {fix.original && fix.original !== "none" && fix.original !== "None" ? `"${fix.original}"` : "📝 General Improvement"}
-                  </div>
-                  <div style={{ color: "#555", fontSize: "0.68rem", marginBottom: "0.4rem" }}>
-                    ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Suggested improvements for your content"}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
-                    <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
-                    <span style={{ color: "#22c55e", fontSize: "0.78rem", lineHeight: 1.5 }}>{fix.fixed}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 3 Platform Versions */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#6d28d9", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
-            {result.platform_versions && Object.entries(result.platform_versions).map(([key, ver]: any, i) => {
-              const colors = ["#6d28d9", "#06b6d4", "#22c55e"];
-              const color = colors[i] || "#6d28d9";
-              return (
-                <div key={key} style={{ background: `${color}08`, border: `1px solid ${color}25`, borderRadius: "10px", padding: "0.85rem", marginBottom: "0.5rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                    <span style={{ color, fontSize: "0.7rem", fontWeight: 700 }}>✨ {ver.label}</span>
-                    <button onClick={() => copyText(ver.content, key)}
-                      style={{ background: copiedKey === key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === key ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === key ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
-                      {copiedKey === key ? "✓ Copied!" : "Copy"}
-                    </button>
-                  </div>
-                  <p style={{ margin: 0, color: "#ddd", fontSize: "0.83rem", lineHeight: 1.6 }}>{ver.content}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Pro Tips */}
-          {result.pro_tips && result.pro_tips.length > 0 && (
-            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #8b8cf830", borderRadius: "14px", padding: "1rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b8cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
-              {result.pro_tips.map((tip: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                  <span style={{ color: "#8b8cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
-  const [loading, setLoading] = useState(false);
-  const [calendar, setCalendar] = useState<any[]>([]);
-  const [calKeyword, setCalKeyword] = useState(keyword || "");
-  const [error, setError] = useState("");
-  const [copiedDay, setCopiedDay] = useState<number | null>(null);
-  const [calPlatform, setCalPlatform] = useState("Instagram");
-
-  const ALL_CAL_PLATFORMS = [
-    { id: "Instagram", emoji: "📸", color: "#e1306c" }, { id: "YouTube", emoji: "▶️", color: "#ef4444" },
-    { id: "Facebook", emoji: "📘", color: "#1877f2" }, { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
-    { id: "LinkedIn", emoji: "💼", color: "#0077b5" }, { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
-    { id: "Pinterest", emoji: "📌", color: "#e60023" },
-  ];
-  const ADS_CAL_PLATFORMS = [
-    { id: "Google Ads", emoji: "📢", color: "#4285f4" }, { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
-    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" }, { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
-  ];
-  const CAL_PLATFORMS = userType === "business" ? ADS_CAL_PLATFORMS : ALL_CAL_PLATFORMS;
-
-  useEffect(() => {
-    if (userType === "business" && calPlatform === "Instagram") setCalPlatform("Google Ads");
-  }, [userType]);
-
-  const CAL_PLATFORM_GUIDE: Record<string, string> = {
-    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
-    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
-    "Facebook": "Warm, community/family-oriented tone for a slightly older audience. Less trend-chasing slang.",
-    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
-    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing — credible takeaways only.",
-    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
-    "Pinterest": "Keyword-rich, benefit-stated clearly upfront — functions like search, not entertainment.",
-    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits, no fluff.",
-    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
-    "YouTube Ads": "First-5-second hook that stops a skip, then a clear value statement.",
-    "Native Ads": "Editorial-style, blends with content, curiosity-driven rather than promotional.",
-  };
-
-  const generate = async () => {
-    if (!calKeyword.trim()) { setError("Enter a keyword first."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setCalendar([]);
-
-    const prompt = `You are an experienced ${calPlatform} content strategist who deeply understands how content is actually written and consumed on this specific platform. Create a 30-day content calendar.
-Platform: ${calPlatform}
-Keyword: "${calKeyword}"
-Niche: ${niche}
-OUTPUT LANGUAGE: ${langStrict} — Write ALL hooks and notes in this language/script only. No English mixing.
-
-PLATFORM-SPECIFIC TONE FOR "${calPlatform}" (every hook must genuinely sound native to this platform, not generic):
-${CAL_PLATFORM_GUIDE[calPlatform] || CAL_PLATFORM_GUIDE["Instagram"]}
-
-STRICT RULES:
-- Every hook must be platform-specific for ${calPlatform}, following the tone above
-- Use varied content types: ${CONTENT_TYPES.join(", ")}
-- All hooks must be in the specified language
-
-Respond ONLY in JSON (no markdown):
-{"days":[{"day":1,"type":"Tips","hook":"hook here","platform_note":"tip here"},...]}
-Generate exactly 30 days.`;
-
-    try {
-      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-      const days = parsed.days || [];
-      setCalendar(days);
-      if (onCreditUsed) onCreditUsed();
-      if (onSaveHistory) onSaveHistory("calendar", { niche, platform: calPlatform, keyword: calKeyword, inputSummary: calKeyword, resultData: { days } });
-    } catch { setError("Calendar generation failed. Try again."); }
-    setLoading(false);
-  };
-
-  useEffect(() => { setCalKeyword(keyword || ""); }, [keyword]);
-
-  const TYPE_COLORS: Record<string, string> = {
-    Tips: "#8b8cf8", Story: "#f59e0b", Mistakes: "#ef4444", Tutorial: "#22c55e",
-    Motivation: "#6d28d9", Trend: "#06b6d4", "Case Study": "#6d28d9",
-    Poll: "#ec4899", Review: "#84cc16", Challenge: "#f97316",
-    "Behind the Scenes": "#64748b", "Q&A": "#14b8a6"
-  };
-
-  const getWeek = (day: number) => Math.ceil(day / 7);
-  const weeks = calendar.length ? Array.from(new Set(calendar.map(d => getWeek(d.day)))) : [];
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.3rem" }}>📅</span>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>30-Day Content Calendar</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>AI auto-plans your entire month of content</p>
-          </div>
-        </div>
-        <input value={calKeyword} onChange={e => { setCalKeyword(e.target.value); setError(""); }}
-          placeholder="Topic or keyword (e.g. weight loss)"
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s", marginBottom: "0.75rem" }}
-          onFocus={e => e.target.style.borderColor = "#06b6d4"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label style={{ color: "#52525b", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
-          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-            {CAL_PLATFORMS.map(p => (
-              <button key={p.id} onClick={() => setCalPlatform(p.id)} style={{ background: calPlatform === p.id ? `${p.color}18` : "#0a0a0a", border: `1px solid ${calPlatform === p.id ? p.color : "#1a1a1a"}`, color: calPlatform === p.id ? p.color : "#444", padding: "0.28rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.2s", fontFamily: "'Inter',sans-serif" }}>
-                {p.emoji} {p.id}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#06b6d4,#0891b2)", border: "none", color: loading ? "#333" : "#fff", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "⚡ Planning 30 days..." : "📅 Generate My Content Calendar"}
-        </button>
-      </div>
-      {calendar.length > 0 && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <span style={{ color: "#555", fontSize: "0.75rem" }}>30 days of content ready</span>
-            <button onClick={() => { const allText = calendar.map(d => `Day ${d.day} (${d.type}): ${d.hook}`).join("\n"); navigator.clipboard.writeText(allText); fireCopySignal("calendar", "all", allText, { niche, platform: calPlatform }); }} style={{ background: "#ffffff0a", border: "1px solid #2a2a2a", color: "#666", padding: "0.25rem 0.75rem", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>Copy All</button>
-          </div>
-          {weeks.map(week => (
-            <div key={week} style={{ marginBottom: "1rem" }}>
-              <div style={{ fontSize: "0.65rem", color: "#333", fontWeight: 700, letterSpacing: "0.08em", marginBottom: "0.4rem" }}>WEEK {week}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                {calendar.filter(d => getWeek(d.day) === week).map((day) => {
-                  const color = TYPE_COLORS[day.type] || "#6d28d9";
-                  return (
-                    <div key={day.day} style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", cursor: "pointer" }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = color + "40")}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = "#1a1a1a")}
-                      onClick={() => { navigator.clipboard.writeText(day.hook); setCopiedDay(day.day); setTimeout(() => setCopiedDay(null), 1500); fireCopySignal("calendar", "day_hook", day.hook, { niche, platform: calPlatform }); }}>
-                      <div style={{ flexShrink: 0, textAlign: "center", minWidth: "36px" }}>
-                        <div style={{ fontSize: "0.6rem", color: "#333", fontWeight: 700 }}>{DAYS[(day.day - 1) % 7]}</div>
-                        <div style={{ fontSize: "1rem", fontWeight: 800, color: "#fff", fontFamily: "'Inter',sans-serif" }}>{day.day}</div>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.2rem" }}>
-                          <span style={{ fontSize: "0.6rem", fontWeight: 700, background: color + "18", border: `1px solid ${color}30`, color, borderRadius: "4px", padding: "0.08rem 0.4rem" }}>{day.type}</span>
-                          {copiedDay === day.day && <span style={{ fontSize: "0.6rem", color: "#22c55e", fontWeight: 700 }}>✓ Copied!</span>}
-                        </div>
-                        <p style={{ margin: 0, color: "#bbb", fontSize: "0.8rem", lineHeight: 1.5 }}>{day.hook}</p>
-                        {day.platform_note && <p style={{ margin: "0.2rem 0 0", color: "#333", fontSize: "0.68rem" }}>💡 {day.platform_note}</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ContentPack({ plan, usageCount, limit, onUpgrade, keyword, niche, platform, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
-  const [loading, setLoading] = useState(false);
-  const [pack, setPack] = useState<any>(null);
-  const [packKeyword, setPackKeyword] = useState(keyword || "");
-  const [error, setError] = useState("");
-  const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [packType, setPackType] = useState<"ads" | "youtube" | "instagram">(userType === "business" ? "ads" : "instagram");
-  const [openSection, setOpenSection] = useState<string | null>(null);
-
-  const ALL_PACK_TYPES = [
-    { id: "instagram", label: "📸 Instagram & TikTok", desc: "Hooks, Reels, Captions, Hashtags" },
-    { id: "youtube", label: "▶️ YouTube", desc: "Titles, Scripts, Descriptions, Tags" },
-    { id: "ads", label: "📢 Google & Meta Ads", desc: "Headlines, Ad Copy, CTAs" },
-  ];
-  const PACK_TYPES = userType === "business" ? ALL_PACK_TYPES.filter(p => p.id === "ads") : ALL_PACK_TYPES;
-
-  const generate = async () => {
-    if (!packKeyword.trim()) { setError("Enter a keyword first."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setPack(null);
-
-    const packPrompts: Record<string, string> = {
-      instagram: `You are an experienced Instagram & TikTok content strategist who understands these are two DIFFERENT platforms with different tones, even though you're creating one combined pack.
-- For Instagram-style items: aesthetic, visual-first, aspirational/relatable tone — hooks must work as text overlay even with sound off.
-- For TikTok-style items: raw, casual, pattern-interrupt energy in the first 1-2 seconds — unpolished, trend-aware phrasing.
-Generate (clearly favor Instagram tone for hooks/captions and TikTok tone for scripts, since scripts are typically TikTok/Reel-style fast content):
-- hooks: 10 viral opening lines (Instagram-style aesthetic/aspirational tone)
-- titles: 8 post/reel title ideas
-- captions: 5 full captions with emojis and CTA (Instagram tone — emojis used naturally not decoratively)
-- scripts: 5 Reel/TikTok scripts (TikTok pacing — fast, pattern-interrupt hook, casual phrasing)
-- hashtags: 15 relevant hashtags`,
-      youtube: `You are an experienced YouTube content strategist. Write with YouTube's specific audience expectations in mind: viewers expect a clear payoff promised early, slightly more explanatory/narrative pacing than short-form platforms, and SEO-aware phrasing since YouTube is a search engine as much as a social platform.
-Generate:
-- hooks: 8 video hook lines (each promising a clear payoff, e.g. "by the end of this you'll know...")
-- titles: 10 SEO-optimized video titles (curiosity-driven but also keyword-rich for search)
-- captions: 5 video descriptions (slightly longer, narrative, search-friendly)
-- scripts: 5 full intro scripts (paced for sustained watch time, not a 1-second scroll-stop)
-- hashtags: 10 YouTube tags (treated as searchable keywords, not decoration)`,
-      ads: `You are a senior paid-ads copywriter with deep experience writing for both Google Search Ads and Meta (Facebook/Instagram) Ads — and you know these are NOT interchangeable formats.
-- Google Ads style: search-intent driven, benefit + urgency in tight character limits, no fluff.
-- Meta Ads style: scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.
-Generate:
-- hooks: 10 Google Ad headlines (STRICTLY MAX 30 characters each, search-intent driven, each a genuinely different angle — not repetitive)
-- titles: 8 Meta Ad headlines (STRICTLY MAX 40 characters each, scroll-stopping benefit statements)
-- captions: 5 ad descriptions (STRICTLY MAX 90 characters each, benefit + soft CTA)
-- scripts: 5 Meta ad primary texts (pain point → agitate → solution → CTA structure, 150-200 characters each)
-- hashtags: []`,
-    };
-
-    const prompt = `${packPrompts[packType]}
-
-KEYWORD: ${packKeyword}
-NICHE: ${niche}
-OUTPUT LANGUAGE: ${langStrict} — Write EVERYTHING in this language/script. No English mixing.
-
-Respond ONLY in JSON:
-{"hooks":[],"titles":[],"captions":[],"scripts":[],"hashtags":[]}`;
-
-    try {
-      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3000, messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      const packData = JSON.parse(text.replace(/```json|```/g, "").trim());
-      setPack(packData);
-      if (onCreditUsed) onCreditUsed();
-      if (onSaveHistory) onSaveHistory("pack", { niche, platform, keyword: packKeyword, inputSummary: `${packKeyword} (${packType})`, resultData: packData });
-    } catch { setError("Pack generation failed. Try again."); }
-    setLoading(false);
-  };
-
-  useEffect(() => { setPackKeyword(keyword || ""); }, [keyword]);
-
-  const sectionLabels: Record<string, any[]> = {
-    instagram: [
-      { key: "hooks", label: "Viral Hooks", emoji: "🎣", color: "#6d28d9" },
-      { key: "titles", label: "Post Titles", emoji: "📝", color: "#8b8cf8" },
-      { key: "captions", label: "Captions", emoji: "💬", color: "#22c55e" },
-      { key: "scripts", label: "Reel Scripts", emoji: "🎬", color: "#f59e0b" },
-      { key: "hashtags", label: "Hashtags", emoji: "#️⃣", color: "#06b6d4" },
-    ],
-    youtube: [
-      { key: "hooks", label: "Video Hooks", emoji: "🎬", color: "#6d28d9" },
-      { key: "titles", label: "SEO Titles", emoji: "📝", color: "#8b8cf8" },
-      { key: "captions", label: "Descriptions", emoji: "💬", color: "#22c55e" },
-      { key: "scripts", label: "Intro Scripts", emoji: "🎙️", color: "#f59e0b" },
-      { key: "hashtags", label: "YouTube Tags", emoji: "#️⃣", color: "#06b6d4" },
-    ],
-    ads: [
-      { key: "hooks", label: "Google Headlines", emoji: "📢", color: "#6d28d9" },
-      { key: "titles", label: "Meta Headlines", emoji: "📘", color: "#8b8cf8" },
-      { key: "captions", label: "Ad Descriptions", emoji: "💬", color: "#22c55e" },
-      { key: "scripts", label: "Meta Ad Copies", emoji: "🎯", color: "#f59e0b" },
-      { key: "hashtags", label: "Hashtags", emoji: "#️⃣", color: "#06b6d4" },
-    ],
-  };
-
-  const copySection = (key: string, items: string[]) => {
-    const text = items.join("\n");
-    navigator.clipboard.writeText(text);
-    setCopiedSection(key);
-    setTimeout(() => setCopiedSection(null), 2000);
-    fireCopySignal("pack", key, text, { niche, platform });
-  };
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.3rem" }}>📦</span>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>One-Click Content Pack</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Choose your platform — get complete content pack</p>
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
-          {PACK_TYPES.map(pt => (
-            <button key={pt.id} onClick={() => { setPackType(pt.id as any); setPack(null); }}
-              style={{ background: packType === pt.id ? "rgba(124,58,237,0.1)" : "#0a0a0a", border: `1px solid ${packType === pt.id ? "#6d28d9" : "#1a1a1a"}`, borderRadius: "10px", padding: "0.65rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
-              <span style={{ color: packType === pt.id ? "#6d28d9" : "#fff", fontWeight: 700, fontSize: "0.85rem" }}>{pt.label}</span>
-              <span style={{ color: "#444", fontSize: "0.72rem" }}>{pt.desc}</span>
-            </button>
-          ))}
-        </div>
-        <input value={packKeyword} onChange={e => { setPackKeyword(e.target.value); setError(""); }}
-          placeholder="Enter keyword (e.g. meal prep)"
-          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.75rem 1rem", color: "#fff", fontSize: "0.88rem", outline: "none", fontFamily: "'Inter',sans-serif", marginBottom: "0.75rem" }}
-          onFocus={e => e.target.style.borderColor = "#f59e0b"} onBlur={e => e.target.style.borderColor = "#1e1e1e"} />
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <button onClick={generate} disabled={loading} style={{ width: "100%", padding: "0.8rem", borderRadius: "10px", background: loading ? "#111" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.88rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "⚡ Building your pack..." : "📦 Generate Full Content Pack"}
-        </button>
-      </div>
-      {pack && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          {sectionLabels[packType].map(({ key, label, emoji, color }) => {
-            const items = pack[key] || [];
-            const isOpen = openSection === key;
-            return (
-              <div key={key} style={{ background: "#0f0f0f", border: `1px solid ${isOpen ? color + "40" : "#1a1a1a"}`, borderRadius: "12px", marginBottom: "0.5rem", overflow: "hidden" }}>
-                <div onClick={() => setOpenSection(isOpen ? null : key)} style={{ padding: "0.85rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span>{emoji}</span>
-                    <span style={{ fontWeight: 700, color: "#fff", fontSize: "0.88rem" }}>{label}</span>
-                    <span style={{ background: color + "18", border: `1px solid ${color}30`, color, borderRadius: "20px", padding: "0.1rem 0.5rem", fontSize: "0.65rem", fontWeight: 700 }}>{items.length}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <button onClick={e => { e.stopPropagation(); copySection(key, items); }} style={{ background: copiedSection === key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedSection === key ? "#22c55e" : "#2a2a2a"}`, color: copiedSection === key ? "#22c55e" : "#555", padding: "0.2rem 0.6rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700 }}>
-                      {copiedSection === key ? "✓" : "Copy"}
-                    </button>
-                    <span style={{ color: "#333" }}>{isOpen ? "▲" : "▼"}</span>
-                  </div>
-                </div>
-                {isOpen && (
-                  <div style={{ borderTop: `1px solid ${color}20`, padding: "0 1rem 1rem" }}>
-                    {items.map((item: string, i: number) => (
-                      <div key={i} style={{ padding: "0.5rem 0", borderBottom: i < items.length - 1 ? "1px solid #111" : "none", display: "flex", gap: "0.75rem" }}>
-                        <span style={{ color: "#333", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0, minWidth: "18px" }}>{String(i + 1).padStart(2, "0")}</span>
-                        <p style={{ margin: 0, color: "#ccc", fontSize: "0.83rem", lineHeight: 1.6 }}>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword, niche, langStrict, onCreditUsed, onSaveHistory, userType }: any) {
-  const [kw, setKw] = useState(keyword || "");
-  const [platform, setPlatform] = useState("Instagram");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const ALL_CAPTION_PLATFORMS = [
-    { id: "Instagram", emoji: "📸", color: "#e1306c" },
-    { id: "YouTube", emoji: "▶️", color: "#ef4444" },
-    { id: "TikTok", emoji: "🎵", color: "#69c9d0" },
-    { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
-    { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" },
-    { id: "Facebook", emoji: "📘", color: "#1877f2" },
-    { id: "Pinterest", emoji: "📌", color: "#e60023" },
-    { id: "WhatsApp", emoji: "💬", color: "#25d366" },
-  ];
-  const ADS_CAPTION_PLATFORMS = [
-    { id: "Google Ads", emoji: "📢", color: "#4285f4" },
-    { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
-    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" },
-    { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
-  ];
-  const PLATFORMS = userType === "business" ? ADS_CAPTION_PLATFORMS : ALL_CAPTION_PLATFORMS;
-
-  useEffect(() => {
-    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
-  }, [userType]);
-
-  const copyText = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-    fireCopySignal("caption", key, text, { niche, platform });
-  };
-
-  useEffect(() => { setKw(keyword || ""); }, [keyword]);
-
-  const CAPTION_PLATFORM_GUIDE: Record<string, string> = {
-    "Instagram": "Aesthetic, visual-first tone. Emojis used naturally, not decoratively. Hashtags: mix of broad reach tags and niche-specific tags.",
-    "YouTube": "Slightly longer, SEO-aware descriptions — written to also help search/discovery, not just engagement. Hashtags: fewer, more keyword-precise (YouTube treats hashtags as searchable tags, not decoration).",
-    "TikTok": "Short, punchy, casual, trend-aware phrasing. Hashtags: mix of broad trending tags and niche tags, written the way TikTok captions actually look (lowercase, casual).",
-    "LinkedIn": "Professional, insight-led tone — no slang, no emoji overload (1 max). Hashtags: industry/professional terms only, never entertainment-style tags.",
-    "Twitter / X": "Punchy, opinionated, quotable one-liners — written like a real tweet, not a caption. Hashtags: very few (1-2 max), X culture treats heavy hashtag use as spammy.",
-    "Facebook": "Warm, conversational, slightly longer-form storytelling tone suited to an older, community-oriented audience. Hashtags: minimal, Facebook doesn't reward heavy hashtag use.",
-    "Pinterest": "Keyword-rich, benefit-stated clearly upfront — Pinterest captions function like search snippets, not entertainment hooks. Hashtags: descriptive, search-intent driven.",
-    "WhatsApp": "Personal, direct, one-to-one message tone — written like something a friend would send, not a public post. Hashtags: not used at all on WhatsApp, generate empty array.",
-    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits, no fluff. Hashtags: not applicable, generate empty array.",
-    "Meta Ads": "Scroll-stopping, pain-point-led ad copy for a passive feed audience. Hashtags: not applicable, generate empty array.",
-    "YouTube Ads": "First-5-second hook that stops a skip, natural spoken tone. Hashtags: not applicable, generate empty array.",
-    "Native Ads": "Editorial-style, blends with content, curiosity-driven. Hashtags: not applicable, generate empty array.",
-  };
-
-  const generate = async () => {
-    if (!kw.trim()) { setError("Please enter a keyword first."); return; }
-    if (usageCount >= limit) { onUpgrade(); return; }
-    setLoading(true); setError(""); setResult(null);
-
-    const prompt = `You are an experienced ${platform} content writer who deeply understands how content is actually written and consumed on this specific platform.
-Keyword: "${kw}"
-Platform: ${platform}
-OUTPUT LANGUAGE: ${langStrict}
-
-PLATFORM-SPECIFIC TONE FOR "${platform}" (the captions must feel native to this platform, not generic):
-${CAPTION_PLATFORM_GUIDE[platform] || CAPTION_PLATFORM_GUIDE["Instagram"]}
-
-IMPORTANT: Generate content ONLY about the keyword "${kw}". Ignore any other context.
-
-Generate ONLY:
-1. 5 ready-to-post captions (with emojis where platform-appropriate, CTA, engaging tone) — all about "${kw}", written in the platform tone described above
-2. 20 relevant hashtags specific to "${kw}" (or an empty array if the platform tone above says hashtags aren't used)
-
-Respond ONLY in JSON:
-{"captions":["caption 1","caption 2","caption 3","caption 4","caption 5"],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8","#tag9","#tag10","#tag11","#tag12","#tag13","#tag14","#tag15","#tag16","#tag17","#tag18","#tag19","#tag20"]}`;
-
-    try {
-      const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await res.json();
-      const text = data.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed;
-      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
-      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse"); }
-      setResult(parsed);
-      if (onCreditUsed) onCreditUsed();
-      if (onSaveHistory) onSaveHistory("caption", { niche, platform, keyword: kw, inputSummary: kw, resultData: parsed });
-    } catch { setError("Generation failed. Try again."); }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.25rem" }}>
-          <div style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "10px", padding: "0.4rem 0.6rem", fontSize: "1.2rem" }}>📋</div>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Caption & Hashtags</h3>
-            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Select platform → enter keyword → get ready-to-post captions</p>
-          </div>
-        </div>
-        <div style={{ marginBottom: "0.85rem" }}>
-          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
-          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-            {PLATFORMS.map(p => (
-              <button key={p.id} onClick={() => setPlatform(p.id)}
-                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
-                {p.emoji} {p.id}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{ marginBottom: "0.85rem" }}>
-          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
-          <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
-            onKeyDown={e => e.key === "Enter" && generate()}
-            placeholder="e.g. weight loss, morning routine, travel..."
-            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
-            onFocus={e => e.target.style.borderColor = "#6d28d9"}
-            onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
-        </div>
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
-        <button onClick={generate} disabled={loading}
-          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "✨ Generating..." : `📋 Generate Captions & Hashtags for ${platform}`}
-        </button>
-      </div>
-
-      {result && (
-        <div style={{ animation: "slideUp 0.4s ease" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", borderRadius: "20px", padding: "0.2rem 0.75rem", fontSize: "0.7rem", fontWeight: 700 }}>✓ Ready for {platform}</span>
-            <span style={{ color: "#3f3f46", fontSize: "0.68rem" }}>Copy & post directly!</span>
-          </div>
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <p style={{ margin: 0, fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>💬 CAPTIONS (5 ready-to-post)</p>
-              <button onClick={() => copyText((result.captions || []).join("\n\n"), "allcaptions")}
-                style={{ background: copiedKey === "allcaptions" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allcaptions" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allcaptions" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
-                {copiedKey === "allcaptions" ? "✓ Copied!" : "Copy All"}
-              </button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {(result.captions || []).map((cap: string, i: number) => (
-                <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
-                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.7, flex: 1 }}>{cap}</p>
-                    <button onClick={() => copyText(cap, `cap${i}`)}
-                      style={{ background: copiedKey === `cap${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `cap${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `cap${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0 }}>
-                      {copiedKey === `cap${i}` ? "✓" : "📋"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>#️⃣ HASHTAGS (20 optimized)</p>
-              <button onClick={() => copyText((result.hashtags || []).join(" "), "allhash")}
-                style={{ background: copiedKey === "allhash" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allhash" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allhash" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
-                {copiedKey === "allhash" ? "✓ Copied!" : "Copy All"}
-              </button>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-              {(result.hashtags || []).map((tag: string, i: number) => (
-                <button key={i} onClick={() => copyText(tag, `tag${i}`)}
-                  style={{ background: copiedKey === `tag${i}` ? "rgba(6,182,212,0.15)" : "rgba(6,182,212,0.06)", border: `1px solid ${copiedKey === `tag${i}` ? "#06b6d4" : "rgba(6,182,212,0.2)"}`, color: copiedKey === `tag${i}` ? "#06b6d4" : "#52525b", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.15s" }}>
-                  {copiedKey === `tag${i}` ? "✓ " : ""}{tag}
-                </button>
-              ))}
-            </div>
-            <p style={{ margin: "0.75rem 0 0", color: "#3f3f46", fontSize: "0.65rem" }}>💡 Click any hashtag to copy · Copy All for all at once</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-function NicheIntelligence({ niche, keyword, langLabel }: any) {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState("");
-
-  const searchQuery = keyword && keyword.trim() ? `${keyword} ${niche}` : niche;
-
-  const analyze = async () => {
-    setLoading(true); setError(""); setData(null);
-
-    try {
-      const ytRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/youtube-search?q=${encodeURIComponent(searchQuery)}&country=IN`);
-      let ytVideos: any[] = [];
-      if (ytRes.ok) {
-        const d = await ytRes.json();
-        ytVideos = (d.items || []).slice(0, 5).map((v: any) => ({
-          title: v.snippet?.title || "",
-          channel: v.snippet?.channelTitle || "",
-        }));
-      }
-
-      const gRes = await fetch(`https://viral-tool-1.onrender.com/api/trends/google?q=${encodeURIComponent(searchQuery)}&country=IN`);
-      let rising: string[] = [];
-      if (gRes.ok) {
-        const d = await gRes.json();
-        rising = (d.related_queries?.rising || []).slice(0, 8).map((q: any) => q.query);
-      }
-
-      const subjectLabel = keyword ? `${keyword} (${niche} niche)` : niche;
-      const prompt = `You are a content strategy analyst. Based on this REAL data for "${subjectLabel}" in India:
-
-TRENDING YOUTUBE VIDEOS:
-${ytVideos.map((v, i) => `${i+1}. ${v.title} (by ${v.channel})`).join("\n") || "No data"}
-
-RISING GOOGLE SEARCHES:
-${rising.join(", ") || "No data"}
-
-Analyze this and respond ONLY in JSON:
-{
-  "competition": "Low/Medium/High",
-  "trend_score": 7,
-  "best_content_types": ["type1", "type2", "type3"],
-  "content_gaps": ["gap idea 1", "gap idea 2", "gap idea 3"],
-  "best_posting_times": "specific advice for India",
-  "summary": "2-3 line honest analysis right now",
-  "opportunity": "one clear actionable opportunity for a creator"
-}
-
-CRITICAL: trend_score MUST be an integer between 0 and 10 only. Never output a number above 10 for trend_score.`;
-
-      const aiRes = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
-      });
-      const aiData = await aiRes.json();
-      const text = aiData.content?.map((i: any) => i.text || "").join("") || "";
-      let parsed;
-      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
-      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else parsed = {}; }
-
-      if (typeof parsed.trend_score === "number") {
-        parsed.trend_score = Math.max(0, Math.min(10, Math.round(parsed.trend_score)));
-      }
-
-      setData({ ...parsed, ytVideos, rising });
-    } catch { setError("Analysis failed. Try again."); }
-    setLoading(false);
-  };
-
-  const compColor = (c: string) => c === "Low" ? "#22c55e" : c === "Medium" ? "#f59e0b" : "#ef4444";
-
-  return (
-    <div style={{ animation: "slideUp 0.4s ease" }}>
-      <div style={{ background: "linear-gradient(135deg,#0d0d0d,#111)", border: "1px solid #1f1f1f", borderRadius: "18px", padding: "1.5rem", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "1.4rem" }}>🔍</span>
-          <div>
-            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff" }}>Niche Intelligence</h3>
-            <p style={{ margin: 0, color: "#444", fontSize: "0.72rem" }}>Real YouTube + Google data analysis for your niche</p>
-          </div>
-        </div>
-        <div style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 1rem", marginBottom: "0.85rem" }}>
-          <p style={{ margin: "0 0 0.5rem", color: "#888", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>ANALYZING</p>
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-            {keyword && keyword.trim() && (
-              <span style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#06b6d4", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>📝 {keyword}</span>
-            )}
-            <span style={{ background: "rgba(109,40,217,0.12)", border: "1px solid rgba(109,40,217,0.3)", color: "#8b5cf6", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700 }}>🏷️ {niche}</span>
-          </div>
-        </div>
-        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.5rem" }}>{error}</p>}
-        <button onClick={analyze} disabled={loading} style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#0891b2,#06b6d4)", border: "none", color: loading ? "#333" : "#000", fontWeight: 800, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
-          {loading ? "🔍 Analyzing real trending data..." : `🔍 Analyze "${keyword && keyword.trim() ? keyword : niche}"`}
-        </button>
-      </div>
-
-      {data && (
-        <div style={{ animation: "slideUp 0.5s ease" }}>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <div style={{ background: "#0f0f0f", border: `1px solid ${compColor(data.competition)}30`, borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>COMPETITION</p>
-              <p style={{ margin: 0, color: compColor(data.competition), fontWeight: 900, fontSize: "1.3rem" }}>{data.competition || "N/A"}</p>
-            </div>
-            <div style={{ background: "#0f0f0f", border: "1px solid #22c55e30", borderRadius: "14px", padding: "1rem", textAlign: "center" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.62rem", color: "#555", fontWeight: 700 }}>TREND SCORE</p>
-              <p style={{ margin: 0, color: "#22c55e", fontWeight: 900, fontSize: "1.3rem" }}>{Math.min(10, data.trend_score || 0)}/10</p>
-            </div>
-          </div>
-
-          {data.summary && (
-            <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.08),rgba(6,182,212,0.08))", border: "1px solid rgba(109,40,217,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.3rem", fontSize: "0.65rem", color: "#8b5cf6", fontWeight: 700, letterSpacing: "0.06em" }}>📊 SUMMARY</p>
-              <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.85rem", lineHeight: 1.6 }}>{data.summary}</p>
-            </div>
-          )}
-
-          {data.ytVideos && data.ytVideos.length > 0 && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.68rem", color: "#ef4444", fontWeight: 700, letterSpacing: "0.06em" }}>▶️ TRENDING ON YOUTUBE RIGHT NOW</p>
-              {data.ytVideos.map((v: any, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.6rem", padding: "0.5rem 0", borderBottom: i < data.ytVideos.length - 1 ? "1px solid #161616" : "none" }}>
-                  <span style={{ color: "#333", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                  <div>
-                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.82rem", lineHeight: 1.4 }}>{v.title}</p>
-                    <p style={{ margin: "0.15rem 0 0", color: "#444", fontSize: "0.68rem" }}>by {v.channel}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.rising && data.rising.length > 0 && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>📈 RISING SEARCHES (REAL DATA)</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                {data.rising.map((r: string, i: number) => (
-                  <span key={i} style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", padding: "0.25rem 0.65rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600 }}>{r}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {data.best_content_types && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🎯 BEST CONTENT TYPES</p>
-              {data.best_content_types.map((t: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}>
-                  <span style={{ color: "#f59e0b", fontSize: "0.72rem", flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#bbb", fontSize: "0.78rem" }}>{t}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.content_gaps && (
-            <div style={{ background: "linear-gradient(135deg,#0a0a14,#0d0d1a)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#a855f7", fontWeight: 700, letterSpacing: "0.06em" }}>💡 CONTENT GAPS</p>
-              {data.content_gaps.map((g: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                  <span style={{ color: "#a855f7", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ color: "#d4d4d8", fontSize: "0.8rem", lineHeight: 1.5 }}>{g}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {data.best_posting_times && (
-            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
-              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>⏰ BEST POSTING TIME</p>
-              <p style={{ margin: 0, color: "#bbb", fontSize: "0.8rem", lineHeight: 1.5 }}>{data.best_posting_times}</p>
-            </div>
-          )}
-
-          {data.opportunity && (
-            <div style={{ background: "linear-gradient(135deg,rgba(34,197,94,0.1),rgba(6,182,212,0.06))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "14px", padding: "1.1rem" }}>
-              <p style={{ margin: "0 0 0.4rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>🚀 YOUR OPPORTUNITY</p>
-              <p style={{ margin: 0, color: "#fff", fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 600 }}>{data.opportunity}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
-  const [success,  setSuccess]  = useState(false);
-  const [copied,   setCopied]   = useState(false);
-  const [rzpReady, setRzpReady] = useState<boolean|null>(null);
-
-  const planData = PLANS[plan as keyof typeof PLANS];
-  const priceINR = Math.round(planData?.priceINR || 0);
-
-  // Check if Razorpay is working on mount
-  useEffect(() => {
-    fetch("https://viral-tool-1.onrender.com/api/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: 100, plan: "test" })
-    }).then(r => {
-      // If backend responds (even with error) = backend ok
-      setRzpReady(true);
-    }).catch(() => setRzpReady(false));
-  }, []);
-
-  const payWithRazorpay = async () => {
-    setLoading(true); setError("");
-    try {
-      const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Razorpay SDK load failed.");
-
-      const orderRes = await fetch("https://viral-tool-1.onrender.com/api/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: priceINR * 100, plan })
-      });
-      const orderData = await orderRes.json();
-      if (!orderRes.ok || !orderData.orderId) {
-        throw new Error(orderData.error || "Order creation failed.");
-      }
-
-      const { data: { user } } = await (window as any).supabase?.auth?.getUser() || { data: { user: null } };
-
-      const rzp = new (window as any).Razorpay({
-        key:         RAZORPAY_KEY_ID,
-        amount:      priceINR * 100,
-        currency:    "INR",
-        name:        "VCI — Viral Content Intelligence",
-        description: `${planData?.label} Plan · ${planData?.limit} credits`,
-        order_id:    orderData.orderId,
-        prefill:     { email: user?.email || "", contact: "" },
-        notes:       { plan, user_id: user?.id || "" },
-        theme:       { color: "#7c3aed" },
-        modal: { ondismiss: () => { setLoading(false); } },
-        handler: async (response: any) => {
-          try {
-            const vRes = await fetch("https://viral-tool-1.onrender.com/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id:   response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature:  response.razorpay_signature,
-                plan, userId: user?.id || "", userEmail: user?.email || "",
-                refCode: (() => { try { return localStorage.getItem("vci_ref") || ""; } catch { return ""; } })(),
-              })
-            });
-            const result = await vRes.json();
-            if (result.success) { setSuccess(true); setTimeout(() => onPaid(plan), 2500); }
-            else { setError("Plan activation failed. Contact support: " + SUPPORT_PHONE); }
-          } catch { setError("Payment received. Activation pending — contact support: " + SUPPORT_PHONE); }
-          setLoading(false);
-        }
-      });
-      rzp.on("payment.failed", (resp: any) => {
-        setError("Payment failed: " + (resp?.error?.description || "Try UPI QR below."));
-        setLoading(false);
-      });
-      rzp.open();
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
-      setLoading(false);
-    }
-  };
-
-  if (success) return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem" }}>
-      <div style={{ background:"#080810", border:"2px solid #22c55e", borderRadius:"20px", padding:"2.5rem 2rem", maxWidth:"380px", width:"100%", textAlign:"center", animation:"slideUp .3s ease" }}>
-        <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(34,197,94,.1)", border:"2px solid #22c55e", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2.5rem", margin:"0 auto 1rem" }}>🎉</div>
-        <h2 style={{ fontWeight:900, fontSize:"1.3rem", color:"#22c55e", margin:"0 0 .5rem" }}>Payment Successful!</h2>
-        <p style={{ color:"#71717a", fontSize:".85rem", margin:"0 0 1.25rem" }}>{planData?.label} plan activating...</p>
-        <div style={{ background:"rgba(34,197,94,.06)", border:"1px solid rgba(34,197,94,.18)", borderRadius:"12px", padding:"1rem" }}>
-          <p style={{ color:"#22c55e", fontWeight:800, margin:"0 0 .25rem" }}>✓ {planData?.limit} credits added</p>
-          <p style={{ color:"#52525b", fontSize:".75rem", margin:0 }}>Redirecting to dashboard...</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.96)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", overflowY:"auto" }}>
-      <div style={{ background:"#080810", border:"1px solid rgba(124,58,237,.3)", borderRadius:"20px", padding:"1.75rem", maxWidth:"420px", width:"100%", color:"#fff", animation:"slideUp .3s ease" }}>
-
-        {/* Header */}
-        <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:".4rem", background:"rgba(124,58,237,.08)", border:"1px solid rgba(124,58,237,.2)", borderRadius:"20px", padding:".25rem .85rem", marginBottom:".75rem" }}>
-            <span style={{ fontSize:".65rem", color:"#a855f7", fontWeight:700 }}>🔒 Secured Payment</span>
-          </div>
-          <h2 style={{ fontWeight:900, fontSize:"1.2rem", margin:"0 0 .5rem" }}>Complete Your Purchase</h2>
-          <div style={{ display:"inline-flex", alignItems:"baseline", gap:".4rem", background:"rgba(124,58,237,.06)", border:"1px solid rgba(124,58,237,.15)", borderRadius:"10px", padding:".4rem 1rem" }}>
-            <span style={{ fontWeight:800, color:"#e2e8f0" }}>{planData?.label}</span>
-            <span style={{ color:"#a855f7", fontWeight:900, fontSize:"1.3rem" }}>₹{priceINR}</span>
-            <span style={{ color:"#3f3f46", fontSize:".72rem" }}>/month</span>
-          </div>
-        </div>
-
-        {/* Credits pill */}
-        <div style={{ background:"rgba(34,197,94,.04)", border:"1px solid rgba(34,197,94,.15)", borderRadius:"10px", padding:".6rem 1rem", marginBottom:"1.25rem", display:"flex", gap:".65rem", alignItems:"center" }}>
-          <span style={{ fontSize:"1rem", flexShrink:0 }}>⚡</span>
-          <p style={{ color:"#94a3b8", fontSize:".75rem", margin:0, lineHeight:1.6 }}>
-            <strong style={{ color:"#22c55e" }}>{planData?.limit} credits/month</strong> · Instant activation · All features · Cancel anytime
-          </p>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div style={{ background:"rgba(239,68,68,.06)", border:"1px solid rgba(239,68,68,.22)", borderRadius:"10px", padding:".75rem 1rem", marginBottom:"1rem" }}>
-            <p style={{ color:"#f87171", fontSize:".78rem", margin:0, lineHeight:1.5 }}>⚠️ {error}</p>
-          </div>
-        )}
-
-        {/* ── OPTION A: Razorpay ── */}
-        <div style={{ background:"#050508", border:"1px solid #1a1a2e", borderRadius:"14px", padding:"1.1rem", marginBottom:".75rem" }}>
-          <p style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", letterSpacing:".08em", margin:"0 0 .75rem", textTransform:"uppercase" }}>Option 1 — Pay Online</p>
-          <button onClick={payWithRazorpay} disabled={loading}
-            style={{ width:"100%", padding:".9rem", borderRadius:"11px", background:loading?"#0d0d18":"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:loading?"#444":"#fff", fontWeight:800, fontSize:".95rem", cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".55rem", boxShadow:loading?"none":"0 6px 24px rgba(109,40,217,.3)", marginBottom:".65rem" }}>
-            {loading
-              ? <><span style={{ width:15,height:15,border:"2px solid rgba(255,255,255,.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0 }} /> Processing...</>
-              : <>💳 Pay ₹{priceINR} — UPI / Card / NetBanking</>
-            }
-          </button>
-          <div style={{ display:"flex", justifyContent:"center", gap:".4rem", flexWrap:"wrap" }}>
-            {["📱 PhonePe","🔵 GPay","🟡 Paytm","💳 Cards","🏦 NetBanking"].map(m => (
-              <span key={m} style={{ color:"#3f3f46", fontSize:".6rem", fontWeight:600 }}>{m}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ display:"flex", alignItems:"center", gap:".6rem", margin:".75rem 0" }}>
-          <div style={{ flex:1, height:"1px", background:"#141426" }} />
-          <span style={{ color:"#27272a", fontSize:".62rem", fontWeight:700 }}>OR</span>
-          <div style={{ flex:1, height:"1px", background:"#141426" }} />
-        </div>
-
-        {/* ── OPTION B: Direct UPI ── */}
-        <div style={{ background:"#050508", border:"1px solid #1a1a2e", borderRadius:"14px", padding:"1.1rem", marginBottom:".75rem" }}>
-          <p style={{ fontSize:".6rem", fontWeight:800, color:"#52525b", letterSpacing:".08em", margin:"0 0 .85rem", textTransform:"uppercase" }}>Option 2 — Direct UPI Transfer</p>
-
-          {/* QR Code */}
-          <div style={{ display:"flex", justifyContent:"center", marginBottom:".75rem" }}>
-            <div style={{ background:"#fff", borderRadius:"12px", padding:"10px", boxShadow:"0 4px 20px rgba(0,0,0,.3)" }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=${YOUR_UPI_ID}&pn=VCI&am=${priceINR}&cu=INR&tn=VCI${planData?.label?.replace(/\s/g,"")}Plan`)}&bgcolor=ffffff&color=000000&margin=6`}
-                alt="UPI QR Code"
-                style={{ width:160, height:160, display:"block" }}
-              />
-            </div>
-          </div>
-
-          {/* UPI ID */}
-          <div style={{ background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".55rem .9rem", display:"flex", alignItems:"center", justifyContent:"space-between", gap:".5rem", marginBottom:".5rem" }}>
-            <div>
-              <p style={{ color:"#52525b", fontSize:".58rem", fontWeight:700, margin:"0 0 .1rem", textTransform:"uppercase", letterSpacing:".05em" }}>UPI ID</p>
-              <p style={{ color:"#a855f7", fontWeight:700, fontSize:".85rem", margin:0 }}>{YOUR_UPI_ID}</p>
-            </div>
-            <button onClick={() => { navigator.clipboard.writeText(YOUR_UPI_ID); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
-              style={{ background:copied?"rgba(34,197,94,.1)":"rgba(124,58,237,.1)", border:`1px solid ${copied?"rgba(34,197,94,.3)":"rgba(124,58,237,.25)"}`, color:copied?"#22c55e":"#a855f7", padding:".25rem .65rem", borderRadius:"7px", cursor:"pointer", fontSize:".68rem", fontWeight:800, fontFamily:"inherit", flexShrink:0 }}>
-              {copied ? "✓ Copied" : "Copy"}
-            </button>
-          </div>
-
-          <div style={{ background:"rgba(245,158,11,.05)", border:"1px solid rgba(245,158,11,.15)", borderRadius:"8px", padding:".5rem .75rem", marginBottom:".75rem" }}>
-            <p style={{ color:"#a16207", fontSize:".7rem", margin:0, lineHeight:1.5 }}>
-              💡 Amount <strong style={{ color:"#f59e0b" }}>₹{priceINR}</strong> — Add this amount manually if not auto-filled
-            </p>
-          </div>
-
-          {/* After UPI — WhatsApp */}
-          <button onClick={() => {
-            const msg = encodeURIComponent(`Hi! I've paid ₹${priceINR} for VCI ${planData?.label} plan via UPI.
-
-My registered email: (type here)
-UPI Transaction ID: (paste here)
-
-Please activate my account. Thank you!`);
-            window.open(`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g,"")}?text=${msg}`, "_blank");
-          }}
-            style={{ width:"100%", padding:".75rem", borderRadius:"10px", background:"rgba(37,211,102,.06)", border:"1px solid rgba(37,211,102,.22)", color:"#25d366", fontWeight:800, fontSize:".82rem", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", justifyContent:"center", gap:".5rem" }}>
-            <span style={{ fontSize:"1rem" }}>💬</span> Done Paying — Send Screenshot on WhatsApp
-          </button>
-          <p style={{ color:"#3f3f46", fontSize:".62rem", textAlign:"center", margin:".4rem 0 0", lineHeight:1.5 }}>
-            Send screenshot → activated within 2 hours
-          </p>
-        </div>
-
-        {/* Trust */}
-        <div style={{ display:"flex", justifyContent:"center", gap:"1rem", marginBottom:".6rem", flexWrap:"wrap" }}>
-          {["🔒 SSL Secured","✓ Instant Activation","↩️ 24hr Refund"].map(t => (
-            <span key={t} style={{ color:"#27272a", fontSize:".6rem", fontWeight:600 }}>{t}</span>
-          ))}
-        </div>
-
-        <button onClick={onClose}
-          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".75rem", padding:".4rem", fontFamily:"inherit" }}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-
-function PaywallModal({ onClose, onSelectPlan, currency }: any) {
-  const [selected, setSelected] = useState("creator_starter");
-  const isUSD = currency === "USD";
-  const selectedPlan = PLANS[selected as keyof typeof PLANS];
-
-  const PLAN_FEATURES: Record<string, { features: string[]; highlight?: string; section: "creator" | "advertiser" | "agency" }> = {
-    creator_starter: {
-      section: "creator",
-      highlight: "🔥 Most Popular",
-      features: [
-        "⚡ Viral Content Generator",
-        "📊 Hook Score Analyzer",
+}        "📊 Hook Score Analyzer",
         "📋 Caption & Hashtag Generator",
         "🎬 Script Lab — Full Reel Pipeline",
         "🖼️ Auto Thumbnail Generator",
@@ -8156,6 +7506,7 @@ export default function ViralContentTool() {
       const safeResult = data.resultData ?? {};
       const { error } = await supabase.from("user_history").insert({
         user_id:       user.id,
+        client_id:     activeClient?.id || null,
         feature,
         niche:         data.niche    || null,
         platform:      data.platform || null,
