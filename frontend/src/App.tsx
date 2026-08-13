@@ -557,7 +557,22 @@ function AdAngleGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any)
     if (!product.trim()) return;
     setLoading(true); setResult(null); setActiveAngle(null);
     const isGoogle = platform === "Google Ads";
-    const prompt = `You are a senior performance marketing strategist with 10+ years running Google Ads and Meta Ads for Indian businesses. Generate 10 completely different ad angles for this product.
+    const isLinkedIn = platform === "LinkedIn Ads";
+    let platformName = "Meta Ads", headlineSpec = "EXACTLY 35-40 characters", bodyLabel = "Primary Text", bodySpec = "100-125 characters, first line must stop the scroll", headlineChars = "35-40 chars", bodyChars = "100-125 chars for preview, hook in first line";
+    if (isGoogle) {
+      platformName = "Google Ads";
+      headlineSpec = "EXACTLY 25-30 characters (count every character including spaces). NEVER write headlines under 20 characters";
+      bodyLabel = "Description"; bodySpec = "EXACTLY 75-90 characters";
+      headlineChars = "25-30 chars — count every character";
+      bodyChars = "75-90 chars description — specific and compelling";
+    } else if (isLinkedIn) {
+      platformName = "LinkedIn Ads";
+      headlineSpec = "EXACTLY 60-70 characters, professional B2B tone, no hype or emojis";
+      bodyLabel = "Intro Text"; bodySpec = "100-150 characters, lead with a business outcome (ROI, efficiency, growth)";
+      headlineChars = "60-70 chars — professional, no emojis";
+      bodyChars = "100-150 chars — business-outcome led, no hype";
+    }
+    const prompt = `You are a senior performance marketing strategist with 10+ years running Google Ads, Meta Ads and LinkedIn Ads for Indian businesses. Generate 10 completely different ad angles for this product.
 
 Product/Service: ${product}
 ${price ? `Price: ${price}` : ""}
@@ -579,8 +594,8 @@ The 10 angles are:
 10. Story/Transformation Angle — before and after
 
 For each angle provide:
-- Complete ${isGoogle ? "Google Ads" : "Meta Ads"} ready copy
-- ${isGoogle ? "Headline: EXACTLY 25-30 characters (count every character including spaces). Description: EXACTLY 75-90 characters. NEVER write headlines under 20 characters." : "Headline: EXACTLY 35-40 characters. Primary Text: 100-125 characters, first line must stop the scroll."}
+- Complete ${platformName} ready copy
+- Headline: ${headlineSpec}. ${bodyLabel}: ${bodySpec}.
 - Which audience segment this angle works best for
 - Best time to use this angle in campaign
 
@@ -603,8 +618,8 @@ Return ONLY valid JSON:
       "number": 1,
       "name": "Price/Value Angle",
       "trigger": "One word psychological trigger",
-      "headline": "${isGoogle ? "25-30 chars — count every character" : "35-40 chars"}",
-      "body": "${isGoogle ? "75-90 chars description — specific and compelling" : "100-125 chars primary text — first line stops scroll"}",
+      "headline": "${headlineChars}",
+      "body": "${bodyChars}",
       "cta": "3-5 word CTA",
       "best_for": "Which audience segment responds best",
       "when_to_use": "Specific campaign scenario",
@@ -713,6 +728,7 @@ Return ONLY valid JSON:
             const a = result.angles[activeAngle];
             const color = ANGLE_COLORS[activeAngle];
             const isGoogle = platform === "Google Ads";
+            const isLinkedIn = platform === "LinkedIn Ads";
             return (
               <div style={{ background:"#050508", border:`1px solid ${color}30`, borderRadius:"14px", padding:"1.25rem", marginBottom:"1rem" }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"1rem" }}>
@@ -742,6 +758,19 @@ Return ONLY valid JSON:
                         <span style={{ fontSize:".6rem", fontWeight:700, color:(a.body?.length||0)>90?"#ef4444":"#22c55e" }}>{a.body?.length||0}/90</span>
                       </div>
                       <p style={{ color:"#94a3b8", fontSize:".82rem", margin:0, lineHeight:1.6 }}>{a.body}</p>
+                    </>
+                  ) : isLinkedIn ? (
+                    <>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>HEADLINE</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.headline?.length||0)>70?"#ef4444":"#22c55e" }}>{a.headline?.length||0}/70</span>
+                      </div>
+                      <p style={{ color:"#0a66c2", fontSize:".9rem", fontWeight:800, margin:"0 0 .75rem" }}>{a.headline}</p>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".3rem" }}>
+                        <span style={{ fontSize:".6rem", color:"#3f3f46", fontWeight:700 }}>INTRO TEXT</span>
+                        <span style={{ fontSize:".6rem", fontWeight:700, color:(a.body?.length||0)>150?"#f59e0b":"#22c55e" }}>{a.body?.length||0}/150</span>
+                      </div>
+                      <p style={{ color:"#94a3b8", fontSize:".82rem", margin:0, lineHeight:1.7 }}>{a.body}</p>
                     </>
                   ) : (
                     <>
