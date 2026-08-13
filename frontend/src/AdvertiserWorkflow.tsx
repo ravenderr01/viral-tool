@@ -101,13 +101,29 @@ export default function AdvertiserWorkflow({ plan, usageCount, limit, onUpgrade,
     const formatInstruction = isGoogleRSA
       ? `OUTPUT FORMAT — Google Responsive Search Ads: Generate EXACTLY 15 distinct headlines, each STRICTLY 30 characters or fewer (count characters carefully — this is a hard platform limit, not a suggestion). Generate EXACTLY 4 distinct descriptions, each STRICTLY 90 characters or fewer.
 
-HEADLINE QUALITY BAR — this is critical: headlines must be genuinely persuasive ad copy, NOT generic category labels or store-directory-style tags. 
-BANNED style: plain nouns or category names with no benefit or hook ("Women's Kurtas", "Men's Shirts", "Clothing Store", "Fashion Sale", "Shop Now" alone) — these are directory listings, not ads.
-REQUIRED style: each headline should do ONE of — state a specific concrete benefit ("Save 2Hrs Every Week"), a real number/stat/offer specific to THIS business (not invented), a sharp question, a clear differentiator, or a strong CTA paired with a benefit ("Get 20% Off Today"). Use the business/product, goal, and interest details given below to make headlines SPECIFIC to this business — a stranger reading them should learn something concrete, not just the product category.
-Cover a genuine mix of angles across the 15: some benefit-led, some offer/urgency-led (only if real), some question-led, some social-proof-led, some CTA-led. No near-duplicate headlines, no two headlines saying the same thing in different words.`
+HEADLINE QUALITY BAR — this is the most important rule, read it twice: headlines must be genuinely persuasive ad copy, NOT generic topic labels.
+
+BANNED PATTERNS (do not write headlines shaped like these, even with different words):
+- Bare category/topic: "Women's Kurtas", "Clothing Store", "Meditation Classes"
+- "[Verb] + [Topic]" with no specifics: "Reduce Stress", "Improve Flexibility", "Meditate Daily", "Relax with Yoga", "Find Inner Peace"
+- "[Topic] + for + [Audience]" with no specifics: "Yoga for 55+", "Yoga for Beginners"
+- "[Adjective] + [Topic] + [Vague noun]": "Senior Yoga Tips", "55+ Yoga Benefits", "Mindful Yoga"
+- Bare CTA alone: "Shop Now", "Learn More", "Get Fit at 55"
+These all describe the TOPIC but tell the reader NOTHING they didn't already know from searching. A stranger reading any of these learns nothing concrete — that's the test that fails them.
+
+REQUIRED — every headline must pass this test: "does a stranger learn one concrete, specific fact they didn't know before?" That means each headline must contain at least one of: a real number (class size, duration, price, years of experience, success stat), a named specific feature/format not obvious from the topic, a genuine differentiator vs the obvious alternative, or a sharp specific question that implies a concrete answer.
+
+WORKED EXAMPLE — transforming a banned headline into a required one, for a senior yoga business:
+BANNED: "Yoga for 55+" → too generic, just restates the audience
+BANNED: "Senior Yoga Tips" → generic, no specific info
+REQUIRED instead: "Chair Yoga, No Floor Sitting" (specific format detail) / "Certified Instructor, 15 Yrs Exp" (specific credential) / "Small Batch: Max 6 Seniors" (specific number) / "First Class Free This Week" (specific real offer, only if true) / "Gentle Yoga, Zero Impact Joints" (specific differentiator)
+
+If you genuinely cannot invent a real specific detail for an angle, do NOT fall back to a generic topic label — instead pick a different angle entirely (there are always more angles than headlines needed).
+
+Cover a genuine mix of angles across the 15: some benefit-led, some offer/urgency-led (only if real), some feature-specific, some credential/authority-led, some question-led. No near-duplicate headlines, no two headlines saying the same thing in different words.`
       : `OUTPUT FORMAT — ${platform}: Generate 2 ad copy variations (A/B test). Each headline must be STRICTLY ${limits.headline} characters or fewer. Each body must be STRICTLY ${limits.body} characters or fewer. Count characters carefully — these are real platform limits, not suggestions. If a draft runs long, tighten the wording rather than exceeding the limit.
 
-HEADLINE QUALITY BAR: headlines must be specific and persuasive — a concrete benefit, number, question, or differentiator tied to THIS business — never a generic category label like "Clothing Store" or "Shop Now" with nothing else. Use the business/product and goal details below to make it specific, not generic template copy.`;
+HEADLINE QUALITY BAR — the most important rule: a headline like "Yoga for Seniors" or "Reduce Stress" is BANNED — it's a bare topic label, not an ad. Every headline must pass this test: does a stranger learn ONE concrete, specific fact (a real number, a named feature, a genuine differentiator) they didn't already know? If you can't invent a real specific detail, pick a different angle rather than falling back to a generic topic+modifier phrase.`;
 
     const prompt = `You are an expert performance marketing strategist who writes ad copy that passes Google Ads and Meta Ads policy review on the first submission. Build a complete ad campaign package specifically for ${platform}.
 
