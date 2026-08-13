@@ -1918,12 +1918,11 @@ function ABAdCopyGenerator({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any
     if (!product.trim()) return;
     setLoading(true); setResult(null);
     const isGoogle = platform === "Google Ads";
-    const prompt = `You are a senior performance marketing copywriter specializing in Indian market paid advertising. Generate 2 completely different A/B test ad copies for ${platform}.
+    const isLinkedIn = platform === "LinkedIn Ads";
 
-Product/Service: ${product}
-
-PLATFORM RULES + COMPLIANCE:
-${isGoogle ? `Google Search Ads — Policy Compliant:
+    let platformRules = "";
+    if (isGoogle) {
+      platformRules = `Google Search Ads — Policy Compliant:
 CHARACTER LIMITS (STRICT — count every character including spaces):
 - Headline 1: max 30 characters
 - Headline 2: max 30 characters
@@ -1939,14 +1938,29 @@ GOOGLE ADS POLICY COMPLIANCE (mandatory):
 - Prices must be accurate — if you mention ₹999, that must be real price
 - No "Click here", "Click now" — use action verbs instead
 - Landing page must match the ad promise exactly
-- No competitor brand names unless you have rights` 
-: `Meta Ads (Facebook/Instagram) — Policy Compliant:
+- No competitor brand names unless you have rights`;
+    } else if (isLinkedIn) {
+      platformRules = `LinkedIn Ads — Policy Compliant:
+CHARACTER LIMITS:
+- Headline: max 70 characters (single image ad)
+- Intro Text: max 150 characters before truncation
+- Description: max 100 characters
+
+LINKEDIN ADS POLICY COMPLIANCE (mandatory):
+- No consumer-style hype language or excessive emojis — professional B2B tone only
+- Lead with a business outcome (ROI, efficiency, growth, time saved), not an entertainment hook
+- No unverified superlatives ("best", "#1", "guaranteed")
+- CTA should be professional (Request Demo, Download Report, Book a Call, Learn More)
+- No personal-attribute targeting or insinuation
+- Financial/health claims must be accurate`;
+    } else {
+      platformRules = `${platform} — Policy Compliant:
 CHARACTER LIMITS:
 - Primary Text: 125 chars for preview (keep key message in first 125)
 - Headline: max 40 characters
 - Description: max 30 characters
 
-META ADS POLICY COMPLIANCE (mandatory):
+META ADS FAMILY POLICY COMPLIANCE (mandatory):
 - No "before/after" images implying dramatic physical changes
 - No discriminatory targeting language in copy
 - Health/finance claims must be accurate and not misleading  
@@ -1956,7 +1970,29 @@ META ADS POLICY COMPLIANCE (mandatory):
 - Financial products: must include required disclaimers if applicable
 - No sensationalist or shocking content
 - Alcohol/tobacco/gambling: special approval needed — avoid if not eligible
-- Prices must be real and landing page must reflect same price`}
+- Prices must be real and landing page must reflect same price`;
+    }
+
+    const prompt = `You are a senior performance marketing copywriter specializing in Indian market paid advertising. Generate 2 completely different A/B test ad copies for ${platform}.
+
+Product/Service: ${product}
+
+PLATFORM RULES + COMPLIANCE:
+${platformRules}
+
+${platform === "Instagram Ads" ? `INSTAGRAM-SPECIFIC TONE: Runs in feed/Reels/Stories — keep it visual-first, aspirational or relatable, punchy enough to work even if only the first line is read.` : ""}` : isLinkedIn ? `LinkedIn Ads — Policy Compliant:
+CHARACTER LIMITS:
+- Headline: max 70 characters (single image ad)
+- Intro Text: max 150 characters before truncation
+- Description: max 100 characters
+
+LINKEDIN ADS POLICY COMPLIANCE (mandatory):
+- No consumer-style hype language or excessive emojis — professional B2B tone only
+- Lead with a business outcome (ROI, efficiency, growth, time saved), not an entertainment hook
+- No unverified superlatives ("best", "#1", "guaranteed")
+- CTA should be professional (Request Demo, Download Report, Book a Call, Learn More)
+- No personal-attribute targeting or insinuation
+- Financial/health claims must be accurate` : ``}
 
 The two variants MUST use completely DIFFERENT psychological angles:
 Variant A: Choose from — Fear of Loss, FOMO, Urgency, Problem Agitation
@@ -2058,11 +2094,14 @@ Return ONLY valid JSON:
         placeholder="Describe your product/service... e.g. 'Online yoga classes for busy working women in India, ₹999/month'"
         style={{ width:"100%", background:"#0a0a18", border:"1px solid #1a1a2e", borderRadius:"10px", padding:".75rem", color:"#fff", fontSize:".8rem", minHeight:"80px", resize:"vertical", fontFamily:"inherit", marginBottom:".75rem" }} />
 
-      <div style={{ display:"flex", gap:".5rem", marginBottom:".85rem" }}>
-        {["Meta Ads","Google Ads"].map(p => (
-          <button key={p} onClick={() => setPlatform(p)}
-            style={{ flex:1, padding:".5rem", borderRadius:"8px", border:`1px solid ${platform===p?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:platform===p?"rgba(109,40,217,.12)":"transparent", color:platform===p?"#a855f7":"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer" }}>
-            {p === "Meta Ads" ? "📘 Meta Ads" : "📢 Google Ads"}
+      <div style={{ display:"flex", gap:".5rem", marginBottom:".85rem", flexWrap:"wrap" as const }}>
+        {[
+          { id: "Meta Ads", emoji: "📘" }, { id: "Google Ads", emoji: "📢" },
+          { id: "Instagram Ads", emoji: "📸" }, { id: "LinkedIn Ads", emoji: "💼" },
+        ].map(p => (
+          <button key={p.id} onClick={() => setPlatform(p.id)}
+            style={{ flex:"1 1 auto", minWidth: 110, padding:".5rem", borderRadius:"8px", border:`1px solid ${platform===p.id?"rgba(109,40,217,.4)":"#1a1a2e"}`, background:platform===p.id?"rgba(109,40,217,.12)":"transparent", color:platform===p.id?"#a855f7":"#52525b", fontWeight:700, fontSize:".75rem", cursor:"pointer" }}>
+            {p.emoji} {p.id}
           </button>
         ))}
       </div>
