@@ -289,6 +289,7 @@ const LANGUAGE_GROUPS = [
     { code: "kn", label: "Kannada" }, { code: "ml", label: "Malayalam" },
     { code: "pa", label: "Punjabi" }, { code: "or", label: "Odia" },
     { code: "as", label: "Assamese" }, { code: "ur", label: "Urdu" },
+    { code: "hinglish", label: "Hinglish" },
   ]},
   { country: "🇬🇧 English", code: "EN", category: "global", languages: [{ code: "en", label: "English" }]},
   { country: "🇺🇸 USA", code: "US", category: "global", languages: [
@@ -321,6 +322,7 @@ const LANG_LABELS: Record<string, string> = {
   hi: "Hindi", bn: "Bengali", ta: "Tamil", te: "Telugu",
   mr: "Marathi", gu: "Gujarati", kn: "Kannada", ml: "Malayalam",
   pa: "Punjabi", or: "Odia", as: "Assamese", ur: "Urdu", "ur-pk": "Urdu (Pakistan)",
+  hinglish: "Hinglish",
   es: "Spanish", fr: "French", de: "German", it: "Italian",
   pt: "Portuguese", ar: "Arabic", "ar-eg": "Egyptian Arabic",
   zh: "Chinese (Mandarin)", "zh-yue": "Cantonese",
@@ -332,6 +334,7 @@ const LANG_STRICT: Record<string, string> = {
   en: "English only",
   "en-us": "American English only",
   hi: "Hindi only — use Devanagari script (हिंदी में लिखें)",
+  hinglish: "Hinglish only — write in casual, natural Hindi-English code-mixed style using ROMAN/LATIN script (not Devanagari) — the way urban Indian creators actually talk on social media. Example tone: 'Yeh trick bahut kaam ki hai, try karo aaj hi!' Mix Hindi and English naturally within sentences, don't just alternate whole sentences between the two languages.",
   bn: "Bengali only — use Bengali script (বাংলায় লিখুন)",
   ta: "Tamil only — use Tamil script (தமிழில் எழுதவும்)",
   te: "Telugu only — use Telugu script (తెలుగులో రాయండి)",
@@ -9563,7 +9566,7 @@ Respond ONLY in valid JSON:
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} onSelectPlan={handleSelectPlan} currency={currency} />}
       {payingPlan && <PaymentModal plan={payingPlan} onClose={() => setPayingPlan(null)} onPaid={handlePaid} detectedCurrency={currency} />}
 
-      <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} activeTab={activeTab} usageCount={usageCount} limit={limit} userType={userType} />
+      <VCIAssistant niche={niche} platform={platform} keyword={keyword} plan={plan} activeTab={activeTab} usageCount={usageCount} limit={limit} userType={userType}onNavigate={(tabId: string) => setActiveTab(tabId)} />
 
       {/* FAQ Modal */}
       {showTutorial && (
