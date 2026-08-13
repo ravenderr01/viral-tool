@@ -1980,20 +1980,6 @@ Product/Service: ${product}
 PLATFORM RULES + COMPLIANCE:
 ${platformRules}
 
-${platform === "Instagram Ads" ? `INSTAGRAM-SPECIFIC TONE: Runs in feed/Reels/Stories — keep it visual-first, aspirational or relatable, punchy enough to work even if only the first line is read.` : ""}` : isLinkedIn ? `LinkedIn Ads — Policy Compliant:
-CHARACTER LIMITS:
-- Headline: max 70 characters (single image ad)
-- Intro Text: max 150 characters before truncation
-- Description: max 100 characters
-
-LINKEDIN ADS POLICY COMPLIANCE (mandatory):
-- No consumer-style hype language or excessive emojis — professional B2B tone only
-- Lead with a business outcome (ROI, efficiency, growth, time saved), not an entertainment hook
-- No unverified superlatives ("best", "#1", "guaranteed")
-- CTA should be professional (Request Demo, Download Report, Book a Call, Learn More)
-- No personal-attribute targeting or insinuation
-- Financial/health claims must be accurate` : ``}
-
 The two variants MUST use completely DIFFERENT psychological angles:
 Variant A: Choose from — Fear of Loss, FOMO, Urgency, Problem Agitation
 Variant B: Choose from — Aspiration, Social Proof, Curiosity, Value/ROI
