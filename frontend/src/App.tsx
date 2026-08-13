@@ -432,6 +432,69 @@ function buildScriptTimeline(duration: string, styleLabels: string[]): { time: s
   const labels = [first, ...middleLabels, last];
   return segments.map((time, i) => ({ time, label: labels[i] || `BEAT ${i + 1}` }));
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// SHARED PLATFORM SPECS — single source of truth for platform-native
+// tone, format, and (where real) character limits. Every tool (Script Lab,
+// Generate, Captions, Content Pack, Calendar, Ad Wizard, and all standalone
+// Advertiser tools) should pull from this instead of maintaining its own
+// separate/inconsistent platform guide.
+// ═══════════════════════════════════════════════════════════════════════
+const PLATFORM_SPECS: Record<string, { tone: string; limits?: string }> = {
+  "Instagram": {
+    tone: "Aesthetic, visual-first, fast-paced. Must work as text overlay even with sound off. Caption should feel native to a scroll-first feed — relatable or aspirational, never corporate. Emoji use is natural.",
+    limits: "Caption ideal length 125-150 characters for engagement (hard cap 2,200) — front-load the hook, since Instagram truncates after ~2 lines on feed.",
+  },
+  "YouTube": {
+    tone: "Promise a clear payoff up front. Slightly more explanatory/narrated than Instagram — audiences tolerate more setup. Built for sustained attention, not a 1-second scroll-stop.",
+    limits: "Title ideal 40-60 characters (hard cap 100). Description first 1-2 lines are what shows before 'Show more' — put the hook and keywords there.",
+  },
+  "TikTok": {
+    tone: "Pattern-interrupt within 1-2 seconds. Raw, casual, unpolished — overly 'produced' language feels out of place. Built for trending sounds and duet/stitch-friendly endings.",
+    limits: "Caption ideal under 150 characters — TikTok captions are skimmed, not read.",
+  },
+  "LinkedIn": {
+    tone: "Professional insight or contrarian take, not entertainment. No trending audio/fast cuts — talking-head or text-overlay pacing. Credible, first-person, never gimmicky.",
+    limits: "First 2-3 lines (~140 characters) are what shows before 'see more' — the hook must live there.",
+  },
+  "Twitter / X": {
+    tone: "Punchy, quotable, screenshot-worthy on their own. Short sentences, avoid long explanatory copy. Can carry a stronger opinion/edge than other platforms.",
+    limits: "Hard cap 280 characters per post — every word must earn its place.",
+  },
+  "Facebook": {
+    tone: "Emotionally warm, community/family-oriented — audience skews older, avoid niche internet slang. Slightly slower pacing than Instagram/TikTok.",
+    limits: "Ideal caption 40-80 characters for reach, though longer storytelling posts also perform if the first line hooks.",
+  },
+  "Google Ads": {
+    tone: "Search-intent driven — the reader is actively searching. Clarity and directness win over cleverness. No 'ad language' fluff.",
+    limits: "Responsive Search Ads: exactly up to 15 headlines, each STRICTLY 30 characters max; up to 4 descriptions, each STRICTLY 90 characters max.",
+  },
+  "Meta Ads": {
+    tone: "Scroll-stopping for a passive feed — the reader wasn't searching for this. Conversational, native to a Facebook/Instagram feed, not traditional ad copy.",
+    limits: "Primary text sweet spot ~125 characters (before 'see more'). Headline max ~40 characters. Link description max ~30 characters.",
+  },
+  "Instagram Ads": {
+    tone: "Visual-first, aspirational or relatable — runs in feed/Reels/Stories. Short, punchy, works even if only the first line is read.",
+    limits: "Same as Meta Ads: primary text ~125 characters ideal, headline max ~40 characters.",
+  },
+  "YouTube Ads": {
+    tone: "First 5 seconds must prevent skipping. Hook, then a clear problem/solution arc built for a captive-but-impatient viewer.",
+    limits: "Headline max ~40 characters if used as a companion banner; keep the spoken hook under 10 words for the first 5 seconds.",
+  },
+  "Native Ads": {
+    tone: "Reads like editorial content, not an ad — informational framing, not promotional. Curiosity-driven headline that blends with surrounding content.",
+    limits: "Headline ideal 50-70 characters to match publisher article-title conventions.",
+  },
+  "LinkedIn Ads": {
+    tone: "Professional, B2B-credible — no consumer hype or emojis. Lead with a business outcome (ROI, efficiency, growth), not an entertainment hook.",
+    limits: "Headline max ~70 characters (single image ads). Intro text ideal ~150 characters before truncation.",
+  },
+};
+
+function getPlatformSpec(platform: string): { tone: string; limits?: string } {
+  return PLATFORM_SPECS[platform] || PLATFORM_SPECS["Instagram"];
+}
+
 function AnimatedScore({ target, color }: { target: number; color: string }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
