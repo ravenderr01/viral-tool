@@ -115,7 +115,7 @@ GOAL: ${goal}
 BUSINESS/PRODUCT: ${businessType || "not specified"}
 MONTHLY BUDGET: ${monthlyBudget || "not specified"}
 TARGET LOCATION: ${targetLocation}
-AGE GROUP(S): ${ageGroup.length ? ageGroup.join(", ") : "broad"}
+AGE GROUP(S): ${ageGroup.length ? ageGroup.join(", ") : "All ages — broad targeting, do not narrow to any specific age range"}
 INTEREST/NICHE: ${interest || "general"}
 LANGUAGE: ${langStrict}
 
@@ -267,8 +267,9 @@ ${outputSchema}`;
           </div>
 
           <div style={{ marginBottom: "0.85rem" }}>
-            <label style={label}>AGE GROUP (select all that apply)</label>
+            <label style={label}>AGE GROUP <span style={{ color: "#3f3f46", fontWeight: 500, textTransform: "none", letterSpacing: "normal" }}>— pick "All Ages" for broad targeting, or select specific ranges</span></label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              <button onClick={() => setAgeGroup([])} style={chip(ageGroup.length === 0, "#22c55e")}>🌐 All Ages</button>
               {AGE_GROUPS.map(a => (
                 <button key={a}
                   onClick={() => setAgeGroup(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])}
@@ -338,7 +339,7 @@ ${outputSchema}`;
               { icon: "🎯", val: goal },
               { icon: (PLATFORMS.find(p => p.id === platform)?.emoji || "📢"), val: platform },
               { icon: "📍", val: targetLocation },
-              ...(ageGroup.length ? [{ icon: "👤", val: ageGroup.join(", ") }] : []),
+              { icon: "👤", val: ageGroup.length ? ageGroup.join(", ") : "All Ages" },
               ...(monthlyBudget ? [{ icon: "💰", val: monthlyBudget }] : []),
             ].map((tag, i) => (
               <span key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "0.3rem 0.7rem", fontSize: "0.72rem", color: "#a1a1aa", fontWeight: 600 }}>
