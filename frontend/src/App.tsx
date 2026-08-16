@@ -6378,6 +6378,810 @@ Respond ONLY in JSON:
     </div>
   );
 }
+// Hook Score Analyzer — paste any hook/caption/script and get a strict, honest
+// score (0-100) + grade (A-F), line-level fixes, and 3 platform-tuned rewrites.
+function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
+  const [contentInput, setContentInput] = useState("");
+  const [platform, setPlatform] = useState("Instagram");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const ALL_SCORE_PLATFORMS = [
+    { id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" },
+    { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" },
+    { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" },
+  ];
+  const ADS_SCORE_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" },
+    { id: "YouTube Ads", emoji: "▶️" }, { id: "Native Ads", emoji: "📰" },
+  ];
+  const SCORE_PLATFORMS = userType === "business" ? ADS_SCORE_PLATFORMS : ALL_SCORE_PLATFORMS;
+
+  useEffect(() => {
+    if (userType === "business" && platform === "Instagram") setPlatform("Google Ads");
+  }, [userType]);
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("hookscore", key, text, { platform });
+  };
+
+  const SCORE_PLATFORM_GUIDE: Record<string, string> = {
+    "Instagram": "Aesthetic, visual-first, fast-paced. Hooks must work as text overlay even with sound off.",
+    "YouTube": "Hooks should promise a clear payoff. Slightly more explanatory tone, SEO-aware.",
+    "LinkedIn": "Professional insight or contrarian-take tone. No slang, no entertainment framing.",
+    "Twitter / X": "Punchy, quotable, opinionated one-liners — screenshot-worthy on their own.",
+    "Facebook": "Warm, community/family-oriented tone for a slightly older audience.",
+    "TikTok": "Raw, casual, pattern-interrupt energy within 1-2 seconds. Unpolished, trend-aware phrasing.",
+    "Google Ads": "Search-intent driven, benefit + urgency in tight character limits (headlines max 30 chars), no fluff.",
+    "Meta Ads": "Scroll-stopping, pain-point-led, written for a passive social feed audience rather than active searchers.",
+  };
+
+  const gradeColor = (g: string) => ({ A: "#22c55e", B: "#06b6d4", C: "#f59e0b", D: "#f97316", F: "#ef4444" }[g] || "#6d28d9");
+
+  const analyze = async () => {
+    if (!contentInput.trim()) { setError("Please paste your content or hook first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const prompt = `You are an expert viral content analyst and coach who deeply understands how content actually performs on ${platform} specifically. Analyze this content for ${platform}:
+
+CONTENT TO ANALYZE:
+"""${contentInput}"""
+
+PLATFORM: ${platform}
+PLATFORM CONTEXT: ${SCORE_PLATFORM_GUIDE[platform] || SCORE_PLATFORM_GUIDE["Instagram"]}
+LANGUAGE: ${langStrict}
+
+ANALYSIS RULES:
+- Score out of 100. Use this exact rubric — do not be arbitrarily conservative or arbitrarily generous:
+  - 85-100 (Grade A): Genuinely excellent — strong curiosity gap OR sharp emotional trigger, specific concrete detail (number/result/timeframe), zero generic filler, would stop a scroll. Award this honestly when content earns it — don't withhold A out of general caution.
+  - 70-84 (Grade B): Solid and usable — has a real hook mechanism but is missing one element of A-tier (e.g. good curiosity but vague specifics, or strong specifics but a flat opening).
+  - 50-69 (Grade C): Average — technically fine but generic, forgettable, or missing a genuine attention-grabbing mechanism. Most unedited first-draft content lands here.
+  - 30-49 (Grade D): Weak — clichéd opener, no specific detail, or reads like generic AI/marketing filler.
+  - 0-29 (Grade F): Broken — off-platform, confusing, or actively repels attention.
+- Judge what's ACTUALLY on the page, not what's typical for AI-generated content in general — a genuinely strong hook deserves an A even if most content doesn't reach that bar.
+- Analyze the FULL content, not just first line
+- Give LINE-BY-LINE feedback on weak parts
+- Give 3 platform-specific improved versions, written in the platform tone described above — not generic rewrites — and these 3 versions should themselves be written to hit the A-tier bar above
+- Identify exactly what's strong and what's weak
+
+Respond ONLY in JSON:
+{
+  "score": 0,
+  "grade": "C",
+  "verdict": "one honest sentence summarizing why it scored this way",
+  "strengths": ["specific strength 1", "specific strength 2"],
+  "fixes": [
+    {"problem": "specific weak line or issue, quoted or described exactly", "fixed": "the improved version of that specific part"}
+  ],
+  "platform_versions": {
+    "v1": {"label": "Curiosity-led", "content": "full rewritten version"},
+    "v2": {"label": "Bold Claim", "content": "full rewritten version"},
+    "v3": {"label": "Story Opener", "content": "full rewritten version"}
+  },
+  "pro_tips": ["tip 1", "tip 2", "tip 3"]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2200, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("hookscore", { platform, inputSummary: contentInput.slice(0, 80), resultData: parsed });
+    } catch {
+      setError("Analysis failed. Try again.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+
+      {/* Platform Selector */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+        <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.5rem" }}>SELECT PLATFORM</label>
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+          {SCORE_PLATFORMS.map(p => (
+            <button key={p.id} onClick={() => setPlatform(p.id)}
+              style={{ background: platform === p.id ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: platform === p.id ? "#8b5cf6" : "#52525b", padding: "0.35rem 0.85rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, transition: "all 0.2s" }}>
+              {p.emoji} {p.id}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Input */}
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>📊</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 800 }}>Hook Score Analyzer</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Paste any hook, caption, or script — get an honest score + fixes</p>
+          </div>
+        </div>
+
+        <textarea value={contentInput} onChange={e => { setContentInput(e.target.value); setError(""); }}
+          placeholder={`Paste your ${platform} hook, caption, or opening line here...`}
+          rows={6}
+          style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "12px", padding: "0.9rem 1rem", color: "#f1f5f9", fontSize: "0.88rem", outline: "none", resize: "vertical", fontFamily: "'Inter',sans-serif", lineHeight: 1.7, transition: "border 0.2s", marginBottom: "0.75rem" }}
+          onFocus={e => e.target.style.borderColor = "#6d28d9"}
+          onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={analyze} disabled={loading}
+          style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#ffffff", fontWeight: 800, fontSize: "0.92rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "📊 Analyzing..." : `📊 Score My ${platform} Content`}
+        </button>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div style={{ animation: "slideUp 0.5s ease" }}>
+
+          {/* Score + Verdict */}
+          <div style={{ background: "linear-gradient(135deg,rgba(109,40,217,0.1),rgba(109,40,217,0.03))", border: "1px solid rgba(109,40,217,0.25)", borderRadius: "16px", padding: "1.25rem", marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "1.25rem" }}>
+            <ScoreRing score={result.score || 0} label={`Grade ${result.grade || "-"}`} color={gradeColor(result.grade)} />
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 0.3rem", color: gradeColor(result.grade), fontWeight: 900, fontSize: "1.1rem" }}>
+                {result.score}/100 — Grade {result.grade}
+              </p>
+              <p style={{ margin: 0, color: "#a1a1aa", fontSize: "0.8rem", lineHeight: 1.6 }}>{result.verdict}</p>
+            </div>
+          </div>
+
+          {/* Strengths */}
+          {result.strengths && result.strengths.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.68rem", color: "#22c55e", fontWeight: 700, letterSpacing: "0.06em" }}>✅ WHAT'S WORKING</p>
+              {result.strengths.map((s: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.35rem" }}>
+                  <span style={{ color: "#22c55e", fontSize: "0.72rem", flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#a1a1aa", fontSize: "0.78rem", lineHeight: 1.5 }}>{s}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fixes */}
+          {result.fixes && result.fixes.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>🔧 SUGGESTED FIXES</p>
+              {result.fixes.map((fix: any, i: number) => (
+                <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.75rem 0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem", marginBottom: "0.4rem" }}>
+                    <span style={{ color: "#f59e0b", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>
+                      ⚠️ {fix.problem && fix.problem !== "no specific lines to fix" ? fix.problem : "Suggested improvements for your content"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem" }}>
+                    <span style={{ color: "#22c55e", fontSize: "0.68rem", flexShrink: 0, marginTop: "0.1rem" }}>✅ Fixed:</span>
+                    <span style={{ color: "#22c55e", fontSize: "0.78rem", lineHeight: 1.5 }}>{fix.fixed}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 3 Platform Versions */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.7rem", color: "#6d28d9", fontWeight: 700, letterSpacing: "0.06em" }}>✨ 3 IMPROVED VERSIONS FOR {platform.toUpperCase()}</p>
+            {result.platform_versions && Object.entries(result.platform_versions).map(([key, ver]: any, i) => {
+              const colors = ["#6d28d9", "#06b6d4", "#22c55e"];
+              const color = colors[i] || "#6d28d9";
+              return (
+                <div key={key} style={{ background: `${color}08`, border: `1px solid ${color}25`, borderRadius: "10px", padding: "0.85rem", marginBottom: "0.5rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <span style={{ color, fontSize: "0.7rem", fontWeight: 700 }}>✨ {ver.label}</span>
+                    <button onClick={() => copyText(ver.content, key)}
+                      style={{ background: copiedKey === key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === key ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === key ? "#22c55e" : "#555", padding: "0.15rem 0.5rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 700 }}>
+                      {copiedKey === key ? "✓ Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <p style={{ margin: 0, color: "#ddd", fontSize: "0.83rem", lineHeight: 1.6 }}>{ver.content}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pro Tips */}
+          {result.pro_tips && result.pro_tips.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg,#0d0a1a,#0a0814)", border: "1px solid #8b8cf830", borderRadius: "14px", padding: "1rem" }}>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.7rem", color: "#8b8cf8", fontWeight: 700, letterSpacing: "0.06em" }}>💡 PRO TIPS FOR {platform.toUpperCase()}</p>
+              {result.pro_tips.map((tip: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                  <span style={{ color: "#8b8cf8", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#9ca3af", fontSize: "0.78rem", lineHeight: 1.5 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CAPTION & HASHTAG GENERATOR — standalone caption/hashtag tool
+// ═══════════════════════════════════════════════════════════════════════
+function CaptionHashtags({ plan, usageCount, limit, onUpgrade, keyword: initialKeyword, niche, langStrict, onCreditUsed, onSaveHistory, userType }: any) {
+  const [kw, setKw] = useState(initialKeyword || "");
+  const [platform, setPlatform] = useState("Instagram");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const ALL_PLATFORMS = [
+    { id: "Instagram", emoji: "📸", color: "#e1306c" }, { id: "YouTube", emoji: "▶️", color: "#ef4444" },
+    { id: "TikTok", emoji: "🎵", color: "#69c9d0" }, { id: "LinkedIn", emoji: "💼", color: "#0077b5" },
+    { id: "Twitter / X", emoji: "🐦", color: "#1da1f2" }, { id: "Facebook", emoji: "📘", color: "#1877f2" },
+  ];
+  const ADS_PLATFORMS = [
+    { id: "Google Ads", emoji: "📢", color: "#4285f4" }, { id: "Meta Ads", emoji: "📘", color: "#1877f2" },
+    { id: "YouTube Ads", emoji: "▶️", color: "#ef4444" }, { id: "Native Ads", emoji: "📰", color: "#f59e0b" },
+  ];
+  const PLATFORMS = userType === "business" ? ADS_PLATFORMS : ALL_PLATFORMS;
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("captionhashtags", key, text, { platform });
+  };
+
+  const generate = async () => {
+    if (!kw.trim()) { setError("Please enter a keyword or topic first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const spec = getPlatformSpec(platform);
+    const prompt = `You are a viral ${platform} content expert. Generate ready-to-post captions and hashtags for: "${kw}"
+${niche ? `Niche: ${niche}` : ""}
+Platform: ${platform}
+Language: ${langStrict}
+
+PLATFORM-NATIVE RULES FOR ${platform} (captions must feel native, not generic):
+${spec.tone}
+${spec.limits ? `LENGTH GUIDANCE: ${spec.limits}` : ""}
+
+Generate:
+- 5 completely different, ready-to-post captions (with emojis, varying tone: relatable, bold, story-style, question-based, direct) — each written to fit ${platform}'s native tone and length above
+- 20 highly relevant, optimized hashtags mixing broad + niche + trending tags
+
+Respond ONLY in JSON:
+{
+  "captions": ["caption1", "caption2", "caption3", "caption4", "caption5"],
+  "hashtags": ["#tag1", "#tag2", ...20 tags total]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1800, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("captionhashtags", { platform, keyword: kw, inputSummary: kw, resultData: parsed });
+    } catch { setError("Generation failed. Try again."); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>📋</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Caption & Hashtags</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Select platform → enter keyword → get ready-to-post captions</p>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>SELECT PLATFORM</label>
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+            {PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? `${p.color}15` : "#080808", border: `1px solid ${platform === p.id ? p.color : "#1f1f1f"}`, color: platform === p.id ? p.color : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.2s" }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>KEYWORD / TOPIC</label>
+          <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
+            onKeyDown={e => e.key === "Enter" && generate()}
+            placeholder="e.g. weight loss, morning routine, travel..."
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif", transition: "border 0.2s" }}
+            onFocus={e => e.target.style.borderColor = "#6d28d9"}
+            onBlur={e => e.target.style.borderColor = "#1f1f1f"} />
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={generate} disabled={loading}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Inter',sans-serif" }}>
+          {loading ? "✨ Generating..." : `📋 Generate Captions & Hashtags for ${platform}`}
+        </button>
+      </div>
+
+      {result && (
+        <div style={{ animation: "slideUp 0.4s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <span style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", borderRadius: "20px", padding: "0.2rem 0.75rem", fontSize: "0.7rem", fontWeight: 700 }}>✓ Ready for {platform}</span>
+            <span style={{ color: "#3f3f46", fontSize: "0.68rem" }}>Copy & post directly!</span>
+          </div>
+
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.06em" }}>💬 CAPTIONS (5 ready-to-post)</p>
+              <button onClick={() => copyText((result.captions || []).join("\n\n"), "allcaptions")}
+                style={{ background: copiedKey === "allcaptions" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allcaptions" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allcaptions" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "allcaptions" ? "✓ Copied!" : "Copy All"}
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              {(result.captions || []).map((cap: string, i: number) => (
+                <div key={i} style={{ background: "#080808", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
+                    <p style={{ margin: 0, color: "#e4e4e7", fontSize: "0.85rem", lineHeight: 1.7, flex: 1 }}>{cap}</p>
+                    <button onClick={() => copyText(cap, `cap${i}`)}
+                      style={{ background: copiedKey === `cap${i}` ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === `cap${i}` ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === `cap${i}` ? "#22c55e" : "#555", padding: "0.2rem 0.55rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0 }}>
+                      {copiedKey === `cap${i}` ? "✓" : "📋"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <p style={{ margin: 0, fontSize: "0.68rem", color: "#06b6d4", fontWeight: 700, letterSpacing: "0.06em" }}>#️⃣ HASHTAGS (20 optimized)</p>
+              <button onClick={() => copyText((result.hashtags || []).join(" "), "allhash")}
+                style={{ background: copiedKey === "allhash" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "allhash" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "allhash" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                {copiedKey === "allhash" ? "✓ Copied!" : "Copy All"}
+              </button>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+              {(result.hashtags || []).map((tag: string, i: number) => (
+                <button key={i} onClick={() => copyText(tag, `tag${i}`)}
+                  style={{ background: copiedKey === `tag${i}` ? "rgba(6,182,212,0.15)" : "rgba(6,182,212,0.06)", border: `1px solid ${copiedKey === `tag${i}` ? "#06b6d4" : "rgba(6,182,212,0.2)"}`, color: copiedKey === `tag${i}` ? "#06b6d4" : "#52525b", padding: "0.25rem 0.65rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, transition: "all 0.15s" }}>
+                  {copiedKey === `tag${i}` ? "✓ " : ""}{tag}
+                </button>
+              ))}
+            </div>
+            <p style={{ margin: "0.75rem 0 0", color: "#3f3f46", fontSize: "0.65rem" }}>💡 Click any hashtag to copy · Copy All for all at once</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NICHE INTELLIGENCE — free tab, wraps existing trending/keyword components
+// ═══════════════════════════════════════════════════════════════════════
+function NicheIntelligence({ niche, keyword, langLabel }: any) {
+  return (
+    <div style={{ animation: "slideUp 0.4s ease", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+        <span style={{ fontSize: "1.3rem" }}>🔍</span>
+        <div>
+          <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Niche Intelligence</h3>
+          <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Real-time trends and keyword signals for {niche || "your niche"} — always free</p>
+        </div>
+      </div>
+
+      <TrendingNowCard niche={niche} platform="Instagram" />
+      <SmartKeywordSuggestions niche={niche} currentKeyword={keyword} onSelect={() => {}} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONTENT PACK — bulk generator, 50+ pieces from one keyword
+// ═══════════════════════════════════════════════════════════════════════
+function ContentPack({ plan, usageCount, limit, onUpgrade, keyword: initialKeyword, niche, platform: initialPlatform, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
+  const [kw, setKw] = useState(initialKeyword || "");
+  const [platform, setPlatform] = useState(initialPlatform || "Instagram");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("contentpack", key, text, { platform });
+  };
+  const copyAll = (items: string[], key: string) => copyText((items || []).join("\n"), key);
+
+  const generate = async () => {
+    if (!kw.trim()) { setError("Please enter a keyword first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null);
+
+    const spec = getPlatformSpec(platform);
+    const prompt = `You are a viral ${platform} content strategist. Build a complete content pack for: "${kw}"
+${niche ? `Niche: ${niche}` : ""}
+Language: ${langStrict}
+
+PLATFORM-NATIVE RULES FOR ${platform}: ${spec.tone} ${spec.limits ? `LENGTH: ${spec.limits}` : ""}
+
+Generate a full week+ worth of content assets in one pack:
+- 10 viral hooks (varying angles: curiosity, bold claim, story, question, controversy)
+- 10 titles/headlines
+- 10 ready-to-post captions
+- 15 relevant hashtags
+- 5 content ideas (brief concepts for future posts on this topic)
+
+Respond ONLY in JSON:
+{
+  "hooks": ["..."], "titles": ["..."], "captions": ["..."], "hashtags": ["..."], "ideas": ["..."]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3500, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("contentpack", { platform, keyword: kw, inputSummary: kw, resultData: parsed });
+    } catch { setError("Generation failed. Try again."); }
+    setLoading(false);
+  };
+
+  const SECTIONS = [
+    { key: "hooks", label: "🎣 HOOKS", color: "#8b5cf6" },
+    { key: "titles", label: "📝 TITLES", color: "#22c55e" },
+    { key: "captions", label: "💬 CAPTIONS", color: "#f59e0b" },
+    { key: "ideas", label: "💡 CONTENT IDEAS", color: "#06b6d4" },
+  ];
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>📦</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>Content Pack</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>One keyword → 50+ ready-to-use content pieces</p>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "0.85rem" }}>
+          <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
+            onKeyDown={e => e.key === "Enter" && generate()}
+            placeholder="e.g. weight loss, personal finance, skincare..."
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif" }} />
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={generate} disabled={loading}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer" }}>
+          {loading ? "📦 Building your pack..." : "📦 Generate Content Pack"}
+        </button>
+      </div>
+
+      {result && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {SECTIONS.map(sec => (result[sec.key]?.length > 0) && (
+            <div key={sec.key} style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.68rem", color: sec.color, fontWeight: 700, letterSpacing: "0.06em" }}>{sec.label} ({result[sec.key].length})</p>
+                <button onClick={() => copyAll(result[sec.key], sec.key)}
+                  style={{ background: copiedKey === sec.key ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === sec.key ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === sec.key ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                  {copiedKey === sec.key ? "✓ Copied!" : "Copy All"}
+                </button>
+              </div>
+              {result[sec.key].map((item: string, i: number) => (
+                <div key={i} style={{ display: "flex", gap: "0.5rem", padding: "0.4rem 0", borderBottom: i < result[sec.key].length - 1 ? "1px solid #141414" : "none" }}>
+                  <span style={{ color: "#3f3f46", fontSize: "0.68rem", fontWeight: 700, flexShrink: 0, minWidth: 18 }}>{String(i + 1).padStart(2, "0")}</span>
+                  <p style={{ margin: 0, color: "#d4d4d8", fontSize: "0.8rem", lineHeight: 1.6, flex: 1 }}>{item}</p>
+                </div>
+              ))}
+            </div>
+          ))}
+          {result.hashtags?.length > 0 && (
+            <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "14px", padding: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.68rem", color: "#ec4899", fontWeight: 700, letterSpacing: "0.06em" }}>#️⃣ HASHTAGS ({result.hashtags.length})</p>
+                <button onClick={() => copyAll(result.hashtags, "hashtags")}
+                  style={{ background: copiedKey === "hashtags" ? "#22c55e18" : "#ffffff0a", border: `1px solid ${copiedKey === "hashtags" ? "#22c55e" : "#2a2a2a"}`, color: copiedKey === "hashtags" ? "#22c55e" : "#555", padding: "0.2rem 0.65rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                  {copiedKey === "hashtags" ? "✓ Copied!" : "Copy All"}
+                </button>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem" }}>
+                {result.hashtags.map((tag: string, i: number) => (
+                  <span key={i} style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.2)", color: "#ec4899", padding: "0.2rem 0.55rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 600 }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONTENT CALENDAR — 30 days of hooks, organized by week
+// ═══════════════════════════════════════════════════════════════════════
+function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword: initialKeyword, niche, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
+  const [kw, setKw] = useState(initialKeyword || "");
+  const [platform, setPlatform] = useState(userType === "business" ? "Meta Ads" : "Instagram");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [activeWeek, setActiveWeek] = useState(0);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    fireCopySignal("calendar", key, text, {});
+  };
+
+  const CAL_PLATFORMS = userType === "business"
+    ? [{ id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" }, { id: "Instagram Ads", emoji: "📸" }, { id: "LinkedIn Ads", emoji: "💼" }]
+    : [{ id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" }, { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" }];
+
+  const generate = async () => {
+    if (!kw.trim()) { setError("Please enter a keyword or niche focus first."); return; }
+    if (usageCount >= limit) { onUpgrade(); return; }
+    setLoading(true); setError(""); setResult(null); setActiveWeek(0);
+
+    const spec = getPlatformSpec(platform);
+    const prompt = `You are a content strategist building a 30-day content calendar for: "${kw}"
+${niche ? `Niche: ${niche}` : ""}
+Language: ${langStrict}
+Platform: ${platform}
+PLATFORM-NATIVE TONE: ${spec.tone}
+
+Create exactly 30 days of content ideas, organized into 4 weeks (7-8 days each). Each day needs:
+- A specific, non-repeating hook/topic for that day
+- A content type tag (choose from: Tips, Story, Tutorial, Behind the Scenes, Q&A, Trend, Case Study, Poll, Review, Challenge, Motivation)
+
+Vary the content types across the month for a healthy content mix — don't repeat the same type more than 4-5 times total.
+
+Respond ONLY in JSON:
+{
+  "weeks": [
+    { "label": "Week 1", "days": [ {"day": 1, "hook": "specific hook text", "type": "Tips"}, ... 7-8 days ] },
+    { "label": "Week 2", "days": [...] },
+    { "label": "Week 3", "days": [...] },
+    { "label": "Week 4", "days": [...] }
+  ]
+}`;
+
+    try {
+      const res = await fetch(`https://viral-tool-1.onrender.com/api/generate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 3500, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const text = data.content?.map((i: any) => i.text || "").join("") || "";
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); }
+      catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
+      setResult(parsed);
+      if (onCreditUsed) onCreditUsed();
+      if (onSaveHistory) onSaveHistory("calendar", { platform, keyword: kw, inputSummary: kw, resultData: parsed });
+    } catch { setError("Generation failed. Try again."); }
+    setLoading(false);
+  };
+
+  const typeColor: Record<string, string> = {
+    Tips: "#f59e0b", Story: "#ec4899", Tutorial: "#06b6d4", "Behind the Scenes": "#8b5cf6",
+    "Q&A": "#22c55e", Trend: "#ef4444", "Case Study": "#3b82f6", Poll: "#a855f7",
+    Review: "#14b8a6", Challenge: "#f97316", Motivation: "#eab308",
+  };
+
+  return (
+    <div style={{ animation: "slideUp 0.4s ease" }}>
+      <div style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <span style={{ fontSize: "1.3rem" }}>📅</span>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Inter',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700 }}>30-Day Content Calendar</h3>
+            <p style={{ margin: 0, color: "#52525b", fontSize: "0.72rem" }}>Get 30 days of hooks, organized by week, each tagged with a content type</p>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "0.35rem" }}>
+            {CAL_PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: platform === p.id ? "#8b5cf6" : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "0.85rem" }}>
+          <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
+            onKeyDown={e => e.key === "Enter" && generate()}
+            placeholder="e.g. fitness, personal finance, skincare..."
+            style={{ width: "100%", background: "#080808", border: "1px solid #1f1f1f", borderRadius: "10px", padding: "0.8rem 1rem", color: "#f1f5f9", fontSize: "0.9rem", outline: "none", fontFamily: "'Inter',sans-serif" }} />
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", margin: "0 0 0.75rem" }}>{error}</p>}
+
+        <button onClick={generate} disabled={loading}
+          style={{ width: "100%", padding: "0.9rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer" }}>
+          {loading ? "📅 Building your calendar..." : "📅 Generate Calendar"}
+        </button>
+      </div>
+
+      {result?.weeks && (
+        <div>
+          <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.85rem", overflowX: "auto" }}>
+            {result.weeks.map((w: any, i: number) => (
+              <button key={i} onClick={() => setActiveWeek(i)}
+                style={{ background: activeWeek === i ? "rgba(109,40,217,0.15)" : "#0f0f0f", border: `1px solid ${activeWeek === i ? "#6d28d9" : "#1f1f1f"}`, color: activeWeek === i ? "#8b5cf6" : "#52525b", padding: "0.5rem 1rem", borderRadius: "10px", cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                {w.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {(result.weeks[activeWeek]?.days || []).map((d: any, i: number) => {
+              const color = typeColor[d.type] || "#8b5cf6";
+              return (
+                <div key={i} style={{ background: "#0f0f0f", border: "1px solid #1f1f1f", borderLeft: `3px solid ${color}`, borderRadius: "10px", padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ width: 30, height: 30, borderRadius: "8px", background: `${color}15`, color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800, flexShrink: 0 }}>
+                    {d.day}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: "0 0 0.15rem", color: "#e4e4e7", fontSize: "0.83rem", lineHeight: 1.5 }}>{d.hook}</p>
+                    <span style={{ color, fontSize: "0.62rem", fontWeight: 700, background: `${color}12`, padding: "0.08rem 0.4rem", borderRadius: "5px" }}>{d.type}</span>
+                  </div>
+                  <button onClick={() => copyText(d.hook, `day${activeWeek}-${i}`)}
+                    style={{ background: "none", border: "none", color: copiedKey === `day${activeWeek}-${i}` ? "#22c55e" : "#3f3f46", cursor: "pointer", fontSize: "0.85rem", flexShrink: 0 }}>
+                    {copiedKey === `day${activeWeek}-${i}` ? "✓" : "📋"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PAYMENT MODAL — Razorpay checkout + UPI QR fallback
+// ⚠️ FINANCIAL CODE — test with a small real transaction before relying on
+// this in production. The Razorpay checkout below uses amount-based
+// (order-less) client checkout since this codebase's exact backend
+// order-creation endpoint wasn't available during reconstruction. If your
+// backend has a dedicated /api/create-order route, wire that in instead
+// for stronger amount-tampering protection.
+// ═══════════════════════════════════════════════════════════════════════
+function PaymentModal({ plan, onClose, onPaid, detectedCurrency }: any) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showUPI, setShowUPI] = useState(false);
+
+  const planData = (PLANS as any)[plan];
+  const isUSD = detectedCurrency === "USD";
+  const amount = isUSD ? planData?.priceUSD : planData?.priceINR;
+
+  const payWithRazorpay = async () => {
+    setLoading(true); setError("");
+    const ok = await loadRazorpay();
+    if (!ok) { setError("Payment gateway failed to load. Check your connection."); setLoading(false); return; }
+
+    const options = {
+      key: RAZORPAY_KEY_ID,
+      amount: Math.round((isUSD ? amount * 83 : amount) * 100), // paise; USD roughly converted — verify FX handling server-side
+      currency: "INR",
+      name: "VCI — Viral Content Intelligence",
+      description: `${planData?.label} Plan — Monthly`,
+      handler: function (response: any) {
+        setLoading(false);
+        onPaid?.(response);
+      },
+      modal: { ondismiss: () => setLoading(false) },
+      theme: { color: "#6d28d9" },
+    };
+
+    try {
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch {
+      setError("Could not open payment gateway. Try UPI instead.");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0a0a10", border: "1px solid #1a1a2e", borderRadius: "20px", padding: "1.75rem", maxWidth: 440, width: "100%", color: "#fff" }}>
+
+        <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
+          <div style={{ fontSize: "1.75rem", marginBottom: "0.4rem" }}>💎</div>
+          <h2 style={{ fontFamily: "'Inter',sans-serif", fontWeight: 900, fontSize: "1.2rem", margin: "0 0 0.3rem" }}>Upgrade to {planData?.label}</h2>
+          <p style={{ color: "#52525b", fontSize: "0.82rem", margin: 0 }}>{planData?.limit} credits/month</p>
+        </div>
+
+        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+          <span style={{ fontSize: "2rem", fontWeight: 900, color: "#22c55e" }}>{isUSD ? `$${amount}` : `₹${amount}`}</span>
+          <span style={{ color: "#3f3f46", fontSize: "0.85rem" }}>/month</span>
+        </div>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "0.78rem", textAlign: "center", margin: "0 0 1rem" }}>{error}</p>}
+
+        {!showUPI ? (
+          <>
+            <button onClick={payWithRazorpay} disabled={loading}
+              style={{ width: "100%", padding: "0.95rem", borderRadius: "12px", background: loading ? "#111" : "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "none", color: loading ? "#404040" : "#fff", fontWeight: 800, fontSize: "0.9rem", cursor: loading ? "not-allowed" : "pointer", marginBottom: "0.6rem" }}>
+              {loading ? "Opening payment..." : "💳 Pay with Card / UPI / Netbanking"}
+            </button>
+            <button onClick={() => setShowUPI(true)}
+              style={{ width: "100%", padding: "0.8rem", borderRadius: "12px", background: "transparent", border: "1px solid #1f1f1f", color: "#71717a", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", marginBottom: "0.6rem" }}>
+              📱 Pay via UPI QR instead
+            </button>
+          </>
+        ) : (
+          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+            <img src={getUPIQR(YOUR_UPI_ID, isUSD ? Math.round(amount * 83) : amount)} alt="UPI QR" style={{ borderRadius: "12px", marginBottom: "0.75rem" }} />
+            <p style={{ color: "#52525b", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
+              Scan with any UPI app, then message us on WhatsApp with your payment screenshot for instant activation.
+            </p>
+            <a href={`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g, "")}?text=Hi! I just paid for the ${planData?.label} plan. Here's my screenshot.`} target="_blank" rel="noopener noreferrer"
+              style={{ display: "block", padding: "0.8rem", borderRadius: "12px", background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.3)", color: "#25d366", fontWeight: 700, fontSize: "0.82rem", textDecoration: "none" }}>
+              💬 Confirm on WhatsApp
+            </a>
+            <button onClick={() => setShowUPI(false)}
+              style={{ background: "none", border: "none", color: "#3f3f46", fontSize: "0.75rem", marginTop: "0.75rem", cursor: "pointer" }}>
+              ← Back to card payment
+            </button>
+          </div>
+        )}
+
+        <button onClick={onClose}
+          style={{ width: "100%", background: "none", border: "none", color: "#3f3f46", fontSize: "0.8rem", padding: "0.4rem", cursor: "pointer" }}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
+}
 // Auto-detect hook style for tagging — used for performance pattern matching
 function detectHookStyle(text: string): string {
   const t = text.toLowerCase();
