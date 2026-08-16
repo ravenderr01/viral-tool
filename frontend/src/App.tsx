@@ -7036,6 +7036,7 @@ Respond ONLY in JSON:
 // ═══════════════════════════════════════════════════════════════════════
 function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword: initialKeyword, niche, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
   const [kw, setKw] = useState(initialKeyword || "");
+  const [platform, setPlatform] = useState(userType === "business" ? "Meta Ads" : "Instagram");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -7049,14 +7050,21 @@ function ContentCalendar({ plan, usageCount, limit, onUpgrade, keyword: initialK
     fireCopySignal("calendar", key, text, {});
   };
 
+  const CAL_PLATFORMS = userType === "business"
+    ? [{ id: "Google Ads", emoji: "📢" }, { id: "Meta Ads", emoji: "📘" }, { id: "Instagram Ads", emoji: "📸" }, { id: "LinkedIn Ads", emoji: "💼" }]
+    : [{ id: "Instagram", emoji: "📸" }, { id: "YouTube", emoji: "▶️" }, { id: "TikTok", emoji: "🎵" }, { id: "LinkedIn", emoji: "💼" }, { id: "Twitter / X", emoji: "🐦" }, { id: "Facebook", emoji: "📘" }];
+
   const generate = async () => {
     if (!kw.trim()) { setError("Please enter a keyword or niche focus first."); return; }
     if (usageCount >= limit) { onUpgrade(); return; }
     setLoading(true); setError(""); setResult(null); setActiveWeek(0);
 
+    const spec = getPlatformSpec(platform);
     const prompt = `You are a content strategist building a 30-day content calendar for: "${kw}"
 ${niche ? `Niche: ${niche}` : ""}
 Language: ${langStrict}
+Platform: ${platform}
+PLATFORM-NATIVE TONE: ${spec.tone}
 
 Create exactly 30 days of content ideas, organized into 4 weeks (7-8 days each). Each day needs:
 - A specific, non-repeating hook/topic for that day
@@ -7086,7 +7094,7 @@ Respond ONLY in JSON:
       catch { const m = text.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error("Parse failed"); }
       setResult(parsed);
       if (onCreditUsed) onCreditUsed();
-      if (onSaveHistory) onSaveHistory("calendar", { keyword: kw, inputSummary: kw, resultData: parsed });
+      if (onSaveHistory) onSaveHistory("calendar", { platform, keyword: kw, inputSummary: kw, resultData: parsed });
     } catch { setError("Generation failed. Try again."); }
     setLoading(false);
   };
@@ -7108,6 +7116,17 @@ Respond ONLY in JSON:
           </div>
         </div>
 
+        <div style={{ marginBottom: "0.85rem" }}>
+          <label style={{ color: "#71717a", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: "0.4rem" }}>PLATFORM</label>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "0.35rem" }}>
+            {CAL_PLATFORMS.map(p => (
+              <button key={p.id} onClick={() => setPlatform(p.id)}
+                style={{ background: platform === p.id ? "rgba(109,40,217,0.15)" : "#080808", border: `1px solid ${platform === p.id ? "#6d28d9" : "#1f1f1f"}`, color: platform === p.id ? "#8b5cf6" : "#52525b", padding: "0.3rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>
+                {p.emoji} {p.id}
+              </button>
+            ))}
+          </div>
+        </div>
         <div style={{ marginBottom: "0.85rem" }}>
           <input value={kw} onChange={e => { setKw(e.target.value); setError(""); }}
             onKeyDown={e => e.key === "Enter" && generate()}
