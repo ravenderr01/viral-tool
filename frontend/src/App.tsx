@@ -6380,6 +6380,226 @@ Respond ONLY in JSON:
 }
 // Hook Score Analyzer — paste any hook/caption/script and get a strict, honest
 // score (0-100) + grade (A-F), line-level fixes, and 3 platform-tuned rewrites.
+function PaywallModal({ onClose, onSelectPlan, currency }: any) {
+  const [selected, setSelected] = useState<string>("creator_starter");
+  const isUSD = currency === "USD";
+  const selectedPlan = (PLANS as any)[selected];
+
+  const PLAN_FEATURES = {
+  creator_starter: {
+    section: "creator",
+    highlight: "🔥 Popular",
+    features: [
+      "📊 Hook Score Analyzer",
+        "📋 Caption & Hashtag Generator",
+        "🎬 Script Lab — Full Reel Pipeline",
+        "🖼️ Auto Thumbnail Generator",
+        "🎙️ AI Voiceover — 7 Indian Languages",
+        "🎛️ Mix Studio — Professional Audio Ducking",
+        "📅 30-Day Content Calendar",
+        "📦 Content Pack (50+ pieces)",
+        "🖼️ Image AI",
+        "🔍 Niche Intelligence — Free",
+        "📈 Trends Feed — Free",
+      ],
+    },
+    creator_pro: {
+      section: "creator",
+      highlight: "⚡ Best Value",
+      features: [
+        "Everything in Creator Starter",
+        "🔄 Auto-Repurpose Engine (8 platforms)",
+        "🕵️ Competitor Hook Analyzer",
+        "550 credits — 4× more than Starter",
+      ],
+    },
+    advertiser: {
+      section: "advertiser",
+      highlight: "📢 Advertiser Exclusive",
+      features: [
+        "Everything in Creator Pro",
+        "📊 Ad ROI Calculator",
+        "🧪 A/B Ad Copy Generator",
+        "🖥️ Landing Page Copy Generator",
+        "Google Ads + Meta Ads platforms",
+        "1,100 credits — 2× Creator Pro",
+      ],
+    },
+    agency: {
+      section: "agency",
+      highlight: "👑 All Access",
+      features: [
+        "All Creator + Advertiser tools",
+        "2,800 credits — unlimited workflow",
+        "Multiple clients, all platforms",
+      ],
+    },
+  };
+
+  const sectionColor = {
+    creator:    { border: "#a855f7", bg: "rgba(168,85,247,0.07)", badge: "rgba(168,85,247,0.12)", badgeText: "#a855f7" },
+    advertiser: { border: "#06b6d4", bg: "rgba(6,182,212,0.07)",  badge: "rgba(6,182,212,0.12)",  badgeText: "#06b6d4" },
+    agency:     { border: "#f59e0b", bg: "rgba(245,158,11,0.07)", badge: "rgba(245,158,11,0.12)", badgeText: "#f59e0b" },
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem", overflowY:"auto" }}>
+      <div style={{ background:"#080810", border:"1px solid #1a1a2e", borderRadius:"24px", padding:"1.75rem", maxWidth:"520px", width:"100%", color:"#fff", animation:"slideUp 0.3s ease" }}>
+
+        {/* Header */}
+        <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
+          <div style={{ fontSize:"1.75rem", marginBottom:".4rem" }}>⚡</div>
+          <h2 style={{ fontFamily:"'Inter',sans-serif", fontSize:"1.3rem", fontWeight:900, margin:"0 0 .35rem", color:"#fff" }}>Unlock VCI</h2>
+          <p style={{ color:"#52525b", fontSize:".8rem", margin:0 }}>Choose the plan that fits your workflow</p>
+        </div>
+
+        {/* SECTION: Creator Plans */}
+        <div style={{ marginBottom:"1rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#a855f7", textTransform:"uppercase" }}>📱 Creator Plans</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(168,85,247,.2)" }} />
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:".5rem" }}>
+            {(["creator_starter","creator_pro"] as const).map(key => {
+              const plan   = PLANS[key] as any;
+              const meta   = PLAN_FEATURES[key];
+              const col    = sectionColor.creator;
+              const isSel  = selected === key;
+              return (
+                <div key={key} onClick={() => setSelected(key)}
+                  style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                        <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                        {meta.highlight && <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>}
+                        {(plan as any).wasINR > 0 && <span style={{ fontSize:".52rem", fontWeight:800, background:"rgba(34,197,94,.12)", color:"#22c55e", border:"1px solid rgba(34,197,94,.25)", padding:".08rem .4rem", borderRadius:"5px" }}>🎉 Launch Price</span>}
+                      </div>
+                      <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      {(plan as any).wasINR > 0 && (
+                        <div style={{ fontSize:".7rem", color:"#3f3f46", textDecoration:"line-through", marginBottom:".1rem" }}>
+                          {isUSD ? `$${(plan as any).wasUSD}` : `₹${(plan as any).wasINR}`}
+                        </div>
+                      )}
+                      <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#22c55e" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                      <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                    </div>
+                  </div>
+                  {isSel && (
+                    <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                      {meta.features.map((f,i) => (
+                        <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                          <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                          <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SECTION: Advertiser Plan */}
+        <div style={{ marginBottom:"1rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#06b6d4", textTransform:"uppercase" }}>📢 Advertiser Plan</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(6,182,212,.2)" }} />
+          </div>
+          {(["advertiser"] as const).map(key => {
+            const plan  = PLANS[key] as any;
+            const meta  = PLAN_FEATURES[key];
+            const col   = sectionColor.advertiser;
+            const isSel = selected === key;
+            return (
+              <div key={key} onClick={() => setSelected(key)}
+                style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                      <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                      <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>
+                    </div>
+                    <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                    <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                  </div>
+                </div>
+                {isSel && (
+                  <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                    {meta.features.map((f,i) => (
+                      <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                        <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                        <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* SECTION: Agency Plan */}
+        <div style={{ marginBottom:"1.25rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".5rem", marginBottom:".6rem" }}>
+            <span style={{ fontSize:".58rem", fontWeight:800, letterSpacing:".1em", color:"#f59e0b", textTransform:"uppercase" }}>👑 Agency Plan</span>
+            <div style={{ flex:1, height:"1px", background:"rgba(245,158,11,.2)" }} />
+          </div>
+          {(["agency"] as const).map(key => {
+            const plan  = PLANS[key] as any;
+            const meta  = PLAN_FEATURES[key];
+            const col   = sectionColor.agency;
+            const isSel = selected === key;
+            return (
+              <div key={key} onClick={() => setSelected(key)}
+                style={{ border:`${isSel?"2":"1"}px solid ${isSel ? col.border : "#1a1a2e"}`, borderRadius:"14px", padding:".9rem 1rem", background: isSel ? col.bg : "#0a0a14", cursor:"pointer", transition:"all .2s" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:".4rem", marginBottom:".2rem" }}>
+                      <span style={{ fontWeight:800, fontSize:".9rem", color:"#fff" }}>{plan.label}</span>
+                      <span style={{ fontSize:".55rem", fontWeight:800, background: col.badge, color: col.badgeText, padding:".1rem .45rem", borderRadius:"5px" }}>{meta.highlight}</span>
+                    </div>
+                    <span style={{ fontSize:".72rem", color:"#52525b" }}>{plan.limit} credits/month</span>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:"1.15rem", fontWeight:900, color: isSel ? col.badgeText : "#fff" }}>{isUSD ? `$${plan.priceUSD}` : `₹${plan.priceINR}`}</div>
+                    <div style={{ fontSize:".65rem", color:"#3f3f46" }}>/month</div>
+                  </div>
+                </div>
+                {isSel && (
+                  <div style={{ marginTop:".75rem", display:"flex", flexDirection:"column", gap:".28rem" }}>
+                    {meta.features.map((f,i) => (
+                      <div key={i} style={{ display:"flex", gap:".5rem", alignItems:"flex-start" }}>
+                        <span style={{ color:col.badgeText, fontSize:".65rem", marginTop:".1rem", flexShrink:0 }}>✓</span>
+                        <span style={{ fontSize:".75rem", color:"#cbd5e1", lineHeight:1.4 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <button onClick={() => onSelectPlan(selected)}
+          style={{ width:"100%", padding:"0.95rem", borderRadius:"12px", background:"linear-gradient(135deg,#6d28d9,#7c3aed)", border:"none", color:"#fff", fontWeight:800, fontSize:".95rem", cursor:"pointer", marginBottom:".5rem", boxShadow:"0 8px 24px rgba(109,40,217,.35)" }}>
+          Get {selectedPlan?.label} — {isUSD ? `$${selectedPlan?.priceUSD}` : `₹${selectedPlan?.priceINR}`} /month →
+        </button>
+        <button onClick={onClose}
+          style={{ width:"100%", background:"none", border:"none", color:"#3f3f46", cursor:"pointer", fontSize:".78rem", padding:".4rem" }}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
+}
 function HookScoreAnalyzer({ plan, usageCount, limit, onUpgrade, langStrict, onSaveHistory, onCreditUsed, userType }: any) {
   const [contentInput, setContentInput] = useState("");
   const [platform, setPlatform] = useState("Instagram");
