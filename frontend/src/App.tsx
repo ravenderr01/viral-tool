@@ -1171,8 +1171,11 @@ function AdCopyVariations({ plan, onUpgrade, onCreditUsed, onSaveHistory }: any)
     if (!product.trim()) return;
     setLoading(true); setResult(null);
     const isGoogle = platform === "Google Ads";
+    const isLinkedIn = platform === "LinkedIn Ads";
     const charRule = isGoogle
       ? "HEADLINES: Exactly 25-30 characters. Count every letter, space, and punctuation. NEVER below 20 characters. Descriptions: exactly 75-90 characters."
+      : isLinkedIn
+      ? "HEADLINES: Exactly 60-70 characters, professional B2B tone, no hype or emojis. INTRO TEXT: 100-150 characters, lead with a business outcome (ROI, efficiency, growth)."
       : "HEADLINES: Exactly 35-40 characters. PRIMARY TEXT: 100-125 characters, first line must stop scroll.";
     const prompt = `You are a senior performance marketing copywriter at a top Indian agency. Generate ${count} high-quality ad copy variations for ${platform}.
 
@@ -1269,7 +1272,7 @@ Return ONLY valid JSON with exactly ${count} variations:
           <div>
             <label style={{ fontSize:".62rem", fontWeight:800, color:"#52525b", display:"block", marginBottom:".3rem", textTransform:"uppercase" as const, letterSpacing:".06em" }}>Platform</label>
             <select value={platform} onChange={e => setPlatform(e.target.value)} style={{ width:"100%", background:"#050508", border:"1px solid #1a1a2e", borderRadius:"9px", padding:".65rem .75rem", color:"#fff", fontSize:".78rem", fontFamily:"inherit", outline:"none" }}>
-              <option>Google Ads</option><option>Meta Ads</option>
+              <option>Google Ads</option><option>Meta Ads</option><option>Instagram Ads</option><option>LinkedIn Ads</option>
             </select>
           </div>
           <div>
@@ -1312,6 +1315,8 @@ Return ONLY valid JSON with exactly ${count} variations:
             {filtered.map((v: any, i: number) => {
               const color = TYPE_COLORS[v.type] || "#a855f7";
               const isGoogle = platform === "Google Ads";
+              const isLinkedIn = platform === "LinkedIn Ads";
+              const hLimit = isGoogle ? 30 : isLinkedIn ? 70 : 40;
               return (
               <div key={i} style={{ background:"#050508", border:`1px solid ${color}20`, borderRadius:"10px", padding:".85rem" }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:".5rem" }}>
@@ -1325,7 +1330,7 @@ Return ONLY valid JSON with exactly ${count} variations:
                   </div>
                 </div>
                 <p style={{ color:"#fff", fontWeight:700, fontSize:".84rem", margin:"0 0 .3rem" }}>{v.headline}
-                  <span style={{ fontSize:".58rem", fontWeight:700, color:(v.headline?.length||0) > (isGoogle?30:40)?"#ef4444":"#22c55e", marginLeft:".4rem" }}>{v.headline?.length||0}/{isGoogle?30:40}</span>
+                  <span style={{ fontSize:".58rem", fontWeight:700, color:(v.headline?.length||0) > hLimit?"#ef4444":"#22c55e", marginLeft:".4rem" }}>{v.headline?.length||0}/{hLimit}</span>
                 </p>
                 <p style={{ color:"#94a3b8", fontSize:".78rem", margin:"0 0 .35rem", lineHeight:1.55 }}>{v.body}</p>
                 <p style={{ color:"#52525b", fontSize:".7rem", margin:0 }}>→ <span style={{ color:"#3f3f46" }}>{v.cta}</span> {v.strength && <span style={{ color:"#27272a" }}>· {v.strength}</span>}</p>
@@ -2193,26 +2198,22 @@ RULES:
 - Social proof: use specific numbers
 - FAQs: real objections that stop Indian buyers (price, trust, results)
 
-Return ONLY valid JSON:
+Return ONLY valid JSON — use EXACTLY these field names:
 {
   "hero_headline": "Under 10 words — bold specific claim",
   "hero_subheadline": "15-25 words — expand the promise",
   "hero_cta": "3-5 word action CTA",
-  "pain_section_heading": "Section heading e.g. 'Sound Familiar?'",
-  "pain_points": ["specific emotional pain 1", "specific pain 2", "specific pain 3"],
-  "benefits_heading": "Benefits section heading",
-  "benefits": ["Outcome benefit 1 with number/time", "Outcome benefit 2", "Outcome benefit 3", "Outcome benefit 4"],
-  "social_proof": "Specific credibility with numbers",
-  "urgency_line": "Genuine scarcity or deadline line",
-  "faq": [
-    {"q": "Price objection", "a": "Value reframe answer"},
-    {"q": "Trust concern", "a": "Proof-based answer"},
-    {"q": "Results timeline", "a": "Specific honest answer"}
+  "problem_statement": "One paragraph naming the real, specific daily frustration — emotional, not generic",
+  "solution_intro": "One paragraph introducing how this product/service solves that problem",
+  "benefits": [
+    {"icon": "relevant emoji", "title": "Outcome-based benefit title with number/time", "desc": "One sentence expanding the benefit"}
   ],
-  "footer_cta_headline": "Final push — different angle from hero",
-  "footer_cta_button": "Final CTA button text",
-  "meta_description": "150-160 char SEO description"
-}`
+  "social_proof": "Specific credibility line with real numbers",
+  "urgency_line": "Genuine scarcity or deadline line",
+  "final_cta": "Final push CTA button text — different angle from hero CTA",
+  "trust_elements": ["Trust badge 1 e.g. Money-back guarantee", "Trust badge 2", "Trust badge 3"]
+}
+Generate exactly 4 benefit items.`
     try {
       const res = await fetch("https://viral-tool-1.onrender.com/api/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
