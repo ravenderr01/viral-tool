@@ -27,6 +27,9 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 // User never sees an error, just seamless generation
 
 async function callGroq({ system, messages, max_tokens = 1500, temperature = 0.7, model = "openai/gpt-oss-120b" }) {
+  // gpt-oss models are reasoning models — reasoning_effort keeps them from
+  // padding responses with long internal "thinking" text before the answer.
+  const isReasoningModel = model.startsWith("openai/gpt-oss");
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -37,6 +40,7 @@ async function callGroq({ system, messages, max_tokens = 1500, temperature = 0.7
       model,
       max_tokens,
       temperature,
+      ...(isReasoningModel ? { reasoning_effort: "low" } : {}),
       messages: system
         ? [{ role: "system", content: system }, ...messages]
         : messages
