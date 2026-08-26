@@ -26,7 +26,7 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 // Groq hits rate limit (429) → automatically switches to Gemini
 // User never sees an error, just seamless generation
 
-async function callGroq({ system, messages, max_tokens = 1500, temperature = 0.7, model = "llama-3.3-70b-versatile" }) {
+async function callGroq({ system, messages, max_tokens = 1500, temperature = 0.7, model = "openai/gpt-oss-120b" }) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -59,7 +59,7 @@ async function callGemini({ system, messages, max_tokens = 1500, temperature = 0
   const fullPrompt = system ? `${system}\n\n${userMsg}` : userMsg;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
